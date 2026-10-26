@@ -27,7 +27,7 @@ The roadmap does not decide these questions:
 
 ---
 
-## Phase 0: Digital identity foundation *(this PR)*
+## Phase 0: Digital identity foundation *(merged: PR #1)*
 
 **Scope:**
 
@@ -50,6 +50,30 @@ The roadmap does not decide these questions:
 - [ ] Only the supplied font weights are declared and demonstrated, with no synthetic bold or italic.
 - [ ] No change to production pages, the app entry point, routing, backend, manifests, lockfiles, build configuration or CI.
 - [ ] The existing frontend lint and build still pass.
+
+---
+
+## Status: first homepage (Phases 1–2, combined PR `feat/public-homepage`)
+
+The first homepage was delivered together with **only the shared shell it needs**, rather than as two separate PRs.
+
+**Delivered:**
+
+- `fonts.css` and `brand-tokens.css` imported in `src/main.tsx`, plus a scoped base stylesheet (`font-synthesis: none`, focus ring, reduced motion).
+- Skip link, header with logo, in-page navigation and an accessible mobile menu, and a footer with the dark-background logo.
+- The homepage sections: opening, purpose, Dr. Sankari's legacy, the six domains, the award journey and a closing statement.
+- Two verified photographs of Dr. Abdul Qader Sankari, documented in [photo-provenance.md](photo-provenance.md).
+- Vite starter content removed.
+
+**Not yet delivered (still open in Phases 1–5):**
+
+- routing and page templates (the site is a single page, so no router was added);
+- a shared `DomainSymbol` component;
+- contact details;
+- favicon and social image (not supplied);
+- the production indexing decision (see Phase 5).
+
+Implementation and verification notes: [homepage-implementation.md](homepage-implementation.md).
 
 ---
 

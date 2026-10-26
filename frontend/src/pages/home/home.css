@@ -1,0 +1,452 @@
+/*
+ * Homepage composition. Colour pairings follow the measured table in
+ * identity-guidelines.md §4.4: brand gold is used for rules, markers and
+ * large text on deep green only, never for text on light surfaces.
+ */
+
+/* ---------- Opening ---------- */
+
+.hero {
+  background: var(--sa-color-surface) url('../../assets/brand/background-line-pattern.svg') center / cover no-repeat;
+}
+
+.hero__inner {
+  display: grid;
+  grid-template-areas:
+    'figure'
+    'text';
+  gap: var(--sa-space-6);
+  padding-block: var(--sa-space-5) var(--sa-space-8);
+}
+
+.hero__text {
+  grid-area: text;
+}
+
+.hero__name {
+  max-inline-size: 34rem;
+  font-size: var(--sa-font-size-lead);
+  font-weight: var(--sa-font-weight-medium);
+  line-height: 1.6;
+}
+
+.hero__title {
+  margin-block: var(--sa-space-4) var(--sa-space-5);
+  font-size: clamp(2.25rem, 1.5rem + 3.2vw, 4rem);
+  font-weight: var(--sa-font-weight-black);
+  line-height: var(--sa-line-height-tight);
+}
+
+.hero__title-line {
+  display: block;
+}
+
+.hero__lead {
+  max-inline-size: var(--sa-measure-narrow);
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-lead);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sa-space-3);
+  margin-block-start: var(--sa-space-6);
+}
+
+.hero__figure {
+  grid-area: figure;
+  position: relative;
+}
+
+.hero__photo img {
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  /* Face sits at about 52% × 40% of the source; keep it clear on narrow crops. */
+  object-position: 55% 30%;
+  border-radius: var(--sa-radius-md);
+  background: var(--sa-color-surface-raised);
+}
+
+.hero__caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sa-space-1) var(--sa-space-4);
+  margin-block-start: var(--sa-space-3);
+  font-size: var(--sa-font-size-small);
+  line-height: 1.6;
+}
+
+.hero__caption-name {
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.photo-credit {
+  color: var(--sa-color-text-muted);
+}
+
+@media (min-width: 48rem) {
+  .hero__inner {
+    grid-template-areas: 'text figure';
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: var(--sa-space-8);
+    padding-block: var(--sa-space-8);
+  }
+
+  .hero__photo img {
+    aspect-ratio: 4 / 5;
+    object-position: 62% 50%;
+  }
+
+  /* Gold vertical rule beside the portrait, as on guide pages 10–15. */
+  .hero__figure::before {
+    content: '';
+    position: absolute;
+    inset-block: 18% 30%;
+    inset-inline-start: calc(-1 * var(--sa-space-6));
+    inline-size: var(--sa-border-width-accent);
+    background: var(--sa-color-rule-accent);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero__photo img,
+  .hero__text {
+    animation: home-reveal 640ms var(--sa-easing-standard) both;
+  }
+
+  .hero__text {
+    animation-delay: 120ms;
+  }
+}
+
+@keyframes home-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+/* ---------- Why this award ---------- */
+
+.purpose {
+  background: var(--sa-color-surface-raised);
+}
+
+.purpose__statement {
+  max-inline-size: 46rem;
+  margin-block-start: var(--sa-space-6);
+  padding-inline-start: var(--sa-space-5);
+  border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-medium);
+  line-height: 1.7;
+}
+
+.purpose__aims {
+  display: grid;
+  gap: var(--sa-space-6);
+  margin-block-start: var(--sa-space-7);
+  padding: 0;
+  list-style: none;
+  counter-reset: aim;
+}
+
+.purpose__aim {
+  padding-block-start: var(--sa-space-4);
+  border-block-start: var(--sa-border-width-strong) solid var(--sa-color-border-strong);
+  counter-increment: aim;
+}
+
+.purpose__aim::before {
+  content: counter(aim, decimal-leading-zero);
+  display: block;
+  margin-block-end: var(--sa-space-2);
+  color: var(--sa-color-text-accent);
+  font-size: var(--sa-font-size-h3);
+  font-weight: var(--sa-font-weight-light);
+  line-height: 1;
+}
+
+.purpose__aim-title {
+  margin-block-end: var(--sa-space-2);
+  font-size: var(--sa-font-size-h4);
+}
+
+@media (min-width: 48rem) {
+  .purpose__aims {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------- The human legacy ---------- */
+
+.legacy__inner {
+  display: grid;
+  gap: var(--sa-space-7);
+}
+
+.legacy__text .section__title {
+  margin-block-end: var(--sa-space-5);
+}
+
+.legacy__paragraph {
+  max-inline-size: var(--sa-measure-prose);
+}
+
+.legacy__paragraph + .legacy__paragraph {
+  margin-block-start: var(--sa-space-4);
+}
+
+.legacy__bridge {
+  max-inline-size: var(--sa-measure-prose);
+  margin-block-start: var(--sa-space-6);
+  padding-inline-start: var(--sa-space-5);
+  border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
+  font-size: var(--sa-font-size-lead);
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.legacy__photo img {
+  inline-size: 100%;
+  border-radius: var(--sa-radius-md);
+}
+
+.legacy__caption {
+  margin-block-start: var(--sa-space-3);
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-small);
+  line-height: 1.7;
+}
+
+@media (min-width: 64rem) {
+  .legacy__inner {
+    grid-template-columns: 5fr 7fr;
+    align-items: center;
+    gap: var(--sa-space-8);
+  }
+}
+
+/* ---------- Domains ---------- */
+
+.domains {
+  background: var(--sa-color-surface-raised);
+}
+
+.domains__list {
+  display: grid;
+  gap: var(--sa-space-6) var(--sa-space-5);
+  margin-block-start: var(--sa-space-7);
+  padding: 0;
+  list-style: none;
+}
+
+.domain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sa-space-2);
+  padding-block-start: var(--sa-space-5);
+  border-block-start: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
+}
+
+.domain__symbol {
+  inline-size: 4rem;
+  block-size: auto;
+  margin-block-end: var(--sa-space-2);
+}
+
+.domain__label {
+  font-size: var(--sa-font-size-h4);
+}
+
+.domain__role {
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.domain__text {
+  color: var(--sa-color-text-muted);
+}
+
+.domain__meaning summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sa-space-2);
+  min-block-size: var(--sa-target-min);
+  color: var(--sa-color-link);
+  font-weight: var(--sa-font-weight-medium);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.domain__meaning summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Plus/minus marker drawn in CSS, so it never mirrors or depends on a font glyph. */
+.domain__meaning summary::before {
+  content: '';
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  background:
+    linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 2px 100% no-repeat;
+}
+
+.domain__meaning[open] summary::before {
+  background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
+}
+
+.domain__meaning summary:hover {
+  text-decoration-thickness: 2px;
+}
+
+.domain__meaning p {
+  padding-block-end: var(--sa-space-2);
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-small);
+  line-height: 1.7;
+}
+
+.domain--quality {
+  margin-block-start: var(--sa-space-7);
+  padding: var(--sa-space-5);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
+  border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
+  border-radius: var(--sa-radius-md);
+  background: var(--sa-color-surface);
+}
+
+@media (min-width: 48rem) {
+  .domains__list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .domain--quality {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--sa-space-6);
+    align-items: start;
+  }
+
+  .domain--quality .domain__symbol {
+    grid-row: span 4;
+  }
+
+  .domain--quality > :not(.domain__symbol) {
+    grid-column: 2;
+  }
+}
+
+@media (min-width: 64rem) {
+  /* Three then two across the full width. */
+  .domains__list {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .domain {
+    grid-column: span 2;
+  }
+
+  .domains__list .domain:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+
+  .domain--quality {
+    padding: var(--sa-space-6);
+  }
+}
+
+/* ---------- Journey ---------- */
+
+.journey {
+  background: var(--sa-color-surface);
+}
+
+.journey__stages {
+  display: grid;
+  gap: var(--sa-space-7);
+  margin-block-start: var(--sa-space-7);
+  padding: 0;
+  list-style: none;
+}
+
+.stage {
+  padding-block-start: var(--sa-space-5);
+  border-block-start: var(--sa-border-width-strong) solid var(--sa-color-border-strong);
+}
+
+.stage__number {
+  display: block;
+  margin-block-end: var(--sa-space-3);
+  color: var(--sa-color-text-accent);
+  font-size: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+  font-weight: var(--sa-font-weight-light);
+  line-height: 1;
+}
+
+.stage__title {
+  font-size: var(--sa-font-size-h3);
+}
+
+.stage__summary {
+  margin-block-start: var(--sa-space-2);
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.stage__points {
+  display: grid;
+  gap: var(--sa-space-2);
+  margin-block-start: var(--sa-space-4);
+  padding-inline-start: 1.25em;
+  color: var(--sa-color-text-muted);
+  list-style-type: disc;
+}
+
+.stage__points li::marker {
+  color: var(--sa-color-rule-accent);
+}
+
+@media (min-width: 64rem) {
+  .journey__stages {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sa-space-6);
+  }
+}
+
+/* ---------- Closing ---------- */
+
+.closing {
+  padding-block: var(--sa-space-section);
+  background: var(--sa-color-surface-dark);
+  color: var(--sa-color-text-on-dark);
+  text-align: center;
+}
+
+.closing__label {
+  color: var(--sa-color-text-on-dark-muted);
+  font-size: var(--sa-font-size-small);
+  font-weight: var(--sa-font-weight-medium);
+}
+
+/* Brand gold on deep green is 4.41:1: allowed for large text only. */
+.closing__statement {
+  max-inline-size: 44rem;
+  margin: var(--sa-space-4) auto 0;
+  color: var(--sa-color-text-on-dark-accent-large);
+  font-size: var(--sa-font-size-h2);
+  font-weight: var(--sa-font-weight-bold);
+  line-height: 1.5;
+}
+
+.closing__text {
+  max-inline-size: var(--sa-measure-prose);
+  margin: var(--sa-space-5) auto 0;
+  color: var(--sa-color-text-on-dark-muted);
+}

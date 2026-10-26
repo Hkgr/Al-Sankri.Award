@@ -2,8 +2,8 @@
  * Al-Sankri Award: digital identity tokens (Phase 0 foundation)
  * جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية
  *
- * Status: NOT imported by the running app. Reference sheet:
- * docs/design/preview.html. Rules and rationale:
+ * Status: imported by the app in src/main.tsx (from the homepage PR on).
+ * Reference sheet: docs/design/preview.html. Rules and rationale:
  * docs/design/identity-guidelines.md.
  *
  * Provenance labels used below:
