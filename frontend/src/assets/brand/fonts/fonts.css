@@ -1,8 +1,8 @@
 /*
  * Al-Sankri Award: self-hosted brand font faces (Phase 0 foundation)
  *
- * Status: NOT imported by the running app. Loaded only by the isolated
- * reference sheet docs/design/preview.html.
+ * Status: imported by the app in src/main.tsx (from the homepage PR on),
+ * and by the reference sheet docs/design/preview.html.
  *
  * Source: the owner-supplied OTF files in docs/fonts/ (family "itf rayat",
  * iwantype, version 1.001). Each WOFF2 below is a lossless, unsubsetted
