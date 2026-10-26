@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Schema;
  *
  * file_links.appeal_id and file_links.published_story_id receive their
  * foreign keys in add_deferred_platform_foreign_keys, after those tables exist.
+ *
+ * The sha256 check uses the same regex-free, MariaDB-compatible expression
+ * as the content hash in create_applicant_and_application_tables.
  */
 return new class extends Migration
 {
@@ -42,7 +45,7 @@ return new class extends Migration
         $this->addCheck('files', 'chk_files_scan_status', "scan_status IN ('pending', 'clean', 'infected', 'error')");
         $this->addCheck('files', 'chk_files_scanned_at', "(scan_status = 'pending') = (scanned_at IS NULL)");
         $this->addCheck('files', 'chk_files_access_level', "access_level IN ('private', 'public')");
-        $this->addCheck('files', 'chk_files_sha256', "REGEXP_LIKE(sha256, '^[0-9a-f]{64}$', 'c')");
+        $this->addCheck('files', 'chk_files_sha256', 'CHAR_LENGTH(sha256) = 64 AND CAST(sha256 AS BINARY) = CAST(LOWER(sha256) AS BINARY) AND UNHEX(sha256) IS NOT NULL');
         $this->addCheck('files', 'chk_files_path', "storage_path NOT LIKE '%://%' AND storage_path NOT LIKE '%?%'");
 
         Schema::create('policy_versions', function (Blueprint $table) {

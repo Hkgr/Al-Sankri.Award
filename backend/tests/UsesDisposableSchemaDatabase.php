@@ -10,16 +10,35 @@ use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 /**
- * Runs schema tests against an explicitly named, disposable MySQL database.
+ * Runs schema tests against an explicitly named, disposable MySQL or MariaDB database.
  *
  * Opt in with MIGRATION_TEST_DB_DATABASE (plus optional MIGRATION_TEST_DB_HOST,
- * _PORT, _USERNAME, _PASSWORD, which default to the DB_* values). The name must
+ * _PORT, _USERNAME, _PASSWORD, which default to the DB_* values, and
+ * MIGRATION_TEST_DB_DRIVER, "mysql" by default or "mariadb"). The name must
  * end in "_schema_test", and the live connection is re-checked before anything
  * destructive runs. Without the variable these tests are skipped.
  */
 trait UsesDisposableSchemaDatabase
 {
     protected const SCHEMA_CONNECTION = 'schema_test';
+
+    /**
+     * Engine error numbers for each kind of rejection the tests expect.
+     *
+     * @var array<string, array{mysql: int, mariadb: int}>
+     */
+    protected const DATABASE_ERRORS = [
+        'duplicate' => ['mysql' => 1062, 'mariadb' => 1062],
+        'parent_in_use' => ['mysql' => 1451, 'mariadb' => 1451],
+        'missing_parent' => ['mysql' => 1452, 'mariadb' => 1452],
+        'check_failed' => ['mysql' => 3819, 'mariadb' => 4025],
+        'too_long' => ['mysql' => 1406, 'mariadb' => 1406],
+    ];
+
+    /**
+     * The engine behind the disposable connection: "mysql" or "mariadb".
+     */
+    protected string $schemaEngine = 'mysql';
 
     /**
      * Migrations that already existed on the develop baseline.
@@ -56,13 +75,19 @@ trait UsesDisposableSchemaDatabase
         $database = (string) env('MIGRATION_TEST_DB_DATABASE', '');
 
         if ($database === '') {
-            $this->markTestSkipped('Set MIGRATION_TEST_DB_DATABASE to a disposable MySQL database ending in "_schema_test".');
+            $this->markTestSkipped('Set MIGRATION_TEST_DB_DATABASE to a disposable MySQL or MariaDB database ending in "_schema_test".');
         }
 
         static::assertSafeDisposableDatabaseName($database);
 
+        $driver = (string) env('MIGRATION_TEST_DB_DRIVER', 'mysql');
+
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            throw new RuntimeException("Unsupported MIGRATION_TEST_DB_DRIVER [{$driver}]: use mysql or mariadb.");
+        }
+
         config(['database.connections.'.self::SCHEMA_CONNECTION => [
-            'driver' => 'mysql',
+            'driver' => $driver,
             'host' => env('MIGRATION_TEST_DB_HOST', env('DB_HOST', '127.0.0.1')),
             'port' => env('MIGRATION_TEST_DB_PORT', env('DB_PORT', '3306')),
             'database' => $database,
@@ -83,9 +108,17 @@ trait UsesDisposableSchemaDatabase
             throw new RuntimeException("Connected to [{$connected->db}] instead of [{$database}].");
         }
 
-        if (str_contains(strtolower($connected->version), 'mariadb') || version_compare($connected->version, '8.0.16', '<')) {
-            $this->markTestSkipped("MySQL 8.0.16+ is required for CHECK constraints; found {$connected->version}.");
+        $this->schemaEngine = str_contains(strtolower($connected->version), 'mariadb') ? 'mariadb' : 'mysql';
+        $minimum = $this->schemaEngine === 'mariadb' ? '10.11' : '8.0.16';
+
+        if (version_compare($connected->version, $minimum, '<')) {
+            throw new RuntimeException("The schema requires {$this->schemaEngine} {$minimum}+; found {$connected->version}.");
         }
+    }
+
+    protected function isMariaDb(): bool
+    {
+        return $this->schemaEngine === 'mariadb';
     }
 
     /**
@@ -120,14 +153,22 @@ trait UsesDisposableSchemaDatabase
 
     protected function migrateBaseline(): void
     {
-        $paths = array_map(fn (string $name): string => "database/migrations/{$name}.php", self::BASELINE_MIGRATIONS);
-
-        $this->runArtisan('migrate', ['--path' => $paths]);
+        $this->migrateOnly(self::BASELINE_MIGRATIONS);
     }
 
     protected function migrateAll(): void
     {
         $this->runArtisan('migrate');
+    }
+
+    /**
+     * @param  list<string>  $migrations  Migration names, without the .php suffix.
+     */
+    protected function migrateOnly(array $migrations): void
+    {
+        $paths = array_map(fn (string $name): string => "database/migrations/{$name}.php", $migrations);
+
+        $this->runArtisan('migrate', ['--path' => $paths]);
     }
 
     protected function rollbackLatestBatch(): void
@@ -165,21 +206,21 @@ trait UsesDisposableSchemaDatabase
     }
 
     /**
-     * Asserts that the callback fails with the given MySQL error number.
-     *
-     * 1062 duplicate key, 1451 parent row in use, 1452 missing parent row,
-     * 3819 CHECK constraint violated.
+     * Asserts that the callback fails with the engine's error number for the
+     * given kind of rejection (a key of DATABASE_ERRORS).
      */
-    protected function assertDatabaseRejects(int $mysqlErrorNumber, callable $callback, string $message = ''): void
+    protected function assertDatabaseRejects(string $error, callable $callback, string $message = ''): void
     {
+        $errorNumber = self::DATABASE_ERRORS[$error][$this->schemaEngine];
+
         try {
             $callback();
         } catch (QueryException $exception) {
-            $this->assertSame($mysqlErrorNumber, (int) ($exception->errorInfo[1] ?? 0), $message.' '.$exception->getMessage());
+            $this->assertSame($errorNumber, (int) ($exception->errorInfo[1] ?? 0), $message.' '.$exception->getMessage());
 
             return;
         }
 
-        $this->fail("Expected MySQL error {$mysqlErrorNumber}, but the statement succeeded. {$message}");
+        $this->fail("Expected {$this->schemaEngine} error {$errorNumber} ({$error}), but the statement succeeded. {$message}");
     }
 }

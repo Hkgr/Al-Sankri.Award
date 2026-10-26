@@ -8,7 +8,7 @@ use Tests\UsesDisposableSchemaDatabase;
 
 /**
  * Applies the platform migrations on top of the develop baseline, rolls them
- * back and reapplies them on a disposable MySQL database, checking that
+ * back and reapplies them on a disposable MySQL or MariaDB database, checking that
  * existing data survives every step.
  */
 class PlatformDatabaseMigrationTest extends TestCase
@@ -64,6 +64,7 @@ class PlatformDatabaseMigrationTest extends TestCase
         $this->assertSame('active', $user->status);
         $this->assertNull($user->disabled_at);
         $this->assertEveryTableUsesInnoDbAndUnicodeCollation();
+        $this->assertEveryNamedConstraintExists();
 
         // 4–5. Roll back this PR: back to the exact baseline, data intact.
         $this->rollbackLatestBatch();
@@ -121,6 +122,27 @@ class PlatformDatabaseMigrationTest extends TestCase
             $this->assertSame('InnoDB', $table->engine, "{$table->name} engine");
             $this->assertSame('utf8mb4_unicode_ci', $table->collation, "{$table->name} collation");
         }
+    }
+
+    /**
+     * Every CHECK, foreign key and unique key named in the platform migrations
+     * must exist on this engine, so none can be skipped silently.
+     */
+    private function assertEveryNamedConstraintExists(): void
+    {
+        $source = implode("\n", array_map('file_get_contents', glob(database_path('migrations/2026_10_27_1000*.php'))));
+        preg_match_all("/'((?:chk|fk|uq)_[a-z0-9_]+)'/", $source, $matches);
+        $declared = array_values(array_unique($matches[1]));
+
+        $existing = array_values(array_filter(
+            array_map(fn (object $row): string => $row->name, $this->schemaDb()->select(
+                'SELECT CONSTRAINT_NAME AS name FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE()'
+            )),
+            fn (string $name): bool => preg_match('/^(chk|fk|uq)_/', $name) === 1,
+        ));
+
+        $this->assertGreaterThan(150, count($declared));
+        $this->assertEqualsCanonicalizing($declared, $existing);
     }
 
     /**

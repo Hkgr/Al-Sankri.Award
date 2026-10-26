@@ -9,7 +9,7 @@ Related documents:
 
 **Not present by design:** public voting, voters, an audience award, field visits and field verifiers. These were cancelled, and no table, column, status or permission for them exists.
 
-Generated from the migrated schema on MySQL 8.4.7 (information_schema), then annotated. Regenerate it whenever a migration changes.
+Generated from the migrated schema on MySQL 8.4.7 (information_schema), then annotated. Regenerate it whenever a migration changes. MariaDB creates the same named constraints, keys and indexes. Its own differences in type names and CHECK formatting (for example `json` stored as `LONGTEXT` with a `json_valid()` check) are not repeated here.
 
 ## Contents
 
@@ -442,7 +442,7 @@ The applying entity: an individual, team, initiative, official institution or or
 
 **CHECK constraints**
 
-- `chk_applicants_country`: `((headquarters_country_code is null) or regexp_like(headquarters_country_code,'^[A-Z]{2}$','c'))`
+- `chk_applicants_country`: `((headquarters_country_code is null) or ((char_length(headquarters_country_code) = 2) and (ascii(substr(headquarters_country_code,1,1)) between 65 and 90) and (ascii(substr(headquarters_country_code,2,1)) between 65 and 90)))`
 - `chk_applicants_status`: `(status in ('active','suspended','archived'))`
 - `chk_applicants_type`: `(type in ('individual','team','initiative','official_institution','organization'))`
 
@@ -574,7 +574,7 @@ Implementation locations. An application may have several, at most one primary. 
 **CHECK constraints**
 
 - `chk_application_locations_coords`: `((latitude is null) = (longitude is null))`
-- `chk_application_locations_country`: `regexp_like(country_code,'^[A-Z]{2}$','c')`
+- `chk_application_locations_country`: `((char_length(country_code) = 2) and (ascii(substr(country_code,1,1)) between 65 and 90) and (ascii(substr(country_code,2,1)) between 65 and 90))`
 - `chk_application_locations_lat`: `((latitude is null) or (latitude between -(90) and 90))`
 - `chk_application_locations_lng`: `((longitude is null) or (longitude between -(180) and 180))`
 
@@ -616,7 +616,7 @@ Immutable submitted versions. Snapshots preserve the applicant, members, locatio
 
 - `chk_application_versions_completion`: `((submission_type = 'completion_response') = (completion_request_id is not null))`
 - `chk_application_versions_first`: `((version_number <> 1) or (submission_type = 'initial'))`
-- `chk_application_versions_hash`: `regexp_like(content_hash,'^[0-9a-f]{64}$','c')`
+- `chk_application_versions_hash`: `((char_length(content_hash) = 64) and (cast(content_hash as char charset binary) = cast(lower(content_hash) as char charset binary)) and (unhex(content_hash) is not null))`
 - `chk_application_versions_number`: `(version_number >= 1)`
 - `chk_application_versions_type`: `(submission_type in ('initial','completion_response'))`
 
@@ -666,7 +666,7 @@ Stored files. **Private by default.** The storage location `(storage_disk, stora
 - `chk_files_path`: `((not((storage_path like '%://%'))) and (not((storage_path like '%?%'))))`
 - `chk_files_scan_status`: `(scan_status in ('pending','clean','infected','error'))`
 - `chk_files_scanned_at`: `((scan_status = 'pending') = (scanned_at is null))`
-- `chk_files_sha256`: `regexp_like(sha256,'^[0-9a-f]{64}$','c')`
+- `chk_files_sha256`: `((char_length(sha256) = 64) and (cast(sha256 as char charset binary) = cast(lower(sha256) as char charset binary)) and (unhex(sha256) is not null))`
 
 ### `file_links`
 

@@ -7,22 +7,44 @@ use Tests\TestCase;
 use Tests\UsesDisposableSchemaDatabase;
 
 /**
- * Exercises the database-enforced rules of the platform schema on MySQL.
+ * Exercises the database-enforced rules of the platform schema on MySQL and MariaDB.
  * Each test runs inside a transaction that is rolled back afterwards.
  */
 class PlatformDatabaseConstraintTest extends TestCase
 {
     use UsesDisposableSchemaDatabase;
 
-    private const DUPLICATE = 1062;
+    private const DUPLICATE = 'duplicate';
 
-    private const PARENT_IN_USE = 1451;
+    private const PARENT_IN_USE = 'parent_in_use';
 
-    private const MISSING_PARENT = 1452;
+    private const MISSING_PARENT = 'missing_parent';
 
-    private const CHECK_FAILED = 3819;
+    private const CHECK_FAILED = 'check_failed';
+
+    private const TOO_LONG = 'too_long';
 
     private const NOW = '2026-11-01 10:00:00';
+
+    /**
+     * Values of at most two characters that are not uppercase ASCII alpha-2 codes.
+     *
+     * @var array<string, string>
+     */
+    private const INVALID_COUNTRY_CODES = [
+        'lowercase' => 'sy',
+        'lowercase first letter' => 'sY',
+        'lowercase second letter' => 'Sy',
+        'one letter' => 'S',
+        'empty' => '',
+        'digit' => 'S1',
+        'leading space' => ' S',
+        'line break' => "S\n",
+        'accented letter' => 'SÉ',
+        'Arabic letter' => 'سو',
+        'just below A' => '@A',
+        'just above Z' => 'Z[',
+    ];
 
     private int $sequence = 0;
 
@@ -256,6 +278,62 @@ class PlatformDatabaseConstraintTest extends TestCase
         $this->assertDatabaseRejects(self::MISSING_PARENT, fn () => $this->assignment($judging, member: $outsider, committee: $otherCommittee), 'committee of another domain');
     }
 
+    public function test_country_codes_must_be_two_uppercase_ascii_letters(): void
+    {
+        $cycleDomain = $this->cycleDomain($this->cycle(), $this->domain());
+        $application = $this->application($cycleDomain);
+        $representative = $this->user();
+        $applicant = fn (?string $country): int => $this->db('applicants')->insertGetId([
+            'type' => 'initiative', 'name_ar' => 'مبادرة', 'representative_user_id' => $representative, 'headquarters_country_code' => $country,
+        ]);
+        $location = fn (string $country): int => $this->db('application_locations')->insertGetId([
+            'application_id' => $application, 'country_code' => $country,
+        ]);
+
+        $applicant(null);
+        $applicant('SY');
+        $applicant('AZ');
+        $location('SY');
+        $location('ZA');
+
+        foreach (self::INVALID_COUNTRY_CODES as $label => $code) {
+            $this->assertDatabaseRejects(self::CHECK_FAILED, fn () => $applicant($code), "headquarters country code: {$label}");
+            $this->assertDatabaseRejects(self::CHECK_FAILED, fn () => $location($code), "location country code: {$label}");
+        }
+        $this->assertDatabaseRejects(self::TOO_LONG, fn () => $applicant('SYR'), 'three-letter code');
+        $this->assertDatabaseRejects(self::TOO_LONG, fn () => $location('SYR'), 'three-letter code');
+    }
+
+    public function test_hashes_must_be_64_lowercase_hexadecimal_characters(): void
+    {
+        $application = $this->application($this->cycleDomain($this->cycle(), $this->domain()));
+        $valid = hash('sha256', 'evidence');
+        $version = fn (string $hash): int => $this->version($application, $this->next(), hash: $hash);
+        $file = fn (string $hash): int => $this->file(sha256: $hash);
+
+        $version($valid);
+        $version(str_repeat('0', 63).'f');
+        $file($valid);
+        $file(str_repeat('9', 64));
+
+        $invalid = [
+            'uppercase' => strtoupper($valid),
+            'one uppercase letter' => str_repeat('a', 63).'A',
+            'too short' => substr($valid, 0, 63),
+            'empty' => '',
+            'non-hex letter' => str_repeat('a', 63).'g',
+            'trailing line break' => substr($valid, 0, 63)."\n",
+            'inner space' => str_repeat('a', 31).' '.str_repeat('a', 32),
+            'non-ASCII character' => substr($valid, 0, 63).'é',
+        ];
+        foreach ($invalid as $label => $hash) {
+            $this->assertDatabaseRejects(self::CHECK_FAILED, fn () => $version($hash), "content hash: {$label}");
+            $this->assertDatabaseRejects(self::CHECK_FAILED, fn () => $file($hash), "file sha256: {$label}");
+        }
+        $this->assertDatabaseRejects(self::TOO_LONG, fn () => $version($valid.'0'), 'content hash of 65 characters');
+        $this->assertDatabaseRejects(self::TOO_LONG, fn () => $file($valid.'0'), 'file sha256 of 65 characters');
+    }
+
     public function test_role_scopes_and_effective_grants(): void
     {
         $platformRole = $this->role('platform');
@@ -392,7 +470,7 @@ class PlatformDatabaseConstraintTest extends TestCase
         ]);
     }
 
-    private function version(int $application, int $number, ?int $completionRequest = null): int
+    private function version(int $application, int $number, ?int $completionRequest = null, ?string $hash = null): int
     {
         return $this->db('application_versions')->insertGetId([
             'application_id' => $application,
@@ -403,7 +481,7 @@ class PlatformDatabaseConstraintTest extends TestCase
             'submitted_at' => self::NOW,
             'data_snapshot' => '{}',
             'form_snapshot' => '{}',
-            'content_hash' => hash('sha256', (string) $this->next()),
+            'content_hash' => $hash ?? hash('sha256', (string) $this->next()),
         ]);
     }
 
@@ -414,13 +492,13 @@ class PlatformDatabaseConstraintTest extends TestCase
         ]);
     }
 
-    private function file(): int
+    private function file(?string $sha256 = null): int
     {
         $n = $this->next();
 
         return $this->db('files')->insertGetId([
             'storage_disk' => 'private', 'storage_path' => "evidence/{$n}-".uniqid().'.pdf', 'original_name' => 'evidence.pdf',
-            'detected_mime_type' => 'application/pdf', 'size_bytes' => 1024, 'sha256' => hash('sha256', 'file'),
+            'detected_mime_type' => 'application/pdf', 'size_bytes' => 1024, 'sha256' => $sha256 ?? hash('sha256', 'file'),
         ]);
     }
 
