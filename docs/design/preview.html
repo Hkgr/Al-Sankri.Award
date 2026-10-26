@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>مرجع الهوية الرقمية: Identity reference sheet (Phase 0)</title>
+<!-- The real delivered tokens, loaded by relative path. Nothing remote. -->
+<link rel="stylesheet" href="../../frontend/src/styles/brand-tokens.css">
+<style>
+  /* Preview-sheet styles only. Every value comes from brand-tokens.css. */
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--sa-color-surface);
+    color: var(--sa-color-text);
+    font-family: var(--sa-font-family-base);
+    font-size: var(--sa-font-size-body);
+    line-height: var(--sa-line-height-body);
+  }
+  img { max-width: 100%; height: auto; }
+  .wrap { max-width: var(--sa-container-max); margin-inline: auto; padding-inline: var(--sa-gutter); }
+  section { padding-block: var(--sa-space-7); border-block-end: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle); }
+  h1, h2, h3, h4 { line-height: var(--sa-line-height-heading); margin-block: 0 var(--sa-space-4); font-weight: var(--sa-font-weight-bold); }
+  h2 { font-size: var(--sa-font-size-h2); }
+  h3 { font-size: var(--sa-font-size-h3); }
+  p { margin-block: 0 var(--sa-space-4); }
+  code { font-family: var(--sa-font-family-mono); font-size: 0.875em; }
+  .grid { display: grid; gap: var(--sa-grid-gap); grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+  .grid--wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+  .grid--domains { grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); }
+  @media (min-width: 768px) { .grid--domains { grid-template-columns: repeat(3, 1fr); } }
+  .grid--logos { grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); }
+
+  /* Reviewer notes are English and LTR. */
+  .note { font-size: var(--sa-font-size-small); line-height: 1.6; color: var(--sa-color-text-muted); max-inline-size: var(--sa-measure-prose); margin-block: 0 var(--sa-space-4); }
+  .sheet-header { background: var(--sa-color-surface-dark); color: var(--sa-color-text-on-dark); padding-block: var(--sa-space-6); }
+  .sheet-header .note { color: var(--sa-color-text-on-dark-muted); }
+  .sheet-header h1 { font-size: var(--sa-font-size-h2); }
+
+  /* Provenance tags: text + border, never colour alone */
+  .tag { display: inline-block; font-size: var(--sa-font-size-caption); line-height: 1.4; padding: 0.125rem 0.5rem; border: 1px solid currentColor; border-radius: var(--sa-radius-sm); font-weight: var(--sa-font-weight-semibold); white-space: nowrap; }
+  .tag--official { color: var(--sa-color-text); background: var(--sa-color-surface-raised); }
+  .tag--observed { color: var(--sa-color-text-muted); border-style: dotted; }
+  .tag--proposed { color: var(--sa-color-text-accent); }
+  .tag--provisional, .tag--missing { color: var(--sa-color-error); border-style: dashed; }
+  .sheet-header .tag { color: var(--sa-color-text-on-dark); background: transparent; }
+
+  /* Swatches */
+  .swatch { border: 1px solid var(--sa-color-border-subtle); border-radius: var(--sa-radius-md); overflow: hidden; background: var(--sa-color-surface-raised); }
+  .swatch__chip { block-size: 6rem; }
+  .swatch__body { padding: var(--sa-space-3) var(--sa-space-4); font-size: var(--sa-font-size-small); line-height: 1.6; }
+  .swatch__body strong { display: block; }
+
+  /* Contrast pairs */
+  .pair { display: flex; align-items: center; gap: var(--sa-space-4); padding: var(--sa-space-3); border: 1px solid var(--sa-color-border-subtle); border-radius: var(--sa-radius-md); background: var(--sa-color-surface-raised); }
+  .pair__sample { flex: none; inline-size: 4.5rem; block-size: 3.5rem; display: grid; place-items: center; font-size: 1.375rem; font-weight: var(--sa-font-weight-bold); border-radius: var(--sa-radius-sm); border: 1px solid var(--sa-color-border-subtle); }
+  .pair__text { font-size: var(--sa-font-size-small); line-height: 1.5; }
+
+  /* Logo stage */
+  .stage { border-radius: var(--sa-radius-md); padding: var(--sa-space-6); display: grid; place-items: center; min-block-size: 14rem; }
+  .stage--light { background: var(--sa-color-surface); border: 1px solid var(--sa-color-border-subtle); }
+  .stage--dark { background: var(--sa-color-surface-dark); }
+  .clearspace { outline: 1px dashed var(--sa-color-border-control); }
+  .stage--dark .clearspace { outline-color: var(--sa-color-text-on-dark-muted); }
+  .clearspace--h { --w: 280px; padding: calc(var(--w) * 0.067); }
+  .clearspace--h img { inline-size: var(--w); display: block; }
+  .clearspace--v { --w: 168px; padding: calc(var(--w) * 0.104); }
+  .clearspace--v img { inline-size: var(--w); display: block; }
+  figure { margin: 0; }
+  figcaption { margin-block-start: var(--sa-space-3); font-size: var(--sa-font-size-small); line-height: 1.6; }
+
+  /* Domain symbols */
+  .domain { background: var(--sa-color-surface-raised); border: 1px solid var(--sa-color-border-subtle); border-radius: var(--sa-radius-lg); padding: var(--sa-space-5); text-align: center; }
+  .domain img { inline-size: 88px; margin-inline: auto; display: block; }
+  .domain__label { font-size: var(--sa-font-size-h4); font-weight: var(--sa-font-weight-bold); margin-block: var(--sa-space-3) var(--sa-space-1); line-height: var(--sa-line-height-heading); }
+  .domain__file { font-size: var(--sa-font-size-caption); color: var(--sa-color-text-muted); direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere; margin: 0; }
+  .size-row { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sa-space-6); }
+
+  /* Line pattern panel */
+  .pattern-panel { background: var(--sa-color-surface) url("../../frontend/src/assets/brand/background-line-pattern.svg") center / cover no-repeat; border: 1px solid var(--sa-color-border-subtle); border-radius: var(--sa-radius-md); padding: var(--sa-space-7) var(--sa-space-5); }
+
+  /* Typography specimen */
+  .specimen > * { max-inline-size: var(--sa-measure-prose); }
+  .t-h1 { font-size: var(--sa-font-size-h1); line-height: var(--sa-line-height-tight); }
+  .t-h2 { font-size: var(--sa-font-size-h2); }
+  .t-h3 { font-size: var(--sa-font-size-h3); }
+  .t-h4 { font-size: var(--sa-font-size-h4); font-weight: var(--sa-font-weight-semibold); }
+  .t-lead { font-size: var(--sa-font-size-lead); }
+  .t-small { font-size: var(--sa-font-size-small); color: var(--sa-color-text-muted); }
+  .t-caption { font-size: var(--sa-font-size-caption); color: var(--sa-color-text-muted); line-height: 1.6; }
+  .t-accent { color: var(--sa-color-text-accent); }
+  .rule-accent { border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent); padding-inline-start: var(--sa-space-5); }
+  dl.mixed { display: grid; grid-template-columns: max-content 1fr; gap: var(--sa-space-2) var(--sa-space-5); margin: 0; }
+  dl.mixed dt { font-weight: var(--sa-font-weight-semibold); }
+  dl.mixed dd { margin: 0; overflow-wrap: anywhere; }
+
+  /* Spacing / shape */
+  .space-row { display: flex; align-items: center; gap: var(--sa-space-4); font-size: var(--sa-font-size-small); line-height: 1.4; margin-block-end: var(--sa-space-2); }
+  .space-row code { inline-size: 7.5rem; flex: none; }
+  .space-bar { block-size: 0.75rem; background: var(--sa-brand-deep-green); }
+  .shape { block-size: 5rem; background: var(--sa-color-surface-raised); border: 1px solid var(--sa-color-border-control); display: grid; place-items: center; font-size: var(--sa-font-size-caption); }
+
+  /* Components: static visual specs, not production components */
+  a { color: var(--sa-color-link); text-decoration-line: underline; text-underline-offset: 0.25em; text-decoration-thickness: 1px; transition: color var(--sa-duration-fast) var(--sa-easing-standard); }
+  a:hover { color: var(--sa-color-link-hover); text-decoration-thickness: 2px; }
+  :focus-visible { outline: var(--sa-focus-ring-width) solid var(--sa-color-focus-ring); outline-offset: var(--sa-focus-ring-offset); }
+  .on-dark { background: var(--sa-color-surface-dark); color: var(--sa-color-text-on-dark); border-radius: var(--sa-radius-md); padding: var(--sa-space-6) var(--sa-space-5); }
+  .on-dark a { color: var(--sa-color-link-on-dark); }
+  .on-dark :focus-visible { outline-color: var(--sa-color-focus-ring-on-dark); }
+  .on-dark .note { color: var(--sa-color-text-on-dark-muted); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--sa-space-2); min-block-size: var(--sa-target-min); min-inline-size: var(--sa-target-min); padding: var(--sa-space-2) var(--sa-space-5); font: inherit; font-weight: var(--sa-font-weight-semibold); line-height: 1.4; border-radius: var(--sa-radius-md); border: var(--sa-border-width-strong) solid transparent; cursor: pointer; transition: background-color var(--sa-duration-fast) var(--sa-easing-standard), box-shadow var(--sa-duration-fast) var(--sa-easing-standard); }
+  .btn--primary { background: var(--sa-color-control-primary-bg); color: var(--sa-color-control-primary-fg); }
+  .btn--primary:hover { background: var(--sa-color-control-primary-bg-hover); }
+  .btn--primary:active { background: var(--sa-color-control-primary-bg-active); }
+  .btn--accent { background: var(--sa-color-control-accent-bg); color: var(--sa-color-control-accent-fg); }
+  .btn--accent:hover { box-shadow: inset 0 0 0 2px var(--sa-ext-green-900); }
+  .btn--accent:active { background: var(--sa-ext-green-900); color: var(--sa-brand-gold); }
+  .btn--secondary { background: var(--sa-color-control-secondary-bg); color: var(--sa-color-control-secondary-fg); border-color: var(--sa-color-control-secondary-border); }
+  .btn--secondary:hover { background: var(--sa-color-surface-subtle); }
+  .btn--secondary:active { background: var(--sa-ext-neutral-200); }
+  .btn:disabled, .btn[aria-disabled="true"]:not([aria-busy="true"]) { background: var(--sa-color-control-disabled-bg); color: var(--sa-color-control-disabled-fg); border-color: var(--sa-color-control-disabled-border); box-shadow: none; cursor: not-allowed; }
+  .btn[aria-busy="true"] { cursor: progress; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: var(--sa-space-3); align-items: center; margin-block-end: var(--sa-space-4); }
+  .state-label { font-size: var(--sa-font-size-caption); color: var(--sa-color-text-muted); display: block; margin-block-end: var(--sa-space-1); }
+  .on-dark .state-label { color: var(--sa-color-text-on-dark-muted); }
+  .demo-focus { outline: var(--sa-focus-ring-width) solid var(--sa-color-focus-ring); outline-offset: var(--sa-focus-ring-offset); }
+  .demo-hover.btn--primary { background: var(--sa-color-control-primary-bg-hover); }
+
+  .field { margin-block-end: var(--sa-space-5); max-inline-size: 26rem; }
+  .field label { display: block; font-weight: var(--sa-font-weight-semibold); margin-block-end: var(--sa-space-1); line-height: 1.5; }
+  .field input { display: block; inline-size: 100%; min-block-size: var(--sa-target-min); padding: var(--sa-space-2) var(--sa-space-3); font: inherit; line-height: 1.5; color: var(--sa-color-text); background: var(--sa-color-control-bg); border: var(--sa-border-width-control) solid var(--sa-color-border-control); border-radius: var(--sa-radius-md); }
+  .field input:hover { border-color: var(--sa-color-border-strong); }
+  .field input[dir="ltr"] { text-align: start; }
+  .field input[aria-invalid="true"] { border: var(--sa-border-width-strong) solid var(--sa-color-error); }
+  .field input:disabled { background: var(--sa-color-control-disabled-bg); color: var(--sa-color-control-disabled-fg); border-color: var(--sa-color-control-disabled-border); cursor: not-allowed; }
+  .field__help { font-size: var(--sa-font-size-small); color: var(--sa-color-text-muted); margin-block: var(--sa-space-1) 0; line-height: 1.6; }
+  .field__error { display: flex; gap: var(--sa-space-2); align-items: start; font-size: var(--sa-font-size-small); color: var(--sa-color-error); margin-block: var(--sa-space-1) 0; line-height: 1.6; }
+  .field__error svg { flex: none; margin-block-start: 0.2em; }
+
+  .card { background: var(--sa-color-surface-raised); border: 1px solid var(--sa-color-border-subtle); border-radius: var(--sa-radius-lg); padding: var(--sa-space-5); box-shadow: var(--sa-shadow-raised); position: relative; transition: border-color var(--sa-duration-fast) var(--sa-easing-standard); }
+  .card--accent { border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent); }
+  .card h4 { font-size: var(--sa-font-size-h4); margin-block-end: var(--sa-space-2); }
+  .card h4 a::after { content: ""; position: absolute; inset: 0; }
+  .card:hover { border-color: var(--sa-color-border-strong); }
+  .card:has(a:focus-visible) { outline: var(--sa-focus-ring-width) solid var(--sa-color-focus-ring); outline-offset: var(--sa-focus-ring-offset); }
+  .card a:focus-visible { outline: none; }
+
+  /* Selective mirroring demo: UI chevrons mirror, brand artwork never does */
+  .icon-dir { inline-size: 1.5rem; block-size: 1.5rem; }
+  [dir="rtl"] .icon-dir--mirror { transform: scaleX(-1); }
+
+  /* Missing assets */
+  .missing { border: 2px dashed var(--sa-color-error); border-radius: var(--sa-radius-md); padding: var(--sa-space-4); background: var(--sa-color-error-surface); min-block-size: 7rem; display: grid; align-content: center; gap: var(--sa-space-1); }
+  .missing strong { color: var(--sa-color-error); }
+  .missing p { margin: 0; font-size: var(--sa-font-size-small); line-height: 1.5; }
+
+  .band-foot { block-size: 0.75rem; background: var(--sa-brand-deep-green); }
+</style>
+</head>
+<body>
+
+<header class="sheet-header">
+  <div class="wrap">
+    <img src="../../frontend/src/assets/brand/logo-horizontal-dark-bg.svg" alt="جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية" width="240">
+    <h1 style="margin-block-start: var(--sa-space-5)">مرجع الهوية الرقمية: المرحلة 0</h1>
+    <p class="note" lang="en" dir="ltr">Identity reference sheet for Phase 0. This is a static design reference, <strong>not a website prototype or homepage</strong>. It loads the delivered <code>brand-tokens.css</code> and extracted SVG assets by relative path. It uses no remote fonts or services.</p>
+    <p class="note" lang="en" dir="ltr">Labels:
+      <span class="tag tag--official">Official</span> specified by the identity guide ·
+      <span class="tag tag--observed">Observed</span> present in the guide's artwork ·
+      <span class="tag tag--proposed">Proposed</span> web extension ·
+      <span class="tag tag--provisional">Provisional / Missing</span> awaiting the brand owner
+    </p>
+  </div>
+</header>
+
+<main>
+
+<!-- 1. Colour -->
+<section aria-labelledby="h-colour">
+  <div class="wrap">
+    <h2 id="h-colour">الألوان</h2>
+    <p class="note" lang="en" dir="ltr">The three official colours from guide page 8 are shown exactly. Extensions are digital-only additions.</p>
+
+    <div class="grid" style="margin-block-end: var(--sa-space-6)">
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-brand-deep-green)"></div><div class="swatch__body"><strong>الأخضر العميق</strong><code dir="ltr">#14413D</code> <span class="tag tag--official" lang="en" dir="ltr">Official</span><br><code dir="ltr">--sa-brand-deep-green</code></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-brand-gold)"></div><div class="swatch__body"><strong>الذهبي المطفي</strong><code dir="ltr">#CC9933</code> <span class="tag tag--official" lang="en" dir="ltr">Official</span><br><code dir="ltr">--sa-brand-gold</code></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-brand-light); border-block-end: 1px solid var(--sa-color-border-subtle)"></div><div class="swatch__body"><strong>الخلفية الفاتحة</strong><code dir="ltr">#F4F7FC</code> <span class="tag tag--official" lang="en" dir="ltr">Official</span><br><code dir="ltr">--sa-brand-light</code></div></div>
+    </div>
+
+    <h3>امتدادات رقمية مقترحة</h3>
+    <div class="grid" style="margin-block-end: var(--sa-space-6)">
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-green-900)"></div><div class="swatch__body"><code dir="ltr">#0F3330</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Hover; surface for small gold text</span></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-gold-text)"></div><div class="swatch__body"><code dir="ltr">#8A6417</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Gold-family text on light</span></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-neutral-600)"></div><div class="swatch__body"><code dir="ltr">#4B5F5C</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Secondary text</span></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-neutral-500)"></div><div class="swatch__body"><code dir="ltr">#6B807D</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Control borders (3:1)</span></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-neutral-100)"></div><div class="swatch__body"><code dir="ltr">#E8EDF5</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Subtle surface</span></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-gold-tint)"></div><div class="swatch__body"><code dir="ltr">#F6ECD6</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Accent surface</span></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-error)"></div><div class="swatch__body"><code dir="ltr">#B42318</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Error</span></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background: var(--sa-ext-success)"></div><div class="swatch__body"><code dir="ltr">#1E6A3F</code> <span class="tag tag--proposed" lang="en" dir="ltr">Proposed</span><br><span lang="en" dir="ltr">Success</span></div></div>
+    </div>
+
+    <h3>أزواج التباين</h3>
+    <p class="note" lang="en" dir="ltr">Ratios are measured with the WCAG formula. Failing pairs are shown only as illustrations (the sample glyphs are hidden from assistive technology); their descriptions use accessible colours.</p>
+    <div class="grid grid--wide">
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-light); color: var(--sa-brand-deep-green)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>10.55:1 ✓ All text</strong><br>Deep green on light</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-deep-green); color: var(--sa-brand-light)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>10.55:1 ✓ All text</strong><br>Light on deep green</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-light); color: var(--sa-ext-neutral-600)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>6.33:1 ✓ All text</strong><br>Muted #4B5F5C on light</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-light); color: var(--sa-ext-gold-text)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>4.99:1 ✓ All text</strong><br>Gold-text #8A6417 on light</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-gold); color: var(--sa-ext-green-900)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>5.32:1 ✓ All text</strong><br>#0F3330 on gold (accent button)</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-ext-green-900); color: var(--sa-brand-gold)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>5.32:1 ✓ All text</strong><br>Gold on #0F3330</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-deep-green); color: var(--sa-brand-gold)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>4.41:1 ⚠ Large text / non-text only</strong><br>Gold on deep green</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-light); color: var(--sa-brand-gold)">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>2.39:1 ✗ Never as text</strong><br>Gold on light: decorative only</span></div>
+      <div class="pair"><span class="pair__sample" aria-hidden="true" style="background: var(--sa-brand-gold); color: #ffffff">أثر</span><span class="pair__text" lang="en" dir="ltr"><strong>2.57:1 ✗ Never</strong><br>White text on gold</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Logo -->
+<section aria-labelledby="h-logo">
+  <div class="wrap">
+    <h2 id="h-logo">الشعار</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--official">Official</span> Four supplied arrangements (guide pages 2–5), extracted as vectors. Dark-background versions are distinct artwork, not CSS filters. <span class="tag tag--proposed">Proposed</span> The dashed outline shows clear space equal to the gold tagline-bar height.</p>
+    <div class="grid grid--logos">
+      <figure>
+        <div class="stage stage--light"><div class="clearspace clearspace--h"><img src="../../frontend/src/assets/brand/logo-horizontal-light-bg.svg" alt="جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية"></div></div>
+        <figcaption lang="en" dir="ltr"><code>logo-horizontal-light-bg.svg</code>: page 2, ratio 3.086 : 1</figcaption>
+      </figure>
+      <figure>
+        <div class="stage stage--dark"><div class="clearspace clearspace--h"><img src="../../frontend/src/assets/brand/logo-horizontal-dark-bg.svg" alt="جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية"></div></div>
+        <figcaption lang="en" dir="ltr"><code>logo-horizontal-dark-bg.svg</code>: page 4, on #14413D only</figcaption>
+      </figure>
+      <figure>
+        <div class="stage stage--light"><div class="clearspace clearspace--v"><img src="../../frontend/src/assets/brand/logo-vertical-light-bg.svg" alt="جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية"></div></div>
+        <figcaption lang="en" dir="ltr"><code>logo-vertical-light-bg.svg</code>: page 3, ratio 0.739 : 1</figcaption>
+      </figure>
+      <figure>
+        <div class="stage stage--dark"><div class="clearspace clearspace--v"><img src="../../frontend/src/assets/brand/logo-vertical-dark-bg.svg" alt="جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية"></div></div>
+        <figcaption lang="en" dir="ltr"><code>logo-vertical-dark-bg.svg</code>: page 5, on #14413D only</figcaption>
+      </figure>
+    </div>
+
+    <h3 style="margin-block-start: var(--sa-space-6)">الحد الأدنى للحجم</h3>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--proposed">Proposed</span> Horizontal logo at 200px wide, vertical logo at 128px wide. At these sizes the tagline lettering block is about 10px tall. The guide is silent on minimum sizes.</p>
+    <div class="size-row">
+      <img src="../../frontend/src/assets/brand/logo-horizontal-light-bg.svg" alt="" style="inline-size: var(--sa-logo-horizontal-min-width)">
+      <img src="../../frontend/src/assets/brand/logo-vertical-light-bg.svg" alt="" style="inline-size: var(--sa-logo-vertical-min-width)">
+    </div>
+  </div>
+</section>
+
+<!-- 3. Domain symbols -->
+<section aria-labelledby="h-domains">
+  <div class="wrap">
+    <h2 id="h-domains">رموز المحاور</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--official">Official</span> Six symbols from guide pages 10–15, in the guide's order (right to left). Each appears only with its own Arabic label. Labels are live text, without print kashida. Showing الجودة's symbol does not decide whether quality is an independent nomination category.</p>
+    <div class="grid grid--domains">
+      <div class="domain"><img src="../../frontend/src/assets/brand/domain-culture-and-arts.svg" alt=""><p class="domain__label">الثقافة والفنون</p><p class="domain__file">domain-culture-and-arts.svg · p.10</p></div>
+      <div class="domain"><img src="../../frontend/src/assets/brand/domain-tangible-and-intangible-heritage.svg" alt=""><p class="domain__label">التراث المادي واللامادي</p><p class="domain__file">domain-tangible-and-intangible-heritage.svg · p.11</p></div>
+      <div class="domain"><img src="../../frontend/src/assets/brand/domain-volunteer-work.svg" alt=""><p class="domain__label">العمل التطوعي</p><p class="domain__file">domain-volunteer-work.svg · p.12</p></div>
+      <div class="domain"><img src="../../frontend/src/assets/brand/domain-social-responsibility.svg" alt=""><p class="domain__label">المسؤولية المجتمعية</p><p class="domain__file">domain-social-responsibility.svg · p.13</p></div>
+      <div class="domain"><img src="../../frontend/src/assets/brand/domain-entrepreneurship-and-innovation.svg" alt=""><p class="domain__label">ريادة الأعمال والابتكار</p><p class="domain__file">domain-entrepreneurship-and-innovation.svg · p.14</p></div>
+      <div class="domain"><img src="../../frontend/src/assets/brand/domain-quality.svg" alt=""><p class="domain__label">الجودة</p><p class="domain__file">domain-quality.svg · p.15</p></div>
+    </div>
+    <p class="note" lang="en" dir="ltr" style="margin-block-start: var(--sa-space-5)"><span class="tag tag--proposed">Proposed</span> Minimum width 48px (shown below); 64px or more preferred.</p>
+    <div class="size-row">
+      <img src="../../frontend/src/assets/brand/domain-culture-and-arts.svg" alt="الثقافة والفنون" style="inline-size: var(--sa-domain-symbol-min-width)">
+      <img src="../../frontend/src/assets/brand/domain-tangible-and-intangible-heritage.svg" alt="التراث المادي واللامادي" style="inline-size: var(--sa-domain-symbol-min-width)">
+      <img src="../../frontend/src/assets/brand/domain-quality.svg" alt="الجودة" style="inline-size: var(--sa-domain-symbol-min-width)">
+    </div>
+  </div>
+</section>
+
+<!-- 4. Line pattern -->
+<section aria-labelledby="h-pattern">
+  <div class="wrap">
+    <h2 id="h-pattern">النقش الخطي في الخلفية</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--observed">Observed</span> The guide's fine stepped line pattern: <code>#CCCCCC</code> at 15% opacity, on light pages only. <span class="tag tag--proposed">Proposed</span> Use it as quiet decoration with <code>background-size: cover</code>; never tile it visibly, darken it or animate it. Deep-green text over it measures 10.00:1.</p>
+    <div class="pattern-panel">
+      <p class="t-h3" style="margin: 0; text-align: center">وفاءٌ للأثر... وتمكينٌ للمبادرة</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Typography -->
+<section aria-labelledby="h-type">
+  <div class="wrap">
+    <h2 id="h-type">الطباعة</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--provisional">Provisional</span> The guide names no typeface and embeds no fonts. This uses the system stack <code>--sa-font-family-base</code>, so appearance varies by device. The logo lettering is artwork and is never re-set. Specimen paragraphs are transcribed from guide page 7.</p>
+    <div class="specimen">
+      <p class="t-caption" lang="en" dir="ltr">h1: 34 → 52px · line-height 1.3</p>
+      <p class="t-h1" style="font-weight: var(--sa-font-weight-bold)">وفاءٌ للأثر... وتمكينٌ للمبادرة</p>
+      <p class="t-caption" lang="en" dir="ltr">h2: 28 → 40px</p>
+      <p class="t-h2" style="font-weight: var(--sa-font-weight-bold)">فكرة الجائزة العامة</p>
+      <p class="t-caption" lang="en" dir="ltr">h3: 24 → 30px</p>
+      <p class="t-h3" style="font-weight: var(--sa-font-weight-bold)">التراث المادي واللامادي</p>
+      <p class="t-caption" lang="en" dir="ltr">h4: 20 → 24px, semibold</p>
+      <p class="t-h4">محور الجودة</p>
+      <p class="t-caption" lang="en" dir="ltr">lead: 18 → 21px · line-height 1.8</p>
+      <p class="t-lead">جائزة الدكتور عبد القادر سنكري هي جائزة سنوية ذات طابع ثقافي وتنموي ومجتمعي، تحتفي بالأفراد والفرق والمؤسسات التي <strong>تصنع أثراً موثقاً</strong>.</p>
+      <p class="t-caption" lang="en" dir="ltr">body: 16 → 18px · line-height 1.8 · max 42rem · start-aligned, not justified</p>
+      <div class="rule-accent">
+        <p>الفكرة البصرية للجائزة لا تقوم على شكل كأس تقليدي فقط، بل على رمز يجمع بين <strong>الكأس والزهرة والإنسان الصاعد</strong>؛ لذلك يظهر الرمز كعلامة تكريم مفتوحة، تنمو من قاعدة ثابتة وترتفع نحو نقطة ذهبية تمثل <strong>الأثر والإنجاز والاعتراف</strong>.</p>
+      </div>
+      <p class="t-caption" lang="en" dir="ltr">accent text on light: --sa-color-text-accent (#8A6417), never brand gold</p>
+      <p class="t-h4 t-accent">إنها جائزة تحتفي بمن يصنع أثراً... ويبقيه حاضراً في الذاكرة والمجتمع</p>
+      <p class="t-small">نص ثانوي بحجم 16 بكسل للمعلومات المساندة.</p>
+      <p class="t-caption">تعليق توضيحي بحجم 14 بكسل: الحد الأدنى.</p>
+    </div>
+
+    <h3 style="margin-block-start: var(--sa-space-6)">المحتوى المختلط (عربي/لاتيني)</h3>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--proposed">Proposed</span> LTR runs are isolated with <code>&lt;bdi dir="ltr"&gt;</code>. All contact values below are <strong>placeholders</strong>, not real award details. Numerals use Western digits, as in the source plans.</p>
+    <dl class="mixed">
+      <dt>البريد الإلكتروني</dt><dd>للتواصل: <bdi dir="ltr">info@example.org</bdi> (مثال)</dd>
+      <dt>الرابط</dt><dd>زوروا <bdi dir="ltr">https://example.org/award</bdi> للمزيد.</dd>
+      <dt>الهاتف</dt><dd><bdi dir="ltr">+00 000 000 0000</bdi></dd>
+      <dt>الأرقام</dt><dd>المحاور الستة: 6 محاور، والفقرة مدتها 10 دقائق.</dd>
+      <dt>نص لاتيني</dt><dd>نُشر الخبر في <bdi lang="en" dir="ltr">Example Publication</bdi> (مثال).</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- 6. Spacing and shape -->
+<section aria-labelledby="h-space">
+  <div class="wrap">
+    <h2 id="h-space">المسافات والأشكال</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--proposed">Proposed</span> 4px-based spacing scale. Radii are restrained because the guide's bars and bands are square. Shadows are soft and green-tinted.</p>
+    <div lang="en" dir="ltr">
+      <div class="space-row"><code>--sa-space-1</code><span class="space-bar" style="inline-size: var(--sa-space-1)"></span>4px</div>
+      <div class="space-row"><code>--sa-space-2</code><span class="space-bar" style="inline-size: var(--sa-space-2)"></span>8px</div>
+      <div class="space-row"><code>--sa-space-3</code><span class="space-bar" style="inline-size: var(--sa-space-3)"></span>12px</div>
+      <div class="space-row"><code>--sa-space-4</code><span class="space-bar" style="inline-size: var(--sa-space-4)"></span>16px</div>
+      <div class="space-row"><code>--sa-space-5</code><span class="space-bar" style="inline-size: var(--sa-space-5)"></span>24px</div>
+      <div class="space-row"><code>--sa-space-6</code><span class="space-bar" style="inline-size: var(--sa-space-6)"></span>32px</div>
+      <div class="space-row"><code>--sa-space-7</code><span class="space-bar" style="inline-size: var(--sa-space-7)"></span>48px</div>
+      <div class="space-row"><code>--sa-space-8</code><span class="space-bar" style="inline-size: var(--sa-space-8)"></span>64px</div>
+      <div class="space-row"><code>--sa-space-9</code><span class="space-bar" style="inline-size: var(--sa-space-9)"></span>96px</div>
+    </div>
+    <div class="grid" style="margin-block-start: var(--sa-space-5)" lang="en" dir="ltr">
+      <div class="shape" style="border-radius: var(--sa-radius-none)">radius-none · 0</div>
+      <div class="shape" style="border-radius: var(--sa-radius-sm)">radius-sm · 2px</div>
+      <div class="shape" style="border-radius: var(--sa-radius-md)">radius-md · 4px</div>
+      <div class="shape" style="border-radius: var(--sa-radius-lg)">radius-lg · 8px</div>
+      <div class="shape" style="border-radius: var(--sa-radius-md); border-color: var(--sa-color-border-subtle); box-shadow: var(--sa-shadow-raised)">shadow-raised</div>
+      <div class="shape" style="border-radius: var(--sa-radius-md); border-color: var(--sa-color-border-subtle); box-shadow: var(--sa-shadow-overlay)">shadow-overlay</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Components (static visual specs) -->
+<section aria-labelledby="h-components">
+  <div class="wrap">
+    <h2 id="h-components">عناصر التفاعل</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--proposed">Proposed</span> These are static visual specifications, <strong>not production components</strong>. Nothing here submits or stores data. Press <kbd>Tab</kbd> to see the real focus ring. Hover, focus and loading states are also pinned below for review.</p>
+
+    <h3>الأزرار</h3>
+    <div class="btn-row">
+      <button type="button" class="btn btn--primary">إرسال</button>
+      <button type="button" class="btn btn--accent">اكتشف المحاور</button>
+      <button type="button" class="btn btn--secondary">المزيد</button>
+      <button type="button" class="btn btn--primary" disabled>غير متاح</button>
+    </div>
+    <div class="btn-row">
+      <span><span class="state-label" lang="en" dir="ltr">hover (pinned)</span><span class="btn btn--primary demo-hover">إرسال</span></span>
+      <span><span class="state-label" lang="en" dir="ltr">focus-visible (pinned)</span><span class="btn btn--primary demo-focus">إرسال</span></span>
+      <span><span class="state-label" lang="en" dir="ltr">loading</span><button type="button" class="btn btn--primary" aria-disabled="true" aria-busy="true">جارٍ الإرسال…</button></span>
+    </div>
+    <p class="note" lang="en" dir="ltr">Every button is at least 44 × 44 CSS px. Loading keeps the button's width, changes the label, and sets <code>aria-busy</code>. There is no spinning animation here.</p>
+
+    <h3 style="margin-block-start: var(--sa-space-6)">الروابط</h3>
+    <p>اقرأ <a href="#h-colour">دليل الألوان</a> أو انتقل إلى <a href="#h-domains">رموز المحاور</a>. الروابط مسطّرة دائماً ولا تعتمد على اللون وحده.</p>
+
+    <h3 style="margin-block-start: var(--sa-space-6)">الحقول</h3>
+    <div class="grid grid--wide">
+      <div>
+        <div class="field">
+          <label for="f-name">الاسم الكامل</label>
+          <input id="f-name" type="text" autocomplete="off" aria-describedby="f-name-help">
+          <p class="field__help" id="f-name-help">كما يظهر في الوثائق الرسمية.</p>
+        </div>
+        <div class="field">
+          <label for="f-email">البريد الإلكتروني</label>
+          <input id="f-email" type="email" dir="ltr" value="name@example" autocomplete="off" aria-invalid="true" aria-describedby="f-email-err">
+          <p class="field__error" id="f-email-err"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 4v5M8 11v1.5" stroke="currentColor" stroke-width="2"/></svg><span>خطأ: يرجى إدخال بريد إلكتروني صالح، مثل <bdi dir="ltr">name@example.org</bdi>.</span></p>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label for="f-url">الموقع الإلكتروني</label>
+          <input id="f-url" type="url" dir="ltr" placeholder="https://" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-disabled">حقل غير متاح</label>
+          <input id="f-disabled" type="text" value="لا يمكن التعديل" disabled>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-block-start: var(--sa-space-5)">البطاقات</h3>
+    <div class="grid grid--wide">
+      <article class="card">
+        <h4><a href="#h-domains">بطاقة افتراضية</a></h4>
+        <p class="t-small" style="margin: 0">العنوان هو الرابط الوحيد ويغطي البطاقة. عند التمرير يتغير الإطار فقط دون حركة.</p>
+      </article>
+      <article class="card card--accent">
+        <h4><a href="#h-type">بطاقة بخط ذهبي</a></h4>
+        <p class="t-small" style="margin: 0">الخط الذهبي العمودي على الجهة البادئة يستلهم الصفحات 10–15 من الدليل.</p>
+      </article>
+    </div>
+
+    <h3 style="margin-block-start: var(--sa-space-6)">على الخلفية الداكنة</h3>
+    <div class="on-dark">
+      <p style="margin-block-end: var(--sa-space-4)">نص فاتح على الأخضر العميق، مع <a href="#h-logo">رابط مسطّر</a>.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn--accent">اكتشف المحاور</button>
+        <span><span class="state-label" lang="en" dir="ltr">focus-visible on dark (pinned)</span><span class="btn btn--accent demo-focus" style="outline-color: var(--sa-color-focus-ring-on-dark)">اكتشف المحاور</span></span>
+      </div>
+      <p class="t-h3" style="color: var(--sa-color-text-on-dark-accent-large); margin: 0">ذهبي للنص الكبير فقط</p>
+      <p class="note" lang="en" dir="ltr" style="margin: var(--sa-space-2) 0 0">Brand gold on deep green is 4.41:1: large text only. The gold focus ring is 4.41:1 against the green.</p>
+    </div>
+
+    <h3 style="margin-block-start: var(--sa-space-6)">انعكاس الأيقونات</h3>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--proposed">Proposed</span> Directional UI icons mirror in RTL. Brand artwork never does.</p>
+    <div class="size-row" style="align-items: center">
+      <span>التالي <svg class="icon-dir icon-dir--mirror" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+      <span lang="en" dir="ltr" class="t-small">Chevron is mirrored (points left in RTL) ·</span>
+      <img src="../../frontend/src/assets/brand/domain-quality.svg" alt="الجودة" style="inline-size: 48px">
+      <span lang="en" dir="ltr" class="t-small">Domain symbol is not mirrored</span>
+    </div>
+  </div>
+</section>
+
+<!-- 8. Motion -->
+<section aria-labelledby="h-motion">
+  <div class="wrap">
+    <h2 id="h-motion">الحركة</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--proposed">Proposed</span> The only motion on this sheet is colour and border transitions (120ms) on hover. With <code>prefers-reduced-motion: reduce</code>, the token file sets every duration to 0ms. There is no continuous decorative animation and no logo motion.</p>
+  </div>
+</section>
+
+<!-- 9. Missing -->
+<section aria-labelledby="h-missing">
+  <div class="wrap">
+    <h2 id="h-missing">عناصر غير متوفرة</h2>
+    <p class="note" lang="en" dir="ltr"><span class="tag tag--missing">Missing</span> Not supplied with the identity guide. <strong>Intentionally not fabricated.</strong> See identity-guidelines.md §9.</p>
+    <div class="grid" lang="en" dir="ltr">
+      <div class="missing"><strong>Brand typeface</strong><p>Name, licence and font files</p></div>
+      <div class="missing"><strong>Master logo files</strong><p>Original AI/SVG from the designer</p></div>
+      <div class="missing"><strong>Symbol-only mark / favicon</strong><p>Do not crop from the lockup</p></div>
+      <div class="missing"><strong>Dark-bg domain symbols</strong><p>Do not invert or recolour</p></div>
+      <div class="missing"><strong>Monochrome logo</strong><p>Single-colour variants</p></div>
+      <div class="missing"><strong>Photography</strong><p>Authentic, licensed imagery</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap" style="padding-block: var(--sa-space-5)">
+    <p class="note" lang="en" dir="ltr" style="margin: 0">Phase 0 identity reference. Source: <code>docs/جائزة السنكري visual identity.pdf</code>. The thin deep-green band below echoes the guide's page band (Observed).</p>
+  </div>
+  <div class="band-foot"></div>
+</footer>
+
+</body>
+</html>
