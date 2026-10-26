@@ -70,6 +70,22 @@ trait UsesDisposableSchemaDatabase
         'published_stories', 'audit_logs',
     ];
 
+    /**
+     * Additive account migrations that follow the platform foundation
+     * (passwordless accounts and Google identities).
+     *
+     * @var list<string>
+     */
+    protected const ACCOUNT_MIGRATIONS = [
+        '2026_10_27_200001_allow_passwordless_users',
+        '2026_10_27_200002_create_oauth_identities_table',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    protected const ACCOUNT_TABLES = ['oauth_identities'];
+
     protected function configureDisposableDatabase(): void
     {
         $database = (string) env('MIGRATION_TEST_DB_DATABASE', '');
@@ -171,6 +187,19 @@ trait UsesDisposableSchemaDatabase
         $this->runArtisan('migrate', ['--path' => $paths]);
     }
 
+    /**
+     * The twelve platform foundation migrations, in order.
+     *
+     * @return list<string>
+     */
+    protected function platformMigrations(): array
+    {
+        return array_map(
+            fn (string $path): string => basename($path, '.php'),
+            glob(database_path('migrations/2026_10_27_1000*.php')),
+        );
+    }
+
     protected function rollbackLatestBatch(): void
     {
         $this->runArtisan('migrate:rollback');
@@ -183,8 +212,9 @@ trait UsesDisposableSchemaDatabase
     {
         $schema = Schema::connection(self::SCHEMA_CONNECTION);
 
-        if ($schema->hasTable('migrations') && $schema->hasTable('audit_logs')
-            && $this->schemaDb()->table('migrations')->where('migration', 'like', '2026_10_27_1000%')->count() === 12) {
+        if ($schema->hasTable('migrations') && $schema->hasTable('audit_logs') && $schema->hasTable('oauth_identities')
+            && $this->schemaDb()->table('migrations')->where('migration', 'like', '2026_10_27_1000%')->count() === 12
+            && $this->schemaDb()->table('migrations')->whereIn('migration', self::ACCOUNT_MIGRATIONS)->count() === count(self::ACCOUNT_MIGRATIONS)) {
             return;
         }
 

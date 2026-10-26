@@ -1,5 +1,6 @@
 import logo from '../../assets/brand/logo-horizontal-dark-bg.svg'
 import { award, photoCredit, sectionLinks } from '../../content/home'
+import { Link } from '../../lib/router'
 
 export function SiteFooter() {
   return (
@@ -16,11 +17,11 @@ export function SiteFooter() {
         <nav className="site-footer__nav" aria-label="روابط الصفحة">
           <ul>
             <li>
-              <a href="#top">الرئيسية</a>
+              <Link href="/">الرئيسية</Link>
             </li>
             {sectionLinks.map((link) => (
               <li key={link.href}>
-                <a href={link.href}>{link.label}</a>
+                <Link href={`/${link.href}`}>{link.label}</Link>
               </li>
             ))}
           </ul>

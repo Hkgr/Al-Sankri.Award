@@ -22,6 +22,7 @@ Generated from the migrated schema on MySQL 8.4.7 (information_schema), then ann
 - **G. Appeals:** [`appeals`](#appeals), [`appeal_decisions`](#appeal_decisions)
 - **H. Results and ratification:** [`award_results`](#award_results), [`result_ratifications`](#result_ratifications)
 - **I. Public stories and auditing:** [`published_stories`](#published_stories), [`audit_logs`](#audit_logs)
+- **J. External sign-in (account migrations):** [`oauth_identities`](#oauth_identities)
 
 ## Conventions
 
@@ -80,7 +81,7 @@ Existing Laravel login accounts, **extended** (not recreated) by `2026_10_27_100
 | `phone` | `varchar(32)` | yes | — | *new.* Optional contact number, not unique. |
 | `phone_verified_at` | `datetime` | yes | — | *new.* When the phone number was verified. |
 | `email_verified_at` | `timestamp` | yes | — |  |
-| `password` | `varchar(255)` | no | — | Existing. Hashed by the framework; never plaintext. |
+| `password` | `varchar(255)` | yes | — | Existing. Hashed by the framework; never plaintext. NULL only for accounts created with Google (`…200001_allow_passwordless_users`); never a shared dummy value. |
 | `status` | `varchar(16)` | no | `active` | *new.* `active` or `disabled`. |
 | `disabled_at` | `datetime` | yes | — | *new.* Set if and only if `status = disabled`. |
 | `disabled_reason` | `varchar(500)` | yes | — | *new.* Why the account was disabled. |
@@ -1459,3 +1460,43 @@ Append-only audit history. System actions have no actor. The subject is referenc
 **CHECK constraints**
 
 - `chk_audit_logs_subject`: `((subject_type is null) = (subject_id is null))`
+
+---
+
+## J. External sign-in (account migrations)
+
+Two additive migrations follow the platform foundation, for the public authentication described in [authentication.md](authentication.md):
+
+- `2026_10_27_200001_allow_passwordless_users` makes `users.password` nullable. Its rollback refuses to run while any account has no password.
+- `2026_10_27_200002_create_oauth_identities_table` creates the table below.
+
+### `oauth_identities`
+
+Google identities linked to accounts. The key is Google's stable subject identifier (`sub`), never the email address. No provider access or refresh tokens are stored.
+
+| Column | Type | Null | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | — | PK, auto-increment. |
+| `user_id` | `bigint unsigned` | no | — | The account this identity signs in to. |
+| `provider` | `varchar(32)` | no | — | `google` only. |
+| `provider_subject` | `varchar(255)` | no | — | Google `sub`. `ascii` / `ascii_bin`, so it compares exactly (case-sensitive). |
+| `linked_at` | `datetime` | no | — | When the identity was created or linked. |
+| `last_login_at` | `datetime` | yes | — | Last Google sign-in with this identity. |
+| `created_at` | `datetime` | yes | — |  |
+| `updated_at` | `datetime` | yes | — |  |
+
+**Indexes** (besides the primary key)
+
+- **Unique** `uq_oauth_identities_subject` (`provider`, `provider_subject`): one account per Google identity.
+- **Unique** `uq_oauth_identities_user_provider` (`user_id`, `provider`): at most one Google identity per account.
+
+**Foreign keys**
+
+| Name | Columns | References | On delete |
+| --- | --- | --- | --- |
+| `fk_oauth_identities_user` | (user_id) | `users` (id) | CASCADE |
+
+**CHECK constraints**
+
+- `chk_oauth_identities_provider`: `(provider in ('google'))`
+- `chk_oauth_identities_subject`: `(provider_subject <> '')`

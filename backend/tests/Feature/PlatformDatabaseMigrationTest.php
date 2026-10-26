@@ -51,13 +51,14 @@ class PlatformDatabaseMigrationTest extends TestCase
         ]);
         $baselineTables = $this->tableNames();
 
-        // 2–3. Apply the platform migrations.
+        // 2–3. Apply the platform and account migrations.
         $this->migrateAll();
-        $this->assertSame(12, $this->schemaDb()->table('migrations')->where('batch', 2)->count());
-        foreach (self::PLATFORM_TABLES as $table) {
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        foreach ([...self::PLATFORM_TABLES, ...self::ACCOUNT_TABLES] as $table) {
             $this->assertContains($table, $this->tableNames(), "Missing table {$table}");
         }
-        $this->assertCount(count($baselineTables) + count(self::PLATFORM_TABLES), $this->tableNames());
+        $this->assertCount(count($baselineTables) + count(self::PLATFORM_TABLES) + count(self::ACCOUNT_TABLES), $this->tableNames());
+        $this->assertSame('YES', $this->passwordNullability());
         $this->assertSame([], array_diff(self::NEW_USER_COLUMNS, $this->columnNames('users')));
         $this->assertExistingUserIntact($userId);
         $user = $this->schemaDb()->table('users')->find($userId);
@@ -73,6 +74,7 @@ class PlatformDatabaseMigrationTest extends TestCase
             ['id', 'name', 'email', 'email_verified_at', 'password', 'remember_token', 'created_at', 'updated_at'],
             $this->columnNames('users'),
         );
+        $this->assertSame('NO', $this->passwordNullability());
         $this->assertSame(0, (int) $this->schemaDb()->selectOne(
             'SELECT COUNT(*) AS total FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE()'
         )->total);
@@ -82,9 +84,54 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         // 6. Reapply.
         $this->migrateAll();
-        $this->assertSame(12, $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
         $this->assertExistingUserIntact($userId);
         $this->assertSame('active', $this->schemaDb()->table('users')->find($userId)->status);
+    }
+
+    public function test_the_account_migrations_apply_on_a_deployed_platform_schema(): void
+    {
+        // The production state: baseline and platform foundation already applied, with an account.
+        $this->wipeDisposableDatabase();
+        $this->migrateBaseline();
+        $this->migrateOnly($this->platformMigrations());
+        $userId = $this->schemaDb()->table('users')->insertGetId(self::USER);
+        $foreignKeysToUsers = $this->foreignKeysTo('users');
+        $this->assertSame('NO', $this->passwordNullability());
+
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $this->assertSame(count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 3)->count());
+        $this->assertSame('YES', $this->passwordNullability());
+        $this->assertSame(self::USER['password'], $this->schemaDb()->table('users')->find($userId)->password);
+        $this->assertEqualsCanonicalizing([...$foreignKeysToUsers, 'fk_oauth_identities_user'], $this->foreignKeysTo('users'));
+
+        // Only the new batch rolls back; the deployed schema and the hash stay.
+        $this->rollbackLatestBatch();
+        $this->assertSame('NO', $this->passwordNullability());
+        $this->assertNotContains('oauth_identities', $this->tableNames());
+        $this->assertSame($foreignKeysToUsers, $this->foreignKeysTo('users'));
+        $this->assertExistingUserIntact($userId);
+
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $this->assertExistingUserIntact($userId);
+    }
+
+    public function test_rolling_back_refuses_to_strand_passwordless_accounts(): void
+    {
+        $this->wipeDisposableDatabase();
+        $this->migrateBaseline();
+        $this->migrateAll();
+        $this->schemaDb()->table('users')->insert(['name' => 'Google', 'email' => 'google.only@example.org', 'password' => null]);
+
+        try {
+            $this->rollbackLatestBatch();
+            $this->fail('The rollback made users.password required despite a passwordless account.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('1 account(s) have no password', $exception->getMessage());
+        }
+
+        $this->assertSame('YES', $this->passwordNullability());
+        $this->assertSame(1, $this->schemaDb()->table('users')->whereNull('password')->count());
     }
 
     public function test_the_disposable_database_guard_refuses_ordinary_database_names(): void
@@ -130,7 +177,7 @@ class PlatformDatabaseMigrationTest extends TestCase
      */
     private function assertEveryNamedConstraintExists(): void
     {
-        $source = implode("\n", array_map('file_get_contents', glob(database_path('migrations/2026_10_27_1000*.php'))));
+        $source = implode("\n", array_map('file_get_contents', glob(database_path('migrations/2026_10_27_*.php'))));
         preg_match_all("/'((?:chk|fk|uq)_[a-z0-9_]+)'/", $source, $matches);
         $declared = array_values(array_unique($matches[1]));
 
@@ -143,6 +190,28 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         $this->assertGreaterThan(150, count($declared));
         $this->assertEqualsCanonicalizing($declared, $existing);
+    }
+
+    private function passwordNullability(): string
+    {
+        return (string) $this->schemaDb()->selectOne(
+            "SELECT IS_NULLABLE AS nullable FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'password'"
+        )->nullable;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function foreignKeysTo(string $table): array
+    {
+        return array_map(
+            fn (object $row): string => $row->name,
+            $this->schemaDb()->select(
+                'SELECT CONSTRAINT_NAME AS name FROM information_schema.REFERENTIAL_CONSTRAINTS
+                 WHERE CONSTRAINT_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = ? ORDER BY CONSTRAINT_NAME',
+                [$table],
+            ),
+        );
     }
 
     /**

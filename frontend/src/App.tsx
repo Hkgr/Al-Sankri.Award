@@ -1,13 +1,85 @@
+import { useEffect } from 'react'
+import type { ReactNode } from 'react'
+import { useAuth } from './auth/useAuth'
 import { SiteFooter } from './components/layout/SiteFooter'
 import { SiteHeader } from './components/layout/SiteHeader'
+import { Link } from './lib/router'
+import { useRouter } from './lib/useRouter'
+import { AccountPage } from './pages/auth/AccountPage'
+import { AuthLayout } from './pages/auth/AuthLayout'
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
+import { LoginPage } from './pages/auth/LoginPage'
+import { RegisterPage } from './pages/auth/RegisterPage'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
+import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
 import { HomePage } from './pages/home/HomePage'
+
+const HOME_TITLE = document.title
+
+/** Sign-in and sign-up pages send visitors who are already signed in to their account. */
+function GuestOnly({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
+  const { navigate } = useRouter()
+
+  useEffect(() => {
+    if (user) navigate('/account', { replace: true })
+  }, [user, navigate])
+
+  return user ? null : children
+}
+
+function NotFoundPage() {
+  return (
+    <AuthLayout title="الصفحة غير موجودة">
+      <p className="auth-panel__text">لم نجد الصفحة التي طلبتها.</p>
+      <p className="auth-panel__switch">
+        <Link href="/">العودة إلى الصفحة الرئيسية</Link>
+      </p>
+    </AuthLayout>
+  )
+}
+
+function CurrentPage() {
+  const { location } = useRouter()
+
+  useEffect(() => {
+    if (location.pathname === '/') document.title = HOME_TITLE
+  }, [location.pathname])
+
+  switch (location.pathname) {
+    case '/':
+      return <HomePage />
+    case '/login':
+      return (
+        <GuestOnly>
+          <LoginPage />
+        </GuestOnly>
+      )
+    case '/register':
+      return (
+        <GuestOnly>
+          <RegisterPage />
+        </GuestOnly>
+      )
+    case '/forgot-password':
+      return <ForgotPasswordPage />
+    case '/reset-password':
+      return <ResetPasswordPage />
+    case '/verify-email':
+      return <VerifyEmailPage />
+    case '/account':
+      return <AccountPage />
+    default:
+      return <NotFoundPage />
+  }
+}
 
 function App() {
   return (
     <>
       <SiteHeader />
       <main id="main" tabIndex={-1}>
-        <HomePage />
+        <CurrentPage />
       </main>
       <SiteFooter />
     </>

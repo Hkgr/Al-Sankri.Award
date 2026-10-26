@@ -386,6 +386,32 @@ class PlatformDatabaseConstraintTest extends TestCase
         $this->assertDatabaseRejects(self::CHECK_FAILED, fn () => $this->db('appeals')->insert($appeal + ['challenged_record_type' => 'App\\Models\\User', 'challenged_record_id' => 1]), 'class name as challenged record type');
     }
 
+    public function test_google_identities_are_unique_per_subject_and_per_account(): void
+    {
+        $identity = fn (int $userId, string $subject, string $provider = 'google') => $this->db('oauth_identities')->insert([
+            'user_id' => $userId, 'provider' => $provider, 'provider_subject' => $subject, 'linked_at' => self::NOW,
+        ]);
+        $owner = $this->user();
+        $other = $this->user();
+
+        $identity($owner, '109876543210');
+        $this->assertDatabaseRejects(self::DUPLICATE, fn () => $identity($other, '109876543210'), 'subject already owned by another account');
+        $this->assertDatabaseRejects(self::DUPLICATE, fn () => $identity($owner, '200000000000'), 'second Google identity for one account');
+        $identity($other, 'SubjectX');
+        $identity($this->user(), 'subjectx');
+        $this->assertSame(2, $this->db('oauth_identities')->whereIn('provider_subject', ['SubjectX', 'subjectx'])->count(), 'subjects compare case-sensitively');
+
+        $this->assertDatabaseRejects(self::CHECK_FAILED, fn () => $identity($this->user(), 'subject', 'facebook'), 'unknown provider');
+        $this->assertDatabaseRejects(self::CHECK_FAILED, fn () => $identity($this->user(), ''), 'empty subject');
+        $this->assertDatabaseRejects(self::MISSING_PARENT, fn () => $identity(999999999, 'orphan'), 'missing account');
+
+        // A passwordless (Google) account, whose identity goes with it.
+        $passwordless = $this->db('users')->insertGetId(['name' => 'Google', 'email' => 'google.'.uniqid().'@example.org', 'password' => null]);
+        $identity($passwordless, 'passwordless-subject');
+        $this->db('users')->where('id', $passwordless)->delete();
+        $this->assertSame(0, $this->db('oauth_identities')->where('provider_subject', 'passwordless-subject')->count());
+    }
+
     public function test_publication_consent_must_belong_to_the_published_version(): void
     {
         $cycle = $this->cycle();
