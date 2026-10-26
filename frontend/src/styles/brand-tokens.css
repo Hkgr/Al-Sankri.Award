@@ -1,0 +1,241 @@
+/*
+ * Al-Sankri Award: digital identity tokens (Phase 0 foundation)
+ * جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية
+ *
+ * Status: NOT imported by the running app. Reference sheet:
+ * docs/design/preview.html. Rules and rationale:
+ * docs/design/identity-guidelines.md.
+ *
+ * Provenance labels used below:
+ *   [OFFICIAL]    Value is specified in the supplied identity guide
+ *                 (docs/جائزة السنكري visual identity.pdf, page 8).
+ *   [OBSERVED]    Value is present in the guide's artwork but not listed
+ *                 as a palette colour.
+ *   [SUPPLIED]    Supplied by the brand owner as a separate file, not
+ *                 specified in the guide (the brand font files, docs/fonts/).
+ *   [PROPOSED]    Digital extension for web use, not part of the brand guide.
+ *   [PROVISIONAL] Placeholder until the brand owner supplies a missing
+ *                 specification.
+ *
+ * Every custom property is namespaced `--sa-` so it cannot collide with the
+ * starter template's variables in src/index.css. This file declares custom
+ * properties on :root only. It contains no resets and no element selectors.
+ */
+
+:root {
+  /* ------------------------------------------------------------------
+   * 1. Primitive colours
+   * ------------------------------------------------------------------ */
+
+  /* [OFFICIAL] Exact values from the palette page. Do not adjust. */
+  --sa-brand-deep-green: #14413d; /* الأخضر العميق: primary identity colour */
+  --sa-brand-gold: #cc9933; /* الذهبي المطفي: honour and value */
+  --sa-brand-light: #f4f7fc; /* clean, calm background colour */
+
+  /* [OBSERVED] White tagline lettering in the light-background logos. */
+  --sa-observed-white: #ffffff;
+
+  /* [PROPOSED] Extensions chosen for accessible web pairings.
+     Measured contrast ratios are documented in identity-guidelines.md. */
+  --sa-ext-green-900: #0f3330; /* darker green: hover state, small gold text */
+  --sa-ext-green-950: #0c2b28; /* darkest green: active/pressed state */
+  --sa-ext-gold-text: #8a6417; /* gold-family text on light: 4.99:1 on brand-light */
+  --sa-ext-gold-tint: #f6ecd6; /* quiet gold-tinted surface */
+  --sa-ext-neutral-100: #e8edf5; /* subtle surface */
+  --sa-ext-neutral-200: #d5dde9; /* decorative divider (non-essential) */
+  --sa-ext-neutral-500: #6b807d; /* control border: 3.90:1 on brand-light */
+  --sa-ext-neutral-600: #4b5f5c; /* secondary text: 6.33:1 on brand-light */
+  --sa-ext-neutral-on-dark: #b9c8c6; /* secondary text on deep green: 6.55:1 */
+  --sa-ext-disabled-text: #5d6d6b; /* 4.62:1 on neutral-100 */
+  --sa-ext-error: #b42318; /* 6.12:1 on brand-light */
+  --sa-ext-error-tint: #fdecea;
+  --sa-ext-success: #1e6a3f; /* 6.13:1 on brand-light */
+  --sa-ext-success-tint: #e7f3ec;
+
+  /* ------------------------------------------------------------------
+   * 2. Semantic colour roles [PROPOSED]
+   * ------------------------------------------------------------------ */
+
+  /* Surfaces */
+  --sa-color-surface: var(--sa-brand-light);
+  --sa-color-surface-raised: var(--sa-observed-white);
+  --sa-color-surface-subtle: var(--sa-ext-neutral-100);
+  --sa-color-surface-accent: var(--sa-ext-gold-tint);
+  --sa-color-surface-dark: var(--sa-brand-deep-green);
+  --sa-color-surface-dark-deep: var(--sa-ext-green-900);
+
+  /* Text on light surfaces */
+  --sa-color-text: var(--sa-brand-deep-green); /* 10.55:1 */
+  --sa-color-text-muted: var(--sa-ext-neutral-600); /* 6.33:1 */
+  --sa-color-text-accent: var(--sa-ext-gold-text); /* 4.99:1. Never use brand gold for text on light. */
+
+  /* Text on deep-green surfaces */
+  --sa-color-text-on-dark: var(--sa-brand-light); /* 10.55:1 */
+  --sa-color-text-on-dark-muted: var(--sa-ext-neutral-on-dark); /* 6.55:1 */
+  --sa-color-text-on-dark-accent-large: var(--sa-brand-gold); /* 4.41:1: large text only */
+
+  /* Borders */
+  --sa-color-border-subtle: var(--sa-ext-neutral-200); /* decorative only */
+  --sa-color-border-control: var(--sa-ext-neutral-500); /* meets 3:1 non-text */
+  --sa-color-border-strong: var(--sa-brand-deep-green);
+  --sa-color-rule-accent: var(--sa-brand-gold); /* decorative accent bar, as in the guide */
+
+  /* Links */
+  --sa-color-link: var(--sa-brand-deep-green);
+  --sa-color-link-hover: var(--sa-ext-green-900);
+  --sa-color-link-on-dark: var(--sa-brand-light);
+
+  /* Focus */
+  --sa-color-focus-ring: var(--sa-brand-deep-green); /* on light surfaces */
+  --sa-color-focus-ring-on-dark: var(--sa-brand-gold); /* 4.41:1 against deep green */
+
+  /* Controls */
+  --sa-color-control-primary-bg: var(--sa-brand-deep-green);
+  --sa-color-control-primary-bg-hover: var(--sa-ext-green-900);
+  --sa-color-control-primary-bg-active: var(--sa-ext-green-950);
+  --sa-color-control-primary-fg: var(--sa-brand-light); /* 10.55:1 */
+  --sa-color-control-accent-bg: var(--sa-brand-gold);
+  --sa-color-control-accent-fg: var(--sa-ext-green-900); /* 5.32:1. Not white (2.57:1). */
+  --sa-color-control-secondary-bg: transparent;
+  --sa-color-control-secondary-fg: var(--sa-brand-deep-green);
+  --sa-color-control-secondary-border: var(--sa-brand-deep-green);
+  --sa-color-control-bg: var(--sa-observed-white);
+  --sa-color-control-disabled-bg: var(--sa-ext-neutral-100);
+  --sa-color-control-disabled-fg: var(--sa-ext-disabled-text);
+  --sa-color-control-disabled-border: var(--sa-ext-neutral-200);
+
+  /* Status: always paired with an icon or text, never colour alone */
+  --sa-color-error: var(--sa-ext-error);
+  --sa-color-error-surface: var(--sa-ext-error-tint);
+  --sa-color-success: var(--sa-ext-success);
+  --sa-color-success-surface: var(--sa-ext-success-tint);
+
+  /* ------------------------------------------------------------------
+   * 3. Typography
+   * ------------------------------------------------------------------ */
+
+  /* [SUPPLIED] Brand font: "itf rayat" (iwantype, v1.001), five static
+     upright weights, self-hosted as "SA ITF Rayat" by
+     src/assets/brand/fonts/fonts.css. That stylesheet must be loaded for the
+     alias to resolve; this file does not import it.
+     [PROPOSED] Fallbacks after the alias cover characters the font lacks
+     (for example © … and accented Latin) and the moment before it loads
+     (font-display: swap). One family serves both roles. */
+  --sa-font-family-brand: "SA ITF Rayat";
+  --sa-font-family-base: var(--sa-font-family-brand), "Noto Sans Arabic",
+    "Segoe UI", Tahoma, "Geeza Pro", system-ui, -apple-system, sans-serif;
+  --sa-font-family-heading: var(--sa-font-family-base);
+  --sa-font-family-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono",
+    Menlo, monospace;
+
+  /* [SUPPLIED] The only weights that exist (OS/2 usWeightClass).
+     [PROPOSED] Role for each. There is no 600: a request for 600 would
+     render Bold, so use medium for UI emphasis. There is no italic. */
+  --sa-font-weight-light: 300; /* large sizes only (24px and up), never body */
+  --sa-font-weight-regular: 400; /* body, lead, captions, helper text */
+  --sa-font-weight-medium: 500; /* labels, buttons, tags, h4, table heads */
+  --sa-font-weight-bold: 700; /* h1–h3, strong emphasis in body */
+  --sa-font-weight-black: 900; /* short display lines only, h1 size and up */
+
+  /* [PROPOSED] Responsive type scale (rem = 16px default). Body text never
+     drops below 16px. Captions stay at or above 14px for Arabic legibility. */
+  --sa-font-size-caption: 0.875rem; /* 14px */
+  --sa-font-size-small: 1rem; /* 16px */
+  --sa-font-size-body: clamp(1rem, 0.95rem + 0.25vw, 1.125rem); /* 16→18px */
+  --sa-font-size-lead: clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem); /* 18→21px */
+  --sa-font-size-h4: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem); /* 20→24px */
+  --sa-font-size-h3: clamp(1.5rem, 1.3rem + 0.9vw, 1.875rem); /* 24→30px */
+  --sa-font-size-h2: clamp(1.75rem, 1.45rem + 1.5vw, 2.5rem); /* 28→40px */
+  --sa-font-size-h1: clamp(2.125rem, 1.6rem + 2.4vw, 3.25rem); /* 34→52px */
+
+  /* [PROPOSED] Arabic needs generous line height to keep dots and
+     diacritics clear of adjacent lines. Checked against itf rayat: its
+     default line box is 1.43–1.48em, its tallest glyph (the lam of الله)
+     reaches 1.15–1.20em above the baseline, and two-line Bold and Black
+     headings at 1.3 do not collide. */
+  --sa-line-height-body: 1.8;
+  --sa-line-height-heading: 1.4;
+  --sa-line-height-tight: 1.3; /* minimum for Arabic; do not go lower */
+
+  /* [PROPOSED] Readable measures */
+  --sa-measure-prose: 42rem; /* about 70–80 Arabic characters per line */
+  --sa-measure-narrow: 32rem;
+
+  /* ------------------------------------------------------------------
+   * 4. Spacing (4px base) [PROPOSED]
+   * ------------------------------------------------------------------ */
+  --sa-space-1: 0.25rem; /* 4px */
+  --sa-space-2: 0.5rem; /* 8px */
+  --sa-space-3: 0.75rem; /* 12px */
+  --sa-space-4: 1rem; /* 16px */
+  --sa-space-5: 1.5rem; /* 24px */
+  --sa-space-6: 2rem; /* 32px */
+  --sa-space-7: 3rem; /* 48px */
+  --sa-space-8: 4rem; /* 64px */
+  --sa-space-9: 6rem; /* 96px */
+  --sa-space-section: clamp(3rem, 2rem + 4vw, 6rem);
+
+  /* ------------------------------------------------------------------
+   * 5. Layout [PROPOSED]
+   * Breakpoints (custom properties cannot be used inside @media queries,
+   * so these are reference values): sm 480px, md 768px, lg 1024px, xl 1280px.
+   * ------------------------------------------------------------------ */
+  --sa-container-max: 75rem; /* 1200px */
+  --sa-container-wide: 85rem; /* 1360px, full-bleed sections */
+  --sa-container-narrow: 48rem; /* 768px */
+  --sa-gutter: clamp(1rem, 0.5rem + 2.5vw, 2rem); /* 16→32px */
+  --sa-grid-gap: clamp(1rem, 0.75rem + 1.25vw, 1.5rem);
+
+  /* Image proportions */
+  --sa-ratio-wide: 16 / 9;
+  --sa-ratio-standard: 4 / 3;
+  --sa-ratio-photo: 3 / 2;
+  --sa-ratio-square: 1 / 1;
+
+  /* ------------------------------------------------------------------
+   * 6. Shape and depth [PROPOSED]
+   * The guide's gold tagline bar and page bands are square-cornered, so
+   * radii stay restrained.
+   * ------------------------------------------------------------------ */
+  --sa-radius-none: 0;
+  --sa-radius-sm: 2px;
+  --sa-radius-md: 4px;
+  --sa-radius-lg: 8px;
+
+  --sa-border-width-hairline: 1px;
+  --sa-border-width-control: 1px;
+  --sa-border-width-strong: 2px;
+  --sa-border-width-accent: 4px; /* echoes the guide's gold vertical rule */
+
+  --sa-shadow-raised: 0 1px 2px rgb(20 65 61 / 0.08), 0 1px 1px rgb(20 65 61 / 0.04);
+  --sa-shadow-overlay: 0 8px 24px rgb(20 65 61 / 0.14), 0 2px 6px rgb(20 65 61 / 0.08);
+
+  /* ------------------------------------------------------------------
+   * 7. Interaction and accessibility [PROPOSED]
+   * ------------------------------------------------------------------ */
+  --sa-focus-ring-width: 3px;
+  --sa-focus-ring-offset: 2px;
+  --sa-target-min: 2.75rem; /* 44 × 44 CSS px for primary touch controls */
+
+  --sa-duration-instant: 0ms;
+  --sa-duration-fast: 120ms;
+  --sa-duration-base: 200ms;
+  --sa-duration-slow: 320ms;
+  --sa-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --sa-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ------------------------------------------------------------------
+   * 8. Brand artwork sizing [PROPOSED; guide is silent]
+   * ------------------------------------------------------------------ */
+  --sa-logo-horizontal-min-width: 200px;
+  --sa-logo-vertical-min-width: 128px;
+  --sa-domain-symbol-min-width: 48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sa-duration-fast: 0ms;
+    --sa-duration-base: 0ms;
+    --sa-duration-slow: 0ms;
+  }
+}
