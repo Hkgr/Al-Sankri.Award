@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Auth\GoogleAccounts;
+use App\Auth\GoogleIdentity;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 use Tests\UsesDisposableSchemaDatabase;
@@ -118,20 +121,42 @@ class PlatformDatabaseMigrationTest extends TestCase
 
     public function test_rolling_back_refuses_to_strand_passwordless_accounts(): void
     {
+        // Production-like: the foundation in one batch, the account migrations in the next.
         $this->wipeDisposableDatabase();
         $this->migrateBaseline();
-        $this->migrateAll();
-        $this->schemaDb()->table('users')->insert(['name' => 'Google', 'email' => 'google.only@example.org', 'password' => null]);
+        $this->migrateOnly($this->platformMigrations());
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $userId = $this->schemaDb()->table('users')->insertGetId([
+            'name' => 'Google', 'email' => 'google.only@example.org', 'password' => null, 'email_verified_at' => '2026-10-20 10:00:00',
+        ]);
+        $this->schemaDb()->table('oauth_identities')->insert([
+            'user_id' => $userId, 'provider' => 'google', 'provider_subject' => '109876543210987654321', 'linked_at' => '2026-10-20 10:00:00',
+        ]);
 
         try {
             $this->rollbackLatestBatch();
-            $this->fail('The rollback made users.password required despite a passwordless account.');
+            $this->fail('The rollback ran despite a passwordless account.');
         } catch (RuntimeException $exception) {
             $this->assertStringContainsString('1 account(s) have no password', $exception->getMessage());
         }
 
+        // Nothing was dropped or forgotten.
+        $this->assertContains('oauth_identities', $this->tableNames());
+        $this->assertSame(1, $this->schemaDb()->table('oauth_identities')->where('user_id', $userId)->count());
+        $this->assertSame(1, $this->schemaDb()->table('users')->where('id', $userId)->whereNull('password')->count());
         $this->assertSame('YES', $this->passwordNullability());
-        $this->assertSame(1, $this->schemaDb()->table('users')->whereNull('password')->count());
+        $this->assertEqualsCanonicalizing(self::ACCOUNT_MIGRATIONS, $this->schemaDb()->table('migrations')->where('batch', 3)->pluck('migration')->all());
+        $this->assertPreservedIdentitySignsIn($userId, '109876543210987654321');
+
+        // Once the owner has set a password, the same rollback succeeds and reapplies.
+        $this->schemaDb()->table('users')->where('id', $userId)->update(['password' => self::USER['password']]);
+        $this->rollbackLatestBatch();
+        $this->assertNotContains('oauth_identities', $this->tableNames());
+        $this->assertSame('NO', $this->passwordNullability());
+        $this->assertSame(0, $this->schemaDb()->table('migrations')->whereIn('migration', self::ACCOUNT_MIGRATIONS)->count());
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $this->assertSame('YES', $this->passwordNullability());
+        $this->assertSame(self::USER['password'], $this->schemaDb()->table('users')->find($userId)->password);
     }
 
     public function test_the_disposable_database_guard_refuses_ordinary_database_names(): void
@@ -190,6 +215,25 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         $this->assertGreaterThan(150, count($declared));
         $this->assertEqualsCanonicalizing($declared, $existing);
+    }
+
+    /**
+     * Resolves a Google sign-in for the preserved identity against the
+     * disposable database, through the application's own account resolver.
+     */
+    private function assertPreservedIdentitySignsIn(int $userId, string $subject): void
+    {
+        $previous = DB::getDefaultConnection();
+        DB::setDefaultConnection(self::SCHEMA_CONNECTION);
+
+        try {
+            [$outcome, $user] = app(GoogleAccounts::class)->signIn(new GoogleIdentity($subject, 'renamed@gmail.com', 'Google', true, null));
+        } finally {
+            DB::setDefaultConnection($previous);
+        }
+
+        $this->assertSame(GoogleAccounts::SIGNED_IN, $outcome);
+        $this->assertSame($userId, (int) $user->getKey());
     }
 
     private function passwordNullability(): string

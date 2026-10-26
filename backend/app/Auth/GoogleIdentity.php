@@ -48,6 +48,31 @@ final class GoogleIdentity
     }
 
     /**
+     * The claims kept in the session while a sign-up waits for its email
+     * confirmation (never sent to the browser).
+     *
+     * @return array{subject: string, email: string, name: string, emailVerified: bool, hostedDomain: string|null}
+     */
+    public function toSession(): array
+    {
+        return [
+            'subject' => $this->subject,
+            'email' => $this->email,
+            'name' => $this->name,
+            'emailVerified' => $this->emailVerified,
+            'hostedDomain' => $this->hostedDomain,
+        ];
+    }
+
+    /**
+     * @param  array{subject: string, email: string, name: string, emailVerified: bool, hostedDomain: string|null}  $claims
+     */
+    public static function fromSession(array $claims): self
+    {
+        return new self($claims['subject'], $claims['email'], $claims['name'], $claims['emailVerified'], $claims['hostedDomain']);
+    }
+
+    /**
      * Whether Google is authoritative for this address, following Google's
      * guidance: a verified address is authoritative when it is a Gmail
      * address or the account belongs to a Workspace domain (the "hd" claim).

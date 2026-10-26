@@ -45,9 +45,23 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
+     *
+     * This migration rolls back before allow_passwordless_users, so it makes
+     * the same refusal first: while an account has no password, its Google
+     * identity is its only way in, and nothing may be dropped or removed from
+     * the migration history.
      */
     public function down(): void
     {
+        $passwordless = DB::table('users')->whereNull('password')->count();
+
+        if ($passwordless > 0) {
+            throw new RuntimeException(
+                "Cannot drop oauth_identities: {$passwordless} account(s) have no password and sign in only with Google. "
+                .'Those owners must set a password (password reset) first.'
+            );
+        }
+
         Schema::dropIfExists('oauth_identities');
     }
 

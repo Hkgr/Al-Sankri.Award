@@ -25,6 +25,8 @@ Route::get('/account', SpaController::class);
 Route::middleware('throttle:google')->group(function () {
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+    // Confirms a pending sign-up whose email Google is not authoritative for.
+    Route::get('/auth/google/confirm', [GoogleAuthController::class, 'confirm'])->name('auth.google.confirm');
 });
 
 // The link in the verification email. Signed-out visitors sign in first.

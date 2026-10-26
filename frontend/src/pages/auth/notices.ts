@@ -16,6 +16,15 @@ const googleSignIn: Record<string, Notice> = {
     text: 'يوجد حساب مسجّل بهذا البريد الإلكتروني. سجّل الدخول بكلمة المرور، ثم اربط حساب Google من صفحة «حسابي» إن أردت.',
   },
   disabled: { tone: 'error', text: 'هذا الحساب موقوف. لا يمكن استخدامه لتسجيل الدخول.' },
+  confirm_email: {
+    tone: 'info',
+    text: 'لم يُنشأ الحساب بعد. أرسلنا رابط تأكيد إلى البريد الإلكتروني لحساب Google الذي اخترته. افتح الرابط في هذا المتصفح نفسه لإكمال التسجيل خلال 60 دقيقة.',
+  },
+  confirm_invalid: {
+    tone: 'error',
+    text: 'تعذّر إكمال التسجيل بهذا الرابط: انتهت صلاحيته، أو استُخدم مسبقاً، أو فُتح في متصفح غير الذي بدأت منه. ابدأ التسجيل عبر Google مجدداً من هذا المتصفح.',
+  },
+  email_unverified: { tone: 'error', text: 'لا يمكن الدخول بحساب Google قبل تأكيد البريد الإلكتروني لهذا الحساب.' },
 }
 
 const googleLink: Record<string, Notice> = {
@@ -23,7 +32,14 @@ const googleLink: Record<string, Notice> = {
   already_linked: { tone: 'info', text: 'حساب Google هذا مرتبط بحسابك مسبقاً.' },
   owned_by_other: { tone: 'error', text: 'حساب Google هذا مرتبط بحساب آخر في الموقع، فلم يُربط بحسابك.' },
   user_has_other: { tone: 'error', text: 'حسابك مرتبط بحساب Google آخر مسبقاً.' },
-  link_expired: { tone: 'error', text: 'انتهت مهلة طلب الربط. أكّد كلمة المرور وأعد المحاولة.' },
+  link_expired: {
+    tone: 'error',
+    text: 'لم يعد طلب الربط صالحاً: انتهت مهلته، أو تغيّرت كلمة المرور أو الحساب المسجّل دخوله. أكّد كلمة المرور وأعد المحاولة.',
+  },
+  email_unverified: {
+    tone: 'error',
+    text: 'لم يُربط حساب Google: أكّد بريدك الإلكتروني أولاً، أو اختر حساب Google يستخدم البريد نفسه.',
+  },
   unavailable: { tone: 'info', text: 'ربط حساب Google غير متاح حالياً.' },
   cancelled: { tone: 'info', text: 'أُلغي ربط حساب Google.' },
   invalid_state: { tone: 'error', text: 'انتهت صلاحية محاولة الربط أو لم تكتمل. أعد المحاولة.' },

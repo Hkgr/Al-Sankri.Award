@@ -36,6 +36,7 @@ All endpoints accept and return JSON. Messages are always Arabic: the `UseArabic
 | `POST /api/account/google/link` | confirm the current password, then start linking Google | 5/min per account |
 | `GET /email/verify/{id}/{hash}` | link in the verification email (signed, expires after 60 minutes) | 6/min per IP |
 | `GET /auth/google/redirect`, `GET /auth/google/callback` | Google sign-in and linking | 20/min per IP |
+| `GET /auth/google/confirm` | link in the email that confirms a pending Google sign-up (§4) | 20/min per IP; at most 3 emails per address per hour |
 
 ### Rules the backend enforces
 
@@ -113,8 +114,26 @@ If the links start with `http://` instead of `https://`, Laravel is not seeing H
   - A returning identity signs into its own account, even if its Google email has changed.
   - A new identity creates a passwordless account (`users.password` is NULL, never a dummy password).
   - Two simultaneous first sign-ins end in one account (unique keys, plus a retry on the losing insert).
-- **Existing local accounts.** Google is never attached just because the emails match. The visitor sees «يوجد حساب مسجّل بهذا البريد الإلكتروني…» and must sign in with their password first. They can then link Google on `/account`, after confirming that password; the request expires after 10 minutes. An identity already linked to another account is refused.
-- **Email trust** follows Google's guidance on authoritative email addresses. The address is marked verified only when `email_verified` is true **and** it is a `@gmail.com` address or carries a Workspace `hd` claim. Other Google accounts (for example ones created with a third-party email address) receive this site's own verification email.
+- **Ownership rule.** A Google identity is only ever stored against an account whose email ownership is established. This prevents *account pre-hijacking*, where someone registers another person's address and plants their own Google identity on it before the owner arrives.
+- **Authoritative addresses.** Google is authoritative for an address, following Google's guidance, when `email_verified` is true **and** it is a `@gmail.com` address or carries a Workspace `hd` claim.
+- **New Google sign-ups:**
+  - **Authoritative address:** the account is created at once, verified, with the identity linked.
+  - **Any other address** (for example a Google account created with a third-party email, or a missing or false `email_verified`):
+    - **nothing is created yet**: no account and no identity;
+    - the claims wait in the visitor's session, and a one-time link is emailed to the address (`/auth/google/confirm`, valid for 60 minutes);
+    - the sign-up completes only when that link is opened **in the same browser session that started it**, so the mailbox owner and the Google account holder must be the same person;
+    - opened anywhere else, the link creates nothing;
+    - if the address was registered locally in the meantime, the visitor is sent to sign in instead.
+- **Existing local accounts:**
+  - **No automatic linking.** Google is never attached just because the emails match. The visitor sees «يوجد حساب مسجّل بهذا البريد الإلكتروني…» and must sign in with their password first.
+  - **Explicit linking.** The owner can then link Google on `/account` after confirming that password.
+  - **Ownership at link time.** The link is stored only if the account's email is **already verified**, or the chosen Google identity is **authoritative for that same address**; in that case the address also becomes verified. An unrelated Google identity is refused («لم يُربط حساب Google: أكّد بريدك الإلكتروني أولاً…»).
+  - **Identity in use.** An identity already linked to another account is refused.
+- **Rechecks at Google's callback.** A linking request lasts 10 minutes and is bound to the account's current credentials and status (an HMAC of its password hash, remember token, email and status). It is rechecked when Google returns. These all void it:
+  - a password reset;
+  - disabling the account (the session is also ended);
+  - signing in as another account in the same browser.
+- **Returning sign-ins.** A linked identity whose account is not verified is refused, as a safeguard.
 - **Graceful failures.** These outcomes return to the sign-in page with an Arabic message:
   - cancelling at Google;
   - an invalid state;
@@ -130,13 +149,17 @@ If the links start with `http://` instead of `https://`, Laravel is not seeing H
 
 In the [Google Cloud console](https://console.cloud.google.com/), use a project owned by the award organisation, then go to **Google Auth Platform**:
 
-1. **Branding.** Set the following, then submit for brand verification if Google asks:
+1. **Branding.** Separately from the testing exception above, the production consent screen needs the items below. Submit for brand verification if Google asks:
    - app name: «جائزة الدكتور عبد القادر سنكري»;
    - a support email that the organisation monitors;
    - the app home page `https://<domain>/`;
    - the **privacy policy URL** (required; see §6);
    - authorised domain: `<domain>`.
-2. **Audience.** Choose **External**, then **Publish app** to move it to *In production*. While it is in *Testing*, only listed test users can sign in.
+2. **Audience.** Choose **External**.
+   - **Testing:** while the app is in *Testing*, Google normally restricts it to listed test users (at most 100).
+   - **The exception:** Google documents one exception that applies here. If the app requests only `openid`, `userinfo.email` and `userinfo.profile` (or their OpenID Connect equivalents name, email and profile), users do **not** need to be on the test-user list ([Google Cloud help, answer 15549945](https://support.google.com/cloud/answer/15549945?hl=en)). This integration requests only those scopes, so any Google account can sign in during Testing. Adding any other scope would remove the exception.
+   - **Testing consents expire:** in *Testing*, a test user's authorization expires seven days after consent.
+   - **Launch:** select **Publish app** (*In production*) for launch.
 3. **Data access.** Add only `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile`. Add no other scopes.
 4. **Clients → Create client → Web application:**
    - **Authorised redirect URI:** `https://<domain>/auth/google/callback`, exactly, with no trailing slash.
@@ -161,8 +184,11 @@ The automated Google tests are **mocked at the HTTP boundary**. Socialite's real
 4. **Cancel.** Start again and press *Cancel* on Google's screen; `/login` shows «أُلغي تسجيل الدخول عبر Google…».
 5. **Existing local account.** Register locally with a mailbox, then try Google with a Google account using the **same address**. You are refused with «يوجد حساب مسجّل…», nothing is linked, and you are not signed in.
 6. **Linking.** Sign in to that local account with its password. On `/account`, enter the password and choose «تأكيد وربط حساب Google». It returns with «رُبط حساب Google بحسابك». Google sign-in now opens that account.
-7. **Non-Gmail address (if available).** A Google account using a non-Gmail, non-Workspace email creates an account that shows «غير مؤكَّد بعد», and a verification email is sent.
-8. **Database and logs.** In the database, `oauth_identities` holds only the subject and timestamps, with no token columns. In `storage/logs`, there is no `code=` value from the callback.
+7. **Non-Gmail address (if available).** A Google account using a non-Gmail, non-Workspace email creates **no** account at first. `/login` shows «لم يُنشأ الحساب بعد…», and an email arrives at that address.
+   - Opening its link in **another** browser creates nothing.
+   - Opening it in the **same** browser creates the account, verified and linked.
+8. **Linking needs ownership.** Register a local account with an address you control but do **not** verify it. Try to link a Google account with a different email: it is refused («لم يُربط حساب Google…»). Verify the email, then link again: it succeeds.
+9. **Database and logs.** In the database, `oauth_identities` holds only the subject and timestamps, with no token columns. In `storage/logs`, there is no `code=` value from the callback.
 
 ## 5. Deployment on Plesk
 
@@ -184,7 +210,7 @@ The automated Google tests are **mocked at the HTTP boundary**. Socialite's real
    - `/api/auth/options` → JSON;
    - `/no-such-page` → 404.
 
-**Rollback.** `php artisan migrate:rollback` undoes only the latest batch. If any Google-only (passwordless) account exists, the `users.password` rollback refuses to run rather than invent passwords. Those owners must first set a password with "forgot password".
+**Rollback.** `php artisan migrate:rollback` undoes only the latest batch. If any Google-only (passwordless) account exists, the rollback refuses **before changing anything**. `oauth_identities` rolls back first and makes the same check, so no table is dropped and no migration-history row is removed. Those owners must first set a password with "forgot password".
 
 ## 6. Content and policy still required (not invented here)
 
@@ -216,9 +242,14 @@ cd frontend && npm run dev                                      # http://localho
   - protected endpoints and disabled accounts;
   - Arabic validation messages and throttling;
   - safe redirects, verification emails and password reset (real `array` mail transport);
-  - Google sign-in (mocked HTTP only; see §4).
+  - Google sign-in (mocked HTTP only; see §4), including account pre-hijacking regressions:
+    - separate attacker and owner browsers;
+    - linking refused for an unverified account;
+    - owner recovery by password reset;
+    - callbacks resumed after a password reset, after disabling the account, or after a change of account;
+    - same-browser confirmation of unproven Google emails.
 - **Schema tests.** These run on disposable MySQL / MariaDB databases (see [database-rules.md](database-rules.md) §7), and now include the two account migrations:
   - applying them on an already deployed platform schema;
   - rolling them back;
-  - refusing to strand passwordless accounts;
+  - refusing to strand passwordless accounts, while keeping the identity table, its rows and both migration-history rows; the kept identity still signs in;
   - the uniqueness and CHECK constraints of `oauth_identities`.

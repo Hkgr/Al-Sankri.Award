@@ -9,9 +9,17 @@ use Illuminate\Support\Facades\DB;
 /**
  * Maps verified Google identities to accounts.
  *
- * The Google subject is the identity key. A Google sign-in never attaches
- * itself to an existing account just because the email matches: that needs
- * the owner to sign in locally and link Google from the account page.
+ * The Google subject is the identity key. An identity is only ever stored
+ * against an account whose email ownership is established, so a Google
+ * identity can never be planted on an address its holder does not own:
+ *
+ * - a new account is created only when Google is authoritative for the
+ *   address, or after the address was confirmed by an emailed link opened
+ *   in the browser that started the sign-in ($emailConfirmed);
+ * - linking to an existing account needs that account's email to be
+ *   verified already, or a Google identity authoritative for that same
+ *   address;
+ * - a matching email alone never attaches Google to an existing account.
  */
 class GoogleAccounts
 {
@@ -21,9 +29,13 @@ class GoogleAccounts
 
     public const CREATED = 'created';
 
+    public const CONFIRMATION_REQUIRED = 'confirm_email';
+
     public const ACCOUNT_EXISTS = 'account_exists';
 
     public const DISABLED = 'disabled';
+
+    public const EMAIL_UNVERIFIED = 'email_unverified';
 
     public const LINKED = 'linked';
 
@@ -36,10 +48,12 @@ class GoogleAccounts
     /**
      * Resolves a Google sign-in to an existing linked account or a new one.
      *
+     * @param  bool  $emailConfirmed  The address was proven by this site's
+     *                                own emailed link for this pending sign-up.
      * @return array{0: string, 1: User|null} An outcome constant, and the
      *                                        account to sign in on success.
      */
-    public function signIn(GoogleIdentity $identity): array
+    public function signIn(GoogleIdentity $identity, bool $emailConfirmed = false): array
     {
         if ($user = $this->userForSubject($identity->subject)) {
             return $this->signInLinked($user, $identity);
@@ -47,6 +61,10 @@ class GoogleAccounts
 
         if (User::query()->where('email', $identity->email)->exists()) {
             return [self::ACCOUNT_EXISTS, null];
+        }
+
+        if (! $identity->emailIsAuthoritative() && ! $emailConfirmed) {
+            return [self::CONFIRMATION_REQUIRED, null];
         }
 
         try {
@@ -64,13 +82,21 @@ class GoogleAccounts
     }
 
     /**
-     * Links a Google identity to an account whose owner has just confirmed
-     * their local password and asked for the link.
+     * Links a Google identity to an account whose owner confirmed their
+     * local password and asked for the link. The caller must re-check, at
+     * the callback, that this request is still current (see
+     * GoogleAuthController); this method checks email ownership.
      */
     public function link(User $user, GoogleIdentity $identity): string
     {
         if ($outcome = $this->linkConflict($user, $identity)) {
             return $outcome;
+        }
+
+        $provesSameEmail = $identity->emailIsAuthoritative() && $identity->email === $user->email;
+
+        if (! $user->hasVerifiedEmail() && ! $provesSameEmail) {
+            return self::EMAIL_UNVERIFIED;
         }
 
         try {
@@ -79,7 +105,7 @@ class GoogleAccounts
             return $this->linkConflict($user, $identity) ?? self::USER_HAS_OTHER;
         }
 
-        if ($identity->emailIsAuthoritative() && $identity->email === $user->email && ! $user->hasVerifiedEmail()) {
+        if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
 
@@ -117,6 +143,12 @@ class GoogleAccounts
             return [self::DISABLED, null];
         }
 
+        // Every identity is stored against a proven address; refuse anything
+        // else rather than trust it.
+        if (! $user->hasVerifiedEmail()) {
+            return [self::EMAIL_UNVERIFIED, null];
+        }
+
         DB::table('oauth_identities')
             ->where('provider', self::PROVIDER)
             ->where('provider_subject', $identity->subject)
@@ -125,6 +157,9 @@ class GoogleAccounts
         return [self::SIGNED_IN, $user];
     }
 
+    /**
+     * Only called once the address is proven, so the account is verified.
+     */
     private function createAccount(GoogleIdentity $identity): User
     {
         $user = new User;
@@ -132,7 +167,8 @@ class GoogleAccounts
             'name' => $identity->name,
             'email' => $identity->email,
             'password' => null,
-            'email_verified_at' => $identity->emailIsAuthoritative() ? now() : null,
+            'status' => User::STATUS_ACTIVE,
+            'email_verified_at' => now(),
         ])->save();
 
         $this->insertIdentity($user, $identity);

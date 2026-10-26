@@ -5,11 +5,11 @@ namespace Tests\Feature\Auth;
 use App\Auth\GoogleAccounts;
 use App\Auth\GoogleIdentity;
 use App\Models\User;
+use App\Notifications\ConfirmGoogleSignUp;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 use Psr\Http\Message\RequestInterface;
+use Symfony\Component\Mime\Email;
 use Tests\ActsAsSpaBrowser;
 use Tests\TestCase;
 
@@ -109,9 +110,10 @@ class GoogleAuthenticationTest extends TestCase
         $this->assertNotEmpty($tokenRequest['code_verifier']);
     }
 
-    public function test_google_emails_are_trusted_only_where_google_is_authoritative(): void
+    public function test_only_authoritative_google_emails_create_an_account_at_once(): void
     {
         $cases = [
+            'gmail' => [['email' => 'layla@gmail.com', 'email_verified' => true], true],
             'workspace (hd) address' => [['email' => 'staff@example.org', 'email_verified' => true, 'hd' => 'example.org'], true],
             'other verified address without hd' => [['email' => 'person@outlook.example', 'email_verified' => true], false],
             'unverified gmail' => [['email' => 'unverified@gmail.com', 'email_verified' => false], false],
@@ -119,18 +121,176 @@ class GoogleAuthenticationTest extends TestCase
         ];
 
         Notification::fake();
-        foreach ($cases as $label => [$claims, $trusted]) {
+        foreach ($cases as $label => [$claims, $authoritative]) {
             $this->cookieJar = [];
             $state = $this->startGoogle()['state'];
             $this->queueGoogleUser(['sub' => 'sub-'.md5($label), 'name' => 'Name'] + $claims);
-            $this->returnFromGoogle($state)->assertRedirect('/account');
 
-            $user = User::query()->where('email', $claims['email'])->sole();
-            $this->assertSame($trusted, $user->hasVerifiedEmail(), $label);
-            $trusted
-                ? Notification::assertNotSentTo($user, VerifyEmail::class)
-                : Notification::assertSentTo($user, VerifyEmail::class);
+            if ($authoritative) {
+                $this->returnFromGoogle($state)->assertRedirect('/account');
+                $this->assertTrue(User::query()->where('email', $claims['email'])->sole()->hasVerifiedEmail(), $label);
+
+                continue;
+            }
+
+            // Nothing is created for an unproven address: it must be confirmed first.
+            $this->returnFromGoogle($state)->assertRedirect('/login?google=confirm_email');
+            $this->assertFalse(User::query()->where('email', $claims['email'])->exists(), $label);
+            $this->assertFalse(DB::table('oauth_identities')->where('provider_subject', 'sub-'.md5($label))->exists(), $label);
+            $this->browser('GET', '/api/user')->assertUnauthorized();
+            Notification::assertSentOnDemand(ConfirmGoogleSignUp::class, fn ($notification, array $channels, object $notifiable): bool => $notifiable->routes['mail'] === $claims['email']);
         }
+    }
+
+    public function test_an_unproven_google_email_is_confirmed_only_in_the_browser_that_started(): void
+    {
+        $this->useBrowser('google-holder');
+        $state = $this->startGoogle()['state'];
+        $this->queueGoogleUser(['sub' => 'outlook-sub', 'email' => 'person@outlook.example', 'email_verified' => true, 'name' => 'Person']);
+        $this->returnFromGoogle($state)->assertRedirect('/login?google=confirm_email');
+        $link = $this->linkIn($this->lastEmail('person@outlook.example'));
+        $this->assertStringStartsWith(url('/auth/google/confirm').'?token=', $link);
+
+        // The mailbox alone (another browser) creates nothing.
+        $this->useBrowser('mailbox');
+        $this->navigate($link)->assertRedirect('/login?google=confirm_invalid');
+        $this->assertSame(0, User::query()->count());
+
+        $this->useBrowser('google-holder');
+        $this->navigate($link)->assertRedirect('/account');
+        $user = User::query()->sole();
+        $this->assertSame('person@outlook.example', $user->email);
+        $this->assertTrue($user->hasVerifiedEmail());
+        $this->assertSame((int) $user->id, (int) DB::table('oauth_identities')->where('provider_subject', 'outlook-sub')->value('user_id'));
+        $this->browser('GET', '/api/user')->assertOk()->assertJsonPath('data.google_linked', true);
+
+        // The link is single-use.
+        $this->browser('POST', '/api/auth/logout')->assertNoContent();
+        $this->navigate($link)->assertRedirect('/login?google=confirm_invalid');
+    }
+
+    public function test_a_pending_google_sign_up_cannot_take_an_address_registered_meanwhile(): void
+    {
+        $this->useBrowser('google-holder');
+        $state = $this->startGoogle()['state'];
+        $this->queueGoogleUser(['sub' => 'late-sub', 'email' => 'person@outlook.example', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/login?google=confirm_email');
+        $link = $this->linkIn($this->lastEmail('person@outlook.example'));
+
+        $this->useBrowser('owner');
+        $this->startCsrfSession();
+        $this->register('person@outlook.example', 'owner-pass-1');
+
+        $this->useBrowser('google-holder');
+        $this->navigate($link)->assertRedirect('/login?google=account_exists');
+        $this->assertSame(0, DB::table('oauth_identities')->count());
+    }
+
+    public function test_an_unrelated_google_identity_cannot_pre_hijack_an_unverified_account(): void
+    {
+        // The attacker registers the owner's address with their own password…
+        $this->useBrowser('attacker');
+        $this->startCsrfSession();
+        $this->register('owner@example.org', 'attacker-pass-1');
+
+        // …and tries to link their own Google identity before verification.
+        $this->browser('POST', '/api/account/google/link', ['password' => 'attacker-pass-1'])->assertOk();
+        $state = $this->googleQuery($this->navigate('/auth/google/redirect', ['intent' => 'link']))['state'];
+        $this->queueGoogleUser(['sub' => 'attacker-sub', 'email' => 'attacker@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/account?google=email_unverified');
+        $this->assertSame(0, DB::table('oauth_identities')->count());
+
+        // The real owner recovers the account through the emailed reset link.
+        $this->useBrowser('owner');
+        $this->startCsrfSession();
+        $this->browser('POST', '/api/auth/forgot-password', ['email' => 'owner@example.org'])->assertStatus(202);
+        parse_str((string) parse_url($this->linkIn($this->lastEmail('owner@example.org')), PHP_URL_QUERY), $reset);
+        $this->browser('POST', '/api/auth/reset-password', [
+            'token' => $reset['token'], 'email' => 'owner@example.org', 'password' => 'owner-pass-1', 'password_confirmation' => 'owner-pass-1',
+        ])->assertOk();
+        $this->browser('POST', '/api/auth/login', ['email' => 'owner@example.org', 'password' => 'owner-pass-1'])->assertOk();
+
+        // The attacker's session is gone, and their Google identity does not open the account.
+        $this->useBrowser('attacker');
+        $this->browser('GET', '/api/user')->assertUnauthorized();
+        $this->cookieJar = [];
+        $state = $this->startGoogle()['state'];
+        $this->queueGoogleUser(['sub' => 'attacker-sub', 'email' => 'attacker@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/account');
+        $this->browser('GET', '/api/user')->assertOk()->assertJsonPath('data.email', 'attacker@gmail.com');
+
+        $owner = User::query()->where('email', 'owner@example.org')->sole();
+        $this->assertFalse(DB::table('oauth_identities')->where('user_id', $owner->id)->exists());
+    }
+
+    public function test_a_pending_link_does_not_survive_a_password_reset(): void
+    {
+        User::factory()->create(['email' => 'reader@example.org']);
+        $this->useBrowser('first');
+        $state = $this->startLink('reader@example.org');
+
+        $this->useBrowser('owner');
+        $this->startCsrfSession();
+        $this->browser('POST', '/api/auth/forgot-password', ['email' => 'reader@example.org'])->assertStatus(202);
+        parse_str((string) parse_url($this->linkIn($this->lastEmail('reader@example.org')), PHP_URL_QUERY), $reset);
+        $this->browser('POST', '/api/auth/reset-password', [
+            'token' => $reset['token'], 'email' => 'reader@example.org', 'password' => 'new-secret-9', 'password_confirmation' => 'new-secret-9',
+        ])->assertOk();
+
+        // Google returns to the session that started the link before the reset.
+        $this->useBrowser('first');
+        $this->queueGoogleUser(['sub' => 'stale-sub', 'email' => 'someone@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/account?google=link_expired');
+        $this->assertSame(0, DB::table('oauth_identities')->count());
+    }
+
+    public function test_a_pending_link_does_not_survive_disabling_the_account(): void
+    {
+        $user = User::factory()->create(['email' => 'reader@example.org']);
+        $state = $this->startLink('reader@example.org');
+
+        $user->forceFill(['status' => User::STATUS_DISABLED, 'disabled_at' => now()])->save();
+
+        $this->queueGoogleUser(['sub' => 'disabled-link-sub', 'email' => 'someone@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/login?account=disabled');
+        $this->assertSame(0, DB::table('oauth_identities')->count());
+        $this->browser('GET', '/api/user')->assertUnauthorized();
+    }
+
+    public function test_a_pending_link_does_not_follow_a_change_of_account(): void
+    {
+        User::factory()->create(['email' => 'first@example.org']);
+        User::factory()->create(['email' => 'second@example.org']);
+        $state = $this->startLink('first@example.org');
+
+        // Another account signs in on the same browser before Google returns.
+        $this->browser('POST', '/api/auth/login', ['email' => 'second@example.org', 'password' => 'password'])->assertOk();
+
+        $this->queueGoogleUser(['sub' => 'switched-sub', 'email' => 'someone@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/account?google=link_expired');
+        $this->assertSame(0, DB::table('oauth_identities')->count());
+    }
+
+    public function test_a_verified_account_can_link_a_google_identity_with_another_email(): void
+    {
+        $user = User::factory()->create(['email' => 'reader@example.org']);
+        $state = $this->startLink('reader@example.org');
+
+        $this->queueGoogleUser(['sub' => 'other-email-sub', 'email' => 'reader.personal@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/account?google=linked');
+
+        $this->assertSame((int) $user->id, (int) DB::table('oauth_identities')->where('provider_subject', 'other-email-sub')->value('user_id'));
+    }
+
+    public function test_an_unverified_account_cannot_link_a_non_authoritative_google_identity(): void
+    {
+        User::factory()->unverified()->create(['email' => 'reader@outlook.example']);
+        $state = $this->startLink('reader@outlook.example');
+
+        // Same address, but Google is not authoritative for it.
+        $this->queueGoogleUser(['sub' => 'outlook-link-sub', 'email' => 'reader@outlook.example', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/account?google=email_unverified');
+        $this->assertSame(0, DB::table('oauth_identities')->count());
     }
 
     public function test_a_returning_identity_signs_into_the_same_account(): void
@@ -349,6 +509,46 @@ class GoogleAuthenticationTest extends TestCase
             ])),
             new Response(200, ['Content-Type' => 'application/json'], json_encode($claims + ['name' => 'Google User'])),
         );
+    }
+
+    /**
+     * Signs in and starts linking Google; returns Google's state value.
+     */
+    private function startLink(string $email): string
+    {
+        $this->signIn($email);
+        $this->browser('POST', '/api/account/google/link', ['password' => 'password'])->assertOk();
+
+        return $this->googleQuery($this->navigate('/auth/google/redirect', ['intent' => 'link']))['state'];
+    }
+
+    private function register(string $email, string $password): void
+    {
+        $this->browser('POST', '/api/auth/register', [
+            'name' => 'Name', 'email' => $email, 'password' => $password, 'password_confirmation' => $password,
+        ])->assertCreated();
+    }
+
+    /**
+     * The latest email sent to the address through the real (array) transport.
+     */
+    private function lastEmail(string $to): Email
+    {
+        $emails = array_values(array_filter(
+            array_map(fn ($message) => $message->getOriginalMessage(), iterator_to_array(app('mailer')->getSymfonyTransport()->messages())),
+            fn (Email $email): bool => $email->getTo()[0]->getAddress() === $to,
+        ));
+        $this->assertNotEmpty($emails, "No email was sent to {$to}.");
+
+        return end($emails);
+    }
+
+    private function linkIn(Email $email): string
+    {
+        preg_match('/^http\S+$/m', (string) $email->getTextBody(), $matches);
+        $this->assertNotEmpty($matches, 'No link in the email.');
+
+        return $matches[0];
     }
 
     private function linkIdentity(User $user, string $subject): void

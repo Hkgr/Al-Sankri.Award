@@ -229,6 +229,11 @@ function GoogleSection({ user, onSessionError }: { user: User; onSessionError: (
       <p className="account-section__text">
         بعد الربط يمكنك تسجيل الدخول بحساب Google أيضاً. للتأكد من أنك صاحب الحساب، أدخل كلمة المرور الحالية، ثم اختر حساب Google الذي تريد ربطه.
       </p>
+      {!user.email_verified && (
+        <p className="account-section__text">
+          بريدك الإلكتروني غير مؤكَّد بعد، لذلك لن يُربط إلا حساب Gmail أو حساب Google لمؤسسة يستخدم البريد نفسه. لربط حساب آخر، أكّد بريدك أولاً.
+        </p>
+      )}
       {alert && (
         <FormAlert tone="error" id={ALERT_ID}>
           <p>{alert}</p>

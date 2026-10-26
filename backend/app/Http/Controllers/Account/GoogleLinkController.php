@@ -15,6 +15,11 @@ class GoogleLinkController extends Controller
      * Start linking Google to the signed-in account. The owner confirms
      * their current password here (local authentication and explicit
      * consent); the browser then goes to Google with intent=link.
+     *
+     * The request is bound to the account's current credentials and status,
+     * and is re-checked at Google's callback. The link itself is stored only
+     * if the account's email is verified, or the Google identity is
+     * authoritative for that same address (GoogleAccounts::link).
      */
     public function store(Request $request, GoogleAuthConfig $config, GoogleAccounts $accounts): JsonResponse
     {
@@ -36,6 +41,7 @@ class GoogleLinkController extends Controller
 
         $request->session()->put(GoogleAuthController::LINK_SESSION_KEY, [
             'user_id' => $user->getKey(),
+            'fingerprint' => GoogleAuthController::linkFingerprint($user),
             'expires_at' => now()->addMinutes(GoogleAuthController::LINK_LIFETIME_MINUTES)->getTimestamp(),
         ]);
 

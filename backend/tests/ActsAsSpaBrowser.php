@@ -20,6 +20,13 @@ trait ActsAsSpaBrowser
      */
     protected array $cookieJar = [];
 
+    /**
+     * @var array<string, array<string, string>>
+     */
+    private array $browserJars = [];
+
+    private string $currentBrowser = 'default';
+
     protected function enforceCsrfProtection(): void
     {
         $this->app->bind(ValidateCsrfToken::class, fn ($app) => new class($app, $app['encrypter']) extends ValidateCsrfToken
@@ -78,6 +85,17 @@ trait ActsAsSpaBrowser
         $this->rememberCookies($response);
 
         return $response;
+    }
+
+    /**
+     * Switches to another browser with its own cookie jar (for example the
+     * email owner versus someone else). Each browser keeps its cookies.
+     */
+    protected function useBrowser(string $name): void
+    {
+        $this->browserJars[$this->currentBrowser] = $this->cookieJar;
+        $this->currentBrowser = $name;
+        $this->cookieJar = $this->browserJars[$name] ?? [];
     }
 
     protected function startCsrfSession(): void

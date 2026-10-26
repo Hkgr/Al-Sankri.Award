@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Auth\AccountEmail;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -17,11 +18,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * The award name used in account emails.
-     */
-    public const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري';
-
     /**
      * Register any application services.
      */
@@ -55,10 +51,10 @@ class AppServiceProvider extends ServiceProvider
             absolute: false,
         )));
 
-        VerifyEmail::toMailUsing(fn (User $user, string $url): MailMessage => $this->accountMail(
+        VerifyEmail::toMailUsing(fn (User $user, string $url): MailMessage => AccountEmail::message(
             subject: 'تأكيد بريدك الإلكتروني',
             heading: 'أكّد بريدك الإلكتروني',
-            intro: 'أنشأت حساباً في موقع '.self::AWARD_NAME.'. اضغط الزر أدناه لتأكيد أن هذا البريد الإلكتروني لك.',
+            intro: 'أنشأت حساباً في موقع '.AccountEmail::AWARD_NAME.'. اضغط الزر أدناه لتأكيد أن هذا البريد الإلكتروني لك.',
             action: 'تأكيد البريد الإلكتروني',
             url: $url,
             outro: 'صلاحية الرابط 60 دقيقة. إذا لم تنشئ هذا الحساب، فتجاهل هذه الرسالة.',
@@ -69,28 +65,14 @@ class AppServiceProvider extends ServiceProvider
             'email' => $user->getEmailForPasswordReset(),
         ]));
 
-        ResetPassword::toMailUsing(fn (User $user, string $token): MailMessage => $this->accountMail(
+        ResetPassword::toMailUsing(fn (User $user, string $token): MailMessage => AccountEmail::message(
             subject: 'تعيين كلمة مرور جديدة',
             heading: 'تعيين كلمة مرور جديدة',
-            intro: 'وصلنا طلب لتعيين كلمة مرور جديدة لحسابك في موقع '.self::AWARD_NAME.'.',
+            intro: 'وصلنا طلب لتعيين كلمة مرور جديدة لحسابك في موقع '.AccountEmail::AWARD_NAME.'.',
             action: 'تعيين كلمة المرور',
             url: url('/reset-password').'?'.http_build_query(['token' => $token, 'email' => $user->getEmailForPasswordReset()]),
             outro: 'صلاحية الرابط 60 دقيقة. إذا لم تطلب ذلك، فتجاهل هذه الرسالة وستبقى كلمة مرورك كما هي.',
         ));
-    }
-
-    private function accountMail(string $subject, string $heading, string $intro, string $action, string $url, string $outro): MailMessage
-    {
-        return (new MailMessage)
-            ->subject($subject.' | '.self::AWARD_NAME)
-            ->view(['mail.account-action', 'mail.account-action-text'], [
-                'heading' => $heading,
-                'intro' => $intro,
-                'actionText' => $action,
-                'actionUrl' => $url,
-                'outro' => $outro,
-                'awardName' => self::AWARD_NAME,
-            ]);
     }
 
     private function configureRateLimiting(): void

@@ -1467,7 +1467,8 @@ Append-only audit history. System actions have no actor. The subject is referenc
 
 Two additive migrations follow the platform foundation, for the public authentication described in [authentication.md](authentication.md):
 
-- `2026_10_27_200001_allow_passwordless_users` makes `users.password` nullable. Its rollback refuses to run while any account has no password.
+- `2026_10_27_200001_allow_passwordless_users` makes `users.password` nullable.
+- **Rollback:** while any account has no password, rollback is refused before anything changes. `200002` runs first and makes the same check, so `oauth_identities`, its rows and both migration-history rows are kept.
 - `2026_10_27_200002_create_oauth_identities_table` creates the table below.
 
 ### `oauth_identities`

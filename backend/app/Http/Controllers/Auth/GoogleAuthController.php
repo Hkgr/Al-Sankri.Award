@@ -7,11 +7,16 @@ use App\Auth\GoogleAuthConfig;
 use App\Auth\GoogleIdentity;
 use App\Auth\SafeRedirect;
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Notifications\ConfirmGoogleSignUp;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -35,6 +40,10 @@ class GoogleAuthController extends Controller
 
     public const LINK_LIFETIME_MINUTES = 10;
 
+    public const PENDING_SIGNUP_SESSION_KEY = 'google_pending_signup';
+
+    public const PENDING_SIGNUP_LIFETIME_MINUTES = 60;
+
     private const INTENT_SESSION_KEY = 'google_intent';
 
     private const REDIRECT_SESSION_KEY = 'google_redirect';
@@ -43,6 +52,22 @@ class GoogleAuthController extends Controller
         private readonly GoogleAuthConfig $config,
         private readonly GoogleAccounts $accounts,
     ) {}
+
+    /**
+     * Ties a linking request to the account's current credentials and status:
+     * a password reset (new hash and remember token) or disabling the account
+     * invalidates any request started before it.
+     */
+    public static function linkFingerprint(User $user): string
+    {
+        return hash_hmac('sha256', implode("\0", [
+            (string) $user->getKey(),
+            (string) $user->getAuthPassword(),
+            (string) $user->getRememberToken(),
+            (string) $user->email,
+            (string) $user->status,
+        ]), (string) config('app.key'));
+    }
 
     /**
      * Send the visitor to Google: to sign in (the default), or to link
@@ -106,9 +131,39 @@ class GoogleAuthController extends Controller
         return $linking ? $this->completeLink($request, $identity) : $this->completeSignIn($request, $identity);
     }
 
-    private function completeSignIn(Request $request, GoogleIdentity $identity): RedirectResponse
+    /**
+     * The link from the confirmation email for a pending Google sign-up. It
+     * only completes in the browser session that started the sign-up.
+     */
+    public function confirm(Request $request): RedirectResponse
     {
-        [$outcome, $user] = $this->accounts->signIn($identity);
+        $pending = $request->session()->get(self::PENDING_SIGNUP_SESSION_KEY);
+        $token = $request->query('token');
+
+        if (! $this->config->available()) {
+            return redirect('/login?google=unavailable');
+        }
+
+        if (! is_array($pending) || ! is_string($token)
+            || (int) ($pending['expires_at'] ?? 0) < now()->getTimestamp()
+            || ! hash_equals((string) ($pending['token_hash'] ?? ''), hash('sha256', $token))) {
+            return redirect('/login?google=confirm_invalid');
+        }
+
+        $request->session()->forget(self::PENDING_SIGNUP_SESSION_KEY);
+
+        return $this->completeSignIn($request, GoogleIdentity::fromSession($pending['identity']), emailConfirmed: true);
+    }
+
+    private function completeSignIn(Request $request, GoogleIdentity $identity, bool $emailConfirmed = false): RedirectResponse
+    {
+        [$outcome, $user] = $this->accounts->signIn($identity, $emailConfirmed);
+
+        if ($outcome === GoogleAccounts::CONFIRMATION_REQUIRED) {
+            $this->startEmailConfirmation($request, $identity);
+
+            return redirect('/login?google='.$outcome);
+        }
 
         if ($user === null) {
             return redirect('/login?google='.$outcome);
@@ -118,31 +173,60 @@ class GoogleAuthController extends Controller
         $request->session()->regenerate();
         $user->forceFill(['last_login_at' => now()])->save();
 
-        if ($outcome === GoogleAccounts::CREATED && ! $user->hasVerifiedEmail()) {
+        return redirect(SafeRedirect::afterLogin($request, $request->session()->pull(self::REDIRECT_SESSION_KEY)));
+    }
+
+    /**
+     * Google is not authoritative for this address: nothing is created yet.
+     * The claims wait in this session, and a one-time link goes to the
+     * address. At most three such emails per address per hour.
+     */
+    private function startEmailConfirmation(Request $request, GoogleIdentity $identity): void
+    {
+        $token = Str::random(64);
+        $request->session()->put(self::PENDING_SIGNUP_SESSION_KEY, [
+            'identity' => $identity->toSession(),
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(self::PENDING_SIGNUP_LIFETIME_MINUTES)->getTimestamp(),
+        ]);
+
+        RateLimiter::attempt('google-confirm:'.sha1($identity->email), 3, function () use ($identity, $token): void {
             try {
-                $user->sendEmailVerificationNotification();
+                Notification::route('mail', $identity->email)
+                    ->notify(new ConfirmGoogleSignUp(url('/auth/google/confirm').'?'.http_build_query(['token' => $token])));
             } catch (Throwable $exception) {
                 report($exception);
             }
-        }
-
-        return redirect(SafeRedirect::afterLogin($request, $request->session()->pull(self::REDIRECT_SESSION_KEY)));
+        }, 3600);
     }
 
     private function completeLink(Request $request, GoogleIdentity $identity): RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user !== null && ! $user->isActive()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect('/login?account=disabled');
+        }
+
         if (! $this->hasPendingLink($request)) {
+            $request->session()->forget(self::LINK_SESSION_KEY);
+
             return redirect('/account?google=link_expired');
         }
 
         $request->session()->forget(self::LINK_SESSION_KEY);
 
-        return redirect('/account?google='.$this->accounts->link($request->user(), $identity));
+        return redirect('/account?google='.$this->accounts->link($user, $identity));
     }
 
     /**
-     * Linking was requested, with the password confirmed, by the account
-     * that is signed in now, and only a few minutes ago.
+     * Linking was requested, with the password confirmed, by the account that
+     * is signed in now, a few minutes ago, and its credentials and status have
+     * not changed since (password reset, disabling, another account).
      */
     private function hasPendingLink(Request $request): bool
     {
@@ -151,8 +235,10 @@ class GoogleAuthController extends Controller
 
         return is_array($pending)
             && $user !== null
+            && $user->isActive()
             && (int) ($pending['user_id'] ?? 0) === (int) $user->getKey()
-            && (int) ($pending['expires_at'] ?? 0) >= now()->getTimestamp();
+            && (int) ($pending['expires_at'] ?? 0) >= now()->getTimestamp()
+            && hash_equals((string) ($pending['fingerprint'] ?? ''), self::linkFingerprint($user));
     }
 
     private function driver(): GoogleProvider
