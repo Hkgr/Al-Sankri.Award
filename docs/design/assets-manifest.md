@@ -1,12 +1,12 @@
 # Brand assets manifest
 
-All brand assets in `frontend/src/assets/brand/` are **faithful vector extractions** from the supplied identity guide, `docs/جائزة السنكري visual identity.pdf`.
+The brand artwork in `frontend/src/assets/brand/` consists of **faithful vector extractions** from the supplied identity guide, `docs/جائزة السنكري visual identity.pdf`. The web fonts in `frontend/src/assets/brand/fonts/` are **lossless conversions** of the owner-supplied OTF files in `docs/fonts/` ([Web fonts](#web-fonts)).
 
 - Page numbers are physical PDF pages.
 - Nothing was traced, redrawn, generated or substituted.
 - No standalone logo or symbol files were supplied with the guide (see [source-audit.md](source-audit.md) §11).
 
-The assets are **not imported** by the running app in this phase.
+The assets and fonts are **not imported** by the running app in this phase.
 
 ## Inventory
 
@@ -76,6 +76,44 @@ Each logo and symbol SVG was checked as follows:
 - **Not extracted:** the page 1 raster mockup. It is a product visualisation, not a logo source, and its use on the web is unresolved.
 - The background pattern is a full-page composition, not a seamless tile.
 
+## Web fonts
+
+The brand owner supplied five OTF files as the award's fonts. The identity PDF does not name them. Their internal metadata is recorded in [source-audit.md](source-audit.md) §10.2.
+
+| Original (unchanged) | Family / style (internal) | Weight | Coverage | Web asset | Size |
+| --- | --- | --- | --- | --- | --- |
+| `docs/fonts/itfrayat-Light.otf` (61,312 B) | itf rayat / Light | 300 | Arabic + Basic Latin | `fonts/itf-rayat-light.woff2` | 30,072 B |
+| `docs/fonts/itfrayat-Regular.otf` (63,044 B) | itf rayat / Regular | 400 | Arabic + Basic Latin | `fonts/itf-rayat-regular.woff2` | 31,456 B |
+| `docs/fonts/itfrayat-Medium.otf` (63,832 B) | itf rayat / Medium | 500 | Arabic + Basic Latin | `fonts/itf-rayat-medium.woff2` | 31,844 B |
+| `docs/fonts/itfrayat-Bold.otf` (64,884 B) | itf rayat / Bold | 700 | Arabic + Basic Latin | `fonts/itf-rayat-bold.woff2` | 32,240 B |
+| `docs/fonts/itfrayat-Black.otf` (63,392 B) | itf rayat / Black | 900 | Arabic + Basic Latin | `fonts/itf-rayat-black.woff2` | 31,524 B |
+
+`fonts/fonts.css` declares the five faces:
+
+- alias `"SA ITF Rayat"`;
+- relative `url()` sources only, with no `local()` and no remote service;
+- `font-weight` taken from each file's `usWeightClass`;
+- `font-style: normal`;
+- `font-display: swap`.
+
+The files are static, so no weight ranges are declared.
+
+### Conversion method
+
+1. **Tool.** fontTools 4.67.0 `woff2.compress` with Brotli 1.2.1, run from a temporary environment outside the repository. No project dependency was added.
+2. **No subsetting.** Every glyph, the full character map and all OpenType layout tables were kept.
+3. **Verification.** Each WOFF2 was decompressed again and compared with its OTF table by table.
+   - **Byte-identical:** `CFF `, `GSUB`, `GPOS`, `GDEF`, `cmap`, `name`, `OS/2`, `hhea`, `hmtx`, `maxp` and `post`.
+   - **`head`:** differs only by `flags` bit 11 ("font data losslessly converted"), which the WOFF2 specification requires, plus the recomputed checksum adjustment.
+   - **`DSIG`:** the digital signature table is omitted. A signature cannot remain valid after conversion, and browsers do not use it.
+4. **Result.** About 50% of the OTF size (30–32 KB per weight, about 157 KB for all five). A page downloads only the weights it actually uses.
+
+### Font limitations
+
+- **Not subset.** Subsetting for production (for example, dropping unused presentation-form code points) is a later optimisation, to be checked against shaping.
+- **Missing characters fall back.** These include `…` `•` `©` `®` `™` `·` `→` `§`, accented Latin, `~` `^` `` ` ``, ٬ and Persian-only letters and digits. They render in the next font of the stack; see [identity-guidelines.md](identity-guidelines.md) §5.2.
+- **No licence information is embedded** (no copyright, licence or licence-URL name records). Whether the licence permits self-hosting on a public website is **unresolved**.
+
 ## Missing originals (not fabricated)
 
 The following were not supplied and have **not** been created:
@@ -86,6 +124,5 @@ The following were not supplied and have **not** been created:
 - social-sharing image
 - monochrome logos
 - dark-background domain symbols
-- brand font files
 
-See [identity-guidelines.md](identity-guidelines.md) §9.
+The font licence confirmation is also outstanding. See [identity-guidelines.md](identity-guidelines.md) §9.

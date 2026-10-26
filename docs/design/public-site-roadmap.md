@@ -35,17 +35,19 @@ The roadmap does not decide these questions:
 - Digital identity guidelines.
 - `brand-tokens.css` (not imported into the app).
 - Faithful vector brand assets and their manifest.
+- Self-hosted WOFF2 conversions of the owner-supplied brand font, with `fonts.css` (not imported into the app).
 - Isolated reference sheet `docs/design/preview.html`.
 - This roadmap.
 
-**Dependencies:** the supplied identity PDF and plans in `docs/`.
+**Dependencies:** the supplied identity PDF and plans in `docs/`, and the brand font files in `docs/fonts/`.
 
 **Acceptance criteria:**
 
 - [ ] The three official colours are preserved exactly. Every web extension is labelled as proposed.
 - [ ] Every proposed text pairing meets WCAG AA, with measured ratios.
 - [ ] Brand assets are extracted, not redrawn. They are verified against the PDF, and their provenance is documented.
-- [ ] Missing items (typeface, master files, dark domain symbols, …) are listed as unresolved, not fabricated.
+- [ ] Missing items (font licence confirmation, master files, dark domain symbols, …) are listed as unresolved, not fabricated.
+- [ ] Only the supplied font weights are declared and demonstrated, with no synthetic bold or italic.
 - [ ] No change to production pages, the app entry point, routing, backend, manifests, lockfiles, build configuration or CI.
 - [ ] The existing frontend lint and build still pass.
 
@@ -55,8 +57,8 @@ The roadmap does not decide these questions:
 
 **Scope:**
 
-- Import `brand-tokens.css` into the app.
-- Add a minimal, scoped base stylesheet: `lang="ar" dir="rtl"`, body typography, focus styles and reduced-motion handling.
+- Import `fonts.css` and `brand-tokens.css` into the app.
+- Add a minimal, scoped base stylesheet: `lang="ar" dir="rtl"`, body typography (with `font-synthesis: none`), focus styles and reduced-motion handling.
 - Shared layout components:
   - skip link
   - header with logo
@@ -72,7 +74,7 @@ The roadmap does not decide these questions:
 
 - Phase 0 merged.
 - Decisions on navigation labels and the page list.
-- Ideally, the brand typeface (otherwise keep the provisional stack).
+- Confirmation from the brand owner that the font licence permits self-hosting on the public site. Without it, ship with the fallback stack only.
 
 **Acceptance criteria:**
 

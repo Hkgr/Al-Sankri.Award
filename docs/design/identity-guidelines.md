@@ -5,6 +5,7 @@
 These guidelines set out how the award's supplied identity should appear on the public website. They are the Phase 0 foundation. No pages are built yet.
 
 - **Source of truth:** `docs/جائزة السنكري visual identity.pdf`. Page numbers below are physical PDF pages.
+- **Brand font:** the owner-supplied OTF files in `docs/fonts/` (§5.1).
 - **Evidence:** [source-audit.md](source-audit.md) records what the guide contains.
 - **Assets:** [assets-manifest.md](assets-manifest.md) lists the extracted brand artwork.
 - **Tokens:** `frontend/src/styles/brand-tokens.css` implements these rules (not yet imported by the app).
@@ -14,6 +15,7 @@ Each rule carries the label of its source:
 
 - **Specified**: stated by the identity guide.
 - **Observed**: visible in the guide's artwork or layouts, but not stated as a rule.
+- **Supplied**: provided by the brand owner as a separate file, not specified in the guide (the font files).
 - **Proposed**: a web-specific decision made here.
 - **Unresolved**: needs the brand owner.
 
@@ -244,32 +246,67 @@ Ratios were calculated from the hex values using the WCAG formula.
 
 ## 5. Typography
 
-### 5.1 Brand typeface status
+### 5.1 Brand typeface (Supplied)
 
-- The guide does **not** name a typeface, and the PDF embeds **no fonts**. All lettering is outlined (**Unresolved**).
-- We do not identify the face from its appearance.
-- No font has been downloaded, bundled or hotlinked.
-- **Action for the brand owner:** supply the typeface name, its web licence, and WOFF2 files covering Arabic and Latin.
+- The guide does **not** name a typeface, and the PDF embeds **no fonts**. All its lettering is outlined.
+- The brand owner has **supplied** the award's fonts separately: **itf rayat** by iwantype, version 1.001, in `docs/fonts/`. The internal metadata is recorded in [source-audit.md](source-audit.md) §10.2.
+- We do not claim the guide's own lettering uses this face; that was not compared.
+- **Unresolved:** the files embed no licence text. Before the font goes live (Phase 1), the brand owner must confirm that the licence covers self-hosting on a public website.
 
-### 5.2 Provisional stack (system fonts only)
+| Weight | `font-weight` | Original | Web file |
+| --- | --- | --- | --- |
+| Light | 300 | `docs/fonts/itfrayat-Light.otf` | `itf-rayat-light.woff2` |
+| Regular | 400 | `docs/fonts/itfrayat-Regular.otf` | `itf-rayat-regular.woff2` |
+| Medium | 500 | `docs/fonts/itfrayat-Medium.otf` | `itf-rayat-medium.woff2` |
+| Bold | 700 | `docs/fonts/itfrayat-Bold.otf` | `itf-rayat-bold.woff2` |
+| Black | 900 | `docs/fonts/itfrayat-Black.otf` | `itf-rayat-black.woff2` |
+
+- All five are **static and upright**. There is **no 600** and **no italic**.
+- The web files live in `frontend/src/assets/brand/fonts/`, declared by `fonts.css` under the alias `"SA ITF Rayat"`.
+- The alias deliberately differs from the installed name, and `fonts.css` has no `local()` sources, so a copy installed on a device can never stand in.
+- **Do not set the logo's lettering in this font.** The logo lettering is **artwork** and is never re-set.
+
+### 5.2 Font stack (Proposed)
 
 ```css
---sa-font-family-base: "Noto Sans Arabic", "Segoe UI", Tahoma, "Geeza Pro",
-  system-ui, -apple-system, sans-serif;
+--sa-font-family-brand: "SA ITF Rayat";
+--sa-font-family-base: var(--sa-font-family-brand), "Noto Sans Arabic",
+  "Segoe UI", Tahoma, "Geeza Pro", system-ui, -apple-system, sans-serif;
+--sa-font-family-heading: var(--sa-font-family-base);
 ```
 
-This is a calm, low-contrast Arabic sans available on most devices: Noto Sans Arabic (Android/Linux), Segoe UI and Tahoma (Windows), Geeza Pro and the system UI font (Apple). It is **Provisional**. Rendering will vary by device until the brand font is supplied.
+- **One family for headings and body.** Only one family was supplied, and its five weights give enough hierarchy.
+- **The fallbacks stay**, for two reasons:
+  - **Before the font loads.** `font-display: swap` shows text in a fallback first.
+  - **For characters the font lacks.** These include `…` `•` `©` `®` `™` `·` `→` `§`, accented Latin (é, ü, ç), `~` `^` `` ` ``, the Arabic thousands separator ٬, and Persian-only letters and digits. Each such character is drawn from the next font in the stack.
+- **Keep copy within coverage where it matters.**
+  - In Arabic UI text, prefer "..." (three full stops) to `…`.
+  - Avoid `•` as a typed bullet: list markers are drawn by the browser and are fine.
+  - Accept that a name with accents will mix faces.
+- **`font-synthesis: none`** belongs in the Phase 1 base stylesheet, so the browser never fakes a weight or an italic. The reference sheet already sets it.
+- The optional features `dlig`, `salt` and `ss01`–`ss04` stay **off**. Turning them on is a brand decision.
+- Fonts are loaded only by the isolated reference sheet in this phase. The running app imports neither `fonts.css` nor the tokens.
 
-The logo lettering is **artwork**. Never re-set it in the web font.
+### 5.3 Weight roles (Proposed)
 
-### 5.3 Type scale (Proposed)
+| Token | Value | Use | Never |
+| --- | --- | --- | --- |
+| `--sa-font-weight-light` | 300 | Large secondary display text, 24px and up | Body, captions, UI |
+| `--sa-font-weight-regular` | 400 | Body, lead, helper text, captions, inputs | — |
+| `--sa-font-weight-medium` | 500 | Field labels, buttons, tags, h4, table heads, `dt` | Long paragraphs |
+| `--sa-font-weight-bold` | 700 | h1–h3, domain labels, `<strong>` in body | — |
+| `--sa-font-weight-black` | 900 | Short display lines (a slogan) at h1 size and up | Paragraphs, text under 34px |
+
+The earlier `--sa-font-weight-semibold` (600) token has been **removed**. With this font, a request for 600 renders Bold, so UI emphasis now uses Medium (500). `<strong>` inside body text resolves to 700 (Bold), and inside Bold text to 900 (Black). Both are real faces.
+
+### 5.4 Type scale (Proposed)
 
 | Token | Range (390 → 1440px viewport) | Line height | Weight | Use |
 | --- | --- | --- | --- | --- |
-| `--sa-font-size-h1` | 34 → 52px | 1.3–1.4 | 700 | One per page |
+| `--sa-font-size-h1` | 34 → 52px | 1.3–1.4 | 700 (900 for short display lines) | One per page |
 | `--sa-font-size-h2` | 28 → 40px | 1.4 | 700 | Section titles |
-| `--sa-font-size-h3` | 24 → 30px | 1.4 | 700 / 600 | Sub-sections, card titles |
-| `--sa-font-size-h4` | 20 → 24px | 1.4 | 600 | Minor headings |
+| `--sa-font-size-h3` | 24 → 30px | 1.4 | 700 | Sub-sections, card titles |
+| `--sa-font-size-h4` | 20 → 24px | 1.4 | 500 | Minor headings |
 | `--sa-font-size-lead` | 18 → 21px | 1.8 | 400 | Introductions |
 | `--sa-font-size-body` | 16 → 18px | **1.8** | 400 | Paragraphs |
 | `--sa-font-size-small` | 16px | 1.7 | 400 | Meta, helper text |
@@ -277,17 +314,29 @@ The logo lettering is **artwork**. Never re-set it in the web font.
 
 All sizes are in `rem` and scale with the reader's font-size setting and browser zoom.
 
-### 5.4 Arabic paragraph treatment (Proposed)
+**Sizes and line heights are unchanged from the system-stack version, because the font's measured proportions do not justify a change:**
+
+| Measure | itf rayat Regular | Segoe UI |
+| --- | --- | --- |
+| Arabic tooth height (س) | 0.379 em | 0.382 em |
+| Latin x-height | 0.505 em | 0.500 em |
+
+- **Why it still looks smaller.** Rayat is narrower and has a tight word space: 0.175 em, against 0.274 em in Segoe UI. Words such as الدكتور عبد can look close together. This is the designer's spacing. **No `word-spacing` override is proposed**; review it with the brand owner on real copy.
+- **Line box.** The default line box is 1.43–1.48 em. The tallest glyph, the lam of `الله`, reaches 1.15–1.20 em above the baseline. Two-line Bold and Black headings at line height 1.3 were checked and do not collide.
+- **Optical centring.** The font's descent is large (about 0.53 em), so a single Arabic line sits slightly high in a fixed-height button. This is acceptable in the reference sheet. Revisit it with real components in Phase 1.
+- **The Latin digit `1` resembles a lowercase `l`** at small sizes (for example, "h1"). Avoid relying on it in codes and identifiers; set them in the mono stack.
+
+### 5.5 Arabic paragraph treatment (Proposed)
 
 - **Line height.** At least 1.3 for headings and 1.8 for body text, so dots and diacritics never clip.
 - **Line length.** Paragraph measure is at most `--sa-measure-prose` (42rem, about 70–80 Arabic characters).
 - **Alignment.** Start-aligned, which is right-aligned in RTL. Do **not** justify on the web. The guide's print layouts justify with kashida, but browser justification of Arabic produces uneven gaps.
 - **Never use `letter-spacing` on Arabic.** It breaks joining.
 - **Never insert tatweel (ـ) for visual stretching** in web text. It breaks search, copy and screen readers.
-- **Emphasis.** Use weight (600/700) or colour plus weight, as the guide does with bold deep green. No italics for Arabic. No `text-transform`.
+- **Emphasis.** Use weight (500 for UI, 700 in text) or colour plus weight, as the guide does with bold deep green. No italics for Arabic. No `text-transform`.
 - **Headings.** Section titles may echo the guide (centred, gold) **only** where the contrast rules allow: on light surfaces, use deep green or `--sa-color-text-accent`, not brand gold.
 
-### 5.5 Mixed Arabic/Latin content (Proposed)
+### 5.6 Mixed Arabic/Latin content (Proposed)
 
 - Set `lang="ar"` and `dir="rtl"` at the document level.
 - **Isolate direction-neutral runs** with `<bdi>`, or with `dir="ltr"` on an inline element. This applies to:
@@ -471,7 +520,7 @@ Use the gold vertical rule beside key text blocks, as on pages 10–15.
 
 ## 9. Unresolved decisions (for the brand owner)
 
-1. Brand typeface: name, licence and web font files.
+1. Brand font licence: confirmation that the itf rayat licence permits self-hosting on a public website (the files embed no licence text). The font files themselves are now supplied (§5.1).
 2. Original master logo files (AI/SVG) to replace the PDF-derived SVGs.
 3. Symbol-only mark, favicon and app icon, plus social-sharing images.
 4. Dark-background versions of the six domain symbols.
@@ -482,3 +531,4 @@ Use the gold vertical rule beside key text blocks, as on pages 10–15.
 9. Whether الجودة is an independent nomination category or a cross-cutting method.
 10. Date and numeral conventions for web copy.
 11. Use of the page 1 award-object mockup in public communications.
+12. Whether any of the font's optional features (`dlig`, `salt`, stylistic sets `ss01`–`ss04`) or a wider word spacing should be used on the web. They stay at the font's defaults until the brand owner decides.

@@ -1,0 +1,58 @@
+/*
+ * Al-Sankri Award: self-hosted brand font faces (Phase 0 foundation)
+ *
+ * Status: NOT imported by the running app. Loaded only by the isolated
+ * reference sheet docs/design/preview.html.
+ *
+ * Source: the owner-supplied OTF files in docs/fonts/ (family "itf rayat",
+ * iwantype, version 1.001). Each WOFF2 below is a lossless, unsubsetted
+ * conversion of one OTF; see docs/design/assets-manifest.md.
+ *
+ * The alias "SA ITF Rayat" is deliberately different from the installed
+ * family name, and there are no local() sources, so a copy installed on the
+ * reader's device can never stand in for these files.
+ *
+ * All five files are static (no variable axes) and upright only. Weights
+ * are taken from each file's OS/2 usWeightClass. There is no 600 and no
+ * italic: do not request them (see font-synthesis in identity-guidelines.md).
+ */
+
+@font-face {
+  font-family: "SA ITF Rayat";
+  src: url("./itf-rayat-light.woff2") format("woff2");
+  font-weight: 300; /* itfrayat-Light, usWeightClass 300 */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SA ITF Rayat";
+  src: url("./itf-rayat-regular.woff2") format("woff2");
+  font-weight: 400; /* itfrayat-Regular, usWeightClass 400 */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SA ITF Rayat";
+  src: url("./itf-rayat-medium.woff2") format("woff2");
+  font-weight: 500; /* itfrayat-Medium, usWeightClass 500 */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SA ITF Rayat";
+  src: url("./itf-rayat-bold.woff2") format("woff2");
+  font-weight: 700; /* itfrayat-Bold, usWeightClass 700 */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SA ITF Rayat";
+  src: url("./itf-rayat-black.woff2") format("woff2");
+  font-weight: 900; /* itfrayat-Black, usWeightClass 900 */
+  font-style: normal;
+  font-display: swap;
+}

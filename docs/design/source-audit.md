@@ -12,6 +12,7 @@ Every finding below carries one of these labels. The same labels are used in [id
 | --- | --- |
 | **Specified** | Stated explicitly in the supplied identity guide (as text, a colour value, or a labelled artwork). |
 | **Observed** | Visible in the guide's artwork or layouts but not stated as a rule. |
+| **Supplied** | Provided by the brand owner as a separate file, not specified in the guide (the font files in `docs/fonts/`). |
 | **Proposed** | A digital-use decision made in this phase, where the guide is silent. |
 | **Unresolved** | Missing from the supplied material. Needs a decision or asset from the brand owner. |
 
@@ -22,6 +23,7 @@ Every finding below carries one of these labels. The same labels are used in [id
 | `docs/جائزة السنكري visual identity.pdf` | PDF, 16 pages, A4 landscape (841.89 × 595.28 pt). Produced by Adobe Illustrator 30.2, dated 2026-09-28. | **Primary authority** for brand appearance. |
 | `docs/خطة جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية.docx` | Award plan | Official name, slogan, implementing organisation, the six domains. No visual rules. |
 | `docs/التصور التنفيذي لحفل الإطلاق الرسمي.docx` | Official launch-event plan | Event context and naming only. No visual rules. |
+| `docs/fonts/itfrayat-{Light,Regular,Medium,Bold,Black}.otf` | Five OpenType (CFF) font files, supplied separately by the brand owner as the award's fonts | **Supplied** brand typeface. See §10. |
 
 None of the source files were modified.
 
@@ -144,10 +146,76 @@ The visual idea combines **the cup, the flower, and the rising person** (الك�
 
 ## 10. Typography
 
+### 10.1 What the guide says
+
 - **The guide does not name a typeface.** All lettering is outlined, and **no fonts are embedded** in the PDF.
 - The DOCX files set no explicit run fonts, and they are not typographic references for the brand.
-- The lettering *looks* like a contemporary, low-contrast Arabic sans-serif. **No identification is claimed from appearance.**
-- **Unresolved:** the brand typeface name, its licence, and its font files. A system-font stack is used as a **Provisional** fallback. Nothing is downloaded or hotlinked.
+- The PDF's outlined lettering was **not** compared with the supplied fonts below. Nothing here claims that the guide was set in them.
+
+### 10.2 Supplied font files (Supplied)
+
+After the guide, the brand owner supplied five OTF files in `docs/fonts/` as the award's fonts. They were inspected programmatically with fontTools 4.67 (in a temporary environment outside the repository). Every statement below comes from the files' internal tables, not their filenames.
+
+| File | Bytes | Family (nameID 16, else 1) | Style (nameID 17, else 2) | Full name | PostScript name | `usWeightClass` | CFF `Weight` |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `itfrayat-Light.otf` | 61,312 | itf rayat | Light | itf rayat Light | `itfrayat-Light` | 300 | Light |
+| `itfrayat-Regular.otf` | 63,044 | itf rayat | Regular | itf rayat Regular | `itfrayat-Regular` | 400 | Regular |
+| `itfrayat-Medium.otf` | 63,832 | itf rayat | Medium | itf rayat Medium | `itfrayat-Medium` | 500 | Medium |
+| `itfrayat-Bold.otf` | 64,884 | itf rayat | Bold | itf rayat Bold | `itfrayat-Bold` | 700 | Bold |
+| `itfrayat-Black.otf` | 63,392 | itf rayat | Black | itf rayat Black | `itfrayat-Black` | 900 | Black |
+
+**Evidence that they form one family.** All five share:
+
+- the typographic family name "itf rayat". Light, Medium and Black use the usual legacy grouping (nameID 1 "itf rayat Light" / "itf rayat Med" / "itf rayat Black", subfamily "Regular") with nameID 16 = "itf rayat"; Regular and Bold carry "itf rayat" in nameID 1;
+- the manufacturer and designer "iwantype" and the vendor URL `iwantype.com`;
+- version 1.001 and the same unique-ID pattern (`Version 1.001;;itfrayat-<Style>;2024;FL842`);
+- 800 units per em, 592 glyphs and an identical 301-character map.
+
+**Style metadata.**
+
+- All five are **static** fonts: no `fvar`, `gvar` or `CFF2` table.
+- All five are **upright**: italic angle 0, no italic bit set. There is no italic.
+- There is **no 600 (SemiBold)** weight. Bold sets the bold bit (`fsSelection`, `macStyle`); the others set "Regular".
+- `fsType` is 0 (installable embedding).
+
+**Character coverage** (identical in all five):
+
+| Range | Coverage |
+| --- | --- |
+| Arabic letters U+0621–U+064A | 37 of 42. All 28 letters plus hamza forms, ta marbuta and alef maqsura. Missing only the rare U+063B–U+063F. |
+| Arabic marks U+064B–U+0652, U+0653–U+0655, superscript alef U+0670 | Complete |
+| Arabic-Indic digits U+0660–U+0669, ٪ ٫ ، ؛ ؟, tatweel | Present. U+066C (Arabic thousands separator) is missing. |
+| Extended Arabic-Indic (Persian) digits, ژ گ ک ی | Missing. پ چ ڤ are present. |
+| Basic Latin A–Z a–z 0–9 | Complete. ASCII punctuation lacks `^`, `` ` `` and `~`. |
+| Latin-1 accented letters (é, ü, ç, …) | **None** |
+| « » – — ‘ ’ “ ” ‹ › € × ÷ | Present |
+| … • © ® ™ · → § | **Missing** |
+| ZWJ, ZWNJ, LRM, RLM | No glyphs (invisible format characters; shaping engines handle them without one) |
+
+**Shaping tables.**
+
+- GSUB, GPOS and GDEF are present, with `DFLT`, `arab` (default plus `URD`) and `latn` scripts.
+- **GSUB features:** `ccmp` (Arabic), `init`, `medi`, `fina`, `rlig`, `liga`, `dlig`, `salt`, `aalt`, and stylistic sets `ss01`–`ss04`. The sets are named "morsala", "yeh" and "dots" for ss01, ss02 and ss04; ss03 has no name.
+- The font includes a dedicated `الله` ligature.
+- **GPOS features:** `kern`, `mark`, `mkmk`. There is no legacy `kern` table.
+- The optional sets (`dlig`, `salt`, `ss01`–`ss04`) are off by default in browsers. They were not enabled or evaluated.
+
+**Vertical metrics.**
+
+- `hhea` ascent/descent ranges from 720/−420 (Light) to 740/−440 (Black). Windows ascent/descent is 720/450. `USE_TYPO_METRICS` is off. The default line box is therefore 1.43–1.48 em.
+- A few glyphs rise above the Windows ascent. The tallest is the medial lam of the `الله` ligature: 922 units (1.15 em) in Regular and 961 units (1.20 em) in Bold.
+
+**Attribution and licence.**
+
+- There is **no** copyright (nameID 0), licence description (13) or licence URL (14) record in any file.
+- The only attribution is iwantype as manufacturer and designer.
+- **Unresolved:** whether the award's licence permits self-hosting these fonts on a public website. See §11.
+
+**Provenance.**
+
+- **Supplied:** the user supplied the files as the award's fonts.
+- **Not specified by the identity guide:** the PDF does not name them.
+- The role each weight plays on the web is a **Proposed** decision, documented in [identity-guidelines.md](identity-guidelines.md) §5.
 
 ## 11. Assets
 
@@ -156,7 +224,7 @@ The visual idea combines **the cup, the flower, and the rising person** (الك�
 | Standalone logo files (SVG/AI/EPS/PNG) | **Not supplied.** Extracted faithfully from the PDF's vector paths; see [assets-manifest.md](assets-manifest.md). |
 | Domain symbols | **Not supplied** separately. Extracted from pages 10–15. |
 | Background line pattern | Extracted from page 2. |
-| Font files | **Not supplied.** Unresolved. |
+| Font files | **Supplied** separately: five static OTF weights of "itf rayat" in `docs/fonts/` (§10.2). Converted losslessly to WOFF2 for the web; see [assets-manifest.md](assets-manifest.md). Web licence **Unresolved**: the files embed no licence text. |
 | Dark-background domain symbols, monochrome logos, symbol-only mark, favicon/app icon | **Not supplied.** Unresolved. Do not improvise them. |
 | Photography | **None supplied.** Page 1 is a product mockup render, not documentary photography. |
 

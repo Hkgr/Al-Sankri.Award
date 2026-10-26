@@ -11,9 +11,11 @@
  *                 (docs/جائزة السنكري visual identity.pdf, page 8).
  *   [OBSERVED]    Value is present in the guide's artwork but not listed
  *                 as a palette colour.
+ *   [SUPPLIED]    Supplied by the brand owner as a separate file, not
+ *                 specified in the guide (the brand font files, docs/fonts/).
  *   [PROPOSED]    Digital extension for web use, not part of the brand guide.
  *   [PROVISIONAL] Placeholder until the brand owner supplies a missing
- *                 specification (for example, the brand typeface).
+ *                 specification.
  *
  * Every custom property is namespaced `--sa-` so it cannot collide with the
  * starter template's variables in src/index.css. This file declares custom
@@ -112,20 +114,28 @@
    * 3. Typography
    * ------------------------------------------------------------------ */
 
-  /* [PROVISIONAL] The guide does not name its typeface and supplies no font
-     files. These stacks use only fonts already installed on the reader's
-     device. Nothing is downloaded, bundled or hotlinked. */
-  --sa-font-family-base: "Noto Sans Arabic", "Segoe UI", Tahoma, "Geeza Pro",
-    system-ui, -apple-system, sans-serif;
+  /* [SUPPLIED] Brand font: "itf rayat" (iwantype, v1.001), five static
+     upright weights, self-hosted as "SA ITF Rayat" by
+     src/assets/brand/fonts/fonts.css. That stylesheet must be loaded for the
+     alias to resolve; this file does not import it.
+     [PROPOSED] Fallbacks after the alias cover characters the font lacks
+     (for example © … and accented Latin) and the moment before it loads
+     (font-display: swap). One family serves both roles. */
+  --sa-font-family-brand: "SA ITF Rayat";
+  --sa-font-family-base: var(--sa-font-family-brand), "Noto Sans Arabic",
+    "Segoe UI", Tahoma, "Geeza Pro", system-ui, -apple-system, sans-serif;
   --sa-font-family-heading: var(--sa-font-family-base);
   --sa-font-family-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono",
     Menlo, monospace;
 
-  /* [PROPOSED] Weights. Rendering depends on the fallback font. Tahoma has
-     only 400/700, so the browser synthesises 600 from 700. */
-  --sa-font-weight-regular: 400;
-  --sa-font-weight-semibold: 600;
-  --sa-font-weight-bold: 700;
+  /* [SUPPLIED] The only weights that exist (OS/2 usWeightClass).
+     [PROPOSED] Role for each. There is no 600: a request for 600 would
+     render Bold, so use medium for UI emphasis. There is no italic. */
+  --sa-font-weight-light: 300; /* large sizes only (24px and up), never body */
+  --sa-font-weight-regular: 400; /* body, lead, captions, helper text */
+  --sa-font-weight-medium: 500; /* labels, buttons, tags, h4, table heads */
+  --sa-font-weight-bold: 700; /* h1–h3, strong emphasis in body */
+  --sa-font-weight-black: 900; /* short display lines only, h1 size and up */
 
   /* [PROPOSED] Responsive type scale (rem = 16px default). Body text never
      drops below 16px. Captions stay at or above 14px for Arabic legibility. */
@@ -139,7 +149,10 @@
   --sa-font-size-h1: clamp(2.125rem, 1.6rem + 2.4vw, 3.25rem); /* 34→52px */
 
   /* [PROPOSED] Arabic needs generous line height to keep dots and
-     diacritics clear of adjacent lines. */
+     diacritics clear of adjacent lines. Checked against itf rayat: its
+     default line box is 1.43–1.48em, its tallest glyph (the lam of الله)
+     reaches 1.15–1.20em above the baseline, and two-line Bold and Black
+     headings at 1.3 do not collide. */
   --sa-line-height-body: 1.8;
   --sa-line-height-heading: 1.4;
   --sa-line-height-tight: 1.3; /* minimum for Arabic; do not go lower */
