@@ -11,6 +11,12 @@ use Illuminate\Support\Facades\Schema;
  *
  * Circular keys are added later in add_deferred_platform_foreign_keys:
  * applications.current_version_id and application_versions.completion_request_id.
+ *
+ * Country codes and hashes are checked without regular expressions so the
+ * same definitions run on MySQL 8.0.16+ and MariaDB 10.11 (which has no
+ * REGEXP_LIKE). ASCII() of a single character is 65–90 only for A–Z; the hash
+ * must be 64 characters, already lowercase (compared as bytes) and valid hex
+ * (UNHEX() returns NULL otherwise).
  */
 return new class extends Migration
 {
@@ -39,7 +45,7 @@ return new class extends Migration
         });
         $this->addCheck('applicants', 'chk_applicants_type', "type IN ('individual', 'team', 'initiative', 'official_institution', 'organization')");
         $this->addCheck('applicants', 'chk_applicants_status', "status IN ('active', 'suspended', 'archived')");
-        $this->addCheck('applicants', 'chk_applicants_country', "headquarters_country_code IS NULL OR REGEXP_LIKE(headquarters_country_code, '^[A-Z]{2}$', 'c')");
+        $this->addCheck('applicants', 'chk_applicants_country', 'headquarters_country_code IS NULL OR (CHAR_LENGTH(headquarters_country_code) = 2 AND ASCII(SUBSTRING(headquarters_country_code, 1, 1)) BETWEEN 65 AND 90 AND ASCII(SUBSTRING(headquarters_country_code, 2, 1)) BETWEEN 65 AND 90)');
 
         Schema::create('applicant_members', function (Blueprint $table) {
             $table->id();
@@ -114,7 +120,7 @@ return new class extends Migration
             $table->unique(['application_id', 'primary_flag'], 'uq_application_locations_primary');
             $table->index(['country_code', 'governorate'], 'idx_application_locations_area');
         });
-        $this->addCheck('application_locations', 'chk_application_locations_country', "REGEXP_LIKE(country_code, '^[A-Z]{2}$', 'c')");
+        $this->addCheck('application_locations', 'chk_application_locations_country', 'CHAR_LENGTH(country_code) = 2 AND ASCII(SUBSTRING(country_code, 1, 1)) BETWEEN 65 AND 90 AND ASCII(SUBSTRING(country_code, 2, 1)) BETWEEN 65 AND 90');
         $this->addCheck('application_locations', 'chk_application_locations_coords', '(latitude IS NULL) = (longitude IS NULL)');
         $this->addCheck('application_locations', 'chk_application_locations_lat', 'latitude IS NULL OR latitude BETWEEN -90 AND 90');
         $this->addCheck('application_locations', 'chk_application_locations_lng', 'longitude IS NULL OR longitude BETWEEN -180 AND 180');
@@ -140,7 +146,7 @@ return new class extends Migration
         $this->addCheck('application_versions', 'chk_application_versions_type', "submission_type IN ('initial', 'completion_response')");
         $this->addCheck('application_versions', 'chk_application_versions_first', "version_number <> 1 OR submission_type = 'initial'");
         $this->addCheck('application_versions', 'chk_application_versions_completion', "(submission_type = 'completion_response') = (completion_request_id IS NOT NULL)");
-        $this->addCheck('application_versions', 'chk_application_versions_hash', "REGEXP_LIKE(content_hash, '^[0-9a-f]{64}$', 'c')");
+        $this->addCheck('application_versions', 'chk_application_versions_hash', 'CHAR_LENGTH(content_hash) = 64 AND CAST(content_hash AS BINARY) = CAST(LOWER(content_hash) AS BINARY) AND UNHEX(content_hash) IS NOT NULL');
     }
 
     /**

@@ -26,9 +26,9 @@ These decisions override older documents in `docs/`.
 | Planned jury awards: 2 + 2 + 3, not ranked places | `award_slots` rows per cycle domain. `slot_number` is an identifier, not a rank, and no count is hardcoded. |
 | Committee members, trustees, integrity members and award-management employees may not apply | Application-layer eligibility rule (§3); it spans tables |
 
-## 2. Enforced by the database (MySQL 8.4)
+## 2. Enforced by the database (MySQL and MariaDB)
 
-Every rule below is tested on MySQL 8.4.7 by `backend/tests/Feature/PlatformDatabaseConstraintTest.php`.
+Every rule below is tested on both MySQL and MariaDB by `backend/tests/Feature/PlatformDatabaseConstraintTest.php` (see §7 for the versions). The migrations create the same named CHECK constraints, foreign keys and indexes on both engines. On MariaDB, `json` columns are additionally stored as `LONGTEXT` with an automatic `json_valid()` column check.
 
 ### Uniqueness
 
@@ -107,6 +107,7 @@ All foreign keys are real InnoDB constraints. A single-column foreign key only p
 - **Formats:**
   - ISO country codes are uppercase alpha-2;
   - SHA-256 and content hashes are 64 lowercase hex characters;
+  - both are checked without regular expressions, because MariaDB has no `REGEXP_LIKE()` and the two engines' regex libraries differ. A country code must be 2 characters whose `ASCII()` values are 65–90 (A–Z only). A hash must be 64 characters, equal to its own `LOWER()` when compared as bytes, and accepted by `UNHEX()`, which returns `NULL` for any non-hex character. Wrong case, wrong length, digits, spaces, line breaks and non-ASCII letters are all rejected;
   - storage paths cannot be URLs or carry query strings (so no signed URLs).
 - **Time order:**
   - stage windows close after they open;
@@ -192,27 +193,32 @@ Each refinement keeps the semantics of the original contract and closes a gap th
 - **Rollback order.** Because that migration runs last, a rollback runs its `down()` first: it drops those keys and indexes before any table they reference is dropped. Each earlier `down()` then drops its own tables in reverse order.
 - **`users`.** The extension migration drops only the columns, indexes and CHECKs it added. Existing users and all baseline tables are untouched in both directions.
 - **InnoDB precondition.** The `users` migration refuses to run if `users` is not InnoDB, because foreign keys from InnoDB tables to a MyISAM table would fail part-way through. The error message explains the conversion.
-- **Never edited.** No existing migration was modified.
+- **Edited once, for MariaDB.** No baseline migration was modified. Migrations `…100005` and `…100006` were corrected in place because their original `REGEXP_LIKE()` CHECKs cannot be created on MariaDB, and a new migration placed after `…100012` could never run while `…100005` fails first. Only those four CHECK expressions changed; table, column, key and constraint names are unchanged.
+  - **Databases that already ran them** (only possible on MySQL) are not affected: Laravel does not rerun a recorded migration, and their `REGEXP_LIKE()` CHECKs accept and reject the same values.
+  - **An installation interrupted inside `…100005`** needs the one-time recovery in §8 before migrating again.
 
 ## 7. Running the database tests safely
 
-The schema tests run only against an **explicitly named, disposable MySQL database whose name ends in `_schema_test`**. They are skipped otherwise, so `php artisan test` never touches a real database.
+The schema tests run only against an **explicitly named, disposable MySQL or MariaDB database whose name ends in `_schema_test`**. They are skipped otherwise, so `php artisan test` never touches a real database.
 
 ```sh
-# Create the disposable database once (MySQL 8.0.16+; the project uses 8.4):
+# Create the disposable database once on each server you test
+# (MySQL 8.0.16+ or MariaDB 10.11+; production runs MariaDB 10.11):
 #   CREATE DATABASE al_sankri_award_schema_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 cd backend
 MIGRATION_TEST_DB_DATABASE=al_sankri_award_schema_test php artisan test --compact \
-  tests/Feature/PlatformDatabaseMigrationTest.php tests/Feature/PlatformDatabaseConstraintTest.php
+  tests/Feature/PlatformDatabaseMigrationTest.php tests/Feature/PlatformDatabaseConstraintTest.php \
+  tests/Feature/PlatformDatabaseRecoveryTest.php
 ```
 
-**Connection.** Optional `MIGRATION_TEST_DB_HOST`, `_PORT`, `_USERNAME` and `_PASSWORD` override the `DB_*` values.
+**Connection.** Optional `MIGRATION_TEST_DB_HOST`, `_PORT`, `_USERNAME` and `_PASSWORD` override the `DB_*` values. `MIGRATION_TEST_DB_DRIVER` selects Laravel's `mysql` driver (the default) or its `mariadb` driver.
 
 **Guards before anything destructive:**
 
 - The name must end in `_schema_test` and must differ from the application's configured database.
 - `SELECT DATABASE()` must return that name on the live connection.
-- The server must be MySQL 8.0.16 or later (MariaDB and SQLite are skipped).
+- The server must be MySQL 8.0.16+ or MariaDB 10.11+. An older server fails the tests instead of skipping them.
+- Expected rejections are matched to each engine's error number (for a failed CHECK, 3819 on MySQL and 4025 on MariaDB).
 
 **What the lifecycle test does:**
 
@@ -226,6 +232,104 @@ MIGRATION_TEST_DB_DATABASE=al_sankri_award_schema_test php artisan test --compac
    - the token row is still present.
 5. Reapplies the migrations.
 
+It also checks that every CHECK constraint, foreign key and unique key named in the migrations exists on the engine under test.
+
 **Isolation.** Each constraint test runs inside a transaction that is rolled back afterwards.
 
-**On SQLite** (for example `RefreshDatabase` in future feature tests), the migrations run, but the MySQL CHECK constraints and the InnoDB precondition are skipped. Constraint behaviour must therefore be verified on MySQL.
+**The recovery test** runs on MariaDB only. It is skipped on MySQL, where the original migration never failed. It rebuilds the interrupted production state described in §8 and shows that:
+
+- the original `REGEXP_LIKE()` CHECK fails on MariaDB;
+- `migrate` alone stops at the existing `applicants` table and changes nothing;
+- the recovery SQL in §8, read from this file, aborts on every unexpected state;
+- after a successful recovery, `migrate` completes, and rolling back affects only the new batch.
+
+**On SQLite** (for example `RefreshDatabase` in future feature tests), the migrations run, but the CHECK constraints and the InnoDB precondition are skipped. Constraint behaviour must therefore be verified on MySQL and MariaDB.
+
+## 8. Recovering an installation interrupted inside migration 100005 (MariaDB)
+
+**The state.** On MariaDB, the original `…100005` migration created `applicants` and two of its CHECKs, then failed on `chk_applicants_country` because MariaDB has no `REGEXP_LIKE()`. MariaDB cannot roll back DDL, so the table stayed behind while the migration stayed pending:
+
+- the baseline migrations and `…100001` to `…100004` are recorded;
+- `…100005` to `…100012` are pending;
+- `applicants` exists with no rows, its representative foreign key, its indexes, `chk_applicants_type` and `chk_applicants_status`, but no `chk_applicants_country`;
+- `applicant_members`, `applications`, `application_locations` and `application_versions` do not exist.
+
+With the corrected code installed, `php artisan migrate` still stops at "table `applicants` already exists" and changes nothing. The migrations deliberately do not skip existing tables.
+
+**The fix** is to drop that one empty table and migrate again. The SQL below does this only if every guard matches. Otherwise it raises an error naming the failed guard and changes nothing. It never rolls back a batch, edits the migration log, disables foreign-key checks or touches any other table.
+
+```sql
+-- Recovery for the interrupted 2026_10_27_100005 migration (MariaDB 10.11).
+-- Drops only the empty, partially created `applicants` table, and only when every
+-- guard matches; otherwise it raises an error and changes nothing.
+DELIMITER //
+BEGIN NOT ATOMIC
+  DECLARE applicant_rows BIGINT UNSIGNED DEFAULT 0;
+
+  IF DATABASE() IS NULL OR DATABASE() <> 'al_sankri_award' THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: not connected to the expected database.';
+  END IF;
+
+  IF (SELECT COUNT(*) FROM migrations WHERE migration IN (
+        '2026_10_27_100001_extend_users_for_platform_accounts',
+        '2026_10_27_100002_create_role_and_permission_tables',
+        '2026_10_27_100003_create_award_cycle_and_domain_tables',
+        '2026_10_27_100004_create_cycle_user_roles_table')) <> 4 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: migrations 100001 to 100004 are not all recorded.';
+  END IF;
+
+  IF (SELECT COUNT(*) FROM migrations WHERE migration >= '2026_10_27_100005') <> 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: migration 100005 or a later one is already recorded.';
+  END IF;
+
+  IF (SELECT COUNT(*) FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'applicants' AND TABLE_TYPE = 'BASE TABLE') <> 1 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: table applicants does not exist.';
+  END IF;
+
+  IF (SELECT COUNT(*) FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME IN ('applicant_members', 'applications', 'application_locations', 'application_versions')) <> 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: another table of migration 100005 already exists.';
+  END IF;
+
+  IF (SELECT COUNT(*) FROM information_schema.CHECK_CONSTRAINTS
+      WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'applicants'
+        AND CONSTRAINT_NAME IN ('chk_applicants_type', 'chk_applicants_status')) <> 2
+     OR (SELECT COUNT(*) FROM information_schema.CHECK_CONSTRAINTS
+      WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'applicants'
+        AND CONSTRAINT_NAME = 'chk_applicants_country') <> 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: applicants does not have the expected partial CHECK constraints.';
+  END IF;
+
+  IF (SELECT COUNT(*) FROM information_schema.REFERENTIAL_CONSTRAINTS
+      WHERE UNIQUE_CONSTRAINT_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = 'applicants') <> 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: another table has a foreign key to applicants.';
+  END IF;
+
+  SELECT COUNT(*) INTO applicant_rows FROM applicants;
+  IF applicant_rows <> 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Recovery aborted: applicants contains rows.';
+  END IF;
+
+  DROP TABLE applicants;
+END//
+DELIMITER ;
+```
+
+**Operator steps.** Run these after the corrected code is installed, in the application's `backend` directory, over SSH. Use the database host and user from the production `.env`. `-p` prompts for the password, so it never appears on the command line.
+
+1. Put the site in maintenance mode: `php artisan down`.
+2. Back up first:
+   `mariadb-dump --single-transaction --triggers --hex-blob -h DB_HOST -u DB_USERNAME -p al_sankri_award > ~/al_sankri_award-before-100005-recovery.sql`
+   The last line of the file must read `-- Dump completed on …`. Plesk's database "Export Dump" is an alternative.
+3. Confirm the state: `php artisan migrate:status` must show `…100001` to `…100004` as Ran and `…100005` to `…100012` as Pending.
+4. Confirm the corrected code: `grep -c 'REGEXP_LIKE(' database/migrations/2026_10_27_10000[56]_*.php` must print `0` for both files.
+5. Save the SQL block above as `~/recover-100005.sql` and run it:
+   `mariadb -h DB_HOST -u DB_USERNAME -p al_sankri_award < ~/recover-100005.sql`
+   Any `Recovery aborted: …` error means the state differs: stop, change nothing else, and investigate.
+6. Migrate: `php artisan migrate --force`.
+7. Verify: `php artisan migrate:status` shows every migration as Ran.
+8. Leave maintenance mode: `php artisan up`.
+
+If Plesk runs `php artisan migrate --force` automatically when the corrected code is deployed, that run fails harmlessly at "`applicants` already exists" until step 5 has been done. Redeploying, or step 6, then completes the migration.
