@@ -48,6 +48,57 @@
   block-size: auto;
 }
 
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sa-space-2);
+  margin-inline-start: auto;
+}
+
+/* ---------- Account link: «تسجيل» or «حسابي» ---------- */
+
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sa-space-2);
+  min-block-size: var(--sa-target-min);
+  min-inline-size: var(--sa-target-min);
+  padding: var(--sa-space-2) var(--sa-space-3);
+  border: var(--sa-border-width-control) solid var(--sa-color-border-control);
+  border-radius: var(--sa-radius-md);
+  background: var(--sa-color-control-bg);
+  color: var(--sa-color-text);
+  font-weight: var(--sa-font-weight-medium);
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-link:hover {
+  border-color: var(--sa-color-border-strong);
+  color: var(--sa-color-text);
+}
+
+.account-link[aria-current='page'] {
+  border-color: var(--sa-color-border-strong);
+  background: var(--sa-color-surface-subtle);
+}
+
+.account-link__icon {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+}
+
+.account-link--wide {
+  display: none;
+}
+
 .site-header__toggle {
   display: inline-flex;
   align-items: center;
@@ -71,6 +122,20 @@
 
 .site-header__toggle[aria-expanded='true'] {
   background: var(--sa-color-surface-subtle);
+}
+
+/* Below the inline-navigation breakpoint the account link and the menu
+   toggle stack their icon above a small label, so both fit beside the logo
+   on common phone widths. */
+@media (max-width: 63.99rem) {
+  .site-header__actions .account-link,
+  .site-header__toggle {
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: var(--sa-space-1) var(--sa-space-2);
+    font-size: var(--sa-font-size-caption);
+    line-height: 1.3;
+  }
 }
 
 /* On the narrowest screens the logo needs the room: keep the label for
@@ -132,14 +197,19 @@
     flex-wrap: nowrap;
   }
 
-  .site-header__toggle {
+  .site-header__actions {
     display: none;
+  }
+
+  .account-link--wide {
+    display: inline-flex;
   }
 
   .site-nav,
   .site-nav[data-open='false'] {
     display: block;
     flex-basis: auto;
+    margin-inline-start: auto;
   }
 
   .site-nav__list {

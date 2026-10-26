@@ -110,7 +110,7 @@ class PlatformDatabaseRecoveryTest extends TestCase
 
         // The migrations now finish, recreating applicants exactly, plus its country check.
         $this->migrateAll();
-        $this->assertSame(8, $this->schemaDb()->table('migrations')->where('batch', 3)->count());
+        $this->assertSame(8 + count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 3)->count());
         foreach (self::PLATFORM_TABLES as $table) {
             $this->assertTrue($this->schema()->hasTable($table), "Missing table {$table}");
         }
@@ -126,7 +126,7 @@ class PlatformDatabaseRecoveryTest extends TestCase
         $this->assertTrue($this->schema()->hasTable('cycle_user_roles'));
         $this->assertSame(count(self::BASELINE_MIGRATIONS) + 4, $this->schemaDb()->table('migrations')->count());
         $this->migrateAll();
-        $this->assertSame(count(self::BASELINE_MIGRATIONS) + 12, $this->schemaDb()->table('migrations')->count());
+        $this->assertSame(count(self::BASELINE_MIGRATIONS) + 12 + count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->count());
         $this->assertSame($user, (array) $this->schemaDb()->table('users')->find($userId));
     }
 

@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Auth\GoogleAccounts;
+use App\Auth\GoogleIdentity;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 use Tests\UsesDisposableSchemaDatabase;
@@ -51,13 +54,14 @@ class PlatformDatabaseMigrationTest extends TestCase
         ]);
         $baselineTables = $this->tableNames();
 
-        // 2–3. Apply the platform migrations.
+        // 2–3. Apply the platform and account migrations.
         $this->migrateAll();
-        $this->assertSame(12, $this->schemaDb()->table('migrations')->where('batch', 2)->count());
-        foreach (self::PLATFORM_TABLES as $table) {
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        foreach ([...self::PLATFORM_TABLES, ...self::ACCOUNT_TABLES] as $table) {
             $this->assertContains($table, $this->tableNames(), "Missing table {$table}");
         }
-        $this->assertCount(count($baselineTables) + count(self::PLATFORM_TABLES), $this->tableNames());
+        $this->assertCount(count($baselineTables) + count(self::PLATFORM_TABLES) + count(self::ACCOUNT_TABLES), $this->tableNames());
+        $this->assertSame('YES', $this->passwordNullability());
         $this->assertSame([], array_diff(self::NEW_USER_COLUMNS, $this->columnNames('users')));
         $this->assertExistingUserIntact($userId);
         $user = $this->schemaDb()->table('users')->find($userId);
@@ -73,6 +77,7 @@ class PlatformDatabaseMigrationTest extends TestCase
             ['id', 'name', 'email', 'email_verified_at', 'password', 'remember_token', 'created_at', 'updated_at'],
             $this->columnNames('users'),
         );
+        $this->assertSame('NO', $this->passwordNullability());
         $this->assertSame(0, (int) $this->schemaDb()->selectOne(
             'SELECT COUNT(*) AS total FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE()'
         )->total);
@@ -82,9 +87,76 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         // 6. Reapply.
         $this->migrateAll();
-        $this->assertSame(12, $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
         $this->assertExistingUserIntact($userId);
         $this->assertSame('active', $this->schemaDb()->table('users')->find($userId)->status);
+    }
+
+    public function test_the_account_migrations_apply_on_a_deployed_platform_schema(): void
+    {
+        // The production state: baseline and platform foundation already applied, with an account.
+        $this->wipeDisposableDatabase();
+        $this->migrateBaseline();
+        $this->migrateOnly($this->platformMigrations());
+        $userId = $this->schemaDb()->table('users')->insertGetId(self::USER);
+        $foreignKeysToUsers = $this->foreignKeysTo('users');
+        $this->assertSame('NO', $this->passwordNullability());
+
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $this->assertSame(count(self::ACCOUNT_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 3)->count());
+        $this->assertSame('YES', $this->passwordNullability());
+        $this->assertSame(self::USER['password'], $this->schemaDb()->table('users')->find($userId)->password);
+        $this->assertEqualsCanonicalizing([...$foreignKeysToUsers, 'fk_oauth_identities_user'], $this->foreignKeysTo('users'));
+
+        // Only the new batch rolls back; the deployed schema and the hash stay.
+        $this->rollbackLatestBatch();
+        $this->assertSame('NO', $this->passwordNullability());
+        $this->assertNotContains('oauth_identities', $this->tableNames());
+        $this->assertSame($foreignKeysToUsers, $this->foreignKeysTo('users'));
+        $this->assertExistingUserIntact($userId);
+
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $this->assertExistingUserIntact($userId);
+    }
+
+    public function test_rolling_back_refuses_to_strand_passwordless_accounts(): void
+    {
+        // Production-like: the foundation in one batch, the account migrations in the next.
+        $this->wipeDisposableDatabase();
+        $this->migrateBaseline();
+        $this->migrateOnly($this->platformMigrations());
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $userId = $this->schemaDb()->table('users')->insertGetId([
+            'name' => 'Google', 'email' => 'google.only@example.org', 'password' => null, 'email_verified_at' => '2026-10-20 10:00:00',
+        ]);
+        $this->schemaDb()->table('oauth_identities')->insert([
+            'user_id' => $userId, 'provider' => 'google', 'provider_subject' => '109876543210987654321', 'linked_at' => '2026-10-20 10:00:00',
+        ]);
+
+        try {
+            $this->rollbackLatestBatch();
+            $this->fail('The rollback ran despite a passwordless account.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('1 account(s) have no password', $exception->getMessage());
+        }
+
+        // Nothing was dropped or forgotten.
+        $this->assertContains('oauth_identities', $this->tableNames());
+        $this->assertSame(1, $this->schemaDb()->table('oauth_identities')->where('user_id', $userId)->count());
+        $this->assertSame(1, $this->schemaDb()->table('users')->where('id', $userId)->whereNull('password')->count());
+        $this->assertSame('YES', $this->passwordNullability());
+        $this->assertEqualsCanonicalizing(self::ACCOUNT_MIGRATIONS, $this->schemaDb()->table('migrations')->where('batch', 3)->pluck('migration')->all());
+        $this->assertPreservedIdentitySignsIn($userId, '109876543210987654321');
+
+        // Once the owner has set a password, the same rollback succeeds and reapplies.
+        $this->schemaDb()->table('users')->where('id', $userId)->update(['password' => self::USER['password']]);
+        $this->rollbackLatestBatch();
+        $this->assertNotContains('oauth_identities', $this->tableNames());
+        $this->assertSame('NO', $this->passwordNullability());
+        $this->assertSame(0, $this->schemaDb()->table('migrations')->whereIn('migration', self::ACCOUNT_MIGRATIONS)->count());
+        $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
+        $this->assertSame('YES', $this->passwordNullability());
+        $this->assertSame(self::USER['password'], $this->schemaDb()->table('users')->find($userId)->password);
     }
 
     public function test_the_disposable_database_guard_refuses_ordinary_database_names(): void
@@ -130,7 +202,7 @@ class PlatformDatabaseMigrationTest extends TestCase
      */
     private function assertEveryNamedConstraintExists(): void
     {
-        $source = implode("\n", array_map('file_get_contents', glob(database_path('migrations/2026_10_27_1000*.php'))));
+        $source = implode("\n", array_map('file_get_contents', glob(database_path('migrations/2026_10_27_*.php'))));
         preg_match_all("/'((?:chk|fk|uq)_[a-z0-9_]+)'/", $source, $matches);
         $declared = array_values(array_unique($matches[1]));
 
@@ -143,6 +215,47 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         $this->assertGreaterThan(150, count($declared));
         $this->assertEqualsCanonicalizing($declared, $existing);
+    }
+
+    /**
+     * Resolves a Google sign-in for the preserved identity against the
+     * disposable database, through the application's own account resolver.
+     */
+    private function assertPreservedIdentitySignsIn(int $userId, string $subject): void
+    {
+        $previous = DB::getDefaultConnection();
+        DB::setDefaultConnection(self::SCHEMA_CONNECTION);
+
+        try {
+            [$outcome, $user] = app(GoogleAccounts::class)->signIn(new GoogleIdentity($subject, 'renamed@gmail.com', 'Google', true, null));
+        } finally {
+            DB::setDefaultConnection($previous);
+        }
+
+        $this->assertSame(GoogleAccounts::SIGNED_IN, $outcome);
+        $this->assertSame($userId, (int) $user->getKey());
+    }
+
+    private function passwordNullability(): string
+    {
+        return (string) $this->schemaDb()->selectOne(
+            "SELECT IS_NULLABLE AS nullable FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'password'"
+        )->nullable;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function foreignKeysTo(string $table): array
+    {
+        return array_map(
+            fn (object $row): string => $row->name,
+            $this->schemaDb()->select(
+                'SELECT CONSTRAINT_NAME AS name FROM information_schema.REFERENTIAL_CONSTRAINTS
+                 WHERE CONSTRAINT_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = ? ORDER BY CONSTRAINT_NAME',
+                [$table],
+            ),
+        );
     }
 
     /**

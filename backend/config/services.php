@@ -28,6 +28,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+    | Google sign-in (Laravel Socialite, authorization-code flow). Disabled
+    | until GOOGLE_AUTH_ENABLED=true and all three credentials are set; see
+    | docs/platform/authentication.md for the Google Cloud configuration.
+    */
+    'google' => [
+        'enabled' => (bool) env('GOOGLE_AUTH_ENABLED', false),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
