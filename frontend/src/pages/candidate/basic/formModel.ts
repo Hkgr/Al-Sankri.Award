@@ -186,8 +186,11 @@ function linksPayload(links: SocialLink[]) {
   return links.map((link) => ({ platform: link.platform.trim(), url: link.url.trim() }))
 }
 
-/** The request body: only the selected branch is sent. */
-export function buildPayload(state: FormState, requirements: Requirements | null): Record<string, unknown> {
+/**
+ * The request body: only the selected branch is sent, with the account
+ * context of the form (the server refuses it for any other account).
+ */
+export function buildPayload(state: FormState, requirements: Requirements | null, accountContext: string): Record<string, unknown> {
   const accepted: Partial<Record<PolicyCode, number>> = {}
   for (const code of ['privacy_policy', 'terms_of_use'] as PolicyCode[]) {
     const policy = requirements?.policies[code]
@@ -198,6 +201,7 @@ export function buildPayload(state: FormState, requirements: Requirements | null
   if (state.profileType === 'individual') {
     const person = state.individual
     return {
+      account_context: accountContext,
       profile_type: 'individual',
       individual: {
         first_name: person.first_name,
@@ -222,6 +226,7 @@ export function buildPayload(state: FormState, requirements: Requirements | null
   const institution = state.institution
   declarations.representation = state.declarations.representation
   return {
+    account_context: accountContext,
     profile_type: 'institution',
     institution: {
       name: institution.name,

@@ -32,12 +32,15 @@ export function BasicInformationForm({
   user,
   countries,
   requirements,
+  accountContext,
   onRequirementsChange,
   onConfirmed,
 }: {
   user: User
   countries: Country[]
   requirements: Requirements
+  /** From GET /api/candidate/basic-profile when the form opened; never replaced. */
+  accountContext: string
   onRequirementsChange: (requirements: Requirements) => void
   onConfirmed: (profile: BasicProfile, alreadyStored: boolean) => void
 }) {
@@ -108,8 +111,40 @@ export function BasicInformationForm({
     setErrors({})
   }
 
-  /** Handles a failed request without losing the input. */
-  const reportFailure = (error: unknown) => {
+  /**
+   * The browser's session now belongs to another account than the one this
+   * form was opened for. Nothing is sent on its behalf: the person signs in
+   * again with the original account, or discards the input.
+   */
+  const showAccountMismatch = (message: string) => {
+    setAlert({
+      tone: 'error',
+      content: (
+        <>
+          <p>{message}</p>
+          <p>
+            لحماية البيانات، لا يُرسَل هذا النموذج باسم حساب آخر. ما أدخلته ما زال في هذه الصفحة. للمتابعة، سجّل الخروج من الحساب الآخر وسجّل الدخول
+            بالحساب الذي فُتح به النموذج في نافذة أخرى، ثم أعد المحاولة هنا.
+          </p>
+          <p>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => {
+                setLeaveWarning(null)
+                window.location.assign('/dashboard')
+              }}
+            >
+              تجاهل ما أدخلته والانتقال إلى الحساب المسجّل دخوله الآن
+            </button>
+          </p>
+        </>
+      ),
+    })
+  }
+
+  /** Handles a failed request that is known not to have saved anything. */
+  const reportFailure = (error: unknown, context: 'check' | 'save') => {
     if (error instanceof ApiError && error.status === 401) {
       setAlert({
         tone: 'error',
@@ -118,7 +153,7 @@ export function BasicInformationForm({
             <p>انتهت جلستك، ولم يُحفظ شيء. ما أدخلته ما زال في هذه الصفحة.</p>
             <p>
               <a href="/login" target="_blank" rel="noopener">
-                سجّل الدخول في نافذة جديدة
+                سجّل الدخول بالحساب نفسه في نافذة جديدة
               </a>{' '}
               ثم ارجع إلى هنا وأعد المحاولة.
             </p>
@@ -127,12 +162,71 @@ export function BasicInformationForm({
       })
       return
     }
+    if (error instanceof ApiError && error.code === 'account_mismatch') {
+      showAccountMismatch(error.message)
+      return
+    }
     if (error instanceof ApiError && (error.code === 'account_disabled' || error.code === 'not_candidate')) {
       handleAccountFailure(error)
       return
     }
-    const text = error instanceof NetworkError ? `${messages.network} لم يُحفظ شيء، وما أدخلته ما زال هنا.` : errorMessage(error)
+    const text =
+      error instanceof NetworkError
+        ? context === 'check'
+          ? `${messages.network} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.`
+          : `${messages.network} ما أدخلته ما زال هنا.`
+        : errorMessage(error)
     setAlert({ tone: 'error', content: <p>{text}</p> })
+  }
+
+  /**
+   * A confirmation whose answer never arrived may still have been saved.
+   * Ask the server what this account now has: show the stored profile if
+   * there is one, otherwise keep the input for a retry (which can never
+   * save twice, see BasicProfiles::finalize).
+   */
+  const reconcile = async () => {
+    try {
+      const state = await api.get<{ data: BasicProfile | null; account_context: string }>('/api/candidate/basic-profile')
+      if (state.account_context !== accountContext) {
+        showAccountMismatch('تعذّر تأكيد نتيجة الحفظ، والحساب المسجّل دخوله الآن في هذا المتصفح غير الحساب الذي فُتح به النموذج.')
+        return
+      }
+      if (state.data) {
+        finish(state.data, true)
+        return
+      }
+      setAlert({
+        tone: 'error',
+        content: <p>انقطع الاتصال قبل وصول نتيجة الحفظ. تحقّقنا من حسابك فلم نجد بيانات محفوظة، فلم يُحفظ شيء. ما أدخلته ما زال هنا، ويمكنك إعادة المحاولة.</p>,
+      })
+    } catch (error) {
+      const sessionEnded = error instanceof ApiError && error.status === 401
+      setAlert({
+        tone: 'error',
+        content: (
+          <>
+            <p>
+              تعذّر تأكيد نتيجة الحفظ: ربما حُفظت بياناتك وربما لم تُحفظ.
+              {sessionEnded ? ' انتهت جلستك أيضاً.' : ''} ما أدخلته ما زال هنا.
+            </p>
+            <p>
+              {sessionEnded ? (
+                <>
+                  <a href="/login" target="_blank" rel="noopener">
+                    سجّل الدخول بالحساب نفسه في نافذة جديدة
+                  </a>{' '}
+                  ثم أعد المحاولة هنا.
+                </>
+              ) : (
+                'أعد المحاولة عند عودة الاتصال.'
+              )}{' '}
+              إن كانت قد حُفظت فسنعرضها لك كما هي، ولن تُحفظ مرة ثانية.
+            </p>
+          </>
+        ),
+      })
+    }
   }
 
   const guard = async (action: () => Promise<void>) => {
@@ -158,13 +252,13 @@ export function BasicInformationForm({
       }
       if (step.id !== 'type') {
         try {
-          await api.post('/api/candidate/basic-profile/check', { section: step.id, ...buildPayload(form, requirements) })
+          await api.post('/api/candidate/basic-profile/check', { section: step.id, ...buildPayload(form, requirements, accountContext) })
         } catch (error) {
           if (error instanceof ApiError && error.status === 422) {
             showErrors(firstMessages(error.errors))
             return
           }
-          reportFailure(error)
+          reportFailure(error, 'check')
           return
         }
       }
@@ -193,10 +287,10 @@ export function BasicInformationForm({
         return
       }
       try {
-        const response = await api.post<{ data: BasicProfile }>('/api/candidate/basic-profile', buildPayload(form, requirements))
+        const response = await api.post<{ data: BasicProfile }>('/api/candidate/basic-profile', buildPayload(form, requirements, accountContext))
         finish(response.data, false)
       } catch (error) {
-        handleSubmitError(error)
+        await handleSubmitError(error)
       }
     })
 
@@ -207,9 +301,15 @@ export function BasicInformationForm({
     onConfirmed(profile, alreadyStored)
   }
 
-  const handleSubmitError = (error: unknown) => {
+  const handleSubmitError = async (error: unknown) => {
+    // No answer, or a server error that may have come after the commit:
+    // the outcome is unknown until the server is asked.
+    if (error instanceof NetworkError || (error instanceof ApiError && error.status >= 500)) {
+      await reconcile()
+      return
+    }
     if (!(error instanceof ApiError)) {
-      reportFailure(error)
+      reportFailure(error, 'save')
       return
     }
     if (error.status === 422) {
@@ -220,7 +320,8 @@ export function BasicInformationForm({
       return
     }
     if (error.code === 'profile_already_completed' && error.payload.data) {
-      // A previous attempt was saved (for example its answer was lost).
+      // An earlier attempt of this same account was saved (the server checked
+      // the account context first), for example when its answer was lost.
       finish(error.payload.data as BasicProfile, true)
       return
     }
@@ -235,7 +336,7 @@ export function BasicInformationForm({
       setAlert({ tone: 'error', content: <p>{error.message}</p> })
       return
     }
-    reportFailure(error)
+    reportFailure(error, 'save')
   }
 
   const onSubmit = (event: FormEvent) => {

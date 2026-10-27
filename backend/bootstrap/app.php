@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureCandidateAccountContext;
 use App\Http\Middleware\EnsureUserIsCandidate;
 use App\Http\Middleware\PreventCaching;
 use App\Http\Middleware\UseArabicLocale;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'active' => EnsureAccountIsActive::class,
             'candidate' => EnsureUserIsCandidate::class,
+            'candidate.context' => EnsureCandidateAccountContext::class,
             'no-store' => PreventCaching::class,
         ]);
     })

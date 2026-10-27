@@ -1515,6 +1515,8 @@ Three additive migrations, described for operators in [candidate-onboarding.md](
 
 **Rollback.** `300003` rolls back first and refuses, before anything changes, while any confirmed profile, policy acceptance or candidate role grant exists. `300002` also refuses while acceptances exist, and `300001` while the role has grants.
 
+`300001` then deletes the role only if it created it (recorded as `role.provisioned` in `audit_logs`) and no `role_permissions` row refers to it. A `candidate` role that existed beforehand is preserved unchanged, with its permissions.
+
 **Mapping.** Shared applying-entity fields stay in `applicants`, and an institution's representative in `applicant_members`. Login accounts are unchanged.
 
 ### `account_policy_versions`

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Candidate;
 
+use App\Candidates\AccountContext;
 use App\Models\AccountPolicyVersion;
 use App\Models\ApplicantIndividualDetail;
 use App\Models\User;
@@ -27,6 +28,9 @@ class BasicProfileTest extends TestCase
     ];
 
     private User $candidate;
+
+    /** The account signed in through signIn(), whose form context requests carry. */
+    private ?User $signedIn = null;
 
     /**
      * @var array<string, AccountPolicyVersion>
@@ -242,17 +246,17 @@ class BasicProfileTest extends TestCase
         $this->signIn();
         $payload = $this->individualPayload();
 
-        $this->browser('POST', '/api/candidate/basic-profile/check', ['section' => 'individual_identity'] + $payload)->assertNoContent();
+        $this->check('individual_identity', $payload)->assertNoContent();
 
         // Only the requested section is checked.
         $payload['individual']['primary_phone']['number'] = '1';
-        $this->browser('POST', '/api/candidate/basic-profile/check', ['section' => 'individual_identity'] + $payload)->assertNoContent();
-        $this->browser('POST', '/api/candidate/basic-profile/check', ['section' => 'individual_contact'] + $payload)
+        $this->check('individual_identity', $payload)->assertNoContent();
+        $this->check('individual_contact', $payload)
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['individual.primary_phone.number'])
             ->assertJsonMissingValidationErrors(['individual.first_name']);
 
-        $this->browser('POST', '/api/candidate/basic-profile/check', ['section' => 'institution_details'] + $payload)
+        $this->check('institution_details', $payload)
             ->assertUnprocessable()->assertJsonValidationErrors(['section']);
         $this->assertNothingStored();
     }
@@ -320,7 +324,7 @@ class BasicProfileTest extends TestCase
         foreach (['PUT', 'PATCH', 'DELETE'] as $method) {
             $this->browser($method, '/api/candidate/basic-profile', $changed)->assertMethodNotAllowed();
         }
-        $this->browser('POST', '/api/candidate/basic-profile/check', ['section' => 'individual_identity'] + $changed)->assertNoContent();
+        $this->check('individual_identity', $changed)->assertNoContent();
 
         $this->assertSame($snapshot, $this->snapshot(), 'nothing may change after confirmation');
     }
@@ -337,6 +341,72 @@ class BasicProfileTest extends TestCase
             ->assertJsonPath('data.profile_type', 'institution')
             ->assertJsonPath('data.institution.activity_type', 'صون التراث اللامادي')
             ->assertJsonPath('data.accepted_policies.0.version_number', 1));
+    }
+
+    public function test_a_form_resumes_after_its_own_account_signs_in_again(): void
+    {
+        // A opens the form, then the session ends (sign-out or expiry).
+        $this->signIn();
+        $context = $this->contextFromForm();
+        $this->browser('POST', '/api/auth/logout')->assertNoContent();
+        $this->confirm($this->individualPayload() + ['account_context' => $context])->assertUnauthorized();
+        $this->assertNothingStored();
+
+        // A signs in again in a new session: the open form carries on.
+        $this->signIn();
+        $this->check('individual_identity', $this->individualPayload() + ['account_context' => $context])->assertNoContent();
+        $this->confirm($this->individualPayload() + ['account_context' => $context])->assertCreated();
+        $this->assertSame($this->candidate->id, (int) DB::table('candidate_profiles')->sole()->user_id);
+    }
+
+    public function test_a_form_opened_for_another_account_is_refused_without_any_write(): void
+    {
+        $other = User::factory()->candidate()->create(['email' => 'other@example.org']);
+        $this->signIn();
+        $contextOfA = $this->contextFromForm();
+
+        // The browser is now signed in as B, but the open form is A's.
+        $this->signIn($other->email);
+        $this->assertNotSame($contextOfA, $this->contextFromForm());
+        $this->check('individual_identity', $this->individualPayload() + ['account_context' => $contextOfA])
+            ->assertConflict()->assertJsonPath('code', 'account_mismatch');
+        $this->confirm($this->individualPayload() + ['account_context' => $contextOfA])
+            ->assertConflict()->assertJsonPath('code', 'account_mismatch')->assertJsonMissingPath('data');
+        $this->confirm($this->institutionPayload() + ['account_context' => $contextOfA])->assertConflict();
+
+        // A missing or forged context is refused the same way.
+        $this->confirm($this->individualPayload() + ['account_context' => null])->assertConflict()->assertJsonPath('code', 'account_mismatch');
+        $this->confirm($this->individualPayload() + ['account_context' => str_repeat('0', 64)])->assertConflict();
+
+        // Nothing was created for B from A's data, and A has nothing either.
+        $this->assertNothingStored();
+        $this->assertSame(0, DB::table('audit_logs')->where('action', 'candidate_profile.completed')->count());
+    }
+
+    public function test_another_accounts_completed_profile_is_never_returned_to_a_stale_form(): void
+    {
+        $other = User::factory()->candidate()->create(['email' => 'other@example.org']);
+        $this->signIn();
+        $contextOfA = $this->contextFromForm();
+
+        // B has already confirmed their own information.
+        $this->signIn($other->email);
+        $this->confirm($this->institutionPayload())->assertCreated();
+        $snapshot = $this->snapshot();
+
+        // A's form, retried in B's session, is not B's "already saved" result.
+        $response = $this->confirm($this->individualPayload() + ['account_context' => $contextOfA])
+            ->assertConflict()
+            ->assertJsonPath('code', 'account_mismatch')
+            ->assertJsonMissingPath('data');
+        foreach (['جمعية التراث الحيّ', '0042/2019', 'info@heritage.example'] as $detailOfB) {
+            $this->assertStringNotContainsString($detailOfB, $response->getContent());
+        }
+        $this->assertSame($snapshot, $this->snapshot());
+
+        // B's own retry still finds B's stored result.
+        $this->confirm($this->institutionPayload())->assertConflict()->assertJsonPath('code', 'profile_already_completed')
+            ->assertJsonPath('data.institution.name', 'جمعية التراث الحيّ');
     }
 
     public function test_candidate_endpoints_need_an_active_signed_in_candidate_and_csrf(): void
@@ -422,6 +492,35 @@ class BasicProfileTest extends TestCase
         $this->cookieJar = [];
         $this->startCsrfSession();
         $this->browser('POST', '/api/auth/login', ['email' => $email ?? $this->candidate->email, 'password' => 'password'])->assertOk();
+        $this->signedIn = User::query()->where('email', $email ?? $this->candidate->email)->sole();
+    }
+
+    /**
+     * The account context a form opened by the signed-in account receives.
+     */
+    private function contextFromForm(): string
+    {
+        return $this->browser('GET', '/api/candidate/basic-profile')->assertOk()->json('account_context');
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function check(string $section, array $payload): TestResponse
+    {
+        return $this->browser('POST', '/api/candidate/basic-profile/check', ['section' => $section] + $this->withContext($payload));
+    }
+
+    /**
+     * Adds the signed-in account's own form context, unless the payload
+     * already carries one (for example a stale form of another account).
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function withContext(array $payload): array
+    {
+        return $payload + ['account_context' => $this->signedIn ? AccountContext::for($this->signedIn) : null];
     }
 
     /**
@@ -432,7 +531,7 @@ class BasicProfileTest extends TestCase
         // Stay under the per-account confirmation limit (10 per minute).
         $this->travel(7)->seconds();
 
-        return $this->browser('POST', '/api/candidate/basic-profile', $payload);
+        return $this->browser('POST', '/api/candidate/basic-profile', $this->withContext($payload));
     }
 
     /**

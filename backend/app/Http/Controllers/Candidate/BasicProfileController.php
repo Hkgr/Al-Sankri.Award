@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Candidate;
 
+use App\Candidates\AccountContext;
 use App\Candidates\BasicProfiles;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureAccountIsActive;
@@ -25,7 +26,8 @@ class BasicProfileController extends Controller
     public function __construct(private readonly BasicProfiles $profiles) {}
 
     /**
-     * The confirmed information, or null with what confirmation needs.
+     * The confirmed information, or null with what confirmation needs, and
+     * the account context the form must send back with its requests.
      */
     public function show(Request $request): JsonResponse
     {
@@ -35,6 +37,7 @@ class BasicProfileController extends Controller
         return response()->json([
             'data' => $profile === null ? null : new BasicProfileResource($profile),
             'requirements' => $this->requirements($user->hasVerifiedEmail()),
+            'account_context' => AccountContext::for($user),
         ]);
     }
 

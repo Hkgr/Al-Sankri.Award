@@ -52,7 +52,10 @@ class CandidateSchemaTest extends TestCase
         $this->assertSame(['مترشح', 'platform'], [$role->name_ar, $role->scope]);
         $this->assertSame(0, $this->db('user_roles')->count(), 'existing accounts are classified by the provisioning command, not the migration');
 
-        // Nothing depends on the new tables yet: the batch rolls back cleanly.
+        $this->assertSame(1, $this->db('audit_logs')->where('action', 'role.provisioned')->where('subject_id', $role->id)->count(), 'the migration records the role it created');
+
+        // Nothing depends on the new tables yet: the batch rolls back cleanly,
+        // and the role this migration created is removed.
         $this->rollbackLatestBatch();
         foreach (self::CANDIDATE_TABLES as $table) {
             $this->assertFalse($this->schemaDb()->getSchemaBuilder()->hasTable($table), "{$table} should be gone");
@@ -65,6 +68,32 @@ class CandidateSchemaTest extends TestCase
         $this->migrateOnly(self::CANDIDATE_MIGRATIONS);
         $this->assertSame([$existing], $this->db('roles')->where('code', 'candidate')->pluck('id')->map(fn ($id): int => (int) $id)->all());
         $this->assertSame('manual', $this->db('roles')->find($existing)->description);
+    }
+
+    public function test_rolling_back_preserves_a_candidate_role_that_existed_before(): void
+    {
+        // A "candidate" role created by someone else, with its own metadata and permissions.
+        $this->deployedSchema();
+        $roleId = $this->db('roles')->insertGetId([
+            'code' => 'candidate', 'name_ar' => 'مترشح (تعريف سابق)', 'description' => 'Defined before the candidate migrations.',
+            'scope' => 'platform', 'created_at' => '2026-09-01 10:00:00', 'updated_at' => '2026-09-02 11:00:00',
+        ]);
+        $permissionId = $this->db('permissions')->insertGetId(['code' => 'profiles.view_own', 'name_ar' => 'عرض الملف', 'module' => 'profiles']);
+        $this->db('role_permissions')->insert(['role_id' => $roleId, 'permission_id' => $permissionId, 'created_at' => '2026-09-02 11:00:00']);
+        $roleBefore = (array) $this->db('roles')->find($roleId);
+        $permissionsBefore = $this->db('role_permissions')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all();
+
+        $this->migrateOnly(self::CANDIDATE_MIGRATIONS);
+        $this->assertSame($roleBefore, (array) $this->db('roles')->find($roleId), 'applying keeps the existing role as it is');
+        $this->assertSame(0, $this->db('audit_logs')->where('action', 'role.provisioned')->count(), 'the migration did not create the role');
+
+        $this->rollbackLatestBatch();
+        foreach (self::CANDIDATE_TABLES as $table) {
+            $this->assertFalse($this->schemaDb()->getSchemaBuilder()->hasTable($table), "{$table} should be gone");
+        }
+        $this->assertSame($roleBefore, (array) $this->db('roles')->find($roleId), 'rollback keeps the pre-existing role');
+        $this->assertSame($permissionsBefore, $this->db('role_permissions')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all());
+        $this->assertSame(1, $this->db('permissions')->where('id', $permissionId)->count());
     }
 
     public function test_rolling_back_is_refused_before_anything_changes_while_candidate_data_exists(): void

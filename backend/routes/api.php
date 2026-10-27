@@ -53,6 +53,7 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
     Route::get('overview', CandidateOverviewController::class);
     Route::get('reference-data', ReferenceDataController::class);
     Route::get('basic-profile', [BasicProfileController::class, 'show']);
-    Route::post('basic-profile/check', [BasicProfileController::class, 'check'])->middleware('throttle:candidate-check');
-    Route::post('basic-profile', [BasicProfileController::class, 'store'])->middleware('throttle:candidate-confirm');
+    // Writes and checks carry the account_context of the form (App\Candidates\AccountContext).
+    Route::post('basic-profile/check', [BasicProfileController::class, 'check'])->middleware(['throttle:candidate-check', 'candidate.context']);
+    Route::post('basic-profile', [BasicProfileController::class, 'store'])->middleware(['throttle:candidate-confirm', 'candidate.context']);
 });

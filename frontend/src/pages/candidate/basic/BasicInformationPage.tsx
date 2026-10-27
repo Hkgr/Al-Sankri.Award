@@ -12,7 +12,7 @@ import { BasicInformationForm } from './BasicInformationForm'
 import { ProfileSummary } from './ProfileSummary'
 import { summaryFromProfile } from './summaries'
 
-type Loaded = { profile: BasicProfile | null; requirements: Requirements; countries: Country[] }
+type Loaded = { profile: BasicProfile | null; requirements: Requirements; countries: Country[]; accountContext: string }
 
 /**
  * Stage 1: the form until the basic information is confirmed, and a
@@ -30,10 +30,10 @@ export function BasicInformationPage({ user }: { user: User }) {
     setLoadError(null)
     try {
       const [state, reference] = await Promise.all([
-        api.get<{ data: BasicProfile | null; requirements: Requirements }>('/api/candidate/basic-profile'),
+        api.get<{ data: BasicProfile | null; requirements: Requirements; account_context: string }>('/api/candidate/basic-profile'),
         api.get<{ countries: Country[] }>('/api/candidate/reference-data'),
       ])
-      setLoaded({ profile: state.data, requirements: state.requirements, countries: reference.countries })
+      setLoaded({ profile: state.data, requirements: state.requirements, countries: reference.countries, accountContext: state.account_context })
     } catch (error) {
       if (!handleAccountFailure(error)) setLoadError(errorMessage(error))
     }
@@ -47,7 +47,8 @@ export function BasicInformationPage({ user }: { user: User }) {
 
   const onConfirmed = (profile: BasicProfile, alreadyStored: boolean) => {
     if (alreadyStored) {
-      // An earlier attempt was saved: show what is stored, unchanged.
+      // This account's information was already saved (an earlier attempt, or
+      // a save whose answer was lost): show what is stored, unchanged.
       setLoaded((current) => (current ? { ...current, profile } : current))
       setStoredNotice(true)
       return
@@ -99,6 +100,7 @@ export function BasicInformationPage({ user }: { user: User }) {
           user={user}
           countries={loaded.countries}
           requirements={loaded.requirements}
+          accountContext={loaded.accountContext}
           onRequirementsChange={(requirements) => setLoaded((current) => (current ? { ...current, requirements } : current))}
           onConfirmed={onConfirmed}
         />
@@ -112,7 +114,7 @@ function ReadOnlyProfile({ profile, storedNotice }: { profile: BasicProfile; sto
     <>
       {storedNotice && (
         <FormAlert tone="info">
-          <p>بياناتك الأساسية محفوظة مسبقاً ومتاحة للعرض فقط، ولم يُغيَّر فيها شيء.</p>
+          <p>تأكّدنا من أن بياناتك الأساسية محفوظة، وهي متاحة للعرض فقط. لم تُحفظ مرة ثانية ولم يُغيَّر فيها شيء.</p>
         </FormAlert>
       )}
       <div className="locked-banner">
