@@ -84,7 +84,7 @@ function App() {
   const { location } = useRouter()
 
   // The candidate area has its own layout (CandidateLayout).
-  if (location.pathname === '/dashboard' || location.pathname === '/dashboard/basic-information') return <CandidateApp />
+  if (['/dashboard', '/dashboard/basic-information', '/dashboard/nomination-details'].includes(location.pathname)) return <CandidateApp />
 
   return (
     <>

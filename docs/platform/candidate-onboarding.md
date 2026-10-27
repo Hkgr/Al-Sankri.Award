@@ -9,7 +9,7 @@ This document is for the people who deploy, operate and review the platform. It 
 
 Related: [authentication.md](authentication.md) (accounts and sign-in), [database-schema.md](database-schema.md) §K (tables), [database-rules.md](database-rules.md) (rules).
 
-**Scope.** Only stage 1 exists. There are no later nomination forms, uploads, cycle or domain choice, judging, results or administration screens. Confirming the basic information does **not** submit a nomination: no award cycle, application or application version is created.
+**Scope.** This document covers stage 1. Stage 2 (domain, subcategory and work details) is described in [candidate-nomination-details.md](candidate-nomination-details.md). There are no uploads, judging, results or administration screens. Confirming the basic information does **not** submit a nomination: no award cycle, application or application version is created.
 
 ## 1. The «مترشح» classification
 

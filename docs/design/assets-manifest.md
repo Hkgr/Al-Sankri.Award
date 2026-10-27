@@ -28,6 +28,16 @@ Dimensions are in PDF points; the SVG `viewBox` uses the same units.
 
 The entrepreneurship symbol's ratio differs because its gold dot rises above the cup's wings. The cup geometry is the same as in the other five symbols.
 
+**Platform mapping (candidate Stage 2, approved by the owner).** The candidate platform shows the award artwork of each main domain, unchanged, with the alt text «جائزة محور …»:
+
+| Main domain (code) | Artwork |
+| --- | --- |
+| الثقافة والفنون (`culture_and_arts`) | `domain-culture-and-arts.svg` |
+| التراث (`heritage`) | `domain-tangible-and-intangible-heritage.svg` |
+| الإبداع (`creativity`), for all three of its subcategories | `domain-volunteer-work.svg`: the former Volunteer Work award shape, explicitly approved by the owner for Creativity |
+
+The files and their provenance comments are unchanged; only the platform's use is new (`frontend/src/pages/candidate/nomination/nominationApi.ts`). The other three symbols (social responsibility, entrepreneurship, quality) are not used by the platform. The page 1 raster mockup stays unused.
+
 Each SVG carries:
 
 - a `<title>`: the official Arabic name for logos, the Arabic domain label for symbols;

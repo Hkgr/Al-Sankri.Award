@@ -33,7 +33,7 @@ class SpaRoutingTest extends TestCase
 
     public function test_each_public_page_serves_the_react_app(): void
     {
-        foreach (['/', '/login', '/register', '/forgot-password', '/reset-password?token=abc&email=a%40b.org', '/verify-email?status=verified', '/account', '/dashboard', '/dashboard/basic-information', '/policies/privacy-policy', '/policies/terms-of-use'] as $path) {
+        foreach (['/', '/login', '/register', '/forgot-password', '/reset-password?token=abc&email=a%40b.org', '/verify-email?status=verified', '/account', '/dashboard', '/dashboard/basic-information', '/dashboard/nomination-details', '/policies/privacy-policy', '/policies/terms-of-use'] as $path) {
             $response = $this->get($path)->assertOk();
             $this->assertSame(realpath($this->publicPath.'/index.html'), $response->baseResponse->getFile()->getRealPath(), $path);
             $this->assertStringStartsWith('text/html', (string) $response->headers->get('Content-Type'));

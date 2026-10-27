@@ -3,7 +3,7 @@ import type { FormEvent, ReactNode } from 'react'
 import { useAuth } from '../../../auth/useAuth'
 import type { User } from '../../../auth/useAuth'
 import { FormAlert, StatusIcon, TextField } from '../../../components/forms/FormControls'
-import { ApiError, api, errorMessage, messages, NetworkError } from '../../../lib/api'
+import { ApiError, api, errorMessage, NetworkError } from '../../../lib/api'
 import { useLeaveWarning, useRouter } from '../../../lib/useRouter'
 import { POLICY_NAMES, POLICY_SLUGS, PROFILE_TYPE_LABELS } from '../candidateApi'
 import type { BasicProfile, Country, PolicyCode, ProfileType, Requirements } from '../candidateApi'
@@ -179,8 +179,8 @@ export function BasicInformationForm({
     const text =
       error instanceof NetworkError
         ? context === 'check'
-          ? `${messages.network} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.`
-          : `${messages.network} ما أدخلته ما زال هنا.`
+          ? `${error.message} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.`
+          : `${error.message} ما أدخلته ما زال هنا.`
         : errorMessage(error)
     setAlert({ tone: 'error', content: <p>{text}</p> })
   }

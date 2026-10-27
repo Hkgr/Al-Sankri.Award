@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Candidate\BasicProfileController;
 use App\Http\Controllers\Candidate\CandidateOverviewController;
+use App\Http\Controllers\Candidate\NominationDetailsController;
 use App\Http\Controllers\Candidate\ReferenceDataController;
 use Illuminate\Support\Facades\Route;
 
@@ -59,4 +60,14 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
     Route::get('basic-profile', [BasicProfileController::class, 'show'])->middleware('candidate.context');
     Route::post('basic-profile/check', [BasicProfileController::class, 'check'])->middleware(['throttle:candidate-check', 'candidate.context']);
     Route::post('basic-profile', [BasicProfileController::class, 'store'])->middleware(['throttle:candidate-confirm', 'candidate.context']);
+
+    // Stage 2. Writes also pass nomination.gate: Stage 1 confirmed, the
+    // stage usable now, and the form's journey_key still current.
+    Route::get('nomination-details', [NominationDetailsController::class, 'show'])->middleware('candidate.context');
+    // Reconciling a save whose answer was lost: that form's journey only.
+    Route::get('nomination-details/journey', [NominationDetailsController::class, 'journey'])->middleware('candidate.context');
+    Route::post('nomination-details/check', [NominationDetailsController::class, 'check'])
+        ->middleware(['throttle:candidate-check', 'candidate.context', 'nomination.gate']);
+    Route::post('nomination-details', [NominationDetailsController::class, 'store'])
+        ->middleware(['throttle:candidate-confirm', 'candidate.context', 'nomination.gate']);
 });

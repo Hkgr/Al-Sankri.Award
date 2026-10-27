@@ -56,11 +56,11 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         // 2–3. Apply the platform and account migrations.
         $this->migrateAll();
-        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
-        foreach ([...self::PLATFORM_TABLES, ...self::ACCOUNT_TABLES, ...self::CANDIDATE_TABLES] as $table) {
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS) + count(self::NOMINATION_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        foreach ([...self::PLATFORM_TABLES, ...self::ACCOUNT_TABLES, ...self::CANDIDATE_TABLES, ...self::NOMINATION_TABLES] as $table) {
             $this->assertContains($table, $this->tableNames(), "Missing table {$table}");
         }
-        $this->assertCount(count($baselineTables) + count(self::PLATFORM_TABLES) + count(self::ACCOUNT_TABLES) + count(self::CANDIDATE_TABLES), $this->tableNames());
+        $this->assertCount(count($baselineTables) + count(self::PLATFORM_TABLES) + count(self::ACCOUNT_TABLES) + count(self::CANDIDATE_TABLES) + count(self::NOMINATION_TABLES), $this->tableNames());
         $this->assertSame('YES', $this->passwordNullability());
         $this->assertSame([], array_diff(self::NEW_USER_COLUMNS, $this->columnNames('users')));
         $this->assertExistingUserIntact($userId);
@@ -87,7 +87,7 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         // 6. Reapply.
         $this->migrateAll();
-        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS) + count(self::NOMINATION_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
         $this->assertExistingUserIntact($userId);
         $this->assertSame('active', $this->schemaDb()->table('users')->find($userId)->status);
     }
