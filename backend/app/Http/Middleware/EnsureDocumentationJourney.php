@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Runs before every Stage 3 and submission request (reads of files
- * included): Stage 1 must be confirmed (409 basic_information_required),
+ * Runs before every Stage 3 and submission request (reads of files and the
+ * journey-bound recovery reads included): Stage 1 must be confirmed (409 basic_information_required),
  * and the request's journey_key must name this account's confirmed Stage 2
  * journey (409 journey_changed), whose application is then the only one the
  * request may touch. Whether that application may still change is decided

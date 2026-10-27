@@ -28,6 +28,7 @@ Stage 3 and the submission follow the **same cycle stage as Stage 2**: the journ
   - the extension (`.docm`, `.exe` and anything else not listed are refused);
   - the MIME type detected from the content (`finfo`);
   - the format's structure: PDF header; OLE header for DOC; for DOCX, a Word package without a VBA project or macro-enabled content type; MP4 `ftyp` box; WebM EBML header.
+  - For DOCX, only `[Content_Types].xml` is decompressed, and only up to **64 KiB** (`CONTENT_TYPES_MAX_BYTES`; real files are 1–3 KB). The upload limit bounds the compressed archive, not what an entry inflates to. So the entry's declared size is checked first, and the read stops one byte past the limit in case that size is forged. A larger or unreadable entry is refused with the usual file error.
 
   A renamed executable or web page is refused.
 - **Not a malware scan.** Accepted files keep `scan_status = pending`; nothing marks them `clean`. No scanner is configured, and adding one is a separate decision.
@@ -41,6 +42,11 @@ Stage 3 and the submission follow the **same cycle stage as Stage 2**: the journ
 ## 4. Saving, retries and the lock
 
 - **One file per request** (multipart). The browser gives each file an operation identifier (`files.upload_operation_id`, unique per uploader). If an answer is lost, the page re-reads the saved list; a retry with the same identifier returns the stored attachment and never adds it twice.
+- **Recovery reads are bound to the page's journey.**
+  - When an upload or submission answer is lost, the page re-reads `GET /api/candidate/documentation/journey` or `GET /api/candidate/review/journey`, sending its own `journey_key` in the query and its account context in the header.
+  - The server resolves exactly that owned journey, even after its cycle closed, or answers `409 journey_changed`. It never substitutes the journey of the cycle that is current now.
+  - The page accepts the answer only if the same `journey_key` comes back. Otherwise it keeps what it showed, says the outcome is unknown, and sends nothing again by itself.
+  - Opening the pages normally still shows the journey of the current cycle.
 - **Deadlines:**
   - an upload has a bounded 5-minute deadline (`UPLOAD_TIMEOUT_MS`);
   - every other request keeps 20 seconds;
@@ -48,6 +54,12 @@ Stage 3 and the submission follow the **same cycle stage as Stage 2**: the journ
 - **Lock order:** every Stage 3 write and the submission use one transaction with the platform's lock order: the account's `users` row, then the configuration (`award_cycles`), then the journey and the application. Inside it they recheck that the application is an unsubmitted draft and the stage is open. An upload that started before the submission and finishes after it is refused, and its bytes are deleted.
 - **Revisions:** every change to attachments or links raises `candidate_nominations.documentation_revision`. Stage 3 is confirmed for one revision, and the submission is bound to the revision the candidate reviewed. A change from another tab after the review returns `409 review_outdated`, and the candidate reviews again.
 - **Submission** (`App\Candidates\Submissions`):
+  - **Conflict-of-interest bar** ([database-rules.md](database-rules.md) §3), checked inside the transaction before anything is written:
+    - **Who is refused:** an account with a current membership (`committee_members.left_at` empty) in a `judging`, `integrity` or `trustees` committee of the application's cycle, unless that committee is `dissolved`. Draft committees count.
+    - **Answer:** `403 committee_member`, with nothing written.
+    - **Not checked:**
+      - award-management roles, because the repository defines no such role code yet (only `candidate`); add the check when that role exists;
+      - other roles, which are not a reason to refuse.
   - **Application:** keeps the existing application; sets `status = submitted`, `first_submitted_at` and `current_version_id`; assigns `reference_number` `SA-<cycle year>-<6 characters>`.
   - **Version:** writes `application_versions` version 1 (`initial`) with:
     - `data_snapshot`: the Stage 2 data as shown, the documentation manifest (names, types, sizes, SHA-256, scan status) and the links;
@@ -87,3 +99,4 @@ No `.env`, Document Root or `deploy.sh` change is needed.
 - There is no malware scanning (files stay `pending`). Staff who open candidate files later should treat them as untrusted.
 - Links are not checked for reachability, and their content may change or disappear after submission; only the address and title are frozen.
 - One journey per candidate profile and cycle (unchanged from Stage 2). There is no reopening or correction workflow after submission.
+- The conflict-of-interest bar covers committee memberships only (see §4); there is no award-management role to check yet, and no eligibility-review workflow.

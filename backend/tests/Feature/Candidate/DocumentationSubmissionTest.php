@@ -274,6 +274,75 @@ class DocumentationSubmissionTest extends TestCase
         $this->read('/api/candidate/documentation')->assertOk()->assertJsonPath('data.editable', false)->assertJsonCount(2, 'data.attachments');
     }
 
+    public function test_docx_metadata_is_read_within_a_small_bound(): void
+    {
+        $this->readyForDocumentation();
+        $this->upload('supporting', $this->docx())->assertCreated();
+
+        // Just over the 64 KiB bound, and a tiny archive whose metadata
+        // inflates to 96 MiB: refused without inflating it.
+        $this->upload('supporting', $this->docx(contentTypesBytes: 65_537))->assertUnprocessable()->assertJsonValidationErrors(['file']);
+        $bomb = $this->docx(contentTypesBytes: 100_663_296);
+        $this->assertLessThan(1_048_576, $bomb->getSize());
+        memory_reset_peak_usage();
+        $before = memory_get_usage();
+        $this->upload('supporting', $bomb)->assertUnprocessable()->assertJsonValidationErrors(['file']);
+        $this->assertLessThan(16 * 1_048_576, memory_get_peak_usage() - $before, 'the entry was not inflated into memory');
+        $this->assertSame(1, DB::table('files')->count());
+    }
+
+    public function test_recovery_reads_the_original_journey_and_never_another_cycles(): void
+    {
+        // Journey A is submitted, but the answer is lost.
+        $this->readyForDocumentation();
+        $this->upload('explanatory', $this->pdf())->assertCreated();
+        $this->confirmStage3(1)->assertOk();
+        $receiptA = $this->submit(1)->assertCreated()->json('data');
+        $keyOfA = $this->docKey;
+
+        // Cycle A closes; cycle B opens, and the candidate submits there too.
+        $this->runSetup('cycle-2026', ['--close' => true]);
+        $this->configureCycle('cycle-2027');
+        $this->confirm($this->payload(), $this->journeyKey())->assertCreated();
+        $this->docKey = (string) $this->read('/api/candidate/documentation')->json('journey_key');
+        $this->upload('explanatory', $this->pdf())->assertCreated();
+        $this->confirmStage3(1)->assertOk();
+        $receiptB = $this->submit(1)->assertCreated()->json('data');
+        $this->assertNotSame($receiptA['reference_number'], $receiptB['reference_number']);
+        $this->read('/api/candidate/review')->assertJsonPath('data.submission.reference_number', $receiptB['reference_number']);
+
+        // A's page reconciles A only, though its cycle closed.
+        $this->read('/api/candidate/review/journey?journey_key='.urlencode($keyOfA))->assertOk()
+            ->assertJsonPath('journey_key', $keyOfA)->assertJsonPath('data.submission', $receiptA);
+        $this->read('/api/candidate/documentation/journey?journey_key='.urlencode($keyOfA))->assertOk()
+            ->assertJsonPath('journey_key', $keyOfA)->assertJsonPath('data.submission', $receiptA);
+
+        // An unknown key or another account's page never falls back to the current journey.
+        $this->read('/api/candidate/review/journey?journey_key=unknown')->assertConflict()->assertJsonPath('code', 'journey_changed');
+        $this->read('/api/candidate/review/journey')->assertConflict()->assertJsonPath('code', 'journey_changed');
+        $this->read('/api/candidate/review/journey?journey_key='.urlencode($keyOfA), 'another-account')->assertConflict()->assertJsonPath('code', 'account_mismatch');
+    }
+
+    public function test_a_member_of_a_cycle_committee_cannot_submit(): void
+    {
+        $this->readyForDocumentation();
+        $this->upload('explanatory', $this->pdf())->assertCreated();
+        $this->confirmStage3(1)->assertOk();
+        $cycleId = (int) DB::table('applications')->value('cycle_id');
+        $committee = DB::table('committees')->insertGetId(['cycle_id' => $cycleId, 'type' => 'trustees', 'name_ar' => 'مجلس الأمناء', 'created_at' => now()]);
+        $membership = DB::table('committee_members')->insertGetId(['committee_id' => $committee, 'user_id' => $this->candidate->id, 'joined_at' => now()->subDay()]);
+
+        $before = $this->snapshotTables();
+        $auditRows = DB::table('audit_logs')->count();
+        $this->submit(1)->assertForbidden()->assertJsonPath('code', 'committee_member');
+        $this->assertEquals($before, $this->snapshotTables(), 'nothing was submitted');
+        $this->assertSame($auditRows, DB::table('audit_logs')->count());
+
+        // Once the membership has ended, the candidate is an ordinary one again.
+        DB::table('committee_members')->where('id', $membership)->update(['left_at' => now()]);
+        $this->submit(1)->assertCreated()->assertJsonPath('data.version_number', 1);
+    }
+
     // ---------- helpers ----------
 
     private function readyForDocumentation(): void
@@ -362,12 +431,23 @@ class DocumentationSubmissionTest extends TestCase
         return $this->file('clip.webm', "\x1A\x45\xDF\xA3\x9F\x42\x86\x81\x01\x42\xF7\x81\x01\x42\xF2\x81\x04\x42\xF3\x81\x08\x42\x82\x84webm\x42\x87\x81\x04\x42\x85\x81\x02", 4096);
     }
 
-    private function docx(bool $withMacros = false): UploadedFile
+    /**
+     * A minimal Word package. With $contentTypesBytes, `[Content_Types].xml`
+     * is padded to that size with zero bytes streamed from a sparse file (never
+     * held in memory), which compresses to almost nothing.
+     */
+    private function docx(bool $withMacros = false, ?int $contentTypesBytes = null): UploadedFile
     {
+        $types = '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
         $path = tempnam(sys_get_temp_dir(), 'sa-docx-');
         $zip = new ZipArchive;
         $zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
-        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+        if ($contentTypesBytes === null) {
+            $zip->addFromString('[Content_Types].xml', $types);
+        } else {
+            $padded = $this->file('types.xml', $types, $contentTypesBytes)->getRealPath();
+            $zip->addFile($padded, '[Content_Types].xml');
+        }
         $zip->addFromString('_rels/.rels', '<?xml version="1.0"?><Relationships/>');
         $zip->addFromString('word/document.xml', '<?xml version="1.0"?><w:document/>');
         if ($withMacros) {

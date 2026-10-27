@@ -78,6 +78,10 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
     // confirmed Stage 2 journey. Every write rechecks, inside its
     // transaction, that the application is still an unsubmitted draft.
     Route::get('documentation', [DocumentationController::class, 'show'])->middleware('candidate.context');
+    // Reconciling an upload or a submission whose answer was lost: that
+    // page's journey only (journey_key in the query), even once its cycle
+    // closed. Never the journey of another cycle.
+    Route::get('documentation/journey', [DocumentationController::class, 'show'])->middleware(['candidate.context', 'documentation.journey']);
     Route::post('documentation/files', [DocumentationController::class, 'upload'])
         ->middleware(['throttle:candidate-upload', 'candidate.context', 'documentation.journey']);
     Route::post('documentation/files/remove', [DocumentationController::class, 'remove'])
@@ -92,6 +96,7 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
         ->middleware(['candidate.context:query', 'documentation.journey']);
 
     Route::get('review', [SubmissionController::class, 'show'])->middleware('candidate.context');
+    Route::get('review/journey', [SubmissionController::class, 'show'])->middleware(['candidate.context', 'documentation.journey']);
     Route::post('submission', [SubmissionController::class, 'store'])
         ->middleware(['throttle:candidate-confirm', 'candidate.context', 'documentation.journey']);
 });

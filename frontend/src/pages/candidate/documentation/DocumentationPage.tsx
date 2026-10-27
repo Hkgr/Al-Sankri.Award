@@ -10,7 +10,7 @@ import { contextHeader, formatDamascusDateTime } from '../candidateApi'
 import { useAccountFailure } from '../useCandidateRequests'
 import { AttachmentList, LinkList } from './AttachmentList'
 import type { Attachment, AttachmentKind, Documentation, DocumentationLink, DocumentationState } from './documentationApi'
-import { formatBytes, KIND_RULES, precheck, SECTION_TITLES } from './documentationApi'
+import { formatBytes, journeyStateUrl, KIND_RULES, precheck, SECTION_TITLES } from './documentationApi'
 
 const STATE_URL = '/api/candidate/documentation'
 
@@ -264,8 +264,9 @@ function DocumentationEditor({
    */
   const reconcile = async (row: Pending) => {
     try {
-      const state = await api.get<DocumentationState>(STATE_URL, contextHeader(user))
-      if (state.data?.attachments.some((item) => item.operation_id === row.operationId)) {
+      // This page's journey only: another cycle's list never stands in for it.
+      const state = await api.get<DocumentationState>(journeyStateUrl('documentation', journeyKey), contextHeader(user))
+      if (state.journey_key === journeyKey && state.data?.attachments.some((item) => item.operation_id === row.operationId)) {
         accept(state)
         dropRow(row.key)
         return

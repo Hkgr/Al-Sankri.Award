@@ -59,7 +59,9 @@ class DocumentationController extends Controller
             return response()->json(['code' => NominationDetails::BASIC_INFORMATION_REQUIRED, 'message' => 'أكمل البيانات الأساسية (المرحلة 1) وأكّد حفظها أولاً.'], 409);
         }
 
-        $journey = $this->documentation->journeyOf($request->user());
+        // documentation/journey: the exact journey the page named (reconciling
+        // an upload whose answer was lost); otherwise the one to show now.
+        $journey = $request->attributes->get('candidate_journey') ?? $this->documentation->journeyOf($request->user());
 
         if ($journey === null) {
             return response()->json(['data' => null, 'availability' => ['status' => 'nomination_details_required']]);

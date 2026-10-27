@@ -11,7 +11,7 @@ import type { BasicProfile } from '../candidateApi'
 import { contextHeader, formatDamascusDateTime } from '../candidateApi'
 import { AttachmentList, LinkList } from '../documentation/AttachmentList'
 import type { AttachmentKind, Documentation, Receipt } from '../documentation/documentationApi'
-import { SECTION_TITLES, SUBMIT_CONFIRMATION } from '../documentation/documentationApi'
+import { journeyStateUrl, SECTION_TITLES, SUBMIT_CONFIRMATION } from '../documentation/documentationApi'
 import type { NominationDetails } from '../nomination/nominationApi'
 import { DomainArtwork } from '../nomination/nominationFields'
 import { nominationSummaryFromDetails } from '../nomination/nominationSummaries'
@@ -66,13 +66,14 @@ export function ReviewPage({ user }: { user: User }) {
   const submit = async () => {
     dialogRef.current?.close()
     if (!review || !state?.journey_key) return
+    const journeyKey = state.journey_key
     setSending(true)
     setAlert(null)
     try {
       const response = await api.post<{ data: Receipt }>('/api/candidate/submission', {
         reviewed_revision: review.documentation.revision,
         account_context: user.account_context,
-        journey_key: state.journey_key,
+        journey_key: journeyKey,
       })
       setState({ ...state, data: { ...review, submission: response.data } })
     } catch (error) {
@@ -80,7 +81,7 @@ export function ReviewPage({ user }: { user: User }) {
         setAlert({ tone: 'error', content: <p>{error.message}</p> })
         await load()
       } else if (error instanceof NetworkError || (error instanceof ApiError && error.status >= 500)) {
-        await reconcile()
+        await reconcile(journeyKey)
       } else if (!handleAccountFailure(error)) {
         setAlert({ tone: 'error', content: <p>{errorMessage(error)}</p> })
       }
@@ -89,12 +90,19 @@ export function ReviewPage({ user }: { user: User }) {
     }
   }
 
-  /** The answer was lost: the submission may have been recorded anyway. */
-  const reconcile = async () => {
+  /**
+   * The answer was lost: the submission may have been recorded anyway. Only
+   * the journey that was submitted is read again (even if its cycle has
+   * closed meanwhile); if that cannot be read, the page keeps what it showed
+   * and says the outcome is unknown. Nothing is sent again by itself.
+   */
+  const reconcile = async (journeyKey: string) => {
     try {
-      const fresh = await api.get<ReviewState>('/api/candidate/review', contextHeader(user))
-      setState(fresh)
-      if (fresh.data?.submission) return
+      const fresh = await api.get<ReviewState>(journeyStateUrl('review', journeyKey), contextHeader(user))
+      if (fresh.journey_key === journeyKey && fresh.data) {
+        setState(fresh)
+        if (fresh.data.submission) return
+      }
     } catch {
       // Still unknown: say so below.
     }

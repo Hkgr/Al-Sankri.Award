@@ -112,6 +112,17 @@ export function fileUrl(user: Pick<User, 'account_context'>, journeyKey: string,
   return `/api/candidate/documentation/files/${attachment.id}?${query.toString()}`
 }
 
+/**
+ * The state of one journey only, for reconciling an upload or a submission
+ * whose answer was lost: the server resolves the journey the key names,
+ * even after its cycle closed, and never substitutes another cycle's. Send
+ * it with contextHeader(user), and accept the answer only when its
+ * journey_key is still the same.
+ */
+export function journeyStateUrl(area: 'documentation' | 'review', journeyKey: string): string {
+  return `/api/candidate/${area}/journey?${new URLSearchParams({ journey_key: journeyKey }).toString()}`
+}
+
 export const SECTION_TITLES: Record<AttachmentKind, string> = {
   explanatory: 'وثيقة شرح العمل',
   supporting: 'وثائق داعمة إضافية',

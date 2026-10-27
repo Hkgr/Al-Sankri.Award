@@ -32,6 +32,11 @@ class SubmissionController extends Controller
      * Everything the candidate is about to send (or has sent): Stage 1,
      * Stage 2 and Stage 3 as stored, the documentation revision the review
      * shows, and the receipt once submitted.
+     *
+     * On `review/journey` (reconciling a submission whose answer was lost)
+     * documentation.journey has already resolved the exact journey the page
+     * named, even after its cycle closed; another cycle's participation is
+     * never shown in its place.
      */
     public function show(Request $request): JsonResponse
     {
@@ -41,7 +46,7 @@ class SubmissionController extends Controller
             return response()->json(['code' => NominationDetails::BASIC_INFORMATION_REQUIRED, 'message' => 'أكمل البيانات الأساسية (المرحلة 1) وأكّد حفظها أولاً.'], 409);
         }
 
-        $journey = $this->documentation->journeyOf($request->user());
+        $journey = $request->attributes->get('candidate_journey') ?? $this->documentation->journeyOf($request->user());
 
         if ($journey === null) {
             return response()->json(['data' => null, 'availability' => ['status' => 'nomination_details_required']]);
@@ -76,6 +81,10 @@ class SubmissionController extends Controller
                 'code' => $outcome,
                 'message' => 'تغيّرت ملفات العمل أو روابطه منذ فتحت صفحة المراجعة، أو لم يُؤكَّد حفظ المرحلة 3 لهذه النسخة. لم يُرسل شيء؛ راجع المشاركة من جديد.',
             ], 409),
+            Submissions::COMMITTEE_MEMBER => response()->json([
+                'code' => $outcome,
+                'message' => 'لا يمكن إرسال هذه المشاركة: هذا الحساب عضو في لجنة من لجان هذه الدورة (التحكيم أو النزاهة أو الأمناء)، ولا يحق لأعضاء اللجان الترشح فيها. لم يُرسل شيء. للاستفسار تواصل مع إدارة الجائزة.',
+            ], 403),
             default => app(DocumentationController::class)->refusal($outcome),
         };
     }

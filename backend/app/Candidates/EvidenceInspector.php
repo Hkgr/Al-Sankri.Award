@@ -23,6 +23,12 @@ class EvidenceInspector
     public const VIDEO_MAX_BYTES = 52_428_800;
 
     /**
+     * 64 KiB for a DOCX's `[Content_Types].xml`: a list of part types,
+     * usually 1–3 KB even for long documents. Larger is refused.
+     */
+    public const CONTENT_TYPES_MAX_BYTES = 65_536;
+
+    /**
      * Per extension: the MIME type stored for it once the structure is
      * verified, and the types finfo may report for genuine files.
      *
@@ -96,6 +102,11 @@ class EvidenceInspector
     /**
      * A DOCX is a ZIP package with a main Word document part and no VBA
      * project or macro-enabled content type.
+     *
+     * Only `[Content_Types].xml` is decompressed. The upload limit bounds
+     * the compressed archive, not what an entry inflates to, so the entry's
+     * declared size is checked first and the read itself stops one byte
+     * past CONTENT_TYPES_MAX_BYTES (the declared size can be forged).
      */
     private function isWordDocumentWithoutMacros(string $path): bool
     {
@@ -105,8 +116,12 @@ class EvidenceInspector
         }
 
         try {
-            $types = $zip->getFromName('[Content_Types].xml');
-            if ($types === false || $zip->locateName('word/document.xml') === false || stripos($types, 'macroEnabled') !== false) {
+            $entry = $zip->statName('[Content_Types].xml');
+            if ($entry === false || $entry['size'] > self::CONTENT_TYPES_MAX_BYTES || $zip->locateName('word/document.xml') === false) {
+                return false;
+            }
+            $types = $zip->getFromName('[Content_Types].xml', self::CONTENT_TYPES_MAX_BYTES + 1);
+            if ($types === false || strlen($types) > self::CONTENT_TYPES_MAX_BYTES || stripos($types, 'macroEnabled') !== false) {
                 return false;
             }
             for ($index = 0; $index < $zip->numFiles; $index++) {

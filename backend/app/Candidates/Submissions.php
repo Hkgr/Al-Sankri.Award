@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\DB;
  * One transaction, in the shared lock order (Documentation::lockForChange):
  * it checks again that the application is an unsubmitted draft, the cycle's
  * nomination stage is open, Stage 3 was confirmed for the revision the
- * candidate reviewed and that revision is still the current one. Then it
+ * candidate reviewed and that revision is still the current one, and that
+ * the account sits on none of the cycle's committees. Then it
  * writes immutable version 1 (`initial`) with the data and form snapshots
  * and their canonical SHA-256, links every attached file to that version
  * as well (same bytes, one target per link row), assigns a reference
@@ -41,6 +42,11 @@ class Submissions
 
     public const REVIEW_OUTDATED = 'review_outdated';
 
+    public const COMMITTEE_MEMBER = 'committee_member';
+
+    /** Committee types whose members may not apply in the same cycle (committees.type). */
+    public const EXCLUDING_COMMITTEES = ['judging', 'integrity', 'trustees'];
+
     private const REFERENCE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
     public function __construct(private readonly Documentation $documentation) {}
@@ -58,6 +64,9 @@ class Submissions
             }
             if ($refusal !== null) {
                 return [$refusal, null];
+            }
+            if ($this->sitsOnCycleCommittee($user, (int) $application->cycle_id)) {
+                return [self::COMMITTEE_MEMBER, null];
             }
             if ($reviewedRevision !== $journey->documentation_revision || ! $journey->documentationConfirmed()) {
                 return [self::REVIEW_OUTDATED, null];
@@ -112,6 +121,25 @@ class Submissions
 
             return [self::SUBMITTED, $this->receipt($application->refresh())];
         });
+    }
+
+    /**
+     * The conflict-of-interest bar (database-rules.md §3): a current member
+     * (not left) of a judging, integrity or trustees committee of the
+     * application's cycle that is not dissolved may not apply. Award
+     * management roles are not checked here: no such role code is defined
+     * yet, and other roles are not a reason to refuse.
+     */
+    private function sitsOnCycleCommittee(User $user, int $cycleId): bool
+    {
+        return DB::table('committee_members as members')
+            ->join('committees', 'committees.id', '=', 'members.committee_id')
+            ->where('members.user_id', $user->getKey())
+            ->whereNull('members.left_at')
+            ->where('committees.cycle_id', $cycleId)
+            ->whereIn('committees.type', self::EXCLUDING_COMMITTEES)
+            ->where('committees.status', '<>', 'dissolved')
+            ->exists();
     }
 
     /**
