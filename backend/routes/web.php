@@ -20,6 +20,8 @@ Route::get('/account', SpaController::class);
 Route::get('/dashboard', SpaController::class);
 Route::get('/dashboard/basic-information', SpaController::class);
 Route::get('/dashboard/nomination-details', SpaController::class);
+Route::get('/dashboard/documentation', SpaController::class);
+Route::get('/dashboard/review', SpaController::class);
 Route::get('/policies/privacy-policy', SpaController::class);
 Route::get('/policies/terms-of-use', SpaController::class);
 

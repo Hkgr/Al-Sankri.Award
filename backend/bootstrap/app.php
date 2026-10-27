@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureCandidateAccountContext;
+use App\Http\Middleware\EnsureDocumentationJourney;
 use App\Http\Middleware\EnsureNominationStageIsOpen;
 use App\Http\Middleware\EnsureUserIsCandidate;
 use App\Http\Middleware\PreventCaching;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'candidate' => EnsureUserIsCandidate::class,
             'candidate.context' => EnsureCandidateAccountContext::class,
             'nomination.gate' => EnsureNominationStageIsOpen::class,
+            'documentation.journey' => EnsureDocumentationJourney::class,
             'no-store' => PreventCaching::class,
         ]);
     })

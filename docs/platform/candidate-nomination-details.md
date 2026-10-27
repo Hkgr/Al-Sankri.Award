@@ -9,7 +9,7 @@ For the people who deploy, operate and review the platform. Related: [candidate-
 - start eligibility review or judging;
 - publish anything.
 
-**Not added:** uploads, voting, field visits, scoring, administration screens and later stages.
+**Not added here:** uploads and the final submission (Stage 3: [candidate-documentation-submission.md](candidate-documentation-submission.md)), voting, field visits, scoring and administration screens.
 
 ## 1. Approved taxonomy and artwork
 

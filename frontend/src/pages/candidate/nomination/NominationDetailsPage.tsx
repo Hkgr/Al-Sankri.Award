@@ -131,8 +131,8 @@ function ReadOnlyNomination({ details, storedNotice }: { details: NominationDeta
         <div>
           <p className="locked-banner__title">حُفظت فئة الترشح وبيانات العمل</p>
           <p>
-            حُفظت في {formatDamascusDateTime(details.confirmed_at)} بتوقيت دمشق، وهي متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ ستُتاح بقية مراحل ملف الترشح
-            لاحقاً.
+            حُفظت في {formatDamascusDateTime(details.confirmed_at)} بتوقيت دمشق، وهي متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ تُرسل المشاركة من صفحة
+            المراجعة بعد استكمال ملفات العمل وتوثيقه.
           </p>
         </div>
       </div>
@@ -145,7 +145,7 @@ function ReadOnlyNomination({ details, storedNotice }: { details: NominationDeta
       </div>
       <ProfileSummary groups={nominationSummaryFromDetails(details)} />
       <p className="candidate-page__back">
-        <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+        <Link href="/dashboard/documentation">المتابعة إلى ملفات العمل وتوثيقه</Link>
       </p>
     </>
   )

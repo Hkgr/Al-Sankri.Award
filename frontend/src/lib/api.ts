@@ -49,12 +49,20 @@ export class RequestTimeoutError extends NetworkError {}
  */
 export const REQUEST_TIMEOUT_MS = 20_000
 
+/**
+ * The deadline of one file upload (api.upload only): up to 50 MiB may need
+ * minutes on a slow connection, so five minutes, still bounded. The CSRF
+ * cookie request before it keeps the ordinary deadline.
+ */
+export const UPLOAD_TIMEOUT_MS = 5 * 60_000
+
 export const messages = {
   network: 'تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',
   sessionExpired: 'انتهت صلاحية الجلسة. أعد تحميل الصفحة ثم حاول مرة أخرى.',
   unexpected: 'حدث خطأ غير متوقع. أعد المحاولة بعد قليل.',
   tooManyAttempts: 'محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة.',
   timeout: 'لم يصل ردّ الخادم في الوقت المتوقع. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',
+  tooLarge: 'الطلب أكبر من الحد الذي يقبله الخادم. تأكّد من أن حجم الملف ضمن الحد المسموح ثم أعد المحاولة.',
 }
 
 /**
@@ -62,14 +70,14 @@ export const messages = {
  * deadline. When the deadline passes, the step is aborted and the promise
  * rejects with a RequestTimeoutError, even if the aborted work never settles.
  */
-async function withDeadline<T>(step: (signal: AbortSignal) => Promise<T>): Promise<T> {
+async function withDeadline<T>(step: (signal: AbortSignal) => Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
   const controller = new AbortController()
   let timer: ReturnType<typeof setTimeout> | undefined
   const deadline = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       reject(new RequestTimeoutError(messages.timeout))
       controller.abort()
-    }, REQUEST_TIMEOUT_MS)
+    }, timeoutMs)
   })
   try {
     return await Promise.race([step(controller.signal), deadline])
@@ -107,7 +115,8 @@ async function send(method: Method, url: string, signal: AbortSignal, body?: unk
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  // A FormData body sets its own multipart Content-Type (with the boundary).
+  if (body !== undefined && !(body instanceof FormData)) headers['Content-Type'] = 'application/json'
   const token = readCookie('XSRF-TOKEN')
   if (token) headers['X-XSRF-TOKEN'] = token
 
@@ -116,7 +125,7 @@ async function send(method: Method, url: string, signal: AbortSignal, body?: unk
       method,
       credentials: 'same-origin',
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
       signal,
     })
   } catch {
@@ -132,7 +141,13 @@ async function toError(response: Response): Promise<ApiError> {
     // Not JSON (for example a proxy error page): fall back to a generic message.
   }
   const fallback =
-    response.status === 419 ? messages.sessionExpired : response.status === 429 ? messages.tooManyAttempts : messages.unexpected
+    response.status === 419
+      ? messages.sessionExpired
+      : response.status === 429
+        ? messages.tooManyAttempts
+        : response.status === 413
+          ? messages.tooLarge
+          : messages.unexpected
   const message = response.status >= 500 || !payload.message ? fallback : payload.message
   return new ApiError(response.status, message, payload.errors ?? {}, payload.code ?? null, payload)
 }
@@ -141,7 +156,14 @@ async function toError(response: Response): Promise<ApiError> {
 const CSRF_RETRY = Symbol('csrf-retry')
 
 /** One attempt, bounded from sending until the body has been read. */
-function attempt<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>, retryOn419 = false): Promise<T | typeof CSRF_RETRY> {
+function attempt<T>(
+  method: Method,
+  url: string,
+  body?: unknown,
+  headers?: Record<string, string>,
+  retryOn419 = false,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<T | typeof CSRF_RETRY> {
   return withDeadline(async (signal) => {
     const response = await send(method, url, signal, body, headers)
     if (response.status === 419 && retryOn419) {
@@ -157,22 +179,27 @@ function attempt<T>(method: Method, url: string, body?: unknown, headers?: Recor
     } catch {
       throw new NetworkError(messages.network)
     }
-  })
+  }, timeoutMs)
 }
 
-async function request<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
+async function request<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
   if (method !== 'GET' && !readCookie('XSRF-TOKEN')) await refreshCsrfCookie()
 
-  const first = await attempt<T>(method, url, body, headers, method !== 'GET')
+  const first = await attempt<T>(method, url, body, headers, method !== 'GET', timeoutMs)
   if (first !== CSRF_RETRY) return first
 
   await refreshCsrfCookie()
-  return (await attempt<T>(method, url, body, headers)) as T
+  return (await attempt<T>(method, url, body, headers, false, timeoutMs)) as T
 }
 
 export const api = {
   get: <T>(url: string, headers?: Record<string, string>) => request<T>('GET', url, undefined, headers),
   post: <T>(url: string, body: unknown = {}) => request<T>('POST', url, body),
+  /**
+   * One file as multipart form data, with the upload deadline. Its outcome
+   * after a timeout is unknown, like any write: callers reconcile.
+   */
+  upload: <T>(url: string, form: FormData) => request<T>('POST', url, form, undefined, UPLOAD_TIMEOUT_MS),
 }
 
 /** The message to show for any failure thrown by `api`. */

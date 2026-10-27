@@ -104,5 +104,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('candidate-check', fn (Request $request) => Limit::perMinute(30)->by((string) $request->user()?->getKey())->response($tooMany));
 
         RateLimiter::for('candidate-confirm', fn (Request $request) => Limit::perMinute(10)->by((string) $request->user()?->getKey())->response($tooMany));
+
+        // Stage 3: each file is its own request, per account.
+        RateLimiter::for('candidate-upload', fn (Request $request) => Limit::perMinute(30)->by((string) $request->user()?->getKey())->response($tooMany));
     }
 }

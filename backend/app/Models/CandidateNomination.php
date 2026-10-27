@@ -20,7 +20,20 @@ class CandidateNomination extends Model
     {
         return [
             'details_confirmed_at' => 'datetime',
+            'documentation_revision' => 'integer',
+            'documentation_confirmed_revision' => 'integer',
+            'documentation_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Stage 3 is complete when it was confirmed for the current revision of
+     * the attachments and links; any later change requires confirming again.
+     */
+    public function documentationConfirmed(): bool
+    {
+        return $this->documentation_confirmed_revision !== null
+            && $this->documentation_confirmed_revision === $this->documentation_revision;
     }
 
     public function application(): BelongsTo

@@ -29,9 +29,13 @@ class EnsureCandidateAccountContext
      *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $source = null): Response
     {
-        $context = $request->isMethod('GET') ? $request->header(self::HEADER) : $request->input('account_context');
+        // `candidate.context:query` (file downloads and video playback, where
+        // the browser cannot add a header): the value comes in the query.
+        $context = $source === 'query'
+            ? $request->query('account_context')
+            : ($request->isMethod('GET') ? $request->header(self::HEADER) : $request->input('account_context'));
 
         if (! AccountContext::matches($request->user(), $context)) {
             return response()->json(['message' => self::MESSAGE, 'code' => 'account_mismatch'], 409);
