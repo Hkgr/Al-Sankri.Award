@@ -2,6 +2,7 @@
 
 namespace App\Auth;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 
 /**
@@ -12,14 +13,27 @@ use Illuminate\Http\Request;
  */
 class SafeRedirect
 {
-    public const DEFAULT = '/account';
+    /** Where candidates land after signing in or registering. */
+    public const DASHBOARD = '/dashboard';
+
+    /** The account page, for accounts that are not candidates. */
+    public const ACCOUNT = '/account';
 
     /**
      * Paths (exact) and path prefixes (ending in "/") a visitor may return to.
      *
      * @var list<string>
      */
-    private const ALLOWED = ['/account', '/email/verify/'];
+    private const ALLOWED = ['/dashboard', '/dashboard/basic-information', '/account', '/email/verify/'];
+
+    /**
+     * The default destination for an account: the candidate dashboard, or
+     * the account page for an account without the candidate classification.
+     */
+    public static function defaultFor(?User $user): string
+    {
+        return $user !== null && app(CandidateRole::class)->isHeldBy($user) ? self::DASHBOARD : self::ACCOUNT;
+    }
 
     /**
      * Returns the candidate when it is an allowed same-site path, otherwise null.
@@ -72,7 +86,8 @@ class SafeRedirect
 
     /**
      * The destination after a successful sign-in: the intended URL stored by
-     * Laravel, then the requested path, then the account page.
+     * Laravel (for example a signed verification link), then the requested
+     * path, then the signed-in account's default destination.
      */
     public static function afterLogin(Request $request, mixed $requested = null): string
     {
@@ -80,6 +95,6 @@ class SafeRedirect
 
         return self::fromIntended(is_string($intended) ? $intended : null, $request)
             ?? self::path($requested)
-            ?? self::DEFAULT;
+            ?? self::defaultFor($request->user());
     }
 }

@@ -2,12 +2,16 @@
 
 use App\Http\Controllers\Account\GoogleLinkController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountPolicyController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\AuthOptionsController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Candidate\BasicProfileController;
+use App\Http\Controllers\Candidate\CandidateOverviewController;
+use App\Http\Controllers\Candidate\ReferenceDataController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,4 +38,21 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         ->middleware('throttle:verification');
     Route::post('account/google/link', [GoogleLinkController::class, 'store'])
         ->middleware('throttle:password-confirmation');
+});
+
+// Published account policies (privacy policy, terms of use) are public.
+Route::get('policies/{policy}', AccountPolicyController::class)
+    ->whereIn('policy', array_keys(AccountPolicyController::SLUGS));
+
+/*
+ * The candidate dashboard. Every endpoint concerns the signed-in account
+ * only (no identifiers in URLs), needs an active account holding the
+ * «مترشح» classification, and is never cached.
+ */
+Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('candidate')->group(function () {
+    Route::get('overview', CandidateOverviewController::class);
+    Route::get('reference-data', ReferenceDataController::class);
+    Route::get('basic-profile', [BasicProfileController::class, 'show']);
+    Route::post('basic-profile/check', [BasicProfileController::class, 'check'])->middleware('throttle:candidate-check');
+    Route::post('basic-profile', [BasicProfileController::class, 'store'])->middleware('throttle:candidate-confirm');
 });

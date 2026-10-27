@@ -17,6 +17,10 @@ Route::get('/forgot-password', SpaController::class);
 Route::get('/reset-password', SpaController::class);
 Route::get('/verify-email', SpaController::class);
 Route::get('/account', SpaController::class);
+Route::get('/dashboard', SpaController::class);
+Route::get('/dashboard/basic-information', SpaController::class);
+Route::get('/policies/privacy-policy', SpaController::class);
+Route::get('/policies/terms-of-use', SpaController::class);
 
 /*
  * Google sign-in (server-side authorization-code flow with session state).

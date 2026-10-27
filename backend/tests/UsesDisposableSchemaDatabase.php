@@ -86,6 +86,26 @@ trait UsesDisposableSchemaDatabase
      */
     protected const ACCOUNT_TABLES = ['oauth_identities'];
 
+    /**
+     * Additive candidate migrations: the «مترشح» role, account policies and
+     * the stage 1 basic profile.
+     *
+     * @var list<string>
+     */
+    protected const CANDIDATE_MIGRATIONS = [
+        '2026_10_27_300001_provision_candidate_role',
+        '2026_10_27_300002_create_account_policy_tables',
+        '2026_10_27_300003_create_candidate_profile_tables',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    protected const CANDIDATE_TABLES = [
+        'account_policy_versions', 'account_policy_acceptances', 'candidate_profiles',
+        'applicant_individual_details', 'applicant_institution_details', 'applicant_social_links',
+    ];
+
     protected function configureDisposableDatabase(): void
     {
         $database = (string) env('MIGRATION_TEST_DB_DATABASE', '');
@@ -212,9 +232,11 @@ trait UsesDisposableSchemaDatabase
     {
         $schema = Schema::connection(self::SCHEMA_CONNECTION);
 
-        if ($schema->hasTable('migrations') && $schema->hasTable('audit_logs') && $schema->hasTable('oauth_identities')
+        $later = [...self::ACCOUNT_MIGRATIONS, ...self::CANDIDATE_MIGRATIONS];
+
+        if ($schema->hasTable('migrations') && $schema->hasTable('audit_logs') && $schema->hasTable('candidate_profiles')
             && $this->schemaDb()->table('migrations')->where('migration', 'like', '2026_10_27_1000%')->count() === 12
-            && $this->schemaDb()->table('migrations')->whereIn('migration', self::ACCOUNT_MIGRATIONS)->count() === count(self::ACCOUNT_MIGRATIONS)) {
+            && $this->schemaDb()->table('migrations')->whereIn('migration', $later)->count() === count($later)) {
             return;
         }
 

@@ -45,7 +45,8 @@ class SessionAuthenticationTest extends TestCase
         $this->browser('POST', '/api/auth/login', ['email' => 'Reader@Example.org ', 'password' => 'password'])
             ->assertOk()
             ->assertExactJson([
-                'data' => ['name' => 'سارة', 'email' => 'reader@example.org', 'email_verified' => true, 'has_password' => true, 'google_linked' => false],
+                'data' => ['name' => 'سارة', 'email' => 'reader@example.org', 'email_verified' => true, 'has_password' => true, 'google_linked' => false, 'is_candidate' => false],
+                // Not a candidate (no role), so the account page.
                 'redirect' => '/account',
             ]);
 
@@ -165,18 +166,25 @@ class SessionAuthenticationTest extends TestCase
 
     public function test_only_allowed_same_site_destinations_are_returned(): void
     {
-        User::factory()->create(['email' => 'reader@example.org']);
+        // A candidate: anything not allowed falls back to the dashboard.
+        User::factory()->candidate()->create(['email' => 'reader@example.org']);
         $cases = [
             '/account' => '/account',
+            '/dashboard' => '/dashboard',
+            '/dashboard/basic-information' => '/dashboard/basic-information',
             '/email/verify/1/abc?expires=1&signature=x' => '/email/verify/1/abc?expires=1&signature=x',
-            'https://evil.example/account' => '/account',
-            '//evil.example/account' => '/account',
-            '/\\evil.example' => '/account',
-            'javascript:alert(1)' => '/account',
-            '/admin' => '/account',
+            'https://evil.example/account' => '/dashboard',
+            '//evil.example/dashboard' => '/dashboard',
+            '/\\evil.example' => '/dashboard',
+            'javascript:alert(1)' => '/dashboard',
+            '/admin' => '/dashboard',
+            '/dashboard/other' => '/dashboard',
+            '/dashboardx' => '/dashboard',
         ];
 
         foreach ($cases as $requested => $expected) {
+            // Stay under the per-IP login limit (10 per minute).
+            $this->travel(7)->seconds();
             $this->cookieJar = [];
             $this->startCsrfSession();
             $this->browser('POST', '/api/auth/login', ['email' => 'reader@example.org', 'password' => 'password', 'redirect' => $requested])

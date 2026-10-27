@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Auth\CandidateRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -53,6 +54,14 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'password' => null,
         ]);
+    }
+
+    /**
+     * Give the account the «مترشح» classification, as registration does.
+     */
+    public function candidate(): static
+    {
+        return $this->afterCreating(fn (User $user) => app(CandidateRole::class)->grant($user, CandidateRole::SOURCE_REGISTRATION));
     }
 
     /**

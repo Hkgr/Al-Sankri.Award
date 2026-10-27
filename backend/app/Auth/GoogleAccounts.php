@@ -159,6 +159,8 @@ class GoogleAccounts
 
     /**
      * Only called once the address is proven, so the account is verified.
+     * Runs inside the caller's transaction: the account, its identity and
+     * its candidate classification are created together or not at all.
      */
     private function createAccount(GoogleIdentity $identity): User
     {
@@ -172,6 +174,7 @@ class GoogleAccounts
         ])->save();
 
         $this->insertIdentity($user, $identity);
+        app(CandidateRole::class)->grant($user, CandidateRole::SOURCE_GOOGLE);
 
         return $user;
     }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Auth\CandidateRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class RegistrationTest extends TestCase
         $this->startCsrfSession();
     }
 
-    public function test_registration_creates_a_basic_signed_in_account_only(): void
+    public function test_registration_creates_a_signed_in_candidate_account_only(): void
     {
         $this->browser('POST', '/api/auth/register', [
             'name' => '  ليلى   حسن ',
@@ -34,11 +35,13 @@ class RegistrationTest extends TestCase
             'status' => 'disabled',
             'email_verified_at' => '2026-01-01 00:00:00',
             'role' => 'trustee',
+            'roles' => ['administrator'],
+            'is_candidate' => false,
         ])
             ->assertCreated()
             ->assertJson([
-                'data' => ['name' => 'ليلى حسن', 'email' => 'layla@example.org', 'email_verified' => false, 'has_password' => true, 'google_linked' => false],
-                'redirect' => '/account',
+                'data' => ['name' => 'ليلى حسن', 'email' => 'layla@example.org', 'email_verified' => false, 'has_password' => true, 'google_linked' => false, 'is_candidate' => true],
+                'redirect' => '/dashboard',
                 'verification_email_sent' => true,
             ]);
 
@@ -48,7 +51,15 @@ class RegistrationTest extends TestCase
         $this->assertTrue(Hash::check('secret-pass-1', $user->password));
         $this->assertNotSame('secret-pass-1', $user->getRawOriginal('password'));
 
-        foreach (['user_roles', 'cycle_user_roles', 'applicants', 'applicant_members', 'applications', 'committee_members', 'oauth_identities'] as $table) {
+        // Exactly one system grant of «مترشح», and nothing else: no applicant,
+        // application, cycle role or committee membership.
+        $grant = DB::table('user_roles')->join('roles', 'roles.id', '=', 'user_roles.role_id')->sole();
+        $this->assertSame(
+            [CandidateRole::CODE, 'platform', $user->id, null, null],
+            [$grant->code, $grant->scope, (int) $grant->user_id, $grant->assigned_by, $grant->revoked_at],
+        );
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'user_role.granted')->where('subject_id', $user->id)->count());
+        foreach (['cycle_user_roles', 'applicants', 'applicant_members', 'applications', 'committee_members', 'oauth_identities', 'candidate_profiles'] as $table) {
             $this->assertSame(0, DB::table($table)->count(), "{$table} must stay empty");
         }
 

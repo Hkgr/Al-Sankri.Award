@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Auth\CandidateRole;
 use App\Auth\GoogleAccounts;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class UserResource extends JsonResource
             'email_verified' => $this->hasVerifiedEmail(),
             'has_password' => $this->hasPassword(),
             'google_linked' => app(GoogleAccounts::class)->isLinked($this->resource),
+            'is_candidate' => app(CandidateRole::class)->isHeldBy($this->resource),
         ];
     }
 }

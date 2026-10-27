@@ -86,7 +86,7 @@ class GoogleAuthController extends Controller
                 return redirect('/account?google=link_expired');
             }
         } elseif ($request->user() !== null) {
-            return redirect(SafeRedirect::DEFAULT);
+            return redirect(SafeRedirect::defaultFor($request->user()));
         } else {
             $request->session()->put(self::REDIRECT_SESSION_KEY, SafeRedirect::path($request->query('redirect')));
         }

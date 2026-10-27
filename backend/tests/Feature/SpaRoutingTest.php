@@ -33,7 +33,7 @@ class SpaRoutingTest extends TestCase
 
     public function test_each_public_page_serves_the_react_app(): void
     {
-        foreach (['/', '/login', '/register', '/forgot-password', '/reset-password?token=abc&email=a%40b.org', '/verify-email?status=verified', '/account'] as $path) {
+        foreach (['/', '/login', '/register', '/forgot-password', '/reset-password?token=abc&email=a%40b.org', '/verify-email?status=verified', '/account', '/dashboard', '/dashboard/basic-information', '/policies/privacy-policy', '/policies/terms-of-use'] as $path) {
             $response = $this->get($path)->assertOk();
             $this->assertSame(realpath($this->publicPath.'/index.html'), $response->baseResponse->getFile()->getRealPath(), $path);
             $this->assertStringStartsWith('text/html', (string) $response->headers->get('Content-Type'));
@@ -45,6 +45,10 @@ class SpaRoutingTest extends TestCase
     {
         $this->get('/no-such-page')->assertNotFound();
         $this->get('/account/settings')->assertNotFound();
+        $this->get('/dashboard/stage-2')->assertNotFound();
+        $this->get('/dashboard/basic-information/edit')->assertNotFound();
+        $this->get('/policies/cookies')->assertNotFound();
+        $this->getJson('/api/candidate/overview')->assertUnauthorized();
         $this->getJson('/api/no-such-endpoint')->assertNotFound()->assertJsonStructure(['message']);
         $this->get('/up')->assertOk();
         $this->getJson('/api/user')->assertUnauthorized();
