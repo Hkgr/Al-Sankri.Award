@@ -75,6 +75,31 @@ class NominationDetailsController extends Controller
     }
 
     /**
+     * Reconciliation of one form's save: the outcome of the journey named by
+     * the X-Nomination-Journey header (the form's journey_key), and nothing
+     * else. Unlike show(), it never falls back to another cycle's confirmed
+     * stage, so a different journey can never pass for this save's result.
+     */
+    public function journey(Request $request): JsonResponse
+    {
+        $profile = $this->details->profileOf($request->user());
+
+        if ($profile === null) {
+            return response()->json([
+                'code' => NominationDetails::BASIC_INFORMATION_REQUIRED,
+                'message' => 'أكمل البيانات الأساسية (المرحلة 1) وأكّد حفظها أولاً.',
+            ], 409);
+        }
+
+        [$status, $journey] = $this->details->journeyOutcome($profile, $request->header('X-Nomination-Journey'));
+
+        return response()->json([
+            'data' => $journey === null ? null : new NominationDetailsResource($journey),
+            'journey' => ['status' => $status],
+        ]);
+    }
+
+    /**
      * Checks one section. Nothing is saved.
      */
     public function check(NominationDetailsSectionRequest $request): Response

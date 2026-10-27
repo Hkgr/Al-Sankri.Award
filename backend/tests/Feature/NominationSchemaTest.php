@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Database\Query\Builder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\TestCase;
 use Tests\UsesDisposableSchemaDatabase;
@@ -66,31 +67,79 @@ class NominationSchemaTest extends TestCase
         $this->migrateOnly(self::NOMINATION_MIGRATIONS);
     }
 
-    public function test_rolling_back_is_refused_before_anything_changes_while_stage_2_data_exists(): void
+    /**
+     * Each kind of protected Stage 2 state refuses the whole batch in its
+     * first migration (400003), before any table, column, constraint, row or
+     * migration-history entry changes.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function protectedStage2States(): array
+    {
+        return [
+            'configured subcategories, no journey' => ['subcategories', '7 configured subcategory row(s)'],
+            'an application with only objectives set' => ['objectives_only', '1 application(s) holding Stage 2 values'],
+            'an application with only has_partnerships set' => ['has_partnerships_only', '1 application(s) holding Stage 2 values'],
+            'confirmed journeys and partnerships' => ['journey', '1 confirmed journey(s), 1 partnership row(s), 1 application(s) holding Stage 2 values, 1 configured subcategory row(s)'],
+        ];
+    }
+
+    #[DataProvider('protectedStage2States')]
+    public function test_rolling_back_is_refused_before_anything_changes_while_stage_2_state_exists(string $state, string $described): void
     {
         $this->deployedSchema();
         $this->migrateOnly(self::NOMINATION_MIGRATIONS);
         $cycle = $this->cycle();
         $domain = $this->cycleDomain($cycle);
-        $subcategory = $this->subcategory($cycle, $domain, 'quality');
-        $profile = $this->profile();
-        $application = $this->application($cycle, $domain, ['subcategory_id' => $subcategory, 'funding_type' => 'not_needed', 'applicant_id' => $profile['applicant']]);
-        $this->db('application_partnerships')->insert(['application_id' => $application, 'position' => 1, 'partner_name' => 'جهة']);
-        $this->journey($profile, $cycle, $application);
-        $migrationsBefore = $this->schemaDb()->table('migrations')->orderBy('id')->get()->toArray();
+
+        match ($state) {
+            'subcategories' => array_map(fn (string $code): int => $this->subcategory($cycle, $domain, $code),
+                ['culture', 'arts', 'tangible_heritage', 'intangible_heritage', 'social_responsibility', 'entrepreneurship', 'quality']),
+            'objectives_only' => $this->application($cycle, $domain, ['objectives' => 'هدف']),
+            'has_partnerships_only' => $this->application($cycle, $domain, ['has_partnerships' => false]),
+            'journey' => (function () use ($cycle, $domain): void {
+                $profile = $this->profile();
+                $application = $this->application($cycle, $domain, [
+                    'subcategory_id' => $this->subcategory($cycle, $domain, 'quality'), 'funding_type' => 'not_needed', 'applicant_id' => $profile['applicant'],
+                ]);
+                $this->db('application_partnerships')->insert(['application_id' => $application, 'position' => 1, 'partner_name' => 'جهة']);
+                $this->journey($profile, $cycle, $application);
+            })(),
+        };
+        $before = $this->schemaFingerprint();
 
         try {
             $this->rollbackLatestBatch();
             $this->fail('The rollback should be refused.');
         } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('Cannot roll back the Stage 2 migrations: 1 confirmed journey(s), 1 application(s) with Stage 2 data and 1 partnership row(s) exist.', $exception->getMessage());
+            $this->assertStringContainsString("Cannot roll back the Stage 2 migrations: {$described} exist. Nothing was changed.", $exception->getMessage());
         }
 
-        foreach (self::NOMINATION_TABLES as $table) {
-            $this->assertTrue($this->schemaDb()->getSchemaBuilder()->hasTable($table), "{$table} must be kept");
+        $this->assertEquals($before, $this->schemaFingerprint(), 'tables, columns, constraints, data and migration history unchanged');
+    }
+
+    /**
+     * A later rollback step run on its own (400003 already rolled back while
+     * empty) also refuses before changing anything when 400001 would refuse.
+     */
+    public function test_rolling_back_the_application_columns_is_refused_while_subcategories_are_configured(): void
+    {
+        $this->deployedSchema();
+        $this->migrateOnly(self::NOMINATION_MIGRATIONS);
+        $this->runArtisan('migrate:rollback', ['--step' => 1]);
+        $this->assertFalse($this->schemaDb()->getSchemaBuilder()->hasTable('candidate_nominations'));
+        $cycle = $this->cycle();
+        $this->subcategory($cycle, $this->cycleDomain($cycle), 'quality');
+        $before = $this->schemaFingerprint();
+
+        try {
+            $this->rollbackLatestBatch();
+            $this->fail('The rollback should be refused.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('Cannot roll back the Stage 2 application columns: 1 configured subcategory row(s) exist. Nothing was changed.', $exception->getMessage());
         }
-        $this->assertSame('not_needed', $this->db('applications')->where('id', $application)->value('funding_type'));
-        $this->assertEquals($migrationsBefore, $this->schemaDb()->table('migrations')->orderBy('id')->get()->toArray());
+
+        $this->assertEquals($before, $this->schemaFingerprint());
     }
 
     public function test_subcategories_stay_inside_their_domain_and_cycle(): void
@@ -242,6 +291,30 @@ class NominationSchemaTest extends TestCase
             'user_id' => $profile['user'], 'candidate_profile_id' => $profile['profile'], 'applicant_id' => $profile['applicant'],
             'cycle_id' => $cycle, 'application_id' => $application, 'details_confirmed_at' => self::NOW, 'created_at' => self::NOW,
         ]);
+    }
+
+    /**
+     * Everything a refused rollback must leave as it was: the tables, every
+     * column and constraint of the Stage 2 tables and applications, their
+     * rows, and the migration history.
+     *
+     * @return array<string, mixed>
+     */
+    private function schemaFingerprint(): array
+    {
+        $tables = ['applications', ...self::NOMINATION_TABLES];
+        $present = array_values(array_filter($tables, fn (string $table): bool => $this->schemaDb()->getSchemaBuilder()->hasTable($table)));
+        $placeholders = implode(',', array_fill(0, count($tables), '?'));
+        $rows = fn (string $sql): array => array_map(fn (object $row): array => (array) $row, $this->schemaDb()->select($sql, $tables));
+
+        return [
+            'tables' => $present,
+            'columns' => $rows("SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ({$placeholders}) ORDER BY TABLE_NAME, ORDINAL_POSITION"),
+            'constraints' => $rows("SELECT TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ({$placeholders}) ORDER BY TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE"),
+            'indexes' => $rows("SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ({$placeholders}) ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX"),
+            'data' => array_combine($present, array_map(fn (string $table): array => $this->db($table)->orderBy('id')->get()->map(fn (object $row): array => (array) $row)->all(), $present)),
+            'migrations' => $this->schemaDb()->table('migrations')->orderBy('id')->get()->map(fn (object $row): array => (array) $row)->all(),
+        ];
     }
 
     private function columnType(string $table, string $column): string

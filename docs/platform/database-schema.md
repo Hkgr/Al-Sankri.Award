@@ -1620,7 +1620,7 @@ Three additive migrations, described for operators in [candidate-nomination-deta
 - `2026_10_27_400002_add_nomination_details_to_applications`: new `applications` columns and `application_partnerships`;
 - `2026_10_27_400003_create_candidate_nominations_table`.
 
-**Rollback.** `400003` rolls back first and refuses, before anything changes, while any confirmed journey, partnership row or application holding Stage 2 values exists. `400002` makes the same check for its columns and rows, and `400001` refuses while subcategories are configured.
+**Rollback.** `400003` rolls back first and refuses, before anything changes, while any Stage 2 state exists that it or a later step of the same rollback would refuse: confirmed journeys, partnership rows, applications holding a value in any of the seven new columns, or configured subcategories. So a batch rollback never stops half-way. `400002` repeats that whole check (it can run alone after `400003` was rolled back), and `400001` refuses while subcategories are configured.
 
 **Existing columns reused.** `applications.title`, `documented_impact` (the work's impact), `implementation_started_on`, `implementation_ended_on` and `implementation_status` (`ongoing`, or `completed` with an end date), and `application_locations` for the places of implementation. For Syrian cycles, `application_locations.governorate` holds the ISO 3166-2:SY code (for example `SY-DI`), `locality` the city, town or village, `address` the optional details, and `country_code` the cycle's country.
 

@@ -5,11 +5,12 @@ namespace Tests\Feature\Candidate;
 use App\Candidates\AccountContext;
 use App\Models\ApplicationPartnership;
 use App\Models\User;
+use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Testing\TestResponse;
+use Illuminate\Support\Facades\Event;
 use RuntimeException;
 use Tests\ActsAsSpaBrowser;
 use Tests\TestCase;
@@ -22,15 +23,7 @@ use Tests\TestCase;
  */
 class NominationDetailsTest extends TestCase
 {
-    use ActsAsSpaBrowser, RefreshDatabase;
-
-    private const STAGE_TABLES = ['applications', 'application_locations', 'application_partnerships', 'candidate_nominations'];
-
-    private User $candidate;
-
-    private User $operator;
-
-    private ?User $signedIn = null;
+    use ActsAsSpaBrowser, InteractsWithNominationStage, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -209,6 +202,37 @@ class NominationDetailsTest extends TestCase
             [['SY', 'SY-HL', 'حلب', 'حي الجديدة'], ['SY', 'SY-HL', 'منبج', null], ['SY', 'SY-SU', 'شهبا', null]],
             DB::table('application_locations')->orderBy('id')->get()->map(fn ($row): array => [$row->country_code, $row->governorate, $row->locality, $row->address])->all(),
         );
+    }
+
+    public function test_a_section_check_is_not_blocked_by_unfinished_places_further_on(): void
+    {
+        $this->readyCandidate();
+
+        // Two blank place rows added, then back to an earlier section.
+        $blank = ['governorate' => '', 'locality' => '', 'address' => ''];
+        $unfinished = ['locations' => [$blank, $blank]] + $this->payload();
+        foreach (['domain', 'work', 'funding'] as $section) {
+            $this->check($section, $unfinished)->assertNoContent();
+        }
+
+        // The places' own section still reports them, where they can be fixed.
+        $this->check('dates_locations', $unfinished)->assertUnprocessable()
+            ->assertJsonValidationErrors(['locations.0.governorate', 'locations.0.locality', 'locations.1.governorate', 'locations.1.locality']);
+        $this->assertNothingStored();
+    }
+
+    public function test_duplicate_places_are_still_refused_by_their_section_and_the_confirmation(): void
+    {
+        $this->readyCandidate();
+        $duplicate = ['locations' => [
+            ['governorate' => 'SY-HM', 'locality' => 'حماة', 'address' => null],
+            ['governorate' => 'SY-HM', 'locality' => 'حماة', 'address' => null],
+        ]] + $this->payload();
+
+        $this->check('work', $duplicate)->assertNoContent();
+        $this->check('dates_locations', $duplicate)->assertUnprocessable()->assertJsonValidationErrors(['locations.1.locality']);
+        $this->confirm($duplicate)->assertUnprocessable()->assertJsonValidationErrors(['locations.1.locality']);
+        $this->assertNothingStored();
     }
 
     public function test_each_funding_declaration_keeps_only_its_own_fields(): void
@@ -418,6 +442,99 @@ class NominationDetailsTest extends TestCase
         $this->assertSame([1, 1, 1], [DB::table('applications')->count(), DB::table('candidate_nominations')->count(), DB::table('application_locations')->count()]);
     }
 
+    public function test_reconciling_a_lost_save_never_takes_another_cycles_stage_for_it(): void
+    {
+        // Stage 2 confirmed in cycle A; A closes and cycle B opens.
+        $this->readyCandidate();
+        $this->confirm($this->payload(), $this->journeyKey())->assertCreated();
+        $this->runSetup('cycle-2026', ['--close' => true]);
+        $this->configureCycle('cycle-2027');
+
+        // B's form is opened; its save gets no answer (and stored nothing).
+        $keyOfB = $this->journeyKey();
+        $this->reconcile($keyOfB)->assertOk()->assertJsonPath('data', null)->assertJsonPath('journey.status', 'open');
+
+        // B closes before the form reconciles.
+        $this->runSetup('cycle-2027', ['--close' => true]);
+        // Browsing the page still shows the only confirmed stage, A's...
+        $this->read('/api/candidate/nomination-details')->assertOk()->assertJsonPath('data.cycle.code', 'cycle-2026');
+        // ...but B's reconciliation never takes it for B's save.
+        $response = $this->reconcile($keyOfB)->assertOk()->assertJsonPath('data', null)->assertJsonPath('journey.status', 'unavailable');
+        $this->assertStringNotContainsString('مبادرة ذاكرة الحيّ', $response->getContent());
+        $this->assertPrivate($response);
+
+        // Another cycle open instead: B's journey has changed; still nothing for B.
+        $this->configureCycle('cycle-2028');
+        $this->reconcile($keyOfB)->assertOk()->assertJsonPath('data', null)->assertJsonPath('journey.status', 'changed');
+        $this->reconcile('not-a-journey-key')->assertOk()->assertJsonPath('data', null)->assertJsonPath('journey.status', 'changed');
+        $this->assertSame(1, DB::table('candidate_nominations')->count());
+    }
+
+    public function test_a_confirmed_journey_stays_recoverable_after_closure_or_a_cycle_switch(): void
+    {
+        $this->readyCandidate();
+        $keyOfA = $this->journeyKey();
+        $this->confirm($this->payload(), $keyOfA)->assertCreated();
+        $this->reconcile($keyOfA)->assertOk()->assertJsonPath('journey.status', 'confirmed')->assertJsonPath('data.cycle.code', 'cycle-2026');
+
+        $this->runSetup('cycle-2026', ['--close' => true]);
+        $this->reconcile($keyOfA)->assertJsonPath('journey.status', 'confirmed')->assertJsonPath('data.cycle.code', 'cycle-2026');
+
+        // B opens and is confirmed too: each key gets its own journey only.
+        $this->configureCycle('cycle-2027');
+        $keyOfB = $this->journeyKey();
+        $this->reconcile($keyOfA)->assertJsonPath('journey.status', 'confirmed')->assertJsonPath('data.cycle.code', 'cycle-2026');
+        $this->confirm(['title' => 'عمل الدورة الثانية'] + $this->payload(), $keyOfB)->assertCreated();
+        $this->reconcile($keyOfA)->assertJsonPath('data.cycle.code', 'cycle-2026')->assertJsonPath('data.title', 'مبادرة ذاكرة الحيّ');
+        $this->reconcile($keyOfB)->assertJsonPath('data.cycle.code', 'cycle-2027')->assertJsonPath('data.title', 'عمل الدورة الثانية');
+    }
+
+    public function test_reconciliation_is_bound_to_the_account(): void
+    {
+        $this->configureCycle();
+        $this->completeStage1($this->candidate);
+        $other = User::factory()->candidate()->create(['email' => 'other@example.org']);
+        $this->completeStage1($other);
+
+        $this->signIn();
+        $contextOfA = AccountContext::for($this->candidate);
+        $keyOfA = $this->journeyKey();
+        $this->confirm($this->payload(), $keyOfA)->assertCreated();
+
+        // Another account signed in meanwhile: refused, nothing of either shown.
+        $this->signIn($other->email);
+        $response = $this->reconcile($keyOfA, $contextOfA)->assertConflict()->assertJsonPath('code', 'account_mismatch')->assertJsonMissingPath('data');
+        $this->assertStringNotContainsString('1500', $response->getContent());
+        // B's own context with A's journey key: not B's journey, and A's data never shown.
+        $this->reconcile($keyOfA)->assertOk()->assertJsonPath('data', null)->assertJsonPath('journey.status', 'changed');
+
+        // Without a confirmed Stage 1 there is no journey to reconcile.
+        $third = User::factory()->candidate()->create(['email' => 'third@example.org']);
+        $this->signIn($third->email);
+        $this->reconcile($keyOfA)->assertConflict()->assertJsonPath('code', 'basic_information_required');
+    }
+
+    public function test_a_deadline_passing_after_the_preliminary_check_refuses_the_confirmation(): void
+    {
+        $this->readyCandidate();
+        $journeyKey = $this->journeyKey();
+        DB::table('cycle_stages')->update(['closes_at' => now()->addMinute()->format('Y-m-d H:i:s')]);
+
+        // The gate (outside the transaction) still sees the stage open; the
+        // deadline passes before the confirmation's locked check.
+        $armed = true;
+        Event::listen(TransactionBeginning::class, function () use (&$armed): void {
+            if ($armed) {
+                $armed = false;
+                $this->travel(2)->minutes();
+            }
+        });
+
+        $this->confirm($this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', 'nomination_unavailable');
+        $this->assertFalse($armed, 'the deadline passed inside the confirmation');
+        $this->assertNothingStored();
+    }
+
     public function test_pages_and_forms_are_bound_to_the_displayed_account(): void
     {
         $this->configureCycle();
@@ -497,174 +614,5 @@ class NominationDetailsTest extends TestCase
         $this->assertStringContainsString('Nothing to change.', Artisan::output());
         $this->assertEquals($before, [DB::table('cycle_domain_subcategories')->orderBy('id')->get()->toArray(), DB::table('audit_logs')->count()]);
         $this->artisan('nomination:setup', ['cycle' => 'cycle-2026', '--actor' => $this->operator->email, '--country' => 'IQ'])->assertFailed();
-    }
-
-    // ---------- helpers ----------
-
-    private function configureCycle(string $code = 'cycle-2026'): void
-    {
-        $this->runSetup($code, [
-            '--create-cycle' => true, '--name' => "الدورة {$code}", '--award-name' => 'جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع',
-            '--year' => '2026', '--timezone' => 'Asia/Damascus', '--country' => 'SY', '--open-domains' => true, '--enable' => true, '--publish-cycle' => true,
-        ]);
-    }
-
-    /**
-     * @param  array<string, mixed>  $options
-     */
-    private function runSetup(string $cycle, array $options): void
-    {
-        $this->artisan('nomination:setup', ['cycle' => $cycle, '--actor' => $this->operator->email] + $options)->assertSuccessful();
-    }
-
-    /**
-     * Stage 1 as the confirmation would leave it (inserted directly: Stage 1
-     * itself is covered by BasicProfileTest).
-     *
-     * @return array{applicant_id: int}
-     */
-    private function completeStage1(User $user): array
-    {
-        $applicantId = DB::table('applicants')->insertGetId([
-            'type' => 'individual', 'name_ar' => 'ليلى حسن', 'representative_user_id' => $user->id, 'status' => 'active',
-        ]);
-        DB::table('candidate_profiles')->insert([
-            'user_id' => $user->id, 'applicant_id' => $applicantId, 'profile_type' => 'individual',
-            'data_accuracy_declared_at' => now(), 'completed_at' => now(), 'created_at' => now(),
-        ]);
-
-        return ['applicant_id' => $applicantId];
-    }
-
-    private function readyCandidate(): void
-    {
-        $this->configureCycle();
-        $this->completeStage1($this->candidate);
-        $this->signIn();
-    }
-
-    private function signIn(?string $email = null): void
-    {
-        $this->cookieJar = [];
-        $this->startCsrfSession();
-        $this->browser('POST', '/api/auth/login', ['email' => $email ?? $this->candidate->email, 'password' => 'password'])->assertOk();
-        $this->signedIn = User::query()->where('email', $email ?? $this->candidate->email)->sole();
-    }
-
-    private function read(string $uri, ?string $context = null): TestResponse
-    {
-        return $this->browser('GET', $uri, headers: ['X-Candidate-Context' => $context ?? AccountContext::for($this->signedIn)]);
-    }
-
-    private function journeyKey(): string
-    {
-        return (string) $this->read('/api/candidate/nomination-details')->assertOk()->json('journey_key');
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    private function send(string $uri, array $payload, ?string $journeyKey = null): TestResponse
-    {
-        // Stay under the per-account limits.
-        $this->travel(7)->seconds();
-
-        return $this->browser('POST', $uri, $payload + [
-            'account_context' => $this->signedIn ? AccountContext::for($this->signedIn) : null,
-            'journey_key' => $journeyKey ?? $this->journeyKey(),
-        ]);
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    private function check(string $section, array $payload, ?string $journeyKey = null): TestResponse
-    {
-        return $this->send('/api/candidate/nomination-details/check', ['section' => $section] + $payload, $journeyKey);
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    private function confirm(array $payload, ?string $journeyKey = null): TestResponse
-    {
-        return $this->send('/api/candidate/nomination-details', $payload, $journeyKey);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function payload(): array
-    {
-        return [
-            'domain' => 'creativity',
-            'subcategory' => 'quality',
-            'title' => 'مبادرة ذاكرة الحيّ',
-            'purpose_and_mission' => 'صون ذاكرة الأحياء القديمة ونقلها إلى الأجيال الجديدة.',
-            'objectives' => "توثيق الحِرف التقليدية\nتدريب الشباب على التوثيق",
-            'impact' => 'وثّقنا ثلاثين حرفة، ودرّبنا أربعين شاباً، وأقمنا معرضاً زاره أهل الحي.',
-            'implementation_state' => 'ongoing',
-            'started_on' => '2021-09-15',
-            'ended_on' => null,
-            'locations' => [['governorate' => 'SY-DI', 'locality' => 'دمشق القديمة', 'address' => 'حي القيمرية']],
-            'funding_type' => 'fully_funded',
-            'funder_name' => 'مؤسسة الروّاد',
-            'funding_amount' => '1500.50',
-            'has_partnerships' => false,
-            // Never accepted from the browser:
-            'status' => 'submitted',
-            'first_submitted_at' => '2026-01-01 00:00:00',
-            'applicant_id' => 999,
-            'user_id' => 999,
-        ];
-    }
-
-    private function cycleDomain(string $cycle, string $domain): object
-    {
-        return DB::table('cycle_domains')
-            ->join('award_cycles', 'award_cycles.id', '=', 'cycle_domains.cycle_id')
-            ->join('award_domains', 'award_domains.id', '=', 'cycle_domains.domain_id')
-            ->where('award_cycles.code', $cycle)->where('award_domains.code', $domain)
-            ->first(['cycle_domains.id', 'cycle_domains.cycle_id']);
-    }
-
-    private function subcategoryId(string $cycle, string $code): int
-    {
-        return (int) DB::table('cycle_domain_subcategories')
-            ->join('award_cycles', 'award_cycles.id', '=', 'cycle_domain_subcategories.cycle_id')
-            ->where('award_cycles.code', $cycle)->where('cycle_domain_subcategories.code', $code)
-            ->value('cycle_domain_subcategories.id');
-    }
-
-    /**
-     * The DECIMAL(14,2) value as exact text, whatever the driver returns.
-     */
-    private function decimal(mixed $value): string
-    {
-        [$whole, $fraction] = array_pad(explode('.', (string) $value), 2, '');
-
-        return $whole.'.'.str_pad(substr($fraction, 0, 2), 2, '0');
-    }
-
-    private function assertPrivate(TestResponse $response): void
-    {
-        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
-    }
-
-    private function assertNothingStored(): void
-    {
-        foreach (self::STAGE_TABLES as $table) {
-            $this->assertSame(0, DB::table($table)->count(), "{$table} must stay empty");
-        }
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function snapshot(): array
-    {
-        return collect([...self::STAGE_TABLES, 'applicants'])
-            ->mapWithKeys(fn (string $table): array => [$table => DB::table($table)->orderBy('id')->get()->map(fn ($row) => (array) $row)->all()])
-            ->all();
     }
 }

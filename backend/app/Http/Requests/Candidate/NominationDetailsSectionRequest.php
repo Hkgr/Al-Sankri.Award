@@ -8,7 +8,8 @@ use Illuminate\Validation\Rule;
 /**
  * Checks one section of the Stage 2 form with exactly the rules of the
  * confirmation, so the server's checks are reported before the review.
- * Nothing is saved.
+ * Only that section's fields are checked, including the after-validation
+ * of places. Nothing is saved.
  */
 class NominationDetailsSectionRequest extends NominationDetailsRequest
 {
@@ -24,6 +25,15 @@ class NominationDetailsSectionRequest extends NominationDetailsRequest
             'section' => ['required', 'string', Rule::in(array_keys(self::SECTIONS))],
             ...array_intersect_key(parent::rules(), array_flip($fields)),
         ];
+    }
+
+    /**
+     * The duplicate-place check runs only for the places' own section, so
+     * unfinished rows further on never block an earlier section.
+     */
+    protected function validatesLocations(): bool
+    {
+        return $this->input('section') === 'dates_locations';
     }
 
     /**

@@ -39,9 +39,16 @@ class NominationCycles
     public const SUPPORTED_COUNTRIES = [SyrianGovernorates::COUNTRY];
 
     /**
+     * The usable cycle, as of now.
+     *
+     * With $lock (inside a transaction) the cycle and stage rows and the
+     * options are read with locking reads: the latest committed state, not
+     * the transaction's earlier snapshot, and held until it ends. Callers
+     * first take lockConfiguration().
+     *
      * @return array{status: string, cycle: object|null}
      */
-    public function current(): array
+    public function current(bool $lock = false): array
     {
         $now = now();
         $candidates = DB::table('award_cycles as cycles')
@@ -53,8 +60,9 @@ class NominationCycles
             ->where(fn ($query) => $query->whereNull('stages.opens_at')->orWhere('stages.opens_at', '<=', $now))
             ->where(fn ($query) => $query->whereNull('stages.closes_at')->orWhere('stages.closes_at', '>', $now))
             ->orderBy('cycles.id')
+            ->when($lock, fn ($query) => $query->sharedLock())
             ->get(['cycles.id', 'cycles.code', 'cycles.name_ar', 'cycles.timezone', 'cycles.eligibility_rules', 'stages.id as stage_id'])
-            ->filter(fn (object $cycle): bool => $this->country($cycle) !== null && $this->options((int) $cycle->id)->isNotEmpty())
+            ->filter(fn (object $cycle): bool => $this->country($cycle) !== null && $this->options((int) $cycle->id, $lock)->isNotEmpty())
             ->values();
 
         return match ($candidates->count()) {
@@ -62,6 +70,21 @@ class NominationCycles
             1 => ['status' => self::AVAILABLE, 'cycle' => $candidates->first()],
             default => ['status' => self::AMBIGUOUS, 'cycle' => null],
         };
+    }
+
+    /**
+     * Takes shared locks on every award_cycles row (and the gap after the
+     * last one), inside a transaction. nomination:setup locks its cycle row
+     * for update before changing that cycle, its domains, subcategories or
+     * stage, and creating a cycle inserts into award_cycles; so while these
+     * locks are held no operator change to Stage 2's configuration can
+     * commit, and one that committed earlier is seen by current(lock: true).
+     * Lock order: users row (the confirmation), then award_cycles, then the
+     * stage and option rows, the same cycle-first order as the command.
+     */
+    public function lockConfiguration(): void
+    {
+        DB::table('award_cycles')->orderBy('id')->sharedLock()->pluck('id');
     }
 
     /**

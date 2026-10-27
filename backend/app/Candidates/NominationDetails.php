@@ -18,10 +18,12 @@ use RuntimeException;
  *
  * Confirmation is atomic and happens once per candidate profile and cycle.
  * Inside one transaction it locks the account's users row, checks again that
- * Stage 1 is confirmed, that the cycle is still usable and that the chosen
- * domain and subcategory are still open, and only then creates the draft
- * application (with its locations and partners) and the journey row. The
- * unique key on candidate_nominations (profile, cycle) is the final guard.
+ * Stage 1 is confirmed, then locks the Stage 2 configuration and checks, on
+ * the latest committed state and the current time, that the cycle is still
+ * usable and the chosen domain and subcategory still open, and only then
+ * creates the draft application (with its locations and partners) and the
+ * journey row. The unique key on candidate_nominations (profile, cycle) is
+ * the final guard.
  *
  * The application stays a draft: no reference number, no submitted version,
  * no first_submitted_at, no eligibility or judging. Only Stage 2's own fields
@@ -49,6 +51,15 @@ class NominationDetails
     public const STAGE_NOT_STARTED = 'not_started';
 
     public const STAGE_COMPLETED = 'completed';
+
+    /** What became of one form's journey (journeyOutcome). */
+    public const JOURNEY_CONFIRMED = 'confirmed';
+
+    public const JOURNEY_OPEN = 'open';
+
+    public const JOURNEY_CHANGED_NOW = 'changed';
+
+    public const JOURNEY_UNAVAILABLE = 'unavailable';
 
     public function __construct(private readonly NominationCycles $cycles) {}
 
@@ -86,6 +97,34 @@ class NominationDetails
             ->where('candidate_profile_id', $profile->getKey())
             ->get()
             ->first(fn (CandidateNomination $journey): bool => hash_equals($this->cycles->journeyKey($profile, (int) $journey->cycle_id), $journeyKey));
+    }
+
+    /**
+     * What became of one form's save, for reconciling a save whose answer
+     * never arrived: only the journey that form's key names is looked at.
+     * Another cycle's confirmed journey is never returned in its place.
+     *
+     * Statuses: confirmed (with the journey); otherwise not confirmed as far
+     * as can be seen, with the form's journey still open, the open cycle
+     * changed, or the stage unavailable now.
+     *
+     * @return array{0: string, 1: CandidateNomination|null}
+     */
+    public function journeyOutcome(CandidateProfile $profile, mixed $journeyKey): array
+    {
+        if ($journey = $this->confirmedByKey($profile, $journeyKey)) {
+            return [self::JOURNEY_CONFIRMED, $journey];
+        }
+
+        $current = $this->cycles->current();
+
+        if ($current['status'] !== NominationCycles::AVAILABLE) {
+            return [self::JOURNEY_UNAVAILABLE, null];
+        }
+
+        return is_string($journeyKey) && hash_equals($this->cycles->journeyKey($profile, (int) $current['cycle']->id), $journeyKey)
+            ? [self::JOURNEY_OPEN, null]
+            : [self::JOURNEY_CHANGED_NOW, null];
     }
 
     /**
@@ -184,7 +223,14 @@ class NominationDetails
             return [self::ALREADY_CONFIRMED, $existing];
         }
 
-        $current = $this->cycles->current();
+        // Authoritative availability: the configuration is locked first, then
+        // the cycle, stage window (against the time now, not the time of the
+        // gate's preliminary check) and options are read as last committed,
+        // never from an earlier snapshot. An operator change that committed
+        // before this point refuses the confirmation; one that comes later
+        // waits until this transaction ends.
+        $this->cycles->lockConfiguration();
+        $current = $this->cycles->current(lock: true);
 
         if ($current['status'] !== NominationCycles::AVAILABLE) {
             return [self::UNAVAILABLE, null];
@@ -196,9 +242,6 @@ class NominationDetails
             return [self::JOURNEY_CHANGED, null];
         }
 
-        // The stage row and the chosen options, read under a shared lock so a
-        // concurrent closure is seen either before or after this confirmation.
-        DB::table('cycle_stages')->where('id', $current['cycle']->stage_id)->sharedLock()->first();
         $domain = $this->cycles->options($cycleId, lock: true)->firstWhere('code', $data['domain']);
         $subcategory = $domain === null ? null : collect($domain['subcategories'])->firstWhere('code', $data['subcategory']);
 

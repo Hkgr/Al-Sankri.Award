@@ -8,7 +8,7 @@ import type { Errors } from '../basic/formModel'
 import { ProfileSummary } from '../basic/ProfileSummary'
 import { useAccountFailure } from '../useCandidateRequests'
 import { FUNDING_LABELS } from './nominationApi'
-import type { DomainOption, FundingType, Governorate, NominationDetails } from './nominationApi'
+import type { DomainOption, FundingType, Governorate, JourneyOutcome, NominationDetails } from './nominationApi'
 import { DatePartsField, DiscardWarning, DomainChooser, LocationRows, PartnerRows } from './nominationFields'
 import {
   buildNominationPayload,
@@ -241,13 +241,17 @@ export function NominationForm({
 
   /**
    * A save whose answer never arrived may still have been stored, or may
-   * still be running on the server. Ask the server what this account has:
-   * a stored stage is shown read-only; anything else stays unconfirmed.
+   * still be running on the server. Ask the server about this form's own
+   * journey only (its journey key): its stored stage is shown read-only;
+   * anything else, including another cycle's saved stage, stays unconfirmed.
    */
   const reconcile = async () => {
     try {
-      const state = await api.get<{ data: NominationDetails | null }>('/api/candidate/nomination-details', { 'X-Candidate-Context': accountContext })
-      if (state.data) {
+      const state = await api.get<JourneyOutcome>('/api/candidate/nomination-details/journey', {
+        'X-Candidate-Context': accountContext,
+        'X-Nomination-Journey': journeyKey,
+      })
+      if (state.journey.status === 'confirmed' && state.data) {
         finish(state.data, true)
         return
       }
@@ -256,7 +260,14 @@ export function NominationForm({
         tone: 'error',
         content: (
           <>
-            <p>انقطع الاتصال قبل وصول نتيجة الحفظ. لا تظهر بيانات محفوظة لهذه المرحلة حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.</p>
+            <p>انقطع الاتصال قبل وصول نتيجة الحفظ. لا تظهر بيانات محفوظة لهذا النموذج حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.</p>
+            {state.journey.status !== 'open' && (
+              <p>
+                {state.journey.status === 'unavailable'
+                  ? 'وهذه المرحلة غير متاحة حالياً، فقد تُرفض إعادة المحاولة.'
+                  : 'وقد تغيّرت إعدادات هذه المرحلة منذ فتحت النموذج، فقد تُرفض إعادة المحاولة.'}
+              </p>
+            )}
             <p>ما أدخلته ما زال هنا. أعد المحاولة بعد قليل: إن كان الطلب الأول قد نجح فستظهر بياناتك المحفوظة كما هي، ولن تُحفظ مرة ثانية.</p>
           </>
         ),

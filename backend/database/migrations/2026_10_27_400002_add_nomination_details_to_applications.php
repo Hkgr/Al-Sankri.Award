@@ -77,23 +77,14 @@ return new class extends Migration
      * Reverse the migrations.
      *
      * Refused, before anything changes, while any application holds Stage 2
-     * data in the new columns or any partnership row exists.
+     * data in the new columns, any partnership row exists, or (because
+     * 400001 rolls back next and would refuse them, leaving this step done
+     * and that one not) any subcategory is configured.
      */
     public function down(): void
     {
-        $partnerships = Schema::hasTable('application_partnerships') ? DB::table('application_partnerships')->count() : 0;
-        $applications = DB::table('applications')
-            ->where(function ($query): void {
-                foreach (self::NEW_COLUMNS as $column) {
-                    $query->orWhereNotNull($column);
-                }
-            })
-            ->count();
-
-        if ($partnerships + $applications > 0) {
-            throw new RuntimeException(
-                "Cannot roll back the Stage 2 application columns: {$applications} application(s) hold Stage 2 data and {$partnerships} partnership row(s) exist. Nothing was changed."
-            );
+        if (($state = $this->protectedStage2State()) !== []) {
+            throw new RuntimeException('Cannot roll back the Stage 2 application columns: '.$this->describe($state).' exist. Nothing was changed.');
         }
 
         Schema::dropIfExists('application_partnerships');
@@ -121,5 +112,43 @@ return new class extends Migration
         if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
             DB::statement("ALTER TABLE `{$table}` DROP CONSTRAINT `{$name}`");
         }
+    }
+
+    /**
+     * Every kind of Stage 2 state that one of the Stage 2 migrations refuses
+     * to drop, counted before anything changes: a batch rollback refuses in
+     * its first migration rather than half-way through (400003, 400002 and
+     * 400001 roll back in that order).
+     *
+     * @return array<string, int>
+     */
+    private function protectedStage2State(): array
+    {
+        $count = fn (string $table): int => Schema::hasTable($table) ? DB::table($table)->count() : 0;
+        $columns = array_values(array_filter(
+            ['subcategory_id', 'purpose_and_mission', 'objectives', 'funding_type', 'funder_name', 'funding_amount_usd', 'has_partnerships'],
+            fn (string $column): bool => Schema::hasColumn('applications', $column),
+        ));
+
+        return array_filter([
+            'confirmed journey(s)' => $count('candidate_nominations'),
+            'partnership row(s)' => $count('application_partnerships'),
+            'application(s) holding Stage 2 values' => $columns === [] ? 0 : DB::table('applications')
+                ->where(function ($query) use ($columns): void {
+                    foreach ($columns as $column) {
+                        $query->orWhereNotNull($column);
+                    }
+                })
+                ->count(),
+            'configured subcategory row(s)' => $count('cycle_domain_subcategories'),
+        ]);
+    }
+
+    /**
+     * @param  array<string, int>  $state
+     */
+    private function describe(array $state): string
+    {
+        return implode(', ', array_map(fn (string $kind, int $rows): string => "{$rows} {$kind}", array_keys($state), $state));
     }
 };

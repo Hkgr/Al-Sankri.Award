@@ -50,6 +50,15 @@ export type NominationState = {
   }
 }
 
+/**
+ * What became of one form's save (GET /api/candidate/nomination-details/journey,
+ * for that form's journey key only).
+ */
+export type JourneyOutcome = {
+  data: NominationDetails | null
+  journey: { status: 'confirmed' | 'open' | 'changed' | 'unavailable' }
+}
+
 export const FUNDING_LABELS: Record<FundingType, string> = {
   fully_funded: 'ممول بالكامل',
   partially_funded: 'ممول جزئيًا',

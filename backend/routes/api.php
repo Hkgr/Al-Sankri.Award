@@ -64,6 +64,8 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
     // Stage 2. Writes also pass nomination.gate: Stage 1 confirmed, the
     // stage usable now, and the form's journey_key still current.
     Route::get('nomination-details', [NominationDetailsController::class, 'show'])->middleware('candidate.context');
+    // Reconciling a save whose answer was lost: that form's journey only.
+    Route::get('nomination-details/journey', [NominationDetailsController::class, 'journey'])->middleware('candidate.context');
     Route::post('nomination-details/check', [NominationDetailsController::class, 'check'])
         ->middleware(['throttle:candidate-check', 'candidate.context', 'nomination.gate']);
     Route::post('nomination-details', [NominationDetailsController::class, 'store'])

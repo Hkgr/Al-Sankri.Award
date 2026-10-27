@@ -75,7 +75,7 @@ Five sections inside one form, all held in memory only:
 4. «التمويل والشراكات»
 5. «المراجعة والتأكيد»
 
-Each section is checked by the server (`POST /api/candidate/nomination-details/check`, which saves nothing). The final «حفظ المرحلة والمتابعة» is the only write. The server's `NominationDetailsRequest` is authoritative.
+Each section is checked by the server (`POST /api/candidate/nomination-details/check`, which saves nothing). A section check applies only that section's rules, including the duplicate-place check, which runs only for «التواريخ وأماكن التنفيذ»: unfinished place rows never block an earlier section, and are reported where they can be fixed. The final «حفظ المرحلة والمتابعة» is the only write, and it always applies every rule. The server's `NominationDetailsRequest` is authoritative.
 
 | Field | Rule |
 | --- | --- |
@@ -91,11 +91,18 @@ Each section is checked by the server (`POST /api/candidate/nomination-details/c
 
 `App\Candidates\NominationDetails::confirm` runs in one transaction:
 1. lock the account's `users` row;
-2. check Stage 1 again, any already-confirmed journey for the form's journey key, the usable cycle and the journey key;
-3. read the stage and the chosen options under shared locks;
+2. check Stage 1 again, and any already-confirmed journey for the form's journey key;
+3. lock the Stage 2 configuration (shared locks on every `award_cycles` row), then work out the usable cycle again from the latest committed cycle, stage and option rows (locking reads, never the transaction's earlier snapshot) and the time now, and check the journey key and the chosen options;
 4. create the draft application, its places and partners, the `candidate_nominations` row and an audit entry (ids and codes only).
 
 If anything fails, nothing is left behind.
+
+**Operator changes at the same time.** The `nomination.gate` check before validation is preliminary; step 3 is authoritative. `nomination:setup` locks its cycle row for update before changing that cycle's stage, domains or subcategories (and creating a cycle inserts into `award_cycles`), so:
+- a closure, window change or cycle change committed before step 3 refuses the confirmation (`409 nomination_unavailable` or `journey_changed`) with nothing written;
+- one started after step 3 waits until the confirmation commits, then applies;
+- a deadline that passes between the gate and step 3 refuses the confirmation.
+
+Lock order: the account's `users` row, then `award_cycles`, then the stage and option rows. The command takes no `users` lock and locks its cycle first, so the two cannot deadlock on each other.
 
 **Idempotency:** `uq_candidate_nominations_journey` (one per candidate profile and cycle) backs it. A retry (double click, second tab, lost answer) returns the stored stage with `409 nomination_details_already_confirmed` and never overwrites it.
 
@@ -103,9 +110,11 @@ If anything fails, nothing is left behind.
 
 **Journey identity.** The form receives a server-issued `journey_key` (an HMAC of the candidate profile and cycle). The application is the one this confirmation creates; no existing application is ever picked by "latest id" or attached. The journey table limits this dashboard journey only. `applications` gets no new unique key, and the application-count policy stays open.
 
-**Uncertain saves.** A lost answer or a 5xx after saving is not reported as a failure. The form re-reads the account's stage:
-- a stored stage is shown read-only;
-- otherwise it says no saved data is visible yet and the result is unconfirmed (the request may still be running), keeps the input, and the leave warning says the same.
+**Uncertain saves.** A lost answer or a 5xx after saving is not reported as a failure. The form asks about its own journey only (`GET /api/candidate/nomination-details/journey` with its `journey_key` in `X-Nomination-Journey`):
+- that journey's stored stage is shown read-only;
+- otherwise it says no saved data is visible for this form yet and the result is unconfirmed (the request may still be running), keeps the input, and the leave warning says the same. If the stage has since closed or its cycle changed, it adds that a retry may be refused.
+
+Another cycle's confirmed stage is never taken for this save's result. The page view (`GET /api/candidate/nomination-details`) still shows the only confirmed stage when no cycle is open; reconciliation does not use that fallback.
 
 **Account binding.** As in Stage 1, reads carry `X-Candidate-Context`, and writes carry `account_context` plus the `journey_key`. A page or form showing another account than the one signed in is refused (`409 account_mismatch`) before anything is read or written.
 
@@ -114,6 +123,7 @@ If anything fails, nothing is left behind.
 | Method and path | Purpose |
 | --- | --- |
 | `GET /api/candidate/nomination-details` | The confirmed stage, or availability, options (domains, subcategories, artwork keys, governorates) and `journey_key`. `409 basic_information_required` before Stage 1. |
+| `GET /api/candidate/nomination-details/journey` | Reconciliation of one form's save: the journey named by `X-Nomination-Journey` only. `journey.status` is `confirmed` (with that journey's data), `open`, `changed` or `unavailable` (with `data: null`). Never another journey's data. |
 | `POST /api/candidate/nomination-details/check` | Checks one section (`domain`, `work`, `dates_locations`, `funding`); saves nothing. 30/min per account. |
 | `POST /api/candidate/nomination-details` | Confirms the stage, once. 10/min per account. |
 | `GET /api/candidate/overview` | Adds `nomination_details` (statuses and dates only). |
@@ -123,8 +133,27 @@ All candidate routes require a session, an active account, the candidate role, C
 ## 6. Deployment
 
 1. Back up the database.
-2. Run `php artisan migrate --force` for three additive migrations (`400001`–`400003`; schema §L). Existing applications are unchanged. Rollback is refused before anything changes while any Stage 2 data exists.
+2. Run `php artisan migrate --force` for three additive migrations (`400001`–`400003`; schema §L). Existing applications are unchanged. Rolling back any of them is refused in its first step, before any table, column, constraint, row or migration-history entry changes, while any Stage 2 state exists: confirmed journeys, partnership rows, applications holding a value in any new Stage 2 column, or configured subcategories (so delete or keep the cycle's subcategories deliberately; a batch rollback never stops half-way).
 3. Build and publish the frontend as today.
 4. Run the activation workflow (§2) for the real cycle.
 
 No `.env`, Plesk, Document Root or `deploy.sh` change is needed.
+
+## 7. Tests
+
+- `tests/Feature/Candidate/NominationDetailsTest.php` runs everywhere, SQLite included. It covers the rules, the section scoping, the journey-bound reconciliation and a deadline passing between the gate and the locked check.
+- `tests/Feature/Candidate/NominationConfirmationLockingTest.php` needs MySQL or MariaDB. It is skipped on SQLite and refuses any database not named `*_schema_test`. Because it commits its rows, it migrates that disposable database fresh before and after each test. It runs the real `nomination:setup --close` in a separate PHP process with its own database session, at a point fixed by a hook on the confirmation's queries:
+  - a closure committed after the confirmation began, before its configuration locks: refused, nothing written;
+  - a closure started while the confirmation holds the locks: a real InnoDB lock wait until the confirmation commits;
+  - a confirmed journey still returned after the closure.
+
+  These are controlled orderings across two real sessions, not a load test of arbitrary simultaneous requests.
+- `tests/Feature/NominationSchemaTest.php` (run as in [database-rules.md](database-rules.md) §7) checks that a rollback is refused for each kind of protected state, with tables, columns, constraints, indexes, data and migration history compared before and after.
+
+To run the feature tests against a disposable database (never the configured one):
+
+```sh
+cd backend
+DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=al_sankri_award_auth_schema_test DB_USERNAME=root DB_PASSWORD= \
+  php artisan test --compact tests/Feature/Candidate
+```

@@ -126,7 +126,7 @@ class NominationDetailsRequest extends FormRequest
             // The same place twice, ignoring case and spacing, is refused.
             function (Validator $validator): void {
                 $locations = $this->input('locations');
-                if (! is_array($locations)) {
+                if (! $this->validatesLocations() || ! is_array($locations)) {
                     return;
                 }
                 $seen = [];
@@ -145,6 +145,15 @@ class NominationDetailsRequest extends FormRequest
                 }
             },
         ];
+    }
+
+    /**
+     * Whether the places are part of what this request validates: always for
+     * the confirmation; for a section check only in its own section.
+     */
+    protected function validatesLocations(): bool
+    {
+        return true;
     }
 
     /**
