@@ -15,6 +15,12 @@ export type Overview = {
     completed_at: string | null
     profile_type: ProfileType | null
   }
+  /** Stage 2: statuses only (no work details, places or funding). */
+  nomination_details: {
+    status: 'locked' | 'unavailable' | 'not_started' | 'completed'
+    reason: string | null
+    confirmed_at: string | null
+  }
 }
 
 export type PolicyCode = 'privacy_policy' | 'terms_of_use'

@@ -15,7 +15,8 @@ These decisions override older documents in `docs/`.
 | Decision | How the schema reflects it |
 | --- | --- |
 | Award name: جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع | Stored per cycle in `award_cycles.award_name_ar` (data, not seeded) |
-| Three domains: الثقافة والفنون، التراث المادي واللامادي، الإبداع | Rows in `award_domains` / `cycle_domains`, entered as data. Nothing is hardcoded or seeded. |
+| Three domains: الثقافة والفنون، التراث المادي واللامادي، الإبداع | Rows in `award_domains` / `cycle_domains`, entered as data. Nothing is seeded by migrations; `php artisan nomination:setup` provisions them for an explicitly named cycle. |
+| **Confirmed subcategories:** الثقافة والفنون (الثقافة، الفنون); التراث (التراث المادي، التراث اللامادي); الإبداع (المسؤولية المجتمعية، ريادة الأعمال، الجودة). This supersedes the earlier notes that treated the Creativity sub-areas as unresolved and Quality as only a cross-cutting approach. | `cycle_domain_subcategories`, one per cycle domain and code. An application's `subcategory_id` must belong to its own domain and cycle (composite keys). The subcategories have no slots, rankings, committees or rubrics. |
 | Each domain has its own judging committee of 3 or 5 known judges | `committees` of type `judging`, one current per cycle domain (DB). The 3-or-5 count is checked when a committee is activated (application layer, §3). |
 | Public voting and the audience award are cancelled | No voting, voter or audience-award table, column, status or permission |
 | Field verification and field visits are cancelled | No field-visit or verifier table, file-link target, consent or permission |
@@ -154,6 +155,9 @@ These cannot be expressed as row-level constraints, or they depend on workflow. 
 | Personal data in snapshots, audit `before_data`/`after_data` and stories is minimised; no passwords, tokens or file contents | Content | Redact in the audit writer |
 | Phone numbers are normalised (E.164) and not used as identity | Content | Validation |
 | **A candidate's basic profile is confirmed once, then read-only** | Workflow; the unique key only stops a second row | `App\Candidates\BasicProfiles` locks the `users` row, rechecks and writes everything in one transaction. No candidate endpoint updates or deletes a profile ([candidate-onboarding.md](candidate-onboarding.md) §6). |
+| Stage 2 is confirmed once per candidate profile and cycle, as a **draft** application; its fields are then read-only for the candidate | Workflow | `App\Candidates\NominationDetails` locks the `users` row and rechecks Stage 1, the usable cycle, the journey key and the chosen options in one transaction; `uq_candidate_nominations_journey` is the final guard ([candidate-nomination-details.md](candidate-nomination-details.md) §4) |
+| Funding fields match the declaration | Partly in the DB (`chk_applications_funding`) | The request also refuses fields that do not apply, so they are never silently dropped |
+| Only one cycle is usable for Stage 2 at a time | Spans cycles, stages and time | `App\Candidates\NominationCycles`: none or several usable cycles make the stage unavailable |
 | Candidate reads and writes come from a page showing the signed-in account | Session state, not data | `account_context` (HMAC of the account id, from `/api/user`) compared by the `candidate.context` middleware on the overview and profile reads and on `/check` and confirmation, before any data is read or validated; it never selects an account ([candidate-onboarding.md](candidate-onboarding.md) §4) |
 | A profile's applicant type matches its `profile_type` (`individual` → `individual`, `institution` → `organization`), and an institution's representative member is the account | Spans tables | Written together by the same service |
 | Accepted account-policy versions are the published ones at confirmation | Time-dependent | Checked under a shared lock inside the confirmation transaction; the publish command locks the policy rows |
@@ -166,16 +170,16 @@ These cannot be expressed as row-level constraints, or they depend on workflow. 
 
 | Open decision | Where it will be stored | Current state |
 | --- | --- | --- |
-| Application limits (per applicant, cycle or domain) | `award_cycles.submission_rules`, e.g. `{"max_applications_per_applicant": …}` | `submission_rules` is null; no unique key limits applications |
+| Application limits (per applicant, cycle or domain) | `award_cycles.submission_rules`, e.g. `{"max_applications_per_applicant": …}` | `submission_rules` is null; no unique key limits applications. `candidate_nominations` (one per candidate profile and cycle) limits only the candidate dashboard's journey, not applications. |
 | Whether third-party nominations are allowed | `award_cycles.submission_rules`, e.g. `{"third_party_nominations": …}`. The schema already separates `applications.created_by` from the applicant's representative and members. | Null |
-| Structure of the Creativity (الإبداع) sub-areas (social responsibility, entrepreneurship, quality, …) | Either the cycle domain's `supplementary_questions`/`eligibility_requirements`, or a future table if sub-areas need their own slots or rubrics | Not modelled |
+| Whether subcategories ever get their own award slots, rubrics or committees | A future decision; `cycle_domain_subcategories` exists, and slots and rubrics stay per cycle domain | Not modelled (the subcategory structure itself is now confirmed, §1) |
 | Scoring weights | `evaluation_criteria.weight` (a percentage) | Nullable until a rubric is approved |
 | Aggregation method | `evaluation_rubrics.aggregation_method` | Null until approved; no average is assumed |
 | Tie-breaking rules | A future nullable rubric-level field, added by a small migration once the rule's shape is known | Not stored |
 | Appeal deadlines | A `cycle_stages` row for the appeal window (`opens_at`/`closes_at`), read by the appeal service | No stage or deadline is created |
 | Whether every judge evaluates every application | Recorded with the rubric or cycle configuration once decided; `judging_assignments` supports both full and partial assignment | No constraint either way |
 | Whether one application may receive more than one award slot | Application-layer rule once decided | No constraint |
-| Geographic scope of later cycles (the first cycle is Syria) | `award_cycles.eligibility_rules` | Locations accept any ISO country |
+| Geographic scope of later cycles (the first cycle is Syria) | `award_cycles.eligibility_rules` (`implementation_country`, set explicitly by `nomination:setup`) | Locations accept any ISO country in the schema; the candidate form offers only a country with a vetted governorate list (Syria) |
 
 ## 5. Refinements to the proposed schema
 
@@ -219,7 +223,7 @@ The schema tests run only against an **explicitly named, disposable MySQL or Mar
 cd backend
 MIGRATION_TEST_DB_DATABASE=al_sankri_award_schema_test php artisan test --compact \
   tests/Feature/PlatformDatabaseMigrationTest.php tests/Feature/PlatformDatabaseConstraintTest.php \
-  tests/Feature/PlatformDatabaseRecoveryTest.php tests/Feature/CandidateSchemaTest.php
+  tests/Feature/PlatformDatabaseRecoveryTest.php tests/Feature/CandidateSchemaTest.php tests/Feature/NominationSchemaTest.php
 ```
 
 **Connection.** Optional `MIGRATION_TEST_DB_HOST`, `_PORT`, `_USERNAME` and `_PASSWORD` override the `DB_*` values. `MIGRATION_TEST_DB_DRIVER` selects Laravel's `mysql` driver (the default) or its `mariadb` driver.

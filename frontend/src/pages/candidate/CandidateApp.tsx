@@ -6,9 +6,10 @@ import { AuthLayout } from '../auth/AuthLayout'
 import { BasicInformationPage } from './basic/BasicInformationPage'
 import { CandidateLayout } from './CandidateLayout'
 import { DashboardPage } from './DashboardPage'
+import { NominationDetailsPage } from './nomination/NominationDetailsPage'
 
 /**
- * /dashboard and /dashboard/basic-information. Signed-out visitors go to the
+ * /dashboard, /dashboard/basic-information and /dashboard/nomination-details. Signed-out visitors go to the
  * sign-in page and come back here afterwards; accounts without the
  * candidate classification are pointed to their account page.
  */
@@ -48,6 +49,8 @@ export function CandidateApp() {
       {/* Keyed by the account snapshot: another account never inherits a page's state. */}
       {location.pathname === '/dashboard/basic-information' ? (
         <BasicInformationPage key={user.account_context} user={user} />
+      ) : location.pathname === '/dashboard/nomination-details' ? (
+        <NominationDetailsPage key={user.account_context} user={user} />
       ) : (
         <DashboardPage key={user.account_context} user={user} />
       )}

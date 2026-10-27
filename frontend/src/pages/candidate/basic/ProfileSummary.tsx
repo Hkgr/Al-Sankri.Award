@@ -4,7 +4,7 @@ import type { StepId } from './formModel'
 type Row = { label: string; value: ReactNode | null; ltr?: boolean }
 
 /** Built by summaryFromForm / summaryFromProfile (summaries.tsx). */
-export type SummaryGroup = { title: string; step?: StepId; rows: Row[] }
+export type SummaryGroup<S extends string = StepId> = { title: string; step?: S; rows: Row[] }
 
 /** Shown for an optional field left empty. */
 const NOT_ADDED = 'لم يُضف'
@@ -30,7 +30,7 @@ export function SummaryLinks({ links }: { links: { platform: string; url: string
  * Groups of label/value rows. In the review step each group has an «تعديل»
  * button leading back to its section; the read-only view has none.
  */
-export function ProfileSummary({ groups, onEdit, headingLevel = 2 }: { groups: SummaryGroup[]; onEdit?: (step: StepId) => void; headingLevel?: 2 | 3 }) {
+export function ProfileSummary<S extends string = StepId>({ groups, onEdit, headingLevel = 2 }: { groups: SummaryGroup<S>[]; onEdit?: (step: S) => void; headingLevel?: 2 | 3 }) {
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
 
   return (

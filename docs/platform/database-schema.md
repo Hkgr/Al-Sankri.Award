@@ -24,6 +24,7 @@ Generated from the migrated schema on MySQL 8.4.7 (information_schema), then ann
 - **I. Public stories and auditing:** [`published_stories`](#published_stories), [`audit_logs`](#audit_logs)
 - **J. External sign-in (account migrations):** [`oauth_identities`](#oauth_identities)
 - **K. Candidate onboarding (stage 1):** [`account_policy_versions`](#account_policy_versions), [`account_policy_acceptances`](#account_policy_acceptances), [`candidate_profiles`](#candidate_profiles), [`applicant_individual_details`](#applicant_individual_details), [`applicant_institution_details`](#applicant_institution_details), [`applicant_social_links`](#applicant_social_links)
+- **L. Candidate Stage 2 (nomination details):** [`cycle_domain_subcategories`](#cycle_domain_subcategories), [`applications` additions](#applications-stage-2-columns), [`application_partnerships`](#application_partnerships), [`candidate_nominations`](#candidate_nominations)
 
 ## Conventions
 
@@ -326,7 +327,7 @@ Named stages of a cycle (for example introductory sessions, submissions, eligibi
 
 ### `award_domains`
 
-Catalogue of award domains. The three confirmed domains (الثقافة والفنون، التراث المادي واللامادي، الإبداع) are entered as data by an administrator. They are not seeded or hardcoded. Creativity sub-areas are **not** modelled, because their structure is unresolved.
+Catalogue of award domains. The three confirmed domains (الثقافة والفنون، التراث، الإبداع; codes `culture_and_arts`, `heritage`, `creativity`) are entered as data: no migration seeds them, and `php artisan nomination:setup` provisions them for an explicitly named cycle. Their confirmed subcategories live in `cycle_domain_subcategories` (§L).
 
 | Column | Type | Null | Default | Notes |
 | --- | --- | --- | --- | --- |
@@ -1608,3 +1609,86 @@ The licence number is `applicants.registration_number`. The representative is an
 | `platform` | `varchar(50)` | no |  |
 | `url` | `varchar(500)` | no | `http(s)://` only (`chk_applicant_social_links_url`). Stored as text and never fetched. |
 | `created_at`, `updated_at` | `datetime` | yes |  |
+
+---
+
+## L. Candidate Stage 2 (nomination details)
+
+Three additive migrations, described for operators in [candidate-nomination-details.md](candidate-nomination-details.md):
+
+- `2026_10_27_400001_create_cycle_domain_subcategories_table`;
+- `2026_10_27_400002_add_nomination_details_to_applications`: new `applications` columns and `application_partnerships`;
+- `2026_10_27_400003_create_candidate_nominations_table`.
+
+**Rollback.** `400003` rolls back first and refuses, before anything changes, while any confirmed journey, partnership row or application holding Stage 2 values exists. `400002` makes the same check for its columns and rows, and `400001` refuses while subcategories are configured.
+
+**Existing columns reused.** `applications.title`, `documented_impact` (the work's impact), `implementation_started_on`, `implementation_ended_on` and `implementation_status` (`ongoing`, or `completed` with an end date), and `application_locations` for the places of implementation. For Syrian cycles, `application_locations.governorate` holds the ISO 3166-2:SY code (for example `SY-DI`), `locality` the city, town or village, `address` the optional details, and `country_code` the cycle's country.
+
+### `cycle_domain_subcategories`
+
+The confirmed subcategories of a cycle domain. There are no award slots, rankings, committees or rubrics per subcategory.
+
+| Column | Type | Null | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | — | PK, auto-increment. |
+| `cycle_id` | `bigint unsigned` | no | — | Must be the domain's cycle (composite key). |
+| `cycle_domain_id` | `bigint unsigned` | no | — |  |
+| `code` | `varchar(64)` | no | — | Stable code, e.g. `quality`; never inferred from the label. |
+| `name_ar` | `varchar(150)` | no | — |  |
+| `display_order` | `smallint unsigned` | no | `0` |  |
+| `is_active` | `tinyint(1)` | no | `1` | Inactive subcategories are not offered or accepted. |
+| `created_at`, `updated_at` | `datetime` | yes | — |  |
+
+- **Unique** `uq_cycle_domain_subcategories_code` (`cycle_domain_id`, `code`), `uq_cycle_domain_subcategories_cycle_code` (`cycle_id`, `code`), `uq_cycle_domain_subcategories_id_domain` (`id`, `cycle_domain_id`): the parent key for applications.
+- **FK** `fk_cycle_domain_subcategories_domain` (`cycle_domain_id`, `cycle_id`) → `cycle_domains` (`id`, `cycle_id`), RESTRICT.
+- **CHECK** `chk_cycle_domain_subcategories_code`: `code <> ''`.
+
+### `applications`: Stage 2 columns
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `subcategory_id` | `bigint unsigned` | yes | `fk_applications_subcategory` (`subcategory_id`, `cycle_domain_id`) → `cycle_domain_subcategories` (`id`, `cycle_domain_id`): the subcategory belongs to the application's own domain, and through `fk_applications_cycle_domain` to its cycle. Index `idx_applications_subcategory`. |
+| `purpose_and_mission` | `text` | yes | Plain text. |
+| `objectives` | `text` | yes | Plain text, one objective per line. |
+| `funding_type` | `varchar(32)` | yes | `fully_funded`, `partially_funded`, `self_funded`, `not_needed`. |
+| `funder_name` | `varchar(255)` | yes | Only for fully or partially funded. |
+| `funding_amount_usd` | `decimal(14,2)` | yes | Exact US dollars, > 0; the funding reported for the named funder, or the self-funded amount; null for `not_needed`. |
+| `has_partnerships` | `tinyint(1)` | yes | The yes/no answer; partners are rows of `application_partnerships`. |
+
+**CHECK constraints**
+
+- `chk_applications_funding_type`: the four codes, or NULL.
+- `chk_applications_funding`: exactly the fields each type needs. Null type → no funder and no amount; funded → funder + amount; self → amount only; not needed → neither. Written with `COALESCE`, so a NULL type can never make the check UNKNOWN.
+- `chk_applications_funding_amount`: `funding_amount_usd IS NULL OR funding_amount_usd > 0`.
+- `chk_applications_funder_name`: not empty when present.
+
+### `application_partnerships`
+
+Partners named for the work: live rows of a draft, like `application_locations`. They are not accounts or applicants, and no contact or financial data is kept.
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | PK. |
+| `application_id` | `bigint unsigned` | no | `fk_application_partnerships_application` → `applications`, CASCADE. |
+| `position` | `tinyint unsigned` | no | 1–10 (`chk_application_partnerships_position`); unique with `application_id` (`uq_application_partnerships_position`). |
+| `partner_name` | `varchar(255)` | no | Not empty (`chk_application_partnerships_name`). |
+| `contribution` | `varchar(1000)` | yes | The nature of the partnership. |
+| `created_at`, `updated_at` | `datetime` | yes |  |
+
+### `candidate_nominations`
+
+The candidate dashboard's journey in one cycle: which draft application it created, and when Stage 2 was confirmed. Written in the same transaction as the application, and never updated by the candidate.
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | PK. |
+| `user_id` | `bigint unsigned` | no | FK → `users`, RESTRICT. |
+| `candidate_profile_id` | `bigint unsigned` | no | FK → `candidate_profiles`, RESTRICT. |
+| `applicant_id` | `bigint unsigned` | no | FK → `applicants`, RESTRICT (the Stage 1 applicant). |
+| `cycle_id` | `bigint unsigned` | no | Index `idx_candidate_nominations_cycle`. |
+| `application_id` | `bigint unsigned` | no | `fk_candidate_nominations_application` (`application_id`, `cycle_id`) → `applications` (`id`, `cycle_id`), RESTRICT: the journey's cycle is the application's. |
+| `details_confirmed_at` | `datetime` | no | When Stage 2 was confirmed (UTC). |
+| `created_at` | `datetime` | yes |  |
+
+- **Unique** `uq_candidate_nominations_journey` (`candidate_profile_id`, `cycle_id`): one journey per candidate profile and cycle; the final guard of an idempotent confirmation. It limits this dashboard journey only; `applications` has no new unique key.
+- **Unique** `uq_candidate_nominations_application` (`application_id`).

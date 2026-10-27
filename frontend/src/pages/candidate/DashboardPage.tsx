@@ -59,6 +59,11 @@ export function DashboardPage({ user }: { user: User }) {
           </p>
         </FormAlert>
       )}
+      {params.get('saved') === 'nomination-details' && (
+        <FormAlert tone="success">
+          <p>حُفظت فئة الترشح وبيانات العمل، وأصبحت متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ ستُتاح بقية مراحل ملف الترشح لاحقاً.</p>
+        </FormAlert>
+      )}
       {params.get('saved') === 'basic-information' && (
         <FormAlert tone="success">
           <p>حُفظت بياناتك الأساسية، وأصبحت متاحة للعرض فقط. ستُتاح المراحل التالية من ملف الترشح لاحقاً.</p>
@@ -88,16 +93,17 @@ export function DashboardPage({ user }: { user: User }) {
         ) : (
           <ol className="stage-list">
             <BasicInformationStage stage={overview.basic_information} />
+            <NominationDetailsStage stage={overview.nomination_details} />
             <li className="stage-card stage-card--upcoming">
               <p className="stage-card__number">المراحل التالية</p>
               <h3 className="stage-card__title">غير متاحة بعد</h3>
-              <p className="stage-card__text">ستُتاح المراحل التالية من ملف الترشح لاحقاً، وتظهر هنا عند فتحها.</p>
+              <p className="stage-card__text">ستُتاح بقية مراحل ملف الترشح لاحقاً، وتظهر هنا عند فتحها.</p>
             </li>
           </ol>
         )}
 
         <p className="candidate-section__note">
-          استكمال البيانات الأساسية خطوة أولى في ملف الترشح، ولا يعني تقديم طلب ترشح للجائزة.
+          استكمال هذه المراحل خطوات في ملف الترشح، ولا يعني تقديم طلب الترشح النهائي للجائزة.
         </p>
       </section>
     </div>
@@ -131,6 +137,44 @@ function BasicInformationStage({ stage }: { stage: Overview['basic_information']
       {stage.status !== 'unavailable' && (
         <Link className={`button ${completed ? 'button--secondary' : 'button--primary'}`} href="/dashboard/basic-information">
           {completed ? 'عرض البيانات' : 'ابدأ الاستكمال'}
+        </Link>
+      )}
+    </li>
+  )
+}
+
+function NominationDetailsStage({ stage }: { stage: Overview['nomination_details'] }) {
+  const completed = stage.status === 'completed'
+  const open = stage.status === 'not_started' || completed
+
+  return (
+    <li className={`stage-card${completed ? ' stage-card--completed' : ''}${open ? '' : ' stage-card--waiting'}`}>
+      <p className="stage-card__number">المرحلة 2</p>
+      <h3 className="stage-card__title">فئة الترشح وبيانات العمل</h3>
+      <p className="stage-card__status">
+        <StatusIcon tone={completed ? 'success' : 'info'} />
+        <span>
+          {completed && stage.confirmed_at
+            ? `مكتملة، حُفظت في ${formatDamascusDateTime(stage.confirmed_at)} بتوقيت دمشق`
+            : stage.status === 'locked'
+              ? 'تُتاح بعد المرحلة 1'
+              : stage.status === 'unavailable'
+                ? 'غير متاحة حالياً'
+                : 'لم تبدأ بعد'}
+        </span>
+      </p>
+      <p className="stage-card__text">
+        {completed
+          ? 'المحور والفئة وبيانات العمل محفوظة ومتاحة للعرض فقط.'
+          : stage.status === 'locked'
+            ? 'أكّد حفظ البيانات الأساسية أولاً، ثم تُتاح هذه المرحلة.'
+            : stage.status === 'unavailable'
+              ? 'لم تفتح إدارة الجائزة هذه المرحلة بعد لدورة الجائزة الحالية.'
+              : 'محور الترشح وفئته، وتعريف العمل وأثره، وتواريخه وأماكن تنفيذه، وتمويله وشراكاته.'}
+      </p>
+      {open && (
+        <Link className={`button ${completed ? 'button--secondary' : 'button--primary'}`} href="/dashboard/nomination-details">
+          {completed ? 'عرض البيانات' : 'ابدأ المرحلة'}
         </Link>
       )}
     </li>

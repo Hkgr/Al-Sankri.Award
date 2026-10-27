@@ -19,6 +19,7 @@ Route::get('/verify-email', SpaController::class);
 Route::get('/account', SpaController::class);
 Route::get('/dashboard', SpaController::class);
 Route::get('/dashboard/basic-information', SpaController::class);
+Route::get('/dashboard/nomination-details', SpaController::class);
 Route::get('/policies/privacy-policy', SpaController::class);
 Route::get('/policies/terms-of-use', SpaController::class);
 

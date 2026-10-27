@@ -82,6 +82,9 @@ export function TextAreaField({
   hint,
   maxLength,
   autoComplete,
+  optional = false,
+  rows = 3,
+  limit,
 }: {
   id: string
   label: string
@@ -89,26 +92,37 @@ export function TextAreaField({
   onChange: (value: string) => void
   error?: string
   hint?: string
-  maxLength: number
+  /** Hard browser limit. Leave unset where text must never be cut silently, and use `limit`. */
+  maxLength?: number
   autoComplete: string
+  optional?: boolean
+  rows?: number
+  /** Shown as a live character count; validation enforces it. */
+  limit?: number
 }) {
+  const count = Array.from(value).length
   return (
     <div className="field">
-      <FieldLabel htmlFor={id} label={label} required />
+      <FieldLabel htmlFor={id} label={label} required={!optional} optional={optional} />
       <textarea
         id={id}
         name={id}
         className="field__input field__textarea"
         value={value}
-        rows={3}
+        rows={rows}
         maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
-        required
+        required={!optional}
         dir="auto"
         aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(hint && `${id}-hint`, error && `${id}-error`)}
+        aria-describedby={describedBy(hint && `${id}-hint`, limit !== undefined && `${id}-count`, error && `${id}-error`)}
       />
+      {limit !== undefined && (
+        <p id={`${id}-count`} className="field__hint field__count" data-over={count > limit || undefined}>
+          {count} / {limit} حرفاً
+        </p>
+      )}
       <FieldMessages id={id} hint={hint} error={error} />
     </div>
   )
@@ -428,7 +442,7 @@ export function SocialLinksField({ links, onChange, errors }: { links: SocialLin
  * The list of problems on the current step, each a link to its field. It
  * receives focus when it appears, so it is read out first.
  */
-export function ErrorSummary({ errors, attempt }: { errors: Errors; attempt: number }) {
+export function ErrorSummary({ errors, attempt, idFor = fieldId }: { errors: Errors; attempt: number; idFor?: (key: string) => string }) {
   const ref = useRef<HTMLDivElement>(null)
   const entries = Object.entries(errors)
 
@@ -451,9 +465,9 @@ export function ErrorSummary({ errors, attempt }: { errors: Errors; attempt: num
           {entries.map(([key, message]) => (
             <li key={key}>
               <a
-                href={`#${fieldId(key)}`}
+                href={`#${idFor(key)}`}
                 onClick={(event) => {
-                  const target = document.getElementById(fieldId(key))
+                  const target = document.getElementById(idFor(key))
                   if (!target) return
                   event.preventDefault()
                   target.focus()

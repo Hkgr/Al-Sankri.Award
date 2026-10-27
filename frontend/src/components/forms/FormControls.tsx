@@ -25,7 +25,7 @@ type FieldProps = {
   readOnly?: boolean
   /** Identifiers, numbers and addresses read left to right inside the RTL page. */
   dir?: 'ltr' | 'auto'
-  inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'url'
+  inputMode?: 'text' | 'numeric' | 'decimal' | 'tel' | 'email' | 'url'
   maxLength?: number
 }
 

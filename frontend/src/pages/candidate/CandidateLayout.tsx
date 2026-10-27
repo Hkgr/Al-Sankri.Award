@@ -15,6 +15,7 @@ const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري'
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'الرئيسية' },
   { href: '/dashboard/basic-information', label: 'البيانات الأساسية' },
+  { href: '/dashboard/nomination-details', label: 'فئة الترشح وبيانات العمل' },
 ]
 
 /**
