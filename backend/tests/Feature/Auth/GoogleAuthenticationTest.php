@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Auth\CandidateRole;
 use App\Auth\GoogleAccounts;
 use App\Auth\GoogleIdentity;
 use App\Models\User;
@@ -127,7 +128,7 @@ class GoogleAuthenticationTest extends TestCase
             $this->queueGoogleUser(['sub' => 'sub-'.md5($label), 'name' => 'Name'] + $claims);
 
             if ($authoritative) {
-                $this->returnFromGoogle($state)->assertRedirect('/account');
+                $this->returnFromGoogle($state)->assertRedirect('/dashboard');
                 $this->assertTrue(User::query()->where('email', $claims['email'])->sole()->hasVerifiedEmail(), $label);
 
                 continue;
@@ -157,7 +158,7 @@ class GoogleAuthenticationTest extends TestCase
         $this->assertSame(0, User::query()->count());
 
         $this->useBrowser('google-holder');
-        $this->navigate($link)->assertRedirect('/account');
+        $this->navigate($link)->assertRedirect('/dashboard');
         $user = User::query()->sole();
         $this->assertSame('person@outlook.example', $user->email);
         $this->assertTrue($user->hasVerifiedEmail());
@@ -216,7 +217,7 @@ class GoogleAuthenticationTest extends TestCase
         $this->cookieJar = [];
         $state = $this->startGoogle()['state'];
         $this->queueGoogleUser(['sub' => 'attacker-sub', 'email' => 'attacker@gmail.com', 'email_verified' => true]);
-        $this->returnFromGoogle($state)->assertRedirect('/account');
+        $this->returnFromGoogle($state)->assertRedirect('/dashboard');
         $this->browser('GET', '/api/user')->assertOk()->assertJsonPath('data.email', 'attacker@gmail.com');
 
         $owner = User::query()->where('email', 'owner@example.org')->sole();
@@ -351,7 +352,7 @@ class GoogleAuthenticationTest extends TestCase
     {
         $state = $this->startGoogle()['state'];
         $this->queueGoogleUser(['sub' => 'sub-1', 'email' => 'layla@gmail.com', 'email_verified' => true]);
-        $this->returnFromGoogle($state)->assertRedirect('/account');
+        $this->returnFromGoogle($state)->assertRedirect('/dashboard');
         $this->browser('POST', '/api/auth/logout')->assertNoContent();
 
         $this->returnFromGoogle($state)->assertRedirect('/login?google=invalid_state');
@@ -467,6 +468,58 @@ class GoogleAuthenticationTest extends TestCase
         $this->assertSame($winner->id, $user->id);
         $this->assertSame(1, User::query()->count(), 'the losing insert was rolled back');
         $this->assertSame(1, DB::table('oauth_identities')->count());
+    }
+
+    public function test_new_google_accounts_are_classified_as_candidates_once(): void
+    {
+        // An authoritative address creates the account at once.
+        $state = $this->startGoogle()['state'];
+        $this->queueGoogleUser(['sub' => 'gmail-sub', 'email' => 'layla@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/dashboard');
+        $layla = User::query()->where('email', 'layla@gmail.com')->sole();
+        $this->assertSame([CandidateRole::CODE], $this->roleCodes($layla));
+        $this->browser('GET', '/api/user')->assertOk()->assertJsonPath('data.is_candidate', true);
+
+        // A returning sign-in adds no second grant.
+        $this->browser('POST', '/api/auth/logout')->assertNoContent();
+        $state = $this->startGoogle()['state'];
+        $this->queueGoogleUser(['sub' => 'gmail-sub', 'email' => 'layla@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/dashboard');
+        $this->assertSame(1, DB::table('user_roles')->where('user_id', $layla->id)->count());
+
+        // A sign-up confirmed by email in the same browser is classified too.
+        $this->useBrowser('outlook');
+        $state = $this->startGoogle()['state'];
+        $this->queueGoogleUser(['sub' => 'outlook-sub', 'email' => 'person@outlook.example', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/login?google=confirm_email');
+        $this->navigate($this->linkIn($this->lastEmail('person@outlook.example')))->assertRedirect('/dashboard');
+        $this->assertSame([CandidateRole::CODE], $this->roleCodes(User::query()->where('email', 'person@outlook.example')->sole()));
+    }
+
+    public function test_linking_google_does_not_change_the_accounts_roles(): void
+    {
+        $staffRole = DB::table('roles')->insertGetId(['code' => 'award_administrator', 'name_ar' => 'إدارة الجائزة', 'scope' => 'platform', 'created_at' => now(), 'updated_at' => now()]);
+        $staff = User::factory()->create(['email' => 'staff@example.org']);
+        DB::table('user_roles')->insert(['user_id' => $staff->id, 'role_id' => $staffRole, 'assigned_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        $grantsBefore = DB::table('user_roles')->orderBy('id')->get()->toArray();
+
+        $state = $this->startLink('staff@example.org');
+        $this->queueGoogleUser(['sub' => 'staff-sub', 'email' => 'staff.personal@gmail.com', 'email_verified' => true]);
+        $this->returnFromGoogle($state)->assertRedirect('/account?google=linked');
+
+        $this->assertEquals($grantsBefore, DB::table('user_roles')->orderBy('id')->get()->toArray());
+        $this->assertSame(['award_administrator'], $this->roleCodes($staff));
+        $this->browser('GET', '/api/user')->assertOk()->assertJsonPath('data.is_candidate', false);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function roleCodes(User $user): array
+    {
+        return DB::table('user_roles')->join('roles', 'roles.id', '=', 'user_roles.role_id')
+            ->where('user_roles.user_id', $user->id)->whereNull('user_roles.revoked_at')
+            ->orderBy('roles.code')->pluck('roles.code')->all();
     }
 
     /**

@@ -99,5 +99,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('password-confirmation', fn (Request $request) => Limit::perMinute(5)->by((string) $request->user()?->getKey())->response($tooMany));
 
         RateLimiter::for('google', fn (Request $request) => Limit::perMinute(20)->by($request->ip())->response($tooMany));
+
+        // Stage 1 of the candidate journey, per account.
+        RateLimiter::for('candidate-check', fn (Request $request) => Limit::perMinute(30)->by((string) $request->user()?->getKey())->response($tooMany));
+
+        RateLimiter::for('candidate-confirm', fn (Request $request) => Limit::perMinute(10)->by((string) $request->user()?->getKey())->response($tooMany));
     }
 }

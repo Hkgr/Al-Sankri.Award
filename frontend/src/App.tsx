@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { useAuth } from './auth/useAuth'
+import { homeFor, useAuth } from './auth/useAuth'
 import { SiteFooter } from './components/layout/SiteFooter'
 import { SiteHeader } from './components/layout/SiteHeader'
 import { Link } from './lib/router'
@@ -12,17 +12,19 @@ import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
+import { CandidateApp } from './pages/candidate/CandidateApp'
 import { HomePage } from './pages/home/HomePage'
+import { PolicyPage } from './pages/policies/PolicyPage'
 
 const HOME_TITLE = document.title
 
-/** Sign-in and sign-up pages send visitors who are already signed in to their account. */
+/** Sign-in and sign-up pages send visitors who are already signed in to their dashboard or account. */
 function GuestOnly({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const { navigate } = useRouter()
 
   useEffect(() => {
-    if (user) navigate('/account', { replace: true })
+    if (user) navigate(homeFor(user), { replace: true })
   }, [user, navigate])
 
   return user ? null : children
@@ -69,12 +71,21 @@ function CurrentPage() {
       return <VerifyEmailPage />
     case '/account':
       return <AccountPage />
+    case '/policies/privacy-policy':
+      return <PolicyPage code="privacy_policy" slug="privacy-policy" />
+    case '/policies/terms-of-use':
+      return <PolicyPage code="terms_of_use" slug="terms-of-use" />
     default:
       return <NotFoundPage />
   }
 }
 
 function App() {
+  const { location } = useRouter()
+
+  // The candidate area has its own layout (CandidateLayout).
+  if (location.pathname === '/dashboard' || location.pathname === '/dashboard/basic-information') return <CandidateApp />
+
   return (
     <>
       <SiteHeader />

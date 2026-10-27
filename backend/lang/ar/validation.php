@@ -6,12 +6,25 @@
  */
 
 return [
+    'accepted' => 'يجب تأكيد :attribute.',
+    'accepted_if' => 'يجب تأكيد :attribute.',
+    'array' => 'قيمة :attribute غير صالحة.',
     'confirmed' => 'تأكيد :attribute غير مطابق.',
     'current_password' => 'كلمة المرور غير صحيحة.',
+    'date_format' => 'أدخل :attribute بصيغة صحيحة.',
     'email' => 'أدخل :attribute صحيحاً، مثل name@example.com.',
+    'in' => 'اختر :attribute من القائمة.',
+    'integer' => 'قيمة :attribute غير صالحة.',
     'max' => [
+        'array' => 'يمكن إضافة :max عناصر على الأكثر في :attribute.',
         'string' => 'يجب ألا يزيد :attribute على :max حرفاً.',
     ],
+    'prohibited' => 'لا يُقبل :attribute هنا.',
+    'prohibited_unless' => 'لا يُقبل :attribute مع الاختيار الحالي.',
+    'regex' => 'صيغة :attribute غير صحيحة.',
+    'required_if' => 'أدخل :attribute.',
+    'required_with' => 'أدخل :attribute.',
+    'url' => 'أدخل رابطاً كاملاً يبدأ بـ https:// أو http://.',
     'min' => [
         'string' => 'يجب أن تتكوّن :attribute من :min أحرف على الأقل.',
     ],

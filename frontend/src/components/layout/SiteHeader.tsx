@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
-import { useAuth } from '../../auth/useAuth'
+import { homeFor, useAuth } from '../../auth/useAuth'
 import { award, sectionLinks } from '../../content/home'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
@@ -17,7 +17,7 @@ function AccountLink({ placement }: { placement: 'compact' | 'wide' }) {
   const { user } = useAuth()
   const { location } = useRouter()
   const signedIn = Boolean(user)
-  const href = signedIn ? '/account' : '/login'
+  const href = user ? homeFor(user) : '/login'
 
   return (
     <Link

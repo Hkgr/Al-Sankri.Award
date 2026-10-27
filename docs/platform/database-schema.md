@@ -23,6 +23,7 @@ Generated from the migrated schema on MySQL 8.4.7 (information_schema), then ann
 - **H. Results and ratification:** [`award_results`](#award_results), [`result_ratifications`](#result_ratifications)
 - **I. Public stories and auditing:** [`published_stories`](#published_stories), [`audit_logs`](#audit_logs)
 - **J. External sign-in (account migrations):** [`oauth_identities`](#oauth_identities)
+- **K. Candidate onboarding (stage 1):** [`account_policy_versions`](#account_policy_versions), [`account_policy_acceptances`](#account_policy_acceptances), [`candidate_profiles`](#candidate_profiles), [`applicant_individual_details`](#applicant_individual_details), [`applicant_institution_details`](#applicant_institution_details), [`applicant_social_links`](#applicant_social_links)
 
 ## Conventions
 
@@ -1501,3 +1502,109 @@ Google identities linked to accounts. The key is Google's stable subject identif
 
 - `chk_oauth_identities_provider`: `(provider in ('google'))`
 - `chk_oauth_identities_subject`: `(provider_subject <> '')`
+
+---
+
+## K. Candidate onboarding (stage 1)
+
+Three additive migrations, described for operators in [candidate-onboarding.md](candidate-onboarding.md):
+
+- `2026_10_27_300001_provision_candidate_role` inserts the platform role `candidate` («مترشح») into `roles`, unless it exists. It creates no table.
+- `2026_10_27_300002_create_account_policy_tables` creates the account policy tables.
+- `2026_10_27_300003_create_candidate_profile_tables` creates the profile and applicant detail tables.
+
+**Rollback.** `300003` rolls back first and refuses, before anything changes, while any confirmed profile, policy acceptance or candidate role grant exists. `300002` also refuses while acceptances exist, and `300001` while the role has grants.
+
+`300001` then deletes the role only if it created it (recorded as `role.provisioned` in `audit_logs`) and no `role_permissions` row refers to it. A `candidate` role that existed beforehand is preserved unchanged, with its permissions.
+
+**Mapping.** Shared applying-entity fields stay in `applicants`, and an institution's representative in `applicant_members`. Login accounts are unchanged.
+
+### `account_policy_versions`
+
+Versioned account-level policies, independent of award cycles (`policy_versions` remains for cycle consents tied to submitted application versions). Published text is not edited; a new version is published instead.
+
+| Column | Type | Null | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | — | PK, auto-increment. |
+| `code` | `varchar(64)` | no | — | `privacy_policy` or `terms_of_use`. |
+| `version_number` | `int unsigned` | no | — | ≥ 1. |
+| `title_ar` | `varchar(255)` | no | — |  |
+| `body_ar` | `mediumtext` | no | — | The exact text. |
+| `status` | `varchar(16)` | no | `draft` | `draft`, `published`, `retired`. |
+| `published_at` | `datetime` | yes | — | Required unless draft. |
+| `published_flag` | `tinyint unsigned` | yes | generated (virtual): `(case when status = 'published' then 1 end)` | Helper for one published version per code. |
+| `created_at`, `updated_at` | `datetime` | yes | — |  |
+
+- **Unique** `uq_account_policy_versions_version` (`code`, `version_number`); **unique** `uq_account_policy_versions_published` (`code`, `published_flag`).
+- **CHECKs:** `chk_account_policy_versions_code`, `chk_account_policy_versions_status`, `chk_account_policy_versions_number` (`version_number >= 1`), `chk_account_policy_versions_published` (`status = 'draft' or published_at is not null`).
+
+### `account_policy_acceptances`
+
+One acceptance of one exact policy version by one account: an event record with no update timestamps.
+
+| Column | Type | Null | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | — | PK, auto-increment. |
+| `user_id` | `bigint unsigned` | no | — | The accepting account. FK `fk_account_policy_acceptances_user` → `users`, RESTRICT. |
+| `policy_version_id` | `bigint unsigned` | no | — | FK `fk_account_policy_acceptances_version` → `account_policy_versions`, RESTRICT. |
+| `context` | `varchar(32)` | no | — | `basic_profile`. |
+| `accepted_at` | `datetime` | no | — | Server time (UTC). |
+
+- **Unique** `uq_account_policy_acceptances_user_version` (`user_id`, `policy_version_id`).
+- **CHECK** `chk_account_policy_acceptances_context`.
+
+### `candidate_profiles`
+
+Stage 1 completion: one confirmed basic profile per account. The row exists only once the information is confirmed, and it is read-only for the candidate. One profile per account limits this onboarding journey only; it sets no limit on award applications.
+
+| Column | Type | Null | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | — | PK, auto-increment. |
+| `user_id` | `bigint unsigned` | no | — | FK `fk_candidate_profiles_user` → `users`, RESTRICT. |
+| `applicant_id` | `bigint unsigned` | no | — | FK `fk_candidate_profiles_applicant` → `applicants`, RESTRICT. |
+| `profile_type` | `varchar(16)` | no | — | `individual` or `institution` (institutions map to `applicants.type = 'organization'`). |
+| `data_accuracy_declared_at` | `datetime` | no | — | Declaration of accurate data. |
+| `representation_declared_at` | `datetime` | yes | — | Set if and only if the type is `institution`. |
+| `completed_at` | `datetime` | no | — | Confirmation time (UTC). |
+| `created_at` | `datetime` | yes | — | No `updated_at`: the row is not edited. |
+
+- **Unique** `uq_candidate_profiles_user` (`user_id`): the final guard against a second confirmation; **unique** `uq_candidate_profiles_applicant` (`applicant_id`).
+- **CHECKs:** `chk_candidate_profiles_type`, `chk_candidate_profiles_representation` (`(profile_type = 'institution') = (representation_declared_at is not null)`).
+
+### `applicant_individual_details`
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | PK. |
+| `applicant_id` | `bigint unsigned` | no | Unique `uq_applicant_individual_details_applicant`; FK → `applicants`, RESTRICT. |
+| `first_name`, `last_name` | `varchar(100)` | no | Any script (the form allows 80). |
+| `middle_name` | `varchar(100)` | yes |  |
+| `birth_date` | `date` | no | Gregorian calendar date. |
+| `nationality_country_code` | `char(2)` | no | Uppercase ISO alpha-2 (`chk_applicant_individual_details_nationality`, checked like `chk_applicants_country`). |
+| `gender` | `varchar(16)` | no | `male` or `female` (`chk_applicant_individual_details_gender`). |
+| `national_id_number` | `text` | no | **Ciphertext only** (Laravel `encrypted` cast with `APP_KEY`). Not indexed or searchable. |
+| `secondary_phone` | `varchar(32)` | yes | E.164; never marked verified. |
+| `created_at`, `updated_at` | `datetime` | yes |  |
+
+### `applicant_institution_details`
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | PK. |
+| `applicant_id` | `bigint unsigned` | no | Unique `uq_applicant_institution_details_applicant`; FK → `applicants`, RESTRICT. |
+| `activity_type` | `varchar(150)` | no | Free text (no approved catalogue exists). |
+| `website_url` | `varchar(500)` | yes | `http(s)://` only (`chk_applicant_institution_details_website`). |
+| `created_at`, `updated_at` | `datetime` | yes |  |
+
+The licence number is `applicants.registration_number`. The representative is an `applicant_members` row with the account as `user_id`, the name, `role_title` and `is_primary_contact = 1`.
+
+### `applicant_social_links`
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | PK. |
+| `applicant_id` | `bigint unsigned` | no | FK `fk_applicant_social_links_applicant` → `applicants`, CASCADE (live rows of the applicant, like `applicant_members`). |
+| `position` | `tinyint unsigned` | no | 1–5 (`chk_applicant_social_links_position`); unique with `applicant_id` (`uq_applicant_social_links_position`). |
+| `platform` | `varchar(50)` | no |  |
+| `url` | `varchar(500)` | no | `http(s)://` only (`chk_applicant_social_links_url`). Stored as text and never fetched. |
+| `created_at`, `updated_at` | `datetime` | yes |  |

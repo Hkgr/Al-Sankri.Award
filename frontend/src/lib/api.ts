@@ -13,12 +13,15 @@ export class ApiError extends Error {
   readonly status: number
   readonly errors: FieldErrors
   readonly code: string | null
+  /** The whole JSON answer, for errors that carry data (for example a 409 with the current state). */
+  readonly payload: Record<string, unknown>
 
-  constructor(status: number, message: string, errors: FieldErrors = {}, code: string | null = null) {
+  constructor(status: number, message: string, errors: FieldErrors = {}, code: string | null = null, payload: Record<string, unknown> = {}) {
     super(message)
     this.status = status
     this.errors = errors
     this.code = code
+    this.payload = payload
   }
 }
 
@@ -50,8 +53,9 @@ async function refreshCsrfCookie(): Promise<void> {
 
 type Method = 'GET' | 'POST'
 
-async function send(method: Method, url: string, body?: unknown): Promise<Response> {
+async function send(method: Method, url: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<Response> {
   const headers: Record<string, string> = {
+    ...extraHeaders,
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   }
@@ -72,7 +76,7 @@ async function send(method: Method, url: string, body?: unknown): Promise<Respon
 }
 
 async function toError(response: Response): Promise<ApiError> {
-  let payload: { message?: string; errors?: FieldErrors; code?: string } = {}
+  let payload: { message?: string; errors?: FieldErrors; code?: string } & Record<string, unknown> = {}
   try {
     payload = await response.json()
   } catch {
@@ -81,16 +85,16 @@ async function toError(response: Response): Promise<ApiError> {
   const fallback =
     response.status === 419 ? messages.sessionExpired : response.status === 429 ? messages.tooManyAttempts : messages.unexpected
   const message = response.status >= 500 || !payload.message ? fallback : payload.message
-  return new ApiError(response.status, message, payload.errors ?? {}, payload.code ?? null)
+  return new ApiError(response.status, message, payload.errors ?? {}, payload.code ?? null, payload)
 }
 
-async function request<T>(method: Method, url: string, body?: unknown): Promise<T> {
+async function request<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
   if (method !== 'GET' && !readCookie('XSRF-TOKEN')) await refreshCsrfCookie()
 
-  let response = await send(method, url, body)
+  let response = await send(method, url, body, headers)
   if (response.status === 419 && method !== 'GET') {
     await refreshCsrfCookie()
-    response = await send(method, url, body)
+    response = await send(method, url, body, headers)
   }
   if (!response.ok) throw await toError(response)
   if (response.status === 204) return undefined as T
@@ -103,7 +107,7 @@ async function request<T>(method: Method, url: string, body?: unknown): Promise<
 }
 
 export const api = {
-  get: <T>(url: string) => request<T>('GET', url),
+  get: <T>(url: string, headers?: Record<string, string>) => request<T>('GET', url, undefined, headers),
   post: <T>(url: string, body: unknown = {}) => request<T>('POST', url, body),
 }
 

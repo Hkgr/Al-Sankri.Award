@@ -15,7 +15,8 @@ import { ALERT_ID, useSubmission } from './useSubmission'
 function useFollowRedirect() {
   const { navigate } = useRouter()
   return (target: string) => {
-    if (target === '/account' || target.startsWith('/account?')) navigate(target, { replace: true })
+    const path = target.split('?')[0]
+    if (['/account', '/dashboard', '/dashboard/basic-information'].includes(path)) navigate(target, { replace: true })
     else window.location.assign(target)
   }
 }

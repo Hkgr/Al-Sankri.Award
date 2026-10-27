@@ -40,8 +40,9 @@ trait ActsAsSpaBrowser
 
     /**
      * @param  array<string, mixed>  $data
+     * @param  array<string, string>  $headers  Extra request headers, as the app would send them.
      */
-    protected function browser(string $method, string $uri, array $data = [], bool $withCsrfHeader = true): TestResponse
+    protected function browser(string $method, string $uri, array $data = [], bool $withCsrfHeader = true, array $headers = []): TestResponse
     {
         $this->forgetRequestState();
 
@@ -54,6 +55,9 @@ trait ActsAsSpaBrowser
         ];
         if ($withCsrfHeader && isset($this->cookieJar['XSRF-TOKEN'])) {
             $server['HTTP_X_XSRF_TOKEN'] = $this->cookieJar['XSRF-TOKEN'];
+        }
+        foreach ($headers as $name => $value) {
+            $server['HTTP_'.strtoupper(str_replace('-', '_', $name))] = $value;
         }
 
         $content = null;

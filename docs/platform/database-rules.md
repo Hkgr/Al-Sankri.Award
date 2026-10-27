@@ -50,7 +50,12 @@ Every rule below is tested on both MySQL and MariaDB by `backend/tests/Feature/P
   - one current committee per cycle, type and domain;
   - one primary member per applicant;
   - one primary location per application;
-  - **one current result per award slot.**
+  - **one current result per award slot;**
+  - one published version per account policy (`account_policy_versions`).
+- **Candidate onboarding** (schema §K):
+  - one confirmed basic profile per account and per applicant (`candidate_profiles`);
+  - one acceptance per account and policy version;
+  - one social link per applicant and position (1–5).
 
 ### Referential integrity, including consistency across tables
 
@@ -148,6 +153,12 @@ These cannot be expressed as row-level constraints, or they depend on workflow. 
 | Only authorised accounts edit an applicant or application; **membership alone grants nothing** | Authorisation | Policies, from the representative account and granted roles |
 | Personal data in snapshots, audit `before_data`/`after_data` and stories is minimised; no passwords, tokens or file contents | Content | Redact in the audit writer |
 | Phone numbers are normalised (E.164) and not used as identity | Content | Validation |
+| **A candidate's basic profile is confirmed once, then read-only** | Workflow; the unique key only stops a second row | `App\Candidates\BasicProfiles` locks the `users` row, rechecks and writes everything in one transaction. No candidate endpoint updates or deletes a profile ([candidate-onboarding.md](candidate-onboarding.md) §6). |
+| Candidate reads and writes come from a page showing the signed-in account | Session state, not data | `account_context` (HMAC of the account id, from `/api/user`) compared by the `candidate.context` middleware on the overview and profile reads and on `/check` and confirmation, before any data is read or validated; it never selects an account ([candidate-onboarding.md](candidate-onboarding.md) §4) |
+| A profile's applicant type matches its `profile_type` (`individual` → `individual`, `institution` → `organization`), and an institution's representative member is the account | Spans tables | Written together by the same service |
+| Accepted account-policy versions are the published ones at confirmation | Time-dependent | Checked under a shared lock inside the confirmation transaction; the publish command locks the policy rows |
+| Every new public account receives the candidate role in its own creation transaction; existing accounts receive it only through `candidates:provision` | Workflow | `App\Auth\CandidateRole`; never taken from request input |
+| The identity number is encrypted and exposed only in the owner's profile resource | Content | `encrypted` cast; `BasicProfileResource` only |
 
 ## 4. Open business decisions and where they will live
 
@@ -208,7 +219,7 @@ The schema tests run only against an **explicitly named, disposable MySQL or Mar
 cd backend
 MIGRATION_TEST_DB_DATABASE=al_sankri_award_schema_test php artisan test --compact \
   tests/Feature/PlatformDatabaseMigrationTest.php tests/Feature/PlatformDatabaseConstraintTest.php \
-  tests/Feature/PlatformDatabaseRecoveryTest.php
+  tests/Feature/PlatformDatabaseRecoveryTest.php tests/Feature/CandidateSchemaTest.php
 ```
 
 **Connection.** Optional `MIGRATION_TEST_DB_HOST`, `_PORT`, `_USERNAME` and `_PASSWORD` override the `DB_*` values. `MIGRATION_TEST_DB_DRIVER` selects Laravel's `mysql` driver (the default) or its `mariadb` driver.

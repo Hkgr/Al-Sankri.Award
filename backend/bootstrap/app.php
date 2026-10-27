@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureCandidateAccountContext;
+use App\Http\Middleware\EnsureUserIsCandidate;
+use App\Http\Middleware\PreventCaching;
 use App\Http\Middleware\UseArabicLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,7 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->web(append: [UseArabicLocale::class]);
         $middleware->api(append: [UseArabicLocale::class]);
-        $middleware->alias(['active' => EnsureAccountIsActive::class]);
+        $middleware->alias([
+            'active' => EnsureAccountIsActive::class,
+            'candidate' => EnsureUserIsCandidate::class,
+            'candidate.context' => EnsureCandidateAccountContext::class,
+            'no-store' => PreventCaching::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
