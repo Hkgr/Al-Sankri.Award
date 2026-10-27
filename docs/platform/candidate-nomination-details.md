@@ -102,7 +102,13 @@ If anything fails, nothing is left behind.
 - one started after step 3 waits until the confirmation commits, then applies;
 - a deadline that passes between the gate and step 3 refuses the confirmation.
 
-Lock order: the account's `users` row, then `award_cycles`, then the stage and option rows. The command takes no `users` lock and locks its cycle first, so the two cannot deadlock on each other.
+Lock order, the same in both: the account's `users` row first (the confirmation locks the candidate's row for update; the command takes a shared lock on its `--actor`'s row before anything else, since every audit row it writes references that account), then `award_cycles`, then the stage and option rows.
+
+Verified orderings, with the real command in a separate process and session (`NominationConfirmationLockingTest`, MySQL 8.4 and MariaDB 10.11):
+- operator ≠ candidate: closure committed before the confirmation's configuration locks (confirmation refused); confirmation holding them (closure waits, then applies);
+- operator = the candidate's own account: confirmation first (the closure waits on the account row, then applies), and closure first (the confirmation waits on the account row, then sees the stage closed). Before the actor lock was added, both of these ended in an InnoDB deadlock (error 1213).
+
+These are the orderings tested. Other writers of the same rows (none exist yet: there is no admin portal) would have to follow the same order; a deadlock InnoDB detects is rolled back and reported, never half-applied.
 
 **Idempotency:** `uq_candidate_nominations_journey` (one per candidate profile and cycle) backs it. A retry (double click, second tab, lost answer) returns the stored stage with `409 nomination_details_already_confirmed` and never overwrites it.
 
@@ -110,9 +116,13 @@ Lock order: the account's `users` row, then `award_cycles`, then the stage and o
 
 **Journey identity.** The form receives a server-issued `journey_key` (an HMAC of the candidate profile and cycle). The application is the one this confirmation creates; no existing application is ever picked by "latest id" or attached. The journey table limits this dashboard journey only. `applications` gets no new unique key, and the application-count policy stays open.
 
-**Uncertain saves.** A lost answer or a 5xx after saving is not reported as a failure. The form asks about its own journey only (`GET /api/candidate/nomination-details/journey` with its `journey_key` in `X-Nomination-Journey`):
+**Request deadlines.** Every request of the shared client (`frontend/src/lib/api.ts`) has a deadline of 20 seconds (`REQUEST_TIMEOUT_MS`) per step: the CSRF cookie request, and each attempt from sending until its body (success or error) has been read, including the one resend after a 419. A step that does not finish in time is aborted and fails as a `RequestTimeoutError` (a kind of `NetworkError`). For a save, that means the outcome is unknown: aborting the browser's request does not stop a transaction the server may already be running. The worst case for a save before recovery begins is four steps (cookie, save, cookie again after a 419, resend), each bounded; the reconciliation read is bounded the same way, so the form is never left busy indefinitely.
+
+**Uncertain saves.** A lost answer, a timed-out answer or a 5xx after saving is not reported as a failure. The form asks about its own journey only (`GET /api/candidate/nomination-details/journey` with its `journey_key` in `X-Nomination-Journey`):
 - that journey's stored stage is shown read-only;
 - otherwise it says no saved data is visible for this form yet and the result is unconfirmed (the request may still be running), keeps the input, and the leave warning says the same. If the stage has since closed or its cycle changed, it adds that a retry may be refused.
+
+The busy state ends once that reconciliation has an answer or its own deadline passes (then the form says it could not confirm the result: perhaps saved, perhaps not). Nothing is resent automatically and nothing is reloaded; the user may press «حفظ المرحلة والمتابعة» again, which is safe: a stored journey is returned as it is (`409 nomination_details_already_confirmed`), and if the first request is still running on the server, whichever of the two takes the account's lock first saves, and the other gets that stored result (one application either way).
 
 Another cycle's confirmed stage is never taken for this save's result. The page view (`GET /api/candidate/nomination-details`) still shows the only confirmed stage when no cycle is open; reconciliation does not use that fallback.
 
@@ -147,7 +157,10 @@ No `.env`, Plesk, Document Root or `deploy.sh` change is needed.
   - a closure started while the confirmation holds the locks: a real InnoDB lock wait until the confirmation commits;
   - a confirmed journey still returned after the closure.
 
-  These are controlled orderings across two real sessions, not a load test of arbitrary simultaneous requests.
+  - the candidate's own account as the operator, in both orders (the confirmation also runs in its own process here, through the real service, `fixtures/confirm-nomination.php`).
+
+  These are controlled orderings across real separate sessions, not a load test of arbitrary simultaneous requests.
+- `frontend/tests/api.test.ts` (`npm test`, Node's built-in runner with fake timers) checks the client deadlines: no response headers, headers with an unfinished success or error body, a stalled CSRF cookie request, a bounded 419 resend, and unchanged behaviour for answers within the deadline.
 - `tests/Feature/NominationSchemaTest.php` (run as in [database-rules.md](database-rules.md) §7) checks that a rollback is refused for each kind of protected state, with tables, columns, constraints, indexes, data and migration history compared before and after.
 
 To run the feature tests against a disposable database (never the configured one):

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { FormAlert, StatusIcon, TextField } from '../../../components/forms/FormControls'
-import { ApiError, api, errorMessage, messages, NetworkError } from '../../../lib/api'
+import { ApiError, api, errorMessage, NetworkError } from '../../../lib/api'
 import { useLeaveWarning, useRouter } from '../../../lib/useRouter'
 import { CheckboxField, ErrorSummary, SelectField, TextAreaField } from '../basic/fields'
 import type { Errors } from '../basic/formModel'
@@ -233,8 +233,8 @@ export function NominationForm({
     const text =
       error instanceof NetworkError
         ? context === 'check'
-          ? `${messages.network} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.`
-          : `${messages.network} ما أدخلته ما زال هنا.`
+          ? `${error.message} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.`
+          : `${error.message} ما أدخلته ما زال هنا.`
         : errorMessage(error)
     setAlert({ tone: 'error', content: <p>{text}</p> })
   }
@@ -260,7 +260,7 @@ export function NominationForm({
         tone: 'error',
         content: (
           <>
-            <p>انقطع الاتصال قبل وصول نتيجة الحفظ. لا تظهر بيانات محفوظة لهذا النموذج حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.</p>
+            <p>لم تصل نتيجة الحفظ: انقطع الاتصال أو تأخّر ردّ الخادم. لا تظهر بيانات محفوظة لهذا النموذج حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.</p>
             {state.journey.status !== 'open' && (
               <p>
                 {state.journey.status === 'unavailable'

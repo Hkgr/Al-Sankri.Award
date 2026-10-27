@@ -5,6 +5,14 @@
  * Before a state-changing request, /sanctum/csrf-cookie issues the XSRF-TOKEN
  * cookie, which is sent back in the X-XSRF-TOKEN header. A 419 (token expired
  * with the session) refreshes the cookie and retries once.
+ *
+ * Every step has a deadline (REQUEST_TIMEOUT_MS): the CSRF cookie request,
+ * and each attempt of the request itself from sending it until its body
+ * (success or error) has been read. A step that does not finish in time is
+ * aborted and fails with a RequestTimeoutError. For a write, that means its
+ * outcome is unknown: aborting the browser's request does not stop work the
+ * server may already be doing, so callers that save must find out what was
+ * stored rather than report a failure.
  */
 
 export type FieldErrors = Record<string, string[]>
@@ -28,11 +36,46 @@ export class ApiError extends Error {
 /** The request never reached the server, or no readable answer came back. */
 export class NetworkError extends Error {}
 
+/**
+ * No complete answer within the deadline. A NetworkError, so callers that
+ * treat a lost answer as "outcome unknown" treat this the same way.
+ */
+export class RequestTimeoutError extends NetworkError {}
+
+/**
+ * The deadline of each step, in milliseconds. These are small JSON requests
+ * and answers; 20 seconds leaves room for a slow connection or a busy server
+ * without leaving a form busy indefinitely. (Tests drive it with fake timers.)
+ */
+export const REQUEST_TIMEOUT_MS = 20_000
+
 export const messages = {
   network: 'تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',
   sessionExpired: 'انتهت صلاحية الجلسة. أعد تحميل الصفحة ثم حاول مرة أخرى.',
   unexpected: 'حدث خطأ غير متوقع. أعد المحاولة بعد قليل.',
   tooManyAttempts: 'محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة.',
+  timeout: 'لم يصل ردّ الخادم في الوقت المتوقع. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',
+}
+
+/**
+ * Runs one step (a fetch and the reading of its answer) with its own
+ * deadline. When the deadline passes, the step is aborted and the promise
+ * rejects with a RequestTimeoutError, even if the aborted work never settles.
+ */
+async function withDeadline<T>(step: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new RequestTimeoutError(messages.timeout))
+      controller.abort()
+    }, REQUEST_TIMEOUT_MS)
+  })
+  try {
+    return await Promise.race([step(controller.signal), deadline])
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 function readCookie(name: string): string | null {
@@ -41,19 +84,24 @@ function readCookie(name: string): string | null {
 }
 
 async function refreshCsrfCookie(): Promise<void> {
-  try {
-    await fetch('/sanctum/csrf-cookie', {
-      credentials: 'same-origin',
-      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-    })
-  } catch {
-    throw new NetworkError(messages.network)
-  }
+  await withDeadline(async (signal) => {
+    try {
+      const response = await fetch('/sanctum/csrf-cookie', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        signal,
+      })
+      // Read the (empty) body too, so the step ends when the answer has.
+      await response.arrayBuffer()
+    } catch {
+      throw new NetworkError(messages.network)
+    }
+  })
 }
 
 type Method = 'GET' | 'POST'
 
-async function send(method: Method, url: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<Response> {
+async function send(method: Method, url: string, signal: AbortSignal, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<Response> {
   const headers: Record<string, string> = {
     ...extraHeaders,
     Accept: 'application/json',
@@ -69,6 +117,7 @@ async function send(method: Method, url: string, body?: unknown, extraHeaders: R
       credentials: 'same-origin',
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal,
     })
   } catch {
     throw new NetworkError(messages.network)
@@ -88,22 +137,37 @@ async function toError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, message, payload.errors ?? {}, payload.code ?? null, payload)
 }
 
+/** The CSRF token expired with the session: refresh it and send once more. */
+const CSRF_RETRY = Symbol('csrf-retry')
+
+/** One attempt, bounded from sending until the body has been read. */
+function attempt<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>, retryOn419 = false): Promise<T | typeof CSRF_RETRY> {
+  return withDeadline(async (signal) => {
+    const response = await send(method, url, signal, body, headers)
+    if (response.status === 419 && retryOn419) {
+      // The body is not needed; cancel it rather than leave it unread.
+      await response.body?.cancel().catch(() => undefined)
+      return CSRF_RETRY
+    }
+    if (!response.ok) throw await toError(response)
+    if (response.status === 204) return undefined as T
+
+    try {
+      return (await response.json()) as T
+    } catch {
+      throw new NetworkError(messages.network)
+    }
+  })
+}
+
 async function request<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
   if (method !== 'GET' && !readCookie('XSRF-TOKEN')) await refreshCsrfCookie()
 
-  let response = await send(method, url, body, headers)
-  if (response.status === 419 && method !== 'GET') {
-    await refreshCsrfCookie()
-    response = await send(method, url, body, headers)
-  }
-  if (!response.ok) throw await toError(response)
-  if (response.status === 204) return undefined as T
+  const first = await attempt<T>(method, url, body, headers, method !== 'GET')
+  if (first !== CSRF_RETRY) return first
 
-  try {
-    return (await response.json()) as T
-  } catch {
-    throw new NetworkError(messages.network)
-  }
+  await refreshCsrfCookie()
+  return (await attempt<T>(method, url, body, headers)) as T
 }
 
 export const api = {

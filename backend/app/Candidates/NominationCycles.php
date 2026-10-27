@@ -79,8 +79,9 @@ class NominationCycles
      * stage, and creating a cycle inserts into award_cycles; so while these
      * locks are held no operator change to Stage 2's configuration can
      * commit, and one that committed earlier is seen by current(lock: true).
-     * Lock order: users row (the confirmation), then award_cycles, then the
-     * stage and option rows, the same cycle-first order as the command.
+     * Lock order, shared with the command: the account's users row (the
+     * confirmation locks the candidate's; the command, its actor's), then
+     * award_cycles, then the stage and option rows.
      */
     public function lockConfiguration(): void
     {

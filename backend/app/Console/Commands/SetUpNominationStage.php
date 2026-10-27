@@ -86,6 +86,16 @@ class SetUpNominationStage extends Command
         DB::beginTransaction();
 
         try {
+            // Lock order shared with the Stage 2 confirmation: the account's
+            // users row first, then the configuration (award_cycles, stage,
+            // options). Every audit row written below references the actor,
+            // and that foreign-key check takes a shared lock on the actor's
+            // users row; taking it here, before any cycle lock, means a
+            // confirmation by the same account (which holds its users row,
+            // then locks award_cycles) is waited for, or waits, instead of
+            // deadlocking against this command.
+            DB::table('users')->where('id', $actor->getKey())->sharedLock()->first();
+
             $cycle = $this->cycle($actor);
             $this->domains($cycle, $actor);
             $this->country($cycle, $actor);
