@@ -45,7 +45,12 @@ export function CandidateApp() {
 
   return (
     <CandidateLayout user={user}>
-      {location.pathname === '/dashboard/basic-information' ? <BasicInformationPage user={user} /> : <DashboardPage user={user} />}
+      {/* Keyed by the account snapshot: another account never inherits a page's state. */}
+      {location.pathname === '/dashboard/basic-information' ? (
+        <BasicInformationPage key={user.account_context} user={user} />
+      ) : (
+        <DashboardPage key={user.account_context} user={user} />
+      )}
     </CandidateLayout>
   )
 }

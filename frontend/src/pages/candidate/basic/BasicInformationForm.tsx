@@ -17,6 +17,10 @@ import { summaryFromForm } from './summaries'
 
 const LEAVE_WARNING = 'لم تُحفظ بياناتك الأساسية بعد. إذا غادرت هذه الصفحة فسيُحذف ما أدخلته. هل تريد المغادرة؟'
 
+/** After a save whose result is still unknown: it may or may not have been stored. */
+const LEAVE_WARNING_UNCONFIRMED =
+  'لم تتأكد بعد نتيجة حفظ بياناتك الأساسية: قد تكون حُفظت وقد لا تكون. إذا غادرت هذه الصفحة فلن يبقى ما أدخلته فيها، ويمكنك التحقق لاحقاً من لوحة المترشح. هل تريد المغادرة؟'
+
 export const LOCK_WARNING = 'يرجى مراجعة بياناتك بعناية. بعد تأكيد الحفظ، ستصبح البيانات الأساسية متاحة للعرض فقط ولن تتمكن من تعديلها من حسابك.'
 
 type Alert = { tone: 'error' | 'info'; content: ReactNode }
@@ -39,7 +43,7 @@ export function BasicInformationForm({
   user: User
   countries: Country[]
   requirements: Requirements
-  /** From GET /api/candidate/basic-profile when the form opened; never replaced. */
+  /** The account snapshot's context when the form opened (User.account_context); never replaced. */
   accountContext: string
   onRequirementsChange: (requirements: Requirements) => void
   onConfirmed: (profile: BasicProfile, alreadyStored: boolean) => void
@@ -55,6 +59,8 @@ export function BasicInformationForm({
   const [pendingType, setPendingType] = useState<ProfileType | null>(null)
   const [busy, setBusy] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  // A save was sent but its outcome is not known yet (no terminal answer).
+  const [unconfirmedSave, setUnconfirmedSave] = useState(false)
   const busyRef = useRef(false)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const firstStepRender = useRef(true)
@@ -62,7 +68,7 @@ export function BasicInformationForm({
   const steps = stepsFor(form.profileType)
   const step = steps[Math.min(stepIndex, steps.length - 1)]
   const dirty = !confirmed && (form.profileType !== '' || branchHasInput(form, 'individual', user.email) || branchHasInput(form, 'institution', user.email))
-  useLeaveWarning(dirty ? LEAVE_WARNING : null)
+  useLeaveWarning(dirty ? (unconfirmedSave ? LEAVE_WARNING_UNCONFIRMED : LEAVE_WARNING) : null)
 
   // Each new section starts at its heading, which is announced.
   useEffect(() => {
@@ -187,20 +193,31 @@ export function BasicInformationForm({
    */
   const reconcile = async () => {
     try {
-      const state = await api.get<{ data: BasicProfile | null; account_context: string }>('/api/candidate/basic-profile')
-      if (state.account_context !== accountContext) {
-        showAccountMismatch('تعذّر تأكيد نتيجة الحفظ، والحساب المسجّل دخوله الآن في هذا المتصفح غير الحساب الذي فُتح به النموذج.')
-        return
-      }
+      // Refused (409) if the browser is now signed in as another account.
+      const state = await api.get<{ data: BasicProfile | null }>('/api/candidate/basic-profile', { 'X-Candidate-Context': accountContext })
       if (state.data) {
         finish(state.data, true)
         return
       }
+      // Not a terminal answer: the original request may still be running on
+      // the server and commit after this read.
+      setUnconfirmedSave(true)
       setAlert({
         tone: 'error',
-        content: <p>انقطع الاتصال قبل وصول نتيجة الحفظ. تحقّقنا من حسابك فلم نجد بيانات محفوظة، فلم يُحفظ شيء. ما أدخلته ما زال هنا، ويمكنك إعادة المحاولة.</p>,
+        content: (
+          <>
+            <p>انقطع الاتصال قبل وصول نتيجة الحفظ. لا يظهر لحسابك ملف محفوظ حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.</p>
+            <p>ما أدخلته ما زال هنا. أعد المحاولة بعد قليل: إن كان الطلب الأول قد نجح فستظهر بياناتك المحفوظة كما هي، ولن تُحفظ مرة ثانية.</p>
+          </>
+        ),
       })
     } catch (error) {
+      if (error instanceof ApiError && error.code === 'account_mismatch') {
+        setUnconfirmedSave(true)
+        showAccountMismatch('تعذّر تأكيد نتيجة الحفظ، والحساب المسجّل دخوله الآن في هذا المتصفح غير الحساب الذي فُتح به النموذج.')
+        return
+      }
+      setUnconfirmedSave(true)
       const sessionEnded = error instanceof ApiError && error.status === 401
       setAlert({
         tone: 'error',
@@ -332,7 +349,7 @@ export function BasicInformationForm({
       return
     }
     if (error.code === 'email_unverified') {
-      void refreshUser().catch(() => undefined)
+      void refreshUser({ keepAccount: true }).catch(() => undefined)
       setAlert({ tone: 'error', content: <p>{error.message}</p> })
       return
     }

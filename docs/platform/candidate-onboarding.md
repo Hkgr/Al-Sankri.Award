@@ -63,16 +63,16 @@ Laravel serves `index.html` for exactly these paths (`routes/web.php`); `/dashbo
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /api/candidate/overview` | Stage states for the dashboard: status, completion time and type only |
+| `GET /api/candidate/overview` | Stage states for the dashboard: status, completion time and type only. Requires the `X-Candidate-Context` header. |
 | `GET /api/candidate/reference-data` | ISO countries (Arabic names) with calling codes |
-| `GET /api/candidate/basic-profile` | The owner's confirmed information (or `null`), the confirmation requirements and the form's `account_context` |
-| `POST /api/candidate/basic-profile/check` | Validates one section; saves nothing (30/min per account). Requires the form's `account_context`. |
-| `POST /api/candidate/basic-profile` | Confirms stage 1, once (10/min per account). Requires the form's `account_context`. |
+| `GET /api/candidate/basic-profile` | The owner's confirmed information (or `null`) and the confirmation requirements. Requires the `X-Candidate-Context` header. |
+| `POST /api/candidate/basic-profile/check` | Validates one section; saves nothing (30/min per account). Requires `account_context` in the body. |
+| `POST /api/candidate/basic-profile` | Confirms stage 1, once (10/min per account). Requires `account_context` in the body. |
 | `GET /api/policies/{privacy-policy,terms-of-use}` | Public: the published version, or `?version=N` (never a draft) |
 
 Every `/api/candidate/*` endpoint requires a session, an active account and the candidate role, sends `Cache-Control: no-store, private`, and has no identifier in its URL: it always concerns the signed-in account. State-changing requests use the existing cookie and CSRF protection. There are no bearer tokens.
 
-`/api/user` gains only `is_candidate`. It never includes profile data.
+`/api/user` gains `is_candidate` and the opaque `account_context` (see «Account binding» in §4). It never includes profile data.
 
 ## 3. The dashboard
 
@@ -105,20 +105,23 @@ These are internal sections of stage 1, not award stages.
 - **Leaving:** a link, back/forward, reload or closing the tab asks first while there is unsaved input.
 - **Request failures:**
   - **network failure during a section check:** the input is kept. The message says so, because a check never saves anything;
-  - **no answer to the final save** (network failure, or a 5xx that may come after the commit): the outcome is unknown, so the form never says "nothing was saved" straight away. It asks the server what this account now has (`GET /api/candidate/basic-profile`, compared by account context):
+  - **no answer to the final save** (network failure, or a 5xx that may come after the commit): the outcome is unknown, and the form never claims that nothing was saved. It asks the server what this account now has (`GET /api/candidate/basic-profile`, with the form's account context):
     - a stored profile is shown read-only, saved once;
-    - with no stored profile, it says nothing was saved, keeps the input and allows a retry (a retry can never save twice, §6);
-    - if even that check fails, it says the result could not be confirmed and that a retry will show the stored profile if it was saved;
+    - with no stored profile, the outcome is still **not** terminal: on a server with several workers, the original request may still be running and commit after that read. The form therefore says no saved profile is visible yet and the result is unconfirmed, keeps the input, and explains that retrying is safe: if the first request succeeded, the retry returns the stored profile and saves nothing twice (§6);
+    - if that read fails too, it says the result could not be confirmed, with the same retry explanation;
+    - from then on, the leave warning also says the result is unconfirmed (it may or may not have been saved, and can be checked on the dashboard);
   - **401 (session ended):** the input is kept, with a link to sign in again **with the same account** in a new tab. A 401 is decided before the save, so nothing was saved;
   - **409 `account_mismatch`:** the browser is now signed in as another account (see «Account binding» below);
   - **419:** retried once by the existing client;
   - **403 (disabled account):** signs the visitor out;
   - **422:** returns to the section with the first error;
   - **other 409s:** see §6.
-- **Account binding:** `GET /api/candidate/basic-profile` returns an opaque `account_context` (an HMAC of the account id with the application key, `App\Candidates\AccountContext`). The form keeps the value from when it opened and sends it with every section check and the final save.
-  - **Mismatch:** the `candidate.context` middleware compares the value with the signed-in account's own value and refuses a mismatch, or a missing value, with `409 account_mismatch`. This happens before validation, before the transaction, and before any stored profile could be returned.
+- **Account binding:** what a candidate page shows comes from one account snapshot. The opaque `account_context` (an HMAC of the account id with the application key, `App\Candidates\AccountContext`) travels **with the signed-in account** in `/api/user`, together with the name and email the page displays and pre-fills. It is never taken from a profile response.
+  - **Every read and write is checked:** candidate pages send the value with every read of candidate state (`X-Candidate-Context` header on `GET /api/candidate/overview` and `GET /api/candidate/basic-profile`, including the form's reconciliation read) and every write (`account_context` in the body of `/check` and of the confirmation).
+  - **Mismatch:** the `candidate.context` middleware compares the value with the signed-in account's own value and refuses a mismatch, or a missing value, with `409 account_mismatch`. This happens before validation, before the transaction, and before any stored profile or stage state is read or returned.
+  - **A page with no input yet** (for example the dashboard, or stage 1 being opened after another tab signed in as someone else): it reloads the account snapshot, then shows the account now signed in, with its own name, pre-filled email and data, and a notice «تغيّر الحساب المسجّل دخوله…». Pages are keyed by the snapshot, so another account never inherits a page's state.
   - **Authorization:** the value is only compared, never used to choose an account; the session's account remains the only authority.
-  - **The open form:** it keeps its input and explains the situation. The person can sign in again with the original account in another tab and retry, or discard the input («تجاهل ما أدخلته…»), which reloads the dashboard of the account now signed in.
+  - **The open form** (with input): it never switches account by itself. It keeps its input and explains the situation, and its email re-check never adopts another account. The person can sign in again with the original account in another tab and retry, or discard the input («تجاهل ما أدخلته…»), which reloads the dashboard of the account now signed in.
   - **Same account:** signing in again with the same account, in a new session, resumes the same form.
 - **Review:** the review groups everything by section, each with «تعديل», shows empty optional fields as «لم يُضف», and displays the lock warning: «يرجى مراجعة بياناتك بعناية. بعد تأكيد الحفظ، ستصبح البيانات الأساسية متاحة للعرض فقط ولن تتمكن من تعديلها من حسابك.»
 - **Declarations:** separate unchecked boxes for the privacy policy, the terms of use and the accuracy of the data, plus authority to represent the institution for institutions. The policy links open the exact version in a new tab, so the form is not lost.
@@ -162,7 +165,7 @@ The account itself (name, login email, verification) is never changed. The other
 
 ## 6. Confirmation and the read-only lock
 
-First, before validation, the request's `account_context` must belong to the signed-in account (§4, «Account binding»). A form opened for another account gets `409 account_mismatch`: it is never treated as that account's retry, and never receives its stored data.
+First, before validation, the request's `account_context` must belong to the signed-in account (§4, «Account binding»). A form showing another account gets `409 account_mismatch`: it is never treated as that account's retry, and never receives its stored data.
 
 Then `App\Candidates\BasicProfiles::finalize` runs in one transaction:
 

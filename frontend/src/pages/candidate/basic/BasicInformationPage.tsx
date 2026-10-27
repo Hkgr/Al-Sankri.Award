@@ -5,14 +5,14 @@ import { api, errorMessage } from '../../../lib/api'
 import { Link } from '../../../lib/router'
 import { useRouter } from '../../../lib/useRouter'
 import { usePageTitle } from '../../auth/usePageTitle'
-import { formatDamascusDateTime } from '../candidateApi'
+import { contextHeader, formatDamascusDateTime } from '../candidateApi'
 import type { BasicProfile, Country, Requirements } from '../candidateApi'
 import { useAccountFailure } from '../useCandidateRequests'
 import { BasicInformationForm } from './BasicInformationForm'
 import { ProfileSummary } from './ProfileSummary'
 import { summaryFromProfile } from './summaries'
 
-type Loaded = { profile: BasicProfile | null; requirements: Requirements; countries: Country[]; accountContext: string }
+type Loaded = { profile: BasicProfile | null; requirements: Requirements; countries: Country[] }
 
 /**
  * Stage 1: the form until the basic information is confirmed, and a
@@ -30,14 +30,15 @@ export function BasicInformationPage({ user }: { user: User }) {
     setLoadError(null)
     try {
       const [state, reference] = await Promise.all([
-        api.get<{ data: BasicProfile | null; requirements: Requirements; account_context: string }>('/api/candidate/basic-profile'),
+        // Read for the account this page shows; refused (409) if another is signed in now.
+        api.get<{ data: BasicProfile | null; requirements: Requirements }>('/api/candidate/basic-profile', contextHeader(user)),
         api.get<{ countries: Country[] }>('/api/candidate/reference-data'),
       ])
-      setLoaded({ profile: state.data, requirements: state.requirements, countries: reference.countries, accountContext: state.account_context })
+      setLoaded({ profile: state.data, requirements: state.requirements, countries: reference.countries })
     } catch (error) {
       if (!handleAccountFailure(error)) setLoadError(errorMessage(error))
     }
-  }, [handleAccountFailure])
+  }, [handleAccountFailure, user])
 
   useEffect(() => {
     // Fetching on mount: the state is set once the requests settle.
@@ -100,7 +101,7 @@ export function BasicInformationPage({ user }: { user: User }) {
           user={user}
           countries={loaded.countries}
           requirements={loaded.requirements}
-          accountContext={loaded.accountContext}
+          accountContext={user.account_context}
           onRequirementsChange={(requirements) => setLoaded((current) => (current ? { ...current, requirements } : current))}
           onConfirmed={onConfirmed}
         />

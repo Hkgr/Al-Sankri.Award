@@ -5,10 +5,11 @@ namespace App\Candidates;
 use App\Models\User;
 
 /**
- * Binds an open stage 1 form to the account it was opened for.
+ * Binds candidate pages to the account they display.
  *
- * The form receives an opaque value with GET /api/candidate/basic-profile
- * and sends it back with every check and confirmation. If the browser's
+ * The value travels with the signed-in account snapshot (/api/user,
+ * UserResource). Candidate pages send it back with every read and write of
+ * the candidate state (EnsureCandidateAccountContext). If the browser's
  * session now belongs to another account (for example after signing in as
  * someone else in another tab), the value no longer matches and the request
  * is refused before anything is validated, written or returned.

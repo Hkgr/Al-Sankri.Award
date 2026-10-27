@@ -51,7 +51,7 @@ class BasicProfileTest extends TestCase
     public function test_an_individual_confirms_the_basic_information_once_and_atomically(): void
     {
         $this->signIn();
-        $this->browser('GET', '/api/candidate/overview')->assertOk()->assertJsonPath('data.basic_information.status', 'not_started');
+        $this->read('/api/candidate/overview')->assertOk()->assertJsonPath('data.basic_information.status', 'not_started');
 
         $response = $this->confirm($this->individualPayload())
             ->assertCreated()
@@ -96,7 +96,7 @@ class BasicProfileTest extends TestCase
             $this->assertStringNotContainsString($secret, (string) $audit->after_data);
         }
 
-        $this->browser('GET', '/api/candidate/overview')->assertOk()
+        $this->read('/api/candidate/overview')->assertOk()
             ->assertJsonPath('data.basic_information.status', 'completed')
             ->assertJsonPath('data.basic_information.profile_type', 'individual');
     }
@@ -113,7 +113,7 @@ class BasicProfileTest extends TestCase
         $this->assertArrayNotHasKey('national_id_number', ApplicantIndividualDetail::query()->sole()->toArray());
 
         foreach (['/api/user', '/api/candidate/overview'] as $uri) {
-            $body = $this->browser('GET', $uri)->assertOk()->getContent();
+            $body = $this->read($uri)->assertOk()->getContent();
             foreach (['00123', '1950-02-28', 'Musterstraße', '+963944123456', 'contact@example.net'] as $secret) {
                 $this->assertStringNotContainsString($secret, $body, "{$uri} must not expose {$secret}");
             }
@@ -267,16 +267,16 @@ class BasicProfileTest extends TestCase
         $this->signIn($unverified->email);
 
         // The dashboard and the form stay available while unverified.
-        $this->browser('GET', '/api/candidate/overview')->assertOk();
-        $this->browser('GET', '/api/candidate/basic-profile')->assertOk()->assertJsonPath('requirements.email_verified', false);
+        $this->read('/api/candidate/overview')->assertOk();
+        $this->read('/api/candidate/basic-profile')->assertOk()->assertJsonPath('requirements.email_verified', false);
         $this->confirm($this->individualPayload())->assertForbidden()->assertJsonPath('code', 'email_unverified');
         $this->assertNothingStored();
 
         // Without published policies, confirmation is unavailable.
         $this->signIn();
         AccountPolicyVersion::query()->where('status', AccountPolicyVersion::STATUS_PUBLISHED)->update(['status' => AccountPolicyVersion::STATUS_RETIRED]);
-        $this->browser('GET', '/api/candidate/overview')->assertOk()->assertJsonPath('data.basic_information.status', 'unavailable');
-        $this->browser('GET', '/api/candidate/basic-profile')->assertOk()
+        $this->read('/api/candidate/overview')->assertOk()->assertJsonPath('data.basic_information.status', 'unavailable');
+        $this->read('/api/candidate/basic-profile')->assertOk()
             ->assertJsonPath('requirements.finalization_available', false)
             ->assertJsonPath('requirements.policies.privacy_policy', null);
         $this->confirm($this->individualPayload())->assertConflict()->assertJsonPath('code', 'policies_not_configured');
@@ -334,10 +334,10 @@ class BasicProfileTest extends TestCase
         $this->signIn();
         $this->confirm($this->institutionPayload())->assertCreated();
         $this->browser('POST', '/api/auth/logout')->assertNoContent();
-        $this->browser('GET', '/api/candidate/basic-profile')->assertUnauthorized();
+        $this->read('/api/candidate/basic-profile')->assertUnauthorized();
 
         $this->signIn();
-        $this->assertPrivate($this->browser('GET', '/api/candidate/basic-profile')->assertOk()
+        $this->assertPrivate($this->read('/api/candidate/basic-profile')->assertOk()
             ->assertJsonPath('data.profile_type', 'institution')
             ->assertJsonPath('data.institution.activity_type', 'صون التراث اللامادي')
             ->assertJsonPath('data.accepted_policies.0.version_number', 1));
@@ -409,10 +409,84 @@ class BasicProfileTest extends TestCase
             ->assertJsonPath('data.institution.name', 'جمعية التراث الحيّ');
     }
 
+    public function test_a_page_still_showing_a_switches_to_b_before_stage_1_loads_nothing_of_b(): void
+    {
+        $other = User::factory()->candidate()->create(['email' => 'other@example.org']);
+        $this->signIn();
+        $snapshotOfA = $this->contextFromForm();
+
+        // Another tab signs in as B; this page still shows A and opens stage 1.
+        $this->signIn($other->email);
+        foreach (['/api/candidate/basic-profile', '/api/candidate/overview'] as $uri) {
+            $this->assertPrivate($this->read($uri, $snapshotOfA)
+                ->assertConflict()
+                ->assertJsonPath('code', 'account_mismatch')
+                ->assertJsonMissingPath('data')
+                ->assertJsonMissingPath('requirements'));
+        }
+        $this->browser('GET', '/api/candidate/basic-profile')->assertConflict()->assertJsonPath('code', 'account_mismatch');
+
+        // Its form could not send anything under B either.
+        $this->check('individual_identity', $this->individualPayload() + ['account_context' => $snapshotOfA])->assertConflict();
+        $this->confirm($this->individualPayload() + ['account_context' => $snapshotOfA])->assertConflict();
+        $this->assertNothingStored();
+
+        // Once the page refreshes its account snapshot, it loads B coherently.
+        $snapshotOfB = $this->contextFromForm();
+        $this->assertNotSame($snapshotOfA, $snapshotOfB);
+        $this->read('/api/candidate/basic-profile', $snapshotOfB)->assertOk()->assertJsonPath('data', null);
+    }
+
+    public function test_bs_completed_profile_is_not_loaded_beneath_a_page_still_showing_a(): void
+    {
+        $other = User::factory()->candidate()->create(['email' => 'other@example.org']);
+        $this->signIn();
+        $snapshotOfA = $this->contextFromForm();
+
+        $this->signIn($other->email);
+        $this->confirm($this->institutionPayload())->assertCreated();
+        $snapshot = $this->snapshot();
+
+        foreach (['/api/candidate/basic-profile', '/api/candidate/overview'] as $uri) {
+            $response = $this->read($uri, $snapshotOfA)->assertConflict()->assertJsonPath('code', 'account_mismatch')->assertJsonMissingPath('data');
+            foreach (['جمعية التراث الحيّ', '0042/2019', 'info@heritage.example', 'completed', 'institution'] as $detailOfB) {
+                $this->assertStringNotContainsString($detailOfB, $response->getContent(), "{$uri} answered B's state");
+            }
+        }
+        $this->assertSame($snapshot, $this->snapshot());
+
+        // B's own page sees B's profile.
+        $this->read('/api/candidate/basic-profile', $this->contextFromForm())->assertOk()->assertJsonPath('data.institution.name', 'جمعية التراث الحيّ');
+    }
+
+    /**
+     * The order a multi-worker server allows when a confirmation's answer is
+     * lost: the page reconciles while the original request is still running
+     * and sees no profile; the original then commits; the retry returns the
+     * stored profile without saving twice. Simulated sequentially here.
+     */
+    public function test_a_save_still_in_progress_when_reconciling_is_returned_by_the_retry(): void
+    {
+        $this->signIn();
+        $payload = $this->individualPayload();
+
+        // Reconciliation read: no profile is visible yet.
+        $this->read('/api/candidate/basic-profile')->assertOk()->assertJsonPath('data', null);
+
+        // The original request commits afterwards.
+        $this->confirm($payload)->assertCreated();
+
+        // The retry finds the stored profile; nothing is written twice.
+        $this->confirm($payload)->assertConflict()->assertJsonPath('code', 'profile_already_completed')->assertJsonPath('data.individual.first_name', 'Zoë');
+        $this->assertSame([1, 1, 2], [
+            DB::table('candidate_profiles')->count(), DB::table('applicants')->count(), DB::table('account_policy_acceptances')->count(),
+        ]);
+    }
+
     public function test_candidate_endpoints_need_an_active_signed_in_candidate_and_csrf(): void
     {
         $this->startCsrfSession();
-        $this->browser('GET', '/api/candidate/overview')->assertUnauthorized();
+        $this->read('/api/candidate/overview')->assertUnauthorized();
         $this->confirm($this->individualPayload())->assertUnauthorized();
 
         // A staff account without the classification is refused.
@@ -429,7 +503,7 @@ class BasicProfileTest extends TestCase
 
         // A disabled account loses its session.
         $this->candidate->forceFill(['status' => User::STATUS_DISABLED, 'disabled_at' => now()])->save();
-        $this->browser('GET', '/api/candidate/overview')->assertForbidden()->assertJsonPath('code', 'account_disabled');
+        $this->read('/api/candidate/overview')->assertForbidden()->assertJsonPath('code', 'account_disabled');
         $this->assertNothingStored();
     }
 
@@ -496,11 +570,23 @@ class BasicProfileTest extends TestCase
     }
 
     /**
-     * The account context a form opened by the signed-in account receives.
+     * The account context of the signed-in account snapshot, as the page
+     * receives it with /api/user.
      */
     private function contextFromForm(): string
     {
-        return $this->browser('GET', '/api/candidate/basic-profile')->assertOk()->json('account_context');
+        return $this->browser('GET', '/api/user')->assertOk()->json('data.account_context');
+    }
+
+    /**
+     * A candidate read, sent with the context of the account the page shows
+     * (by default the account signed in through signIn()).
+     */
+    private function read(string $uri, ?string $context = null): TestResponse
+    {
+        $context ??= $this->signedIn ? AccountContext::for($this->signedIn) : null;
+
+        return $this->browser('GET', $uri, headers: $context === null ? [] : ['X-Candidate-Context' => $context]);
     }
 
     /**

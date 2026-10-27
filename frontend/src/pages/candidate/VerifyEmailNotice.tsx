@@ -34,9 +34,14 @@ export function VerifyEmailNotice({ context }: { context: 'dashboard' | 'form' }
     setBusy('check')
     setResult(null)
     try {
-      await refreshUser()
-      // Still shown means still unverified.
-      setResult({ tone: 'info', text: 'لم يُؤكَّد البريد الإلكتروني بعد. افتح الرابط الذي أرسلناه إليه، ثم أعد التحقق.' })
+      // In the form, never move unsaved input to another account signed in meanwhile.
+      const outcome = await refreshUser({ keepAccount: context === 'form' })
+      setResult(
+        outcome === 'account_changed'
+          ? { tone: 'error', text: 'تغيّر الحساب المسجّل دخوله في هذا المتصفح، فلم نحدّث هذه الصفحة حتى لا يضيع ما أدخلته أو يُنسب إلى حساب آخر.' }
+          : // Still shown means still unverified.
+            { tone: 'info', text: 'لم يُؤكَّد البريد الإلكتروني بعد. افتح الرابط الذي أرسلناه إليه، ثم أعد التحقق.' },
+      )
     } catch (error) {
       setResult({ tone: 'error', text: errorMessage(error) })
     } finally {

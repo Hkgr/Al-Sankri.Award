@@ -953,3 +953,8 @@
   margin-block-start: var(--sa-space-5);
   white-space: pre-line;
 }
+
+/* The notice shown after the page switched to the account signed in now. */
+.candidate-page--notice {
+  margin-block-end: var(--sa-space-5);
+}

@@ -6,6 +6,7 @@ import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 import { usePageTitle } from '../auth/usePageTitle'
 import { formatDamascusDateTime, PROFILE_TYPE_LABELS } from './candidateApi'
+import { contextHeader } from './candidateApi'
 import type { Overview } from './candidateApi'
 import { useAccountFailure } from './useCandidateRequests'
 import { VerifyEmailNotice } from './VerifyEmailNotice'
@@ -27,11 +28,11 @@ export function DashboardPage({ user }: { user: User }) {
   const load = useCallback(async () => {
     setLoadError(null)
     try {
-      setOverview((await api.get<{ data: Overview }>('/api/candidate/overview')).data)
+      setOverview((await api.get<{ data: Overview }>('/api/candidate/overview', contextHeader(user))).data)
     } catch (error) {
       if (!handleAccountFailure(error)) setLoadError(errorMessage(error))
     }
-  }, [handleAccountFailure])
+  }, [handleAccountFailure, user])
 
   useEffect(() => {
     // Fetching on mount: the state is set once the request settles.

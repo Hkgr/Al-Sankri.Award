@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Candidates\AccountContext;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,7 +46,10 @@ class SessionAuthenticationTest extends TestCase
         $this->browser('POST', '/api/auth/login', ['email' => 'Reader@Example.org ', 'password' => 'password'])
             ->assertOk()
             ->assertExactJson([
-                'data' => ['name' => 'سارة', 'email' => 'reader@example.org', 'email_verified' => true, 'has_password' => true, 'google_linked' => false, 'is_candidate' => false],
+                'data' => [
+                    'name' => 'سارة', 'email' => 'reader@example.org', 'email_verified' => true, 'has_password' => true, 'google_linked' => false,
+                    'is_candidate' => false, 'account_context' => AccountContext::for($user),
+                ],
                 // Not a candidate (no role), so the account page.
                 'redirect' => '/account',
             ]);

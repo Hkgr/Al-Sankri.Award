@@ -50,10 +50,13 @@ Route::get('policies/{policy}', AccountPolicyController::class)
  * «مترشح» classification, and is never cached.
  */
 Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('candidate')->group(function () {
-    Route::get('overview', CandidateOverviewController::class);
     Route::get('reference-data', ReferenceDataController::class);
-    Route::get('basic-profile', [BasicProfileController::class, 'show']);
-    // Writes and checks carry the account_context of the form (App\Candidates\AccountContext).
+
+    // Everything that reads or writes this account's candidate state carries
+    // the account context of the page that asks (App\Candidates\AccountContext):
+    // the X-Candidate-Context header on reads, the account_context field on writes.
+    Route::get('overview', CandidateOverviewController::class)->middleware('candidate.context');
+    Route::get('basic-profile', [BasicProfileController::class, 'show'])->middleware('candidate.context');
     Route::post('basic-profile/check', [BasicProfileController::class, 'check'])->middleware(['throttle:candidate-check', 'candidate.context']);
     Route::post('basic-profile', [BasicProfileController::class, 'store'])->middleware(['throttle:candidate-confirm', 'candidate.context']);
 });

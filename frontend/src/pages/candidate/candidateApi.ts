@@ -3,6 +3,8 @@
  * prefix /api/candidate). Every endpoint concerns the signed-in account only.
  */
 
+import type { User } from '../../auth/useAuth'
+
 export type ProfileType = 'individual' | 'institution'
 
 export type StageStatus = 'not_started' | 'completed' | 'unavailable'
@@ -82,6 +84,14 @@ export const POLICY_NAMES: Record<PolicyCode, string> = {
 export const GENDER_LABELS = { male: 'ذكر', female: 'أنثى' } as const
 
 export const PROFILE_TYPE_LABELS: Record<ProfileType, string> = { individual: 'فرد', institution: 'مؤسسة' }
+
+/**
+ * The header candidate reads carry: the account the page shows. The server
+ * answers 409 account_mismatch if another account is signed in now.
+ */
+export function contextHeader(user: Pick<User, 'account_context'>): Record<string, string> {
+  return { 'X-Candidate-Context': user.account_context }
+}
 
 /** Dates and times are stored in UTC and shown in Damascus time. */
 export const DAMASCUS_TIME_ZONE = 'Asia/Damascus'

@@ -53,8 +53,9 @@ async function refreshCsrfCookie(): Promise<void> {
 
 type Method = 'GET' | 'POST'
 
-async function send(method: Method, url: string, body?: unknown): Promise<Response> {
+async function send(method: Method, url: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<Response> {
   const headers: Record<string, string> = {
+    ...extraHeaders,
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   }
@@ -87,13 +88,13 @@ async function toError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, message, payload.errors ?? {}, payload.code ?? null, payload)
 }
 
-async function request<T>(method: Method, url: string, body?: unknown): Promise<T> {
+async function request<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>): Promise<T> {
   if (method !== 'GET' && !readCookie('XSRF-TOKEN')) await refreshCsrfCookie()
 
-  let response = await send(method, url, body)
+  let response = await send(method, url, body, headers)
   if (response.status === 419 && method !== 'GET') {
     await refreshCsrfCookie()
-    response = await send(method, url, body)
+    response = await send(method, url, body, headers)
   }
   if (!response.ok) throw await toError(response)
   if (response.status === 204) return undefined as T
@@ -106,7 +107,7 @@ async function request<T>(method: Method, url: string, body?: unknown): Promise<
 }
 
 export const api = {
-  get: <T>(url: string) => request<T>('GET', url),
+  get: <T>(url: string, headers?: Record<string, string>) => request<T>('GET', url, undefined, headers),
   post: <T>(url: string, body: unknown = {}) => request<T>('POST', url, body),
 }
 

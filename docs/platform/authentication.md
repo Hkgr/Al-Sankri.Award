@@ -31,7 +31,7 @@ All endpoints accept and return JSON. Messages are always Arabic: the `UseArabic
 | `POST /api/auth/logout` | ends the session and rotates the CSRF token | signed-in only |
 | `POST /api/auth/forgot-password` | always the same answer (no account enumeration) | 5/min per IP, 2/min per email |
 | `POST /api/auth/reset-password` | token, email, password, password_confirmation | 10/min per IP |
-| `GET /api/user` | the signed-in account: name, email, verification, has-password, Google-linked, `is_candidate` | signed-in only |
+| `GET /api/user` | the signed-in account: name, email, verification, has-password, Google-linked, `is_candidate`, and an opaque `account_context` for candidate pages | signed-in only |
 | `POST /api/email/verification-notification` | resend the verification link | 3/min per account |
 | `POST /api/account/google/link` | confirm the current password, then start linking Google | 5/min per account |
 | `GET /email/verify/{id}/{hash}` | link in the verification email (signed, expires after 60 minutes) | 6/min per IP |

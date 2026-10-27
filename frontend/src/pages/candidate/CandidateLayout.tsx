@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
 import type { User } from '../../auth/useAuth'
+import { FormAlert } from '../../components/forms/FormControls'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 import '../auth/auth.css'
@@ -54,7 +55,16 @@ export function CandidateLayout({ user, children }: { user: User; children: Reac
         </nav>
       </header>
       <main id="main" tabIndex={-1} className="candidate-main">
-        <div className="container">{children}</div>
+        <div className="container">
+          {new URLSearchParams(location.search).get('account') === 'changed' && (
+            <div className="candidate-page candidate-page--notice">
+              <FormAlert tone="info">
+                <p>تغيّر الحساب المسجّل دخوله في هذا المتصفح، فحدّثنا الصفحة لتعرض الحساب الحالي وبياناته.</p>
+              </FormAlert>
+            </div>
+          )}
+          {children}
+        </div>
       </main>
       <footer className="candidate-footer">
         <div className="candidate-footer__inner container">

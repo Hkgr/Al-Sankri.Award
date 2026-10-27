@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { ApiError, api } from '../lib/api'
 import { AuthContext } from './useAuth'
-import type { User } from './useAuth'
+import type { RefreshOptions, RefreshResult, User } from './useAuth'
 
 type AuthOptions = {
   google: { available: boolean }
@@ -20,6 +20,11 @@ async function fetchUser(): Promise<User | null> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null | undefined>(undefined)
   const [googleAvailable, setGoogleAvailable] = useState(false)
+  // The account shown now, for refreshUser({ keepAccount: true }).
+  const current = useRef(user)
+  useEffect(() => {
+    current.current = user
+  }, [user])
 
   useEffect(() => {
     let active = true
@@ -37,8 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const refreshUser = useCallback(async () => {
-    setUser(await fetchUser())
+  const refreshUser = useCallback(async (options: RefreshOptions = {}): Promise<RefreshResult> => {
+    const fresh = await fetchUser()
+    const shown = current.current
+    if (options.keepAccount && shown && fresh?.account_context !== shown.account_context) return 'account_changed'
+    setUser(fresh)
+    return 'updated'
   }, [])
 
   const logout = useCallback(async () => {

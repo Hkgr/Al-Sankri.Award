@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Auth\CandidateRole;
 use App\Auth\GoogleAccounts;
+use App\Candidates\AccountContext;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,6 +31,9 @@ class UserResource extends JsonResource
             'has_password' => $this->hasPassword(),
             'google_linked' => app(GoogleAccounts::class)->isLinked($this->resource),
             'is_candidate' => app(CandidateRole::class)->isHeldBy($this->resource),
+            // Opaque; candidate pages send it back so the server can refuse
+            // requests made under a stale account snapshot.
+            'account_context' => AccountContext::for($this->resource),
         ];
     }
 }
