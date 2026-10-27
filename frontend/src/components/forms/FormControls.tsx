@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ChangeEvent, ReactNode, Ref } from 'react'
+import { describedBy } from './describedBy'
 
 /*
  * Form building blocks that follow identity-guidelines.md §7.2–7.3:
@@ -16,27 +17,29 @@ type FieldProps = {
   error?: string
   hint?: string
   required?: boolean
-  type?: 'text' | 'email' | 'password'
+  /** Marks the field «(اختياري)»; required fields show «(مطلوب)». */
+  optional?: boolean
+  type?: 'text' | 'email' | 'password' | 'url' | 'tel'
   autoComplete: string
   inputRef?: Ref<HTMLInputElement>
   readOnly?: boolean
+  /** Identifiers, numbers and addresses read left to right inside the RTL page. */
+  dir?: 'ltr' | 'auto'
+  inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'url'
+  maxLength?: number
 }
 
-function describedBy(...ids: (string | false | undefined)[]): string | undefined {
-  const value = ids.filter(Boolean).join(' ')
-  return value || undefined
-}
-
-function FieldLabel({ htmlFor, label, required }: { htmlFor: string; label: string; required?: boolean }) {
+export function FieldLabel({ htmlFor, label, required, optional }: { htmlFor: string; label: string; required?: boolean; optional?: boolean }) {
   return (
     <label className="field__label" htmlFor={htmlFor}>
       {label}
       {required && <span className="field__required"> (مطلوب)</span>}
+      {optional && <span className="field__required"> (اختياري)</span>}
     </label>
   )
 }
 
-function FieldMessages({ id, hint, error }: { id: string; hint?: string; error?: string }) {
+export function FieldMessages({ id, hint, error }: { id: string; hint?: string; error?: string }) {
   return (
     <>
       {hint && (
@@ -54,11 +57,11 @@ function FieldMessages({ id, hint, error }: { id: string; hint?: string; error?:
   )
 }
 
-export function TextField({ id, label, value, onChange, error, hint, required, type = 'text', autoComplete, inputRef, readOnly }: FieldProps) {
-  const isEmail = type === 'email'
+export function TextField({ id, label, value, onChange, error, hint, required, optional, type = 'text', autoComplete, inputRef, readOnly, dir, inputMode, maxLength }: FieldProps) {
+  const isLtrValue = type === 'email' || type === 'url' || type === 'tel'
   return (
     <div className="field">
-      <FieldLabel htmlFor={id} label={label} required={required} />
+      <FieldLabel htmlFor={id} label={label} required={required} optional={optional} />
       <input
         ref={inputRef}
         id={id}
@@ -72,7 +75,10 @@ export function TextField({ id, label, value, onChange, error, hint, required, t
         readOnly={readOnly}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(hint && `${id}-hint`, error && `${id}-error`)}
-        {...(isEmail ? { dir: 'ltr', inputMode: 'email', autoCapitalize: 'none', spellCheck: false } : {})}
+        dir={dir}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        {...(isLtrValue ? { dir: 'ltr', inputMode: type, autoCapitalize: 'none', spellCheck: false } : {})}
       />
       <FieldMessages id={id} hint={hint} error={error} />
     </div>

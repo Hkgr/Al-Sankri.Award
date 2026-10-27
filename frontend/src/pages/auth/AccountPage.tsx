@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/useAuth'
 import type { User } from '../../auth/useAuth'
 import { FormAlert, PasswordField, StatusIcon, SubmitButton } from '../../components/forms/FormControls'
 import { ApiError, api, errorMessage } from '../../lib/api'
+import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 import { AuthLayout } from './AuthLayout'
 import { usePageTitle } from './usePageTitle'
@@ -11,9 +12,9 @@ import { accountNotice } from './notices'
 import { ALERT_ID, useSubmission } from './useSubmission'
 
 /**
- * A small landing page for a signed-in account. It is not an applicant
- * dashboard: it shows the account, its verification and Google link, and
- * offers sign-out.
+ * Account settings for a signed-in account: the account, its verification
+ * and Google link, and sign-out. Candidates reach it from the profile menu
+ * of their dashboard (/dashboard).
  */
 export function AccountPage() {
   const { user } = useAuth()
@@ -86,6 +87,11 @@ function AccountDetails({ user }: { user: User }) {
 
   return (
     <AuthLayout title="حسابي" wide>
+      {user.is_candidate && (
+        <p className="auth-panel__text">
+          <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+        </p>
+      )}
       {welcome && (
         <FormAlert tone={mailFailed ? 'info' : 'success'}>
           <p>

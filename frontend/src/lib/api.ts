@@ -13,12 +13,15 @@ export class ApiError extends Error {
   readonly status: number
   readonly errors: FieldErrors
   readonly code: string | null
+  /** The whole JSON answer, for errors that carry data (for example a 409 with the current state). */
+  readonly payload: Record<string, unknown>
 
-  constructor(status: number, message: string, errors: FieldErrors = {}, code: string | null = null) {
+  constructor(status: number, message: string, errors: FieldErrors = {}, code: string | null = null, payload: Record<string, unknown> = {}) {
     super(message)
     this.status = status
     this.errors = errors
     this.code = code
+    this.payload = payload
   }
 }
 
@@ -72,7 +75,7 @@ async function send(method: Method, url: string, body?: unknown): Promise<Respon
 }
 
 async function toError(response: Response): Promise<ApiError> {
-  let payload: { message?: string; errors?: FieldErrors; code?: string } = {}
+  let payload: { message?: string; errors?: FieldErrors; code?: string } & Record<string, unknown> = {}
   try {
     payload = await response.json()
   } catch {
@@ -81,7 +84,7 @@ async function toError(response: Response): Promise<ApiError> {
   const fallback =
     response.status === 419 ? messages.sessionExpired : response.status === 429 ? messages.tooManyAttempts : messages.unexpected
   const message = response.status >= 500 || !payload.message ? fallback : payload.message
-  return new ApiError(response.status, message, payload.errors ?? {}, payload.code ?? null)
+  return new ApiError(response.status, message, payload.errors ?? {}, payload.code ?? null, payload)
 }
 
 async function request<T>(method: Method, url: string, body?: unknown): Promise<T> {

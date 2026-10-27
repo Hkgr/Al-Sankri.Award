@@ -1,4 +1,4 @@
-import { useAuth } from '../../auth/useAuth'
+import { homeFor, useAuth } from '../../auth/useAuth'
 import { FormAlert } from '../../components/forms/FormControls'
 import { Link } from '../../lib/router'
 import { useSearchParam } from '../../lib/useRouter'
@@ -23,7 +23,11 @@ export function VerifyEmailPage() {
         </p>
       )}
       <p className="auth-panel__switch">
-        {user ? <Link href="/account">الانتقال إلى حسابي</Link> : <Link href="/login">تسجيل الدخول</Link>}
+        {user ? (
+          <Link href={homeFor(user)}>{user.is_candidate ? 'الانتقال إلى لوحة المترشح' : 'الانتقال إلى حسابي'}</Link>
+        ) : (
+          <Link href="/login">تسجيل الدخول</Link>
+        )}
       </p>
     </AuthLayout>
   )

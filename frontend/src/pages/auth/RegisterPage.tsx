@@ -24,7 +24,7 @@ export function RegisterPage() {
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
     const result = await submit(() =>
-      api.post<{ data: User; verification_email_sent: boolean }>('/api/auth/register', {
+      api.post<{ data: User; redirect: string; verification_email_sent: boolean }>('/api/auth/register', {
         name,
         email,
         password,
@@ -37,7 +37,8 @@ export function RegisterPage() {
       return
     }
     setUser(result.data)
-    navigate(result.verification_email_sent ? '/account?welcome=1' : '/account?welcome=1&mail=failed', { replace: true })
+    // New accounts are candidates: the backend sends them to the dashboard.
+    navigate(`${result.redirect}?welcome=1${result.verification_email_sent ? '' : '&mail=failed'}`, { replace: true })
   }
 
   return (

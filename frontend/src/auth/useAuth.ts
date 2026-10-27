@@ -7,6 +7,13 @@ export type User = {
   email_verified: boolean
   has_password: boolean
   google_linked: boolean
+  /** Holds the «مترشح» classification (assigned by the backend only). */
+  is_candidate: boolean
+}
+
+/** Where a signed-in account belongs: the candidate dashboard or the account page. */
+export function homeFor(user: Pick<User, 'is_candidate'>): string {
+  return user.is_candidate ? '/dashboard' : '/account'
 }
 
 export type AuthValue = {

@@ -6,7 +6,7 @@ This document is for the people who deploy and maintain the site. It covers:
 - what must be configured on Plesk and in Google Cloud;
 - what was tested, and what still needs a real-world check.
 
-**Scope.** These are basic accounts only. Creating an account creates **no** applicant, application, nomination, committee membership or role. Applications, judging and administration are later work.
+**Scope.** Creating a public account also gives it the platform classification «مترشح» (`candidate`), in the same transaction. It creates **no** applicant, application, nomination, cycle choice or committee membership. The candidate dashboard and stage 1 are described in [candidate-onboarding.md](candidate-onboarding.md). Applications, judging and administration are later work.
 
 ## 1. How it works
 
@@ -31,7 +31,7 @@ All endpoints accept and return JSON. Messages are always Arabic: the `UseArabic
 | `POST /api/auth/logout` | ends the session and rotates the CSRF token | signed-in only |
 | `POST /api/auth/forgot-password` | always the same answer (no account enumeration) | 5/min per IP, 2/min per email |
 | `POST /api/auth/reset-password` | token, email, password, password_confirmation | 10/min per IP |
-| `GET /api/user` | the signed-in account: name, email, verification, has-password, Google-linked | signed-in only |
+| `GET /api/user` | the signed-in account: name, email, verification, has-password, Google-linked, `is_candidate` | signed-in only |
 | `POST /api/email/verification-notification` | resend the verification link | 3/min per account |
 | `POST /api/account/google/link` | confirm the current password, then start linking Google | 5/min per account |
 | `GET /email/verify/{id}/{hash}` | link in the verification email (signed, expires after 60 minutes) | 6/min per IP |
@@ -47,9 +47,9 @@ All endpoints accept and return JSON. Messages are always Arabic: the `UseArabic
 - **Disabled accounts** (`users.status = 'disabled'`):
   - cannot sign in with a password or with Google;
   - an existing session is ended on its next request, with a 403 and `code: account_disabled`.
-- **No client control over privileges.** The browser never sets `status`, verification, roles or permissions, because the account is created server-side with `forceFill` on the allowed fields only.
+- **No client control over privileges.** The browser never sets `status`, verification, roles or permissions, because the account is created server-side with `forceFill` on the allowed fields only. The «مترشح» role is granted by the backend (`App\Auth\CandidateRole`) with every new account, including new Google accounts; linking Google never changes roles.
 - **Session hygiene.** The session ID is regenerated at every sign-in. Sign-out invalidates the session and issues a new CSRF token.
-- **Safe redirects.** After sign-in, only `/account` and `/email/verify/…` are accepted as return destinations (`App\Auth\SafeRedirect`). Anything else, including other sites, falls back to `/account`.
+- **Safe redirects.** After sign-in, only `/dashboard`, `/dashboard/basic-information`, `/account` and `/email/verify/…` are accepted as return destinations (`App\Auth\SafeRedirect`). Anything else, including other sites, falls back to the account's default: `/dashboard` for candidates, `/account` otherwise. A signed verification link opened while signed out still returns there after sign-in.
 
 ## 2. Plesk-only environment settings
 
@@ -179,7 +179,7 @@ GOOGLE_REDIRECT_URI=https://<domain>/auth/google/callback
 The automated Google tests are **mocked at the HTTP boundary**. Socialite's real Google provider runs, including the state and PKCE checks, but Google's token and userinfo endpoints answer from a queue. No real Google authorization has been performed, because no credentials were supplied. After configuring, an operator should check:
 
 1. `https://<domain>/api/auth/options` returns `{"google":{"available":true}}`, and the button on `/login` is active.
-2. **New Gmail account.** «المتابعة مع Google» → choose a Gmail account that has no site account → you land on `/account`, which shows «مؤكَّد» and "Google linked".
+2. **New Gmail account.** «المتابعة مع Google» → choose a Gmail account that has no site account → you land on `/dashboard` as «مترشح», and `/account` shows «مؤكَّد» and "Google linked".
 3. **Returning sign-in.** Sign out, sign in with Google again, and confirm it is the same account (no duplicate in `users`).
 4. **Cancel.** Start again and press *Cancel* on Google's screen; `/login` shows «أُلغي تسجيل الدخول عبر Google…».
 5. **Existing local account.** Register locally with a mailbox, then try Google with a Google account using the **same address**. You are refused with «يوجد حساب مسجّل…», nothing is linked, and you are not signed in.

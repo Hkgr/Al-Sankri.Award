@@ -17,27 +17,62 @@ function currentLocation(): Location {
 export function RouterProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState(currentLocation)
   const firstRender = useRef(true)
+  // The question to ask before leaving a page with unsaved input (useLeaveWarning).
+  const leaveWarning = useRef<string | null>(null)
+  const shownLocation = useRef(location)
+
+  const confirmLeave = useCallback(() => {
+    const message = leaveWarning.current
+    if (!message) return true
+    if (!window.confirm(message)) return false
+    leaveWarning.current = null
+    return true
+  }, [])
+
+  const setLeaveWarning = useCallback((message: string | null) => {
+    leaveWarning.current = message
+    return () => {
+      if (leaveWarning.current === message) leaveWarning.current = null
+    }
+  }, [])
 
   useEffect(() => {
-    const onPopState = () => setLocation(currentLocation())
+    shownLocation.current = location
+  }, [location])
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (!confirmLeave()) {
+        // Stay: put the page that is still shown back into the address bar.
+        const { pathname, search, hash } = shownLocation.current
+        window.history.pushState(null, '', `${pathname}${search}${hash}`)
+        return
+      }
+      setLocation(currentLocation())
+    }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [])
+  }, [confirmLeave])
 
-  const navigate = useCallback((to: string, options: NavigateOptions = {}) => {
-    const url = new URL(to, window.location.href)
-    if (url.origin !== window.location.origin) {
-      window.location.assign(url.href)
-      return
-    }
-    const target = `${url.pathname}${url.search}${url.hash}`
-    if (options.replace) {
-      window.history.replaceState(null, '', target)
-    } else {
-      window.history.pushState(null, '', target)
-    }
-    setLocation({ pathname: url.pathname, search: url.search, hash: url.hash })
-  }, [])
+  const navigate = useCallback(
+    (to: string, options: NavigateOptions = {}) => {
+      const url = new URL(to, window.location.href)
+      const target = `${url.pathname}${url.search}${url.hash}`
+      const current = shownLocation.current
+      if (target !== `${current.pathname}${current.search}${current.hash}` && !confirmLeave()) return
+      if (url.origin !== window.location.origin) {
+        window.location.assign(url.href)
+        return
+      }
+      if (options.replace) {
+        window.history.replaceState(null, '', target)
+      } else {
+        window.history.pushState(null, '', target)
+      }
+      setLocation({ pathname: url.pathname, search: url.search, hash: url.hash })
+    },
+    [confirmLeave],
+  )
 
   // After each client-side navigation: scroll to the requested section, or to
   // the top with focus on <main> so assistive technology announces the page.
@@ -55,7 +90,10 @@ export function RouterProvider({ children }: { children: ReactNode }) {
     document.getElementById('main')?.focus({ preventScroll: true })
   }, [location.pathname, location.search, location.hash])
 
-  const value = useMemo(() => ({ location, navigate }), [location, navigate])
+  const value = useMemo(
+    () => ({ location, navigate, setLeaveWarning, confirmLeave }),
+    [location, navigate, setLeaveWarning, confirmLeave],
+  )
 
   return <RouterContext.Provider value={value}>{children}</RouterContext.Provider>
 }
