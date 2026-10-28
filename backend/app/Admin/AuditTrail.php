@@ -43,6 +43,8 @@ class AuditTrail
         'documentation.links_saved' => 'حفظ روابط التوثيق',
         'documentation.confirmed' => 'تأكيد ملفات العمل وتوثيقه (المرحلة 3)',
         'application.submitted' => 'الإرسال النهائي لملف الترشح',
+        'application.referred' => 'إرسال ملف الترشح إلى لجنة التحكيم',
+        'application.excluded' => 'استبعاد ملف الترشح وأرشفته',
         'committee.created' => 'إنشاء لجنة تحكيم',
         'committee.approved' => 'اعتماد لجنة تحكيم',
         'committee.returned_to_draft' => 'إعادة لجنة تحكيم إلى المسودة',
@@ -69,6 +71,8 @@ class AuditTrail
         'role.provisioned' => 'تهيئة دور (ترحيل قاعدة البيانات)',
         'permission.provisioned' => 'تهيئة صلاحية (ترحيل قاعدة البيانات)',
         'role_permission.provisioned' => 'ربط صلاحية بدور (ترحيل قاعدة البيانات)',
+        'review_classification.backfilled' => 'تصنيف الملفات المرسلة سابقاً (ترحيل قاعدة البيانات)',
+        'nomination_fields.purged' => 'حذف بيانات الأسئلة الملغاة من فئة الترشح (ترحيل قاعدة البيانات)',
     ];
 
     public const SUBJECTS = [
@@ -99,6 +103,11 @@ class AuditTrail
         'candidate_nomination_id' => 'رحلة الترشح', 'committee_member_id' => 'العضوية', 'member_id' => 'العضوية', 'file_link_id' => 'المرفق',
         'judging_assignment_id' => 'إسناد التحكيم', 'rubric_id' => 'معايير التقييم', 'assignments' => 'عدد الإسنادات',
         'role_id' => 'الدور', 'permission_id' => 'الصلاحية', 'migration' => 'الترحيل',
+        'committee_id' => 'اللجنة', 'pending' => 'لم يُصنّف بعد', 'legacy_referred' => 'إحالة سابقة من سجل التحكيم',
+        'in_judging_without_assignments' => 'قيد التحكيم دون إسنادات', 'assignments_in_several_committees' => 'إسنادات في أكثر من لجنة',
+        'applications' => 'ملفات الترشح', 'locations' => 'أماكن التنفيذ المحذوفة', 'partnerships' => 'الشراكات المحذوفة',
+        'versions' => 'النسخ المرسلة المعدّلة', 'form_snapshots' => 'لقطات النموذج المعدّلة', 'audit_rows' => 'سجلات الحركات المنقّحة',
+        'unverified_old_hashes' => 'بصمات سابقة لم تتطابق',
     ];
 
     /**

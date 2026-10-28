@@ -8,14 +8,17 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Gives every current member of an approved judging committee one
- * assignment for every submitted application in that committee's main
- * domain, under one rubric: a single mark out of 100, aggregated by
+ * assignment for every application administratively REFERRED to that
+ * committee (review_status `referred`, review_committee_id = the
+ * committee), under one rubric: a single mark out of 100, aggregated by
  * average.
  *
- * Called when the committee is approved and when an application is
- * submitted afterwards. The committee row is locked by the caller (or
- * here, for a submission), so the two cannot create the same assignment
- * twice. Nothing is created for a draft committee.
+ * Called when the committee is approved and when an administrator refers an
+ * application (App\Admin\ApplicationReviews). Pending and administratively
+ * excluded applications are never assigned on either path: the referral
+ * gate is applied here, where every path ends. The committee row is locked
+ * by the caller, so two paths cannot create the same assignment twice.
+ * Nothing is created for a draft committee.
  */
 class Assignments
 {
@@ -35,27 +38,23 @@ class Assignments
     }
 
     /**
-     * An application now has a submitted version. Assigns it when its
-     * domain's judging committee is approved.
+     * An administrator just referred the application to its committee (the
+     * committee row is already locked by the caller). Assigns it when that
+     * committee is approved.
      */
-    public function provisionApplication(int $applicationId): void
+    public function provisionReferral(int $applicationId, int $assignedBy): void
     {
         $application = DB::table('applications')->where('id', $applicationId)->first();
-        if ($application === null || $application->current_version_id === null) {
+        if ($application === null || $application->review_status !== Application::REVIEW_REFERRED || $application->review_committee_id === null) {
             return;
         }
 
-        $committee = DB::table('committees')
-            ->where('cycle_domain_id', $application->cycle_domain_id)
-            ->where('type', 'judging')
-            ->where('status', 'approved')
-            ->lockForUpdate()
-            ->first();
-        if ($committee === null || $committee->approved_by === null) {
+        $committee = DB::table('committees')->where('id', $application->review_committee_id)->first();
+        if ($committee === null || $committee->type !== 'judging' || $committee->status !== 'approved') {
             return;
         }
 
-        $this->assign($committee, (int) $committee->approved_by, (int) $application->id);
+        $this->assign($committee, $assignedBy, (int) $application->id);
     }
 
     private function assign(object $committee, int $assignedBy, ?int $onlyApplicationId = null): void
@@ -70,6 +69,9 @@ class Assignments
             ->where('cycle_domain_id', $committee->cycle_domain_id)
             ->whereNotNull('current_version_id')
             ->whereNotIn('status', [Application::STATUS_DRAFT, 'withdrawn', 'closed'])
+            // The administrative referral gate: referred to this committee only.
+            ->where('review_status', Application::REVIEW_REFERRED)
+            ->where('review_committee_id', $committee->id)
             ->when($onlyApplicationId !== null, fn ($query) => $query->where('id', $onlyApplicationId))
             ->get(['id', 'current_version_id', 'status']);
 

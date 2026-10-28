@@ -9,7 +9,7 @@
 export const ALL_CYCLES = 'all'
 
 /** The table's query values, kept in the page address so returning restores them. */
-export const TABLE_PARAMS = ['cycle', 'domain', 'subcategory', 'applicant_type', 'status', 'q', 'sort', 'direction', 'page', 'per_page'] as const
+export const TABLE_PARAMS = ['cycle', 'domain', 'subcategory', 'applicant_type', 'status', 'review', 'q', 'sort', 'direction', 'page', 'per_page'] as const
 
 type CycleShape = { id: number; domains: { code: string; subcategories: { code: string }[] }[] }
 

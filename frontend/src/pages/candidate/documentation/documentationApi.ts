@@ -23,7 +23,16 @@ export type Attachment = {
 
 export type DocumentationLink = { title: string; url: string }
 
-export type Receipt = { reference_number: string; submitted_at: string; version_number: number }
+/** What award administration has done with a submission (never its internal notes). */
+export type Processing = 'pending' | 'referred' | 'excluded'
+
+export const PROCESSING_TEXT: Record<Processing, string> = {
+  pending: 'ملف الترشح لدى إدارة الجائزة للمراجعة الأولية.',
+  referred: 'أحالت إدارة الجائزة ملف الترشح إلى لجنة التحكيم.',
+  excluded: 'لم يُحل ملف الترشح إلى التحكيم بعد المراجعة الأولية لإدارة الجائزة، وحُفظ في الأرشيف.',
+}
+
+export type Receipt = { reference_number: string; submitted_at: string; version_number: number; processing: Processing }
 
 export type Documentation = {
   revision: number
@@ -181,4 +190,4 @@ export const SECTION_TITLES: Record<AttachmentKind, string> = {
   video: 'فيديوهات توثيق العمل',
 }
 
-export const SUBMIT_CONFIRMATION = 'بعد الإرسال لن تتمكن من إضافة ملفات أو تعديل بيانات المشاركة. هل تريد تأكيد الإرسال؟'
+export const SUBMIT_CONFIRMATION = 'يُرسل ملف الترشح إلى إدارة الجائزة للمراجعة الأولية. بعد الإرسال لن تتمكن من إضافة ملفات أو تعديل بيانات المشاركة. هل تريد تأكيد الإرسال؟'

@@ -8,6 +8,7 @@ import { usePageTitle } from '../auth/usePageTitle'
 import { formatDamascusDateTime, PROFILE_TYPE_LABELS } from './candidateApi'
 import { contextHeader } from './candidateApi'
 import type { Overview } from './candidateApi'
+import { PROCESSING_TEXT } from './documentation/documentationApi'
 import { useAccountFailure } from './useCandidateRequests'
 import { VerifyEmailNotice } from './VerifyEmailNotice'
 
@@ -100,7 +101,7 @@ export function DashboardPage({ user }: { user: User }) {
 
         <p className="candidate-section__note">
           {overview?.submission
-            ? 'أُرسلت المشاركة للجنة الحكام، وأصبحت كلها متاحة للعرض فقط.'
+            ? `أُرسل ملف الترشح، وأصبح كله متاحاً للعرض فقط. ${PROCESSING_TEXT[overview.submission.processing] ?? PROCESSING_TEXT.pending}`
             : 'استكمال المراحل لا يعني إرسال المشاركة: تُرسل المشاركة من صفحة المراجعة بعد استكمال المراحل الثلاث.'}
         </p>
       </section>
@@ -205,7 +206,7 @@ function SubmissionStage({ overview }: { overview: Overview }) {
             الرقم المرجعي: <bdi dir="ltr">{receipt.reference_number}</bdi>. المشاركة متاحة للعرض فقط.
           </>
         ) : (
-          'مراجعة المراحل الثلاث كما حُفظت، ثم إرسال المشاركة للجنة الحكام.'
+          'مراجعة المراحل الثلاث كما حُفظت، ثم إرسال ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.'
         )}
       </p>
       {(receipt || ready) && (
@@ -244,7 +245,7 @@ function NominationDetailsStage({ stage }: { stage: Overview['nomination_details
             ? 'أكّد حفظ البيانات الأساسية أولاً، ثم تُتاح هذه المرحلة.'
             : stage.status === 'unavailable'
               ? 'لم تفتح إدارة الجائزة هذه المرحلة بعد لدورة الجائزة الحالية.'
-              : 'محور الترشح وفئته، وتعريف العمل وأثره، وتواريخه وأماكن تنفيذه، وتمويله وشراكاته.'}
+              : 'محور الترشح وفئته، وتعريف العمل: عنوانه وغايته ورسالته وأهدافه وأثره.'}
       </p>
       {open && (
         <Link className={`button ${completed ? 'button--secondary' : 'button--primary'}`} href="/dashboard/nomination-details">

@@ -40,8 +40,11 @@ class AdminAccess
 
     public const VIEW_SYSTEM_LOGS = 'logs.view_system';
 
+    /** Referral or exclusion of a pending submission (with VIEW_APPLICATIONS). */
+    public const REVIEW_APPLICATIONS = 'applications.review';
+
     /** The administration permissions this dashboard knows (anything else is ignored). */
-    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS, self::EXPORT_REPORTS, self::VIEW_AUDIT, self::VIEW_SYSTEM_LOGS];
+    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS, self::EXPORT_REPORTS, self::VIEW_AUDIT, self::VIEW_SYSTEM_LOGS, self::REVIEW_APPLICATIONS];
 
     public const SOURCE_COMMAND = 'admin_grant_access_command';
 

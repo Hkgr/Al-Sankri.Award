@@ -67,7 +67,7 @@ export function NominationDetailsPage({ user }: { user: User }) {
         <p className="eyebrow">المرحلة 2 من ملف الترشح</p>
         <h1 className="candidate-page__title">فئة الترشح وبيانات العمل</h1>
         <p className="candidate-page__intro">
-          {details ? 'هذه بيانات المرحلة كما حُفظت. هي متاحة للعرض فقط.' : 'اختر محور الترشح وفئته، وعرّف بالعمل وأثره ومكانه وتمويله.'}
+          {details ? 'هذه بيانات المرحلة كما حُفظت. هي متاحة للعرض فقط.' : 'اختر محور الترشح وفئته، وعرّف بالعمل: عنوانه وغايته ورسالته وأهدافه وأثره.'}
         </p>
       </header>
 
@@ -98,8 +98,6 @@ export function NominationDetailsPage({ user }: { user: User }) {
           accountContext={user.account_context}
           journeyKey={state.journey_key}
           domains={state.options.domains}
-          governorates={state.options.governorates}
-          countryName={state.options.country.name}
           onConfirmed={onConfirmed}
         />
       ) : (

@@ -32,7 +32,7 @@ class DocumentationController extends Controller
      * @var array<string, array{0: int, 1: string}>
      */
     public const REFUSALS = [
-        Documentation::SUBMITTED => [409, 'أُرسلت المشاركة للجنة الحكام، فلم يعد ممكناً إضافة ملفات أو تعديل بياناتها. لم يُحفظ شيء.'],
+        Documentation::SUBMITTED => [409, 'أُرسل ملف الترشح إلى إدارة الجائزة، فلم يعد ممكناً إضافة ملفات أو تعديل بياناته. لم يُحفظ شيء.'],
         Documentation::UNAVAILABLE => [409, 'هذه المرحلة غير متاحة حالياً: باب الترشح لهذه الدورة غير مفتوح. لم يُحفظ شيء.'],
         Documentation::TOO_MANY => [422, 'بلغت الحد الأعلى لعدد الملفات من هذا النوع. احذف ملفاً قبل إضافة غيره.'],
         Documentation::NOT_FOUND => [404, 'لم يُعثر على هذا الملف في مشاركتك.'],

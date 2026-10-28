@@ -4,6 +4,7 @@ namespace App\Admin;
 
 use App\Auth\CandidateRole;
 use App\Candidates\NominationCycles;
+use App\Models\Application;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
@@ -158,6 +159,7 @@ class RegisteredUsers
                 'users.id', 'users.name', 'users.email', 'users.email_verified_at', 'users.status', 'users.created_at', 'users.last_login_at',
                 'profiles.id as profile_id', 'journeys.id as journey_id', 'journeys.documentation_revision',
                 'applications.id as application_id', 'applications.reference_number', 'applications.first_submitted_at', 'applications.status as application_status',
+                'applications.review_status',
             ])
             ->selectRaw("({$progressSql}) as progress", $progressBindings)
             // Accounts that never signed in come last in either direction.
@@ -185,6 +187,8 @@ class RegisteredUsers
                 'reference_number' => $row->reference_number,
                 'submitted_at' => $this->iso($row->first_submitted_at),
                 'status' => $row->application_status,
+                // Administrative processing, separate from having submitted.
+                'review' => $row->review_status ?? Application::REVIEW_PENDING,
             ],
         ])->all();
     }

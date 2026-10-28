@@ -3,8 +3,6 @@
 namespace App\Candidates;
 
 use App\Models\Application;
-use App\Models\ApplicationLocation;
-use App\Models\ApplicationPartnership;
 use App\Models\CandidateNomination;
 use App\Models\CandidateProfile;
 use App\Models\User;
@@ -21,8 +19,8 @@ use RuntimeException;
  * Stage 1 is confirmed, then locks the Stage 2 configuration and checks, on
  * the latest committed state and the current time, that the cycle is still
  * usable and the chosen domain and subcategory still open, and only then
- * creates the draft application (with its locations and partners) and the
- * journey row. The unique key on candidate_nominations (profile, cycle) is
+ * creates the draft application (the work's title, purpose and mission,
+ * objectives and impact) and the journey row. The unique key on candidate_nominations (profile, cycle) is
  * the final guard.
  *
  * The application stays a draft: no reference number, no submitted version,
@@ -250,8 +248,6 @@ class NominationDetails
         }
 
         $now = now();
-        $completed = $data['implementation_state'] === Application::IMPLEMENTATION_COMPLETED;
-        $funding = $data['funding_type'];
 
         $application = new Application;
         $application->forceFill([
@@ -264,36 +260,8 @@ class NominationDetails
             'purpose_and_mission' => $data['purpose_and_mission'],
             'objectives' => $data['objectives'],
             'documented_impact' => $data['impact'],
-            'implementation_started_on' => $data['started_on'],
-            'implementation_ended_on' => $completed ? $data['ended_on'] : null,
-            'implementation_status' => $completed ? Application::IMPLEMENTATION_COMPLETED : Application::IMPLEMENTATION_ONGOING,
-            'funding_type' => $funding,
-            'funder_name' => in_array($funding, Application::FUNDED_BY_OTHERS, true) ? $data['funder_name'] : null,
-            'funding_amount_usd' => $funding === 'not_needed' ? null : $data['funding_amount'],
-            'has_partnerships' => (bool) $data['has_partnerships'],
             'status' => Application::STATUS_DRAFT,
         ])->save();
-
-        $country = $this->cycles->country($current['cycle']);
-        foreach (array_values($data['locations']) as $location) {
-            (new ApplicationLocation)->forceFill([
-                'application_id' => $application->getKey(),
-                'country_code' => $country,
-                'governorate' => $location['governorate'],
-                'locality' => $location['locality'],
-                'address' => $location['address'] ?? null,
-                'is_primary' => false,
-            ])->save();
-        }
-
-        foreach ($data['has_partnerships'] ? array_values($data['partnerships'] ?? []) : [] as $index => $partner) {
-            (new ApplicationPartnership)->forceFill([
-                'application_id' => $application->getKey(),
-                'position' => $index + 1,
-                'partner_name' => $partner['name'],
-                'contribution' => $partner['contribution'] ?? null,
-            ])->save();
-        }
 
         $journey = new CandidateNomination;
         $journey->forceFill([
@@ -305,13 +273,12 @@ class NominationDetails
             'details_confirmed_at' => $now,
         ])->save();
 
-        // Identifiers and codes only: no narrative, places or amounts.
+        // Identifiers and codes only: no narrative.
         AuditLog::record('nomination_details.confirmed', (int) $account->getKey(), 'application', (int) $application->getKey(), [
             'candidate_nomination_id' => $journey->getKey(),
             'cycle_id' => $cycleId,
             'domain' => $data['domain'],
             'subcategory' => $data['subcategory'],
-            'funding_type' => $funding,
         ], $cycleId);
 
         return [self::CONFIRMED, $journey];

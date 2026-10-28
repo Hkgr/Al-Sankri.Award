@@ -2,7 +2,9 @@
 
 For the people who deploy, operate and review the platform. Related: [candidate-onboarding.md](candidate-onboarding.md) (Stage 1, the dashboard, account binding), [database-schema.md](database-schema.md) §L, [database-rules.md](database-rules.md).
 
-**Scope.** After Stage 1 is confirmed, the candidate chooses one domain and one subcategory and describes the work: title, purpose and mission, objectives, impact, dates, places of implementation, funding declaration and optional partners. Confirming saves a **draft** application and makes these fields read-only for the candidate.
+**Scope.** After Stage 1 is confirmed, the candidate chooses one domain and one subcategory and describes the work: title, purpose and mission, objectives and impact. Confirming saves a **draft** application and makes these fields read-only for the candidate.
+
+**Retired questions (2026-10-29, owner decision).** Funding (type, funder, amount), partnerships (the yes/no answer and the partners), places of implementation and the implementation schedule (start, end, ongoing or completed) are no longer asked, stored or shown anywhere: form, summaries, review, admin and judge pages, the application card and exports. Their stored values, including old submitted snapshots, were removed by `2026_10_29_900003` ([administration.md](administration.md) §10). Stage 1 (identity, birth date, nationality, residence, contact, institution registration) is unchanged.
 
 **What confirming does not do:**
 - submit the application, create a submitted version, assign a reference number or set `first_submitted_at`;
@@ -68,24 +70,19 @@ php artisan nomination:setup <cycle-code> --actor=<operator email> --close
 
 ## 3. The form and its rules
 
-Five sections inside one form, all held in memory only:
-1. «المحور والفئة»
+Three sections inside one form, all held in memory only:
+1. «المحور والفئة» (with the approved award artwork)
 2. «تعريف العمل وأثره»
-3. «التواريخ وأماكن التنفيذ»
-4. «التمويل والشراكات»
-5. «المراجعة والتأكيد»
+3. «المراجعة والتأكيد»
 
-Each section is checked by the server (`POST /api/candidate/nomination-details/check`, which saves nothing). A section check applies only that section's rules, including the duplicate-place check, which runs only for «التواريخ وأماكن التنفيذ»: unfinished place rows never block an earlier section, and are reported where they can be fixed. The final «حفظ المرحلة والمتابعة» is the only write, and it always applies every rule. The server's `NominationDetailsRequest` is authoritative.
+Each section is checked by the server (`POST /api/candidate/nomination-details/check`, which saves nothing). A section check applies only that section's rules. The final «حفظ المرحلة والمتابعة» is the only write, and it always applies every rule. The server's `NominationDetailsRequest` is authoritative.
+
+**Outdated pages.** A request that still carries a retired field (`implementation_state`, `started_on`, `ended_on`, `locations`, `funding_type`, `funder_name`, `funding_amount`, `has_partnerships`, `partnerships`) or a retired section (`dates_locations`, `funding`) is refused as a whole, before validation, with `409 nomination_form_outdated`. The answer lists the retired fields and says that nothing was saved and the typed text is still on the page. Nothing is stored, and nothing is silently dropped while the rest is saved.
 
 | Field | Rule |
 | --- | --- |
 | Domain, subcategory | Exactly one of each (strings), from the open domains and active subcategories of the usable cycle; the subcategory must belong to the chosen domain. Changing the domain clears the subcategory, after a warning. |
 | Title / purpose and mission / objectives / impact | Required plain text: 255 / 3000 / 3000 / 4000 characters. Control characters are refused, line breaks kept, nothing truncated, nothing rendered as HTML. Objectives: one per line. Impact: concrete outcomes, beneficiaries and evidence, without required counters. |
-| Dates | Start date required. The end date is required for completed work and refused for ongoing work («العمل مستمر» → `implementation_status = ongoing`, no end date). Real Gregorian dates, not in the future (today in Damascus), end not before start. Stored as `DATE` (no time-zone shift). No minimum age or duration. |
-| Places | 1–20 rows: governorate (ISO 3166-2:SY code) required; city, town or village required (150); address optional (500). Country = the cycle's (Syria). Duplicates, ignoring case and spacing, are refused. No maps, geocoding or external services. |
-| Funding («الإقرار المالي») | One of four choices, none preselected. **ممول بالكامل / ممول جزئيًا:** funder name + amount, which is the funding reported for that funder; no project cost or remainder is inferred. **تمويل شخصي:** self-funded amount only. **لا يحتاج تمويل:** nothing else. Fields that do not apply are refused if sent. |
-| Amounts | US dollars only: digits with an optional point and up to 2 decimals, above 0, up to 12 integer digits. Arabic-Indic or Persian digits and the Arabic decimal sign (٫) are accepted. Grouping commas are refused rather than guessed. Stored as `DECIMAL(14,2)`; no floating point anywhere. |
-| Partnerships | Yes or No (required). Yes needs 1–10 rows: partner name required (255), the nature of the partnership optional (1000). No sends and stores no rows; switching to No warns before clearing them. Partners are not accounts or applicants, and no contact or financial data is kept for them. |
 
 ## 4. Saving, the lock, and retries
 
@@ -93,7 +90,7 @@ Each section is checked by the server (`POST /api/candidate/nomination-details/c
 1. lock the account's `users` row;
 2. check Stage 1 again, and any already-confirmed journey for the form's journey key;
 3. lock the Stage 2 configuration (shared locks on every `award_cycles` row), then work out the usable cycle again from the latest committed cycle, stage and option rows (locking reads, never the transaction's earlier snapshot) and the time now, and check the journey key and the chosen options;
-4. create the draft application, its places and partners, the `candidate_nominations` row and an audit entry (ids and codes only).
+4. create the draft application (the work's four texts), the `candidate_nominations` row and an audit entry (ids and codes only).
 
 If anything fails, nothing is left behind.
 
@@ -132,13 +129,13 @@ Another cycle's confirmed stage is never taken for this save's result. The page 
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /api/candidate/nomination-details` | The confirmed stage, or availability, options (domains, subcategories, artwork keys, governorates) and `journey_key`. `409 basic_information_required` before Stage 1. |
+| `GET /api/candidate/nomination-details` | The confirmed stage, or availability, options (domains, subcategories, artwork keys) and `journey_key`. `409 basic_information_required` before Stage 1. |
 | `GET /api/candidate/nomination-details/journey` | Reconciliation of one form's save: the journey named by `X-Nomination-Journey` only. `journey.status` is `confirmed` (with that journey's data), `open`, `changed` or `unavailable` (with `data: null`). Never another journey's data. |
-| `POST /api/candidate/nomination-details/check` | Checks one section (`domain`, `work`, `dates_locations`, `funding`); saves nothing. 30/min per account. |
-| `POST /api/candidate/nomination-details` | Confirms the stage, once. 10/min per account. |
+| `POST /api/candidate/nomination-details/check` | Checks one section (`domain`, `work`); saves nothing. 30/min per account. `409 nomination_form_outdated` for a retired section or field. |
+| `POST /api/candidate/nomination-details` | Confirms the stage, once. 10/min per account. `409 nomination_form_outdated` for a retired field. |
 | `GET /api/candidate/overview` | Adds `nomination_details` (statuses and dates only). |
 
-All candidate routes require a session, an active account, the candidate role, CSRF on writes and `Cache-Control: no-store`. Writes also pass `nomination.gate`, before validation. Places and funding appear only in the owner's `NominationDetailsResource`, never in `/api/user`, the overview or logs.
+All candidate routes require a session, an active account, the candidate role, CSRF on writes and `Cache-Control: no-store`. Writes also pass `nomination.gate`, before validation. The work's text appears only in the owner's `NominationDetailsResource` (and the submitted snapshot), never in `/api/user`, the overview or logs.
 
 ## 6. Deployment
 
@@ -151,7 +148,7 @@ No `.env`, Plesk, Document Root or `deploy.sh` change is needed.
 
 ## 7. Tests
 
-- `tests/Feature/Candidate/NominationDetailsTest.php` runs everywhere, SQLite included. It covers the rules, the section scoping, the journey-bound reconciliation and a deadline passing between the gate and the locked check.
+- `tests/Feature/Candidate/NominationDetailsTest.php` runs everywhere, SQLite included. It covers the rules, the section scoping, the refusal of outdated requests with retired fields, the journey-bound reconciliation and a deadline passing between the gate and the locked check.
 - `tests/Feature/Candidate/NominationConfirmationLockingTest.php` needs MySQL or MariaDB. It is skipped on SQLite and refuses any database not named `*_schema_test`. Because it commits its rows, it migrates that disposable database fresh before and after each test. It runs the real `nomination:setup --close` in a separate PHP process with its own database session, at a point fixed by a hook on the confirmation's queries:
   - a closure committed after the confirmation began, before its configuration locks: refused, nothing written;
   - a closure started while the confirmation holds the locks: a real InnoDB lock wait until the confirmation commits;

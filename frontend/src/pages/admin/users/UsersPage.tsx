@@ -9,6 +9,7 @@ import { usePageTitle } from '../../auth/usePageTitle'
 import { formatDamascusDateTime } from '../../candidate/candidateApi'
 import type { AdminCycle, StageState, UserProgressState, UserRow, UserSortKey, UsersPage as Page } from '../adminApi'
 import { cycleLabel, PROGRESS_LABELS, USER_ROLE_FILTERS, USER_SORT_LABELS } from '../adminApi'
+import { ReviewBadge } from '../applications/ReviewBadge'
 import { ExportMenu } from '../ExportMenu'
 import { usersQuery } from './usersState'
 
@@ -297,6 +298,7 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
                           أُرسل · <bdi dir="ltr">{row.submission.reference_number}</bdi>
                         </span>
                         {row.submission.submitted_at && <span className="admin-submission-time">{formatDamascusDateTime(row.submission.submitted_at)}</span>}
+                        <ReviewBadge status={row.submission.review} />
                         {canOpenApplications && row.submission.application_id !== null && (
                           <Link className="admin-row-link" href={`/admin/applications/${row.submission.application_id}`}>
                             عرض الملف

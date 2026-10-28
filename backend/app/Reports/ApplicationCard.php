@@ -43,13 +43,6 @@ final class ApplicationCard
         'video/webm' => 'فيديو WebM',
     ];
 
-    private const FUNDING_LABELS = [
-        'fully_funded' => 'ممول بالكامل',
-        'partially_funded' => 'ممول جزئيًا',
-        'self_funded' => 'تمويل شخصي',
-        'not_needed' => 'لا يحتاج تمويل',
-    ];
-
     private const GENDER_LABELS = ['male' => 'ذكر', 'female' => 'أنثى'];
 
     private const PROFILE_TYPES = ['individual' => 'فرد', 'institution' => 'مؤسسة'];
@@ -71,13 +64,13 @@ final class ApplicationCard
                 ['المجال الرئيسي', (string) ($summary['domain']['name'] ?? '—')],
                 ['الفئة الفرعية', (string) ($summary['subcategory']['name'] ?? '—')],
                 ['حالة الملف', self::STATUS_LABELS[$summary['status']] ?? (string) $summary['status']],
+                ['التصنيف الإداري', self::review($detail['review'] ?? null)],
                 ['وقت الإرسال', Formats::dateTime($summary['submitted_at']).' بتوقيت دمشق'],
                 ['النسخة المرسلة', "{$summary['version_number']} · بصمة المحتوى ".substr((string) $summary['content_hash'], 0, 16)],
             ],
             'sections' => array_values(array_filter([
                 self::basicInformation($detail['basic_information'] ?? null),
                 self::workDetails($details),
-                self::funding($details),
                 self::documentation($detail['documentation']),
                 self::declarations($detail['declarations']),
                 self::judging($detail['judging'] ?? null),
@@ -154,11 +147,6 @@ final class ApplicationCard
             return $section;
         }
 
-        $implementation = $details['implementation'] ?? [];
-        $locations = implode("\n", array_map(fn (array $place, int $index): string => ($index + 1).'. '.implode(' — ', array_filter([
-            $place['governorate_name'] ?? null, $place['locality'] ?? null, $place['address'] ?? null,
-        ])), $details['locations'] ?? [], array_keys($details['locations'] ?? []))) ?: '—';
-
         $section['groups'][] = ['title' => 'المحور والفئة', 'rows' => [
             ['المحور', $details['domain']['name'] ?? '—'],
             ['الفئة', $details['subcategory']['name'] ?? '—'],
@@ -169,44 +157,35 @@ final class ApplicationCard
             ['الأهداف', $details['objectives']],
             ['الأثر', $details['impact']],
         ]];
-        $section['groups'][] = ['title' => 'التواريخ وأماكن التنفيذ', 'rows' => [
-            ['تاريخ بدء العمل', Formats::date($implementation['started_on'] ?? null) ?: '—'],
-            ['تاريخ انتهاء العمل', ($implementation['state'] ?? null) === 'ongoing' ? 'العمل مستمر' : (Formats::date($implementation['ended_on'] ?? null) ?: '—')],
-            ['أماكن التنفيذ', $locations],
-        ]];
 
         return $section;
     }
 
     /**
-     * @param  array<string, mixed>|null  $details
-     * @return array<string, mixed>|null
+     * The administrative classification at export time: its label, with the
+     * destination committee of a referral (a legacy referral says so) or
+     * the time of an exclusion. The exclusion reason is shown to
+     * administration on the page, not printed on the card.
+     *
+     * @param  array<string, mixed>|null  $review
      */
-    private static function funding(?array $details): ?array
+    private static function review(?array $review): string
     {
-        if ($details === null) {
-            return null;
+        if ($review === null) {
+            return '—';
         }
 
-        $funding = $details['funding'] ?? [];
-        $partnerships = $details['partnerships'] ?? ['has_partnerships' => false, 'items' => []];
-        $rows = [['الإقرار المالي', self::FUNDING_LABELS[$funding['type'] ?? ''] ?? '—']];
-        if (in_array($funding['type'] ?? null, ['fully_funded', 'partially_funded'], true)) {
-            $rows[] = ['اسم الجهة الممولة', $funding['funder_name'] ?: '—'];
+        $parts = [(string) $review['label']];
+        if ($review['committee'] !== null) {
+            $parts[] = (string) $review['committee']['name'];
         }
-        if (($funding['amount_usd'] ?? null) !== null) {
-            // The exact stored decimal, never rounded.
-            $rows[] = [($funding['type'] ?? '') === 'self_funded' ? 'المبلغ المموَّل ذاتياً' : 'مبلغ التمويل', "{$funding['amount_usd']} USD"];
+        if ($review['legacy']) {
+            $parts[] = 'إحالة سابقة من سجل التحكيم';
+        } elseif ($review['decided_at'] !== null) {
+            $parts[] = Formats::dateTime($review['decided_at']).' بتوقيت دمشق';
         }
 
-        return ['title' => 'التمويل والشراكات', 'groups' => [
-            ['title' => null, 'rows' => $rows],
-            ['title' => 'الشراكات', 'table' => [
-                'columns' => ['الجهة الشريكة', 'طبيعة الشراكة'],
-                'rows' => array_map(fn (array $item): array => [$item['name'], $item['contribution'] ?: '—'], $partnerships['items'] ?? []),
-                'empty' => 'لا توجد شراكات.',
-            ]],
-        ]];
+        return implode(' · ', $parts);
     }
 
     /**
@@ -265,7 +244,7 @@ final class ApplicationCard
 
         $section = ['title' => 'حالة التحكيم وقت التصدير', 'note' => 'هذا القسم ليس جزءاً من الملف المرسل: يعرض حالة التحكيم كما كانت لحظة إنشاء البطاقة، وقد تتغيّر بعدها.', 'groups' => []];
         if (! ($judging['ready'] ?? false)) {
-            $section['groups'][] = ['title' => null, 'rows' => [['الحالة', 'لم تُعتمد لجنة تحكيم هذا المحور بعد.']]];
+            $section['groups'][] = ['title' => null, 'rows' => [['الحالة', ($judging['referred'] ?? false) ? 'لم تُعتمد لجنة تحكيم هذا المحور بعد.' : 'لم يُرسل هذا الملف إلى التحكيم؛ لا يقيّمه الحكام قبل إرسال إدارة الجائزة له.']]];
 
             return $section;
         }

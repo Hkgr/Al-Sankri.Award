@@ -27,6 +27,33 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   closed: 'مغلق',
 }
 
+/** The administrative classification, separate from the workflow status. */
+export type ReviewStatus = 'pending' | 'referred' | 'excluded'
+
+export const REVIEW_LABELS: Record<ReviewStatus, string> = {
+  pending: 'لم يُصنّف بعد',
+  referred: 'مرسل للتحكيم',
+  excluded: 'مستبعد — مؤرشف',
+}
+
+export type ReviewRefusal = 'committee_missing' | 'committee_not_approved'
+
+export const REVIEW_REFUSALS: Record<ReviewRefusal, string> = {
+  committee_missing: 'لا توجد لجنة تحكيم لهذا المجال الرئيسي في دورة الملف. أنشئها واعتمدها في «لجان الحكام» أولاً.',
+  committee_not_approved: 'لجنة تحكيم هذا المجال لم تُعتمد بعد. اعتمدها بثلاثة حكام أو خمسة في «لجان الحكام» أولاً.',
+}
+
+export type ApplicationReview = {
+  status: ReviewStatus
+  label: string
+  legacy: boolean
+  decided_at: string | null
+  decided_by: string | null
+  reason: string | null
+  committee: { id: number; name: string } | null
+  target: { committee: { id: number; name: string; approved: boolean } | null; refusal: ReviewRefusal | null } | null
+}
+
 export const APPLICANT_TYPE_LABELS = { individual: 'فرد', institution: 'مؤسسة' } as const
 export type ApplicantType = keyof typeof APPLICANT_TYPE_LABELS
 
@@ -42,6 +69,7 @@ export type ApplicationRow = {
   subcategory: { code: string; name: string } | null
   submitted_at: string
   status: ApplicationStatus
+  review: ReviewStatus
   attachment_count: number
 }
 
@@ -67,12 +95,14 @@ export type ApplicationDetail = {
   documentation: { confirmed_at: string | null; attachments: Attachment[]; links: DocumentationLink[] }
   judging: {
     ready: boolean
+    referred: boolean
     expected: number
     received: number
     decision: string | null
     excluded: boolean
     scores: { name: string; score: string | null; notes: string | null; recommendations: string | null; excluded: boolean; sent_at: string | null }[]
   }
+  review: ApplicationReview
   declarations: {
     data_accuracy_declared_at: string | null
     accepted_policies: { code: string; title: string | null; version_number: number; accepted_at: string | null; text_sha256: string }[]
@@ -182,7 +212,7 @@ export type UserRow = {
     cycle: { code: string; name: string; cycle: { id: number; name: string; year: number }; domain: string | null }[]
   }
   progress: { state: UserProgressState; stage1: StageState; stage2: StageState; stage3: StageState }
-  submission: { application_id: number | null; reference_number: string; submitted_at: string | null; status: ApplicationStatus } | null
+  submission: { application_id: number | null; reference_number: string; submitted_at: string | null; status: ApplicationStatus; review: ReviewStatus } | null
 }
 
 export type UsersPage = {

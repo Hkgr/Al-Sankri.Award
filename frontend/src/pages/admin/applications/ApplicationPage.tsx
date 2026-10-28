@@ -19,6 +19,7 @@ import type { ApplicationDetail } from '../adminApi'
 import { adminFileUrl, cycleLabel, TABLE_PARAMS } from '../adminApi'
 import { ExportMenu } from '../ExportMenu'
 import { saveFile } from '../saveFile'
+import { ReviewSection } from './ReviewSection'
 import { StatusBadge } from './StatusBadge'
 
 /** «تنزيل بطاقة الترشح PDF»: the submitted application as a server-made PDF. */
@@ -200,6 +201,18 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
         </dl>
       </Section>
 
+      <Section id="admin-review" title="التصنيف الإداري">
+        {user && (
+          <ReviewSection
+            user={user}
+            applicationId={summary.id}
+            domainName={summary.domain?.name ?? '—'}
+            review={detail.review}
+            onChange={(review) => setDetail((current) => (current ? { ...current, review } : current))}
+          />
+        )}
+      </Section>
+
       <Section id="admin-decision" title="قرار اللجنة">
         {user && detail.judging.ready && (
           <div className="admin-section__tools">
@@ -207,7 +220,7 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
           </div>
         )}
         {!detail.judging.ready ? (
-          <p className="admin-muted">لم تُعتمد لجنة تحكيم هذا المحور بعد.</p>
+          <p className="admin-muted">{detail.judging.referred ? 'لم تُعتمد لجنة تحكيم هذا المحور بعد.' : 'لم يُرسل هذا الملف إلى التحكيم؛ لا يقيّمه الحكام قبل إرسال إدارة الجائزة له.'}</p>
         ) : (
           <>
             <p className="admin-muted">

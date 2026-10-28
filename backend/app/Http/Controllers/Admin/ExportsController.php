@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Admin\AdminAccess;
 use App\Admin\AdminCycles;
+use App\Admin\ApplicationReviews;
 use App\Admin\AuditTrail;
 use App\Admin\JudgingCommittees;
 use App\Admin\RegisteredUsers;
@@ -165,7 +166,7 @@ class ExportsController extends Controller
             'stage1' => $stage[$row['progress']['stage1']],
             'stage2' => $stage[$row['progress']['stage2']],
             'stage3' => $stage[$row['progress']['stage3']],
-            'submission' => $row['submission'] ? 'أُرسل · '.$row['submission']['reference_number'].' · '.Formats::dateTime($row['submission']['submitted_at']) : ($row['progress']['state'] === 'not_required' ? '—' : 'لم يُرسل'),
+            'submission' => $row['submission'] ? 'أُرسل · '.$row['submission']['reference_number'].' · '.Formats::dateTime($row['submission']['submitted_at']).' · '.(ApplicationReviews::LABELS[$row['submission']['review']] ?? '') : ($row['progress']['state'] === 'not_required' ? '—' : 'لم يُرسل'),
         ], $export['data']);
 
         $cycle = $export['cycle'];
@@ -208,6 +209,7 @@ class ExportsController extends Controller
             'subcategory' => $row['subcategory']['name'] ?? '—',
             'submitted' => Formats::dateTime($row['submitted_at']),
             'status' => ApplicationCard::STATUS_LABELS[$row['status']] ?? $row['status'],
+            'review' => ApplicationReviews::LABELS[$row['review']] ?? $row['review'],
             'attachments' => (int) $row['attachment_count'],
         ], $applications->export($filters));
 
@@ -219,6 +221,7 @@ class ExportsController extends Controller
             'subcategory' => 'الفئة الفرعية',
             'applicant_type' => ['نوع المترشح', ['individual' => 'فرد', 'institution' => 'مؤسسة']],
             'status' => ['الحالة', ApplicationCard::STATUS_LABELS],
+            'review' => ['التصنيف الإداري', ApplicationReviews::LABELS],
             'q' => 'البحث',
         ]), $this->sortDescription($filters, ['submitted_at' => 'وقت الإرسال', 'reference' => 'الرقم المرجعي', 'title' => 'عنوان العمل', 'applicant' => 'المترشح', 'status' => 'الحالة'], 'submitted_at', 'desc')];
 
@@ -227,7 +230,7 @@ class ExportsController extends Controller
             ['key' => 'applicant', 'label' => 'المترشح أو المؤسسة', 'width' => 26], ['key' => 'type', 'label' => 'النوع', 'width' => 10],
             ['key' => 'domain', 'label' => 'المجال الرئيسي', 'width' => 16], ['key' => 'subcategory', 'label' => 'الفئة الفرعية', 'width' => 18],
             ['key' => 'submitted', 'label' => 'وقت الإرسال', 'width' => 22], ['key' => 'status', 'label' => 'الحالة', 'width' => 16],
-            ['key' => 'attachments', 'label' => 'المرفقات', 'width' => 10],
+            ['key' => 'review', 'label' => 'التصنيف الإداري', 'width' => 18], ['key' => 'attachments', 'label' => 'المرفقات', 'width' => 10],
         ], $rows, $scope, now()), $cycleId];
     }
 
@@ -300,7 +303,7 @@ class ExportsController extends Controller
             ['key' => 'recommendations', 'label' => 'التوصيات', 'width' => 45], ['key' => 'sent', 'label' => 'وقت الإرسال', 'width' => 22],
         ], $rows, [
             ['ملف الترشح', (string) $detail['summary']['reference_number']],
-            ['النتيجة', ! ($judging['ready'] ?? false) ? 'لم تُعتمد لجنة تحكيم هذا المحور بعد' : ($judging['decision'] !== null ? "متوسط التقييمات {$judging['decision']} من 100" : "أُرسل {$judging['received']} من {$judging['expected']}")],
+            ['النتيجة', ! ($judging['ready'] ?? false) ? (($judging['referred'] ?? false) ? 'لم تُعتمد لجنة تحكيم هذا المحور بعد' : 'لم يُرسل هذا الملف إلى التحكيم') : ($judging['decision'] !== null ? "متوسط التقييمات {$judging['decision']} من 100" : "أُرسل {$judging['received']} من {$judging['expected']}")],
             ['الحالة', 'حالة التحكيم وقت التصدير'],
         ], now()), (int) DB::table('applications')->where('id', $detail['summary']['id'])->value('cycle_id')];
     }

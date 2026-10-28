@@ -13,8 +13,10 @@ use App\Reports\ApplicationCard;
 use App\Reports\PdfWriter;
 use App\Reports\TableReport;
 use App\Reports\XlsxWriter;
+use App\Support\CanonicalJson;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Auth\PasswordBroker;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -117,7 +119,7 @@ class AdministrationTest extends TestCase
         $this->browser('POST', '/api/auth/login', ['email' => $this->admin->email, 'password' => 'password', 'redirect' => '/admin/committees'])->assertJsonPath('redirect', '/admin/committees');
         $this->signedIn = $this->admin;
         $this->read('/api/user')->assertJsonPath('data.admin_permissions', [
-            AdminAccess::VIEW_APPLICATIONS, AdminAccess::VIEW_AUDIT, AdminAccess::MANAGE_COMMITTEES,
+            AdminAccess::REVIEW_APPLICATIONS, AdminAccess::VIEW_APPLICATIONS, AdminAccess::VIEW_AUDIT, AdminAccess::MANAGE_COMMITTEES,
             AdminAccess::VIEW_SYSTEM_LOGS, AdminAccess::EXPORT_REPORTS, AdminAccess::VIEW_USERS,
         ]);
         $this->navigate('/admin/applications')->assertOk();
@@ -198,7 +200,8 @@ class AdministrationTest extends TestCase
         $page = $this->read("/api/admin/applications/{$mine['id']}")->assertOk();
         $this->assertSame($mine['reference_number'], $page->json('data.summary.reference_number'));
         $this->assertSame('creativity', $page->json('data.summary.domain.code'));
-        $this->assertSame('1500.50', $page->json('data.nomination_details.funding.amount_usd'));
+        $this->assertSame(['confirmed_at', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($page->json('data.nomination_details')));
+        $this->assertSame('pending', $page->json('data.review.status'));
         $this->assertSame(self::NATIONAL_ID, $page->json('data.basic_information.individual.national_id_number'), 'the full basic information, for administrators');
         $this->assertSame(['explanatory'], array_column($page->json('data.documentation.attachments'), 'kind'));
         $this->assertSame('pending', $page->json('data.documentation.attachments.0.scan_status'));
@@ -386,11 +389,13 @@ class AdministrationTest extends TestCase
         $this->assertSame(1, DB::table('cycle_user_roles')->whereNotNull('revoked_at')->whereNotNull('revocation_reason')->count());
         $this->approve('creativity')->assertUnprocessable();
 
-        // Approving when a project is already submitted starts judging, so the committee can no longer return to draft.
+        // Approval picks up no pending submission; once one is referred, judging starts, so the committee can no longer return to draft.
         $this->appoint('creativity', 'f@judges.example.org')->assertCreated();
         $this->approve('creativity')->assertOk();
-        $this->submitApplication($this->candidate);
+        $submitted = $this->submitApplication($this->candidate);
         $this->signInAdmin();
+        $this->assertSame(0, DB::table('judging_assignments')->count());
+        $this->refer($submitted['id'])->assertOk();
         $this->assertGreaterThan(0, DB::table('judging_assignments')->count());
         $this->adminPost('/committees/creativity/return-to-draft', [])->assertConflict()->assertJsonPath('code', 'judging_history');
         $this->assertSame('approved', DB::table('committees')->value('status'));
@@ -703,6 +708,262 @@ class AdministrationTest extends TestCase
         }
     }
 
+    public function test_a_submission_waits_for_the_administration_and_a_referral_reaches_only_its_own_committee_once(): void
+    {
+        [$creativityJudges, $creativity] = $this->approvedCommittee('creativity', ['c1', 'c2', 'c3']);
+        [$heritageJudges, $heritage] = $this->approvedCommittee('heritage', ['h1', 'h2', 'h3']);
+        $referred = $this->submitApplication($this->candidate);
+        $excluded = $this->submitApplication($this->person('omar@example.org'), ['title' => 'عمل سيُستبعد']);
+        $waiting = $this->submitApplication($this->person('rana@example.org'), ['domain' => 'heritage', 'subcategory' => 'tangible_heritage', 'title' => 'عمل قيد الانتظار']);
+
+        // Submission and approval assign nothing: every submission is pending.
+        $this->assertSame(0, DB::table('judging_assignments')->count());
+        $this->assertSame(['pending', 'pending', 'pending'], DB::table('applications')->orderBy('id')->pluck('review_status')->all());
+        $this->signIn($this->candidate->email);
+        $this->read('/api/candidate/review')->assertOk()->assertJsonPath('data.submission.processing', 'pending');
+
+        $this->signInAdmin();
+        $page = $this->read("/api/admin/applications/{$referred['id']}")->assertOk()
+            ->assertJsonPath('data.review.status', 'pending')->assertJsonPath('data.review.label', 'لم يُصنّف بعد')
+            ->assertJsonPath('data.review.target.committee.id', $creativity)->assertJsonPath('data.review.target.refusal', null);
+        $this->assertSame('creativity', $page->json('data.summary.domain.code'));
+
+        // The confirmed committee must still be the destination.
+        $this->review($referred['id'], 'refer', ['committee_id' => $heritage])->assertConflict()->assertJsonPath('code', 'committee_changed');
+        $this->assertSame(0, DB::table('judging_assignments')->count());
+
+        $this->review($referred['id'], 'refer', ['committee_id' => $creativity])->assertOk()->assertJsonPath('code', 'referred')
+            ->assertJsonPath('data.status', 'referred')->assertJsonPath('data.committee.id', $creativity)->assertJsonPath('data.decided_by', 'مدير الجائزة');
+        $this->review($referred['id'], 'refer', ['committee_id' => $creativity])->assertOk()->assertJsonPath('code', 'unchanged');
+        $this->assertSame([$creativity], DB::table('judging_assignments')->distinct()->pluck('committee_id')->map(fn ($id) => (int) $id)->all());
+        $this->assertSame([$referred['id']], DB::table('judging_assignments')->distinct()->pluck('application_id')->map(fn ($id) => (int) $id)->all());
+        $this->assertSame(3, DB::table('judging_assignments')->count(), 'one per current member, created once');
+        $row = DB::table('applications')->where('id', $referred['id'])->first();
+        $this->assertSame(['referred', 'admin', $this->admin->id, $creativity, 'in_judging'], [$row->review_status, $row->review_source, (int) $row->review_decided_by, (int) $row->review_committee_id, $row->status]);
+        $event = DB::table('audit_logs')->where('action', 'application.referred')->sole();
+        $this->assertSame([$this->admin->id, 'application', $referred['id'], $this->cycleId], [(int) $event->actor_user_id, $event->subject_type, (int) $event->subject_id, (int) $event->cycle_id]);
+
+        // The opposite decision is refused, both ways.
+        $this->review($referred['id'], 'exclude', ['reason' => 'خارج الشروط'])->assertConflict()->assertJsonPath('code', 'already_decided');
+        $this->review($excluded['id'], 'exclude', ['reason' => '  '])->assertUnprocessable()->assertJsonValidationErrors(['reason']);
+        $this->review($excluded['id'], 'exclude', ['reason' => 'العمل خارج مجالات الدورة.'])->assertOk()->assertJsonPath('code', 'excluded')
+            ->assertJsonPath('data.label', 'مستبعد — مؤرشف')->assertJsonPath('data.reason', 'العمل خارج مجالات الدورة.');
+        $this->review($excluded['id'], 'exclude', ['reason' => 'سبب آخر'])->assertOk()->assertJsonPath('code', 'unchanged')->assertJsonPath('data.reason', 'العمل خارج مجالات الدورة.');
+        $this->review($excluded['id'], 'refer', ['committee_id' => $creativity])->assertConflict()->assertJsonPath('code', 'already_decided');
+        $this->assertSame(0, DB::table('judging_assignments')->where('application_id', $excluded['id'])->count());
+        // Never sent to judging: no judge is listed for it, unlike the referred one.
+        $this->read("/api/admin/applications/{$excluded['id']}")->assertJsonPath('data.judging.referred', false)->assertJsonPath('data.judging.scores', []);
+        $this->read("/api/admin/applications/{$referred['id']}")->assertJsonPath('data.judging.ready', true)->assertJsonCount(3, 'data.judging.scores');
+        $exclusion = DB::table('audit_logs')->where('action', 'application.excluded')->sole();
+        $this->assertSame([$this->admin->id, $excluded['id'], $this->cycleId], [(int) $exclusion->actor_user_id, (int) $exclusion->subject_id, (int) $exclusion->cycle_id]);
+        $this->assertStringNotContainsString('خارج مجالات', (string) $exclusion->after_data, 'the reason is not copied into the log');
+
+        // Archived, not hidden: every classification stays in the table and its exports.
+        $this->assertSame(['excluded', 'pending', 'referred'], collect($this->read("/api/admin/applications?cycle={$this->cycleId}")->assertOk()->json('data'))->pluck('review')->sort()->values()->all());
+        $this->read("/api/admin/applications?cycle={$this->cycleId}&review=excluded")->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $excluded['id']);
+        $this->read('/api/admin/applications?review=unknown')->assertUnprocessable();
+        $path = $this->read("/api/admin/exports/applications?format=xlsx&cycle={$this->cycleId}&review=excluded")->assertOk()->baseResponse->getFile()->getPathname();
+        $sheet = $this->sheetRows($path);
+        @unlink($path);
+        $this->assertSame('مستبعد — مؤرشف', collect($sheet)->firstWhere(0, 'التصنيف الإداري')[1] ?? null, 'the filter is stated');
+        $this->assertSame(1, collect($sheet)->filter(fn (array $cells) => in_array('مستبعد — مؤرشف', $cells, true) && in_array($excluded['reference_number'], $cells, true))->count());
+        $this->read("/api/admin/applications/{$excluded['id']}/card")->assertOk();
+
+        // Judges: only the referred application, through every endpoint.
+        $this->signIn($creativityJudges[0]->email);
+        $this->read('/api/judge/projects')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $referred['id']);
+        $this->read("/api/judge/projects/{$referred['id']}")->assertOk()->assertJsonMissingPath('data.review');
+        foreach ([[$creativityJudges[0], $excluded['id']], [$heritageJudges[0], $waiting['id']]] as [$judge, $blocked]) {
+            $this->signIn($judge->email);
+            $this->read('/api/judge/projects')->assertOk()->assertJsonMissing(['id' => $blocked]);
+            $this->read("/api/judge/projects/{$blocked}")->assertNotFound();
+            $link = (int) DB::table('file_links')->where('application_version_id', DB::table('applications')->where('id', $blocked)->value('current_version_id'))->value('id');
+            $this->browser('GET', "/api/judge/projects/{$blocked}/files/{$link}", ['account_context' => AccountContext::for($judge)])->assertNotFound();
+            $this->browser('POST', "/api/judge/projects/{$blocked}/evaluation", [
+                'account_context' => AccountContext::for($judge), 'score' => '50', 'notes' => 'ملاحظة', 'recommendations' => 'توصية', 'excluded' => false,
+            ])->assertNotFound();
+        }
+        $this->assertSame(0, DB::table('evaluations')->count());
+
+        // The owner sees a truthful status, never the reason.
+        $this->signIn('omar@example.org');
+        $review = $this->read('/api/candidate/review')->assertOk()->assertJsonPath('data.submission.processing', 'excluded');
+        $this->assertStringNotContainsString('خارج مجالات', (string) $review->getContent());
+    }
+
+    public function test_review_decisions_need_their_permission_a_ready_committee_and_the_displayed_account(): void
+    {
+        $pending = $this->submitApplication($this->candidate, ['domain' => 'culture_and_arts', 'subcategory' => 'culture']);
+        $this->signInAdmin();
+
+        // No committee, then a draft one: explained, and the application stays pending.
+        $this->read("/api/admin/applications/{$pending['id']}")->assertJsonPath('data.review.target.refusal', 'committee_missing');
+        $this->review($pending['id'], 'refer', ['committee_id' => 1])->assertConflict()->assertJsonPath('code', 'committee_missing');
+        $this->adminPost('/committees', ['domain' => 'culture_and_arts', 'name' => 'لجنة الثقافة'])->assertCreated();
+        $committee = (int) DB::table('committees')->value('id');
+        $this->read("/api/admin/applications/{$pending['id']}")->assertJsonPath('data.review.target.refusal', 'committee_not_approved');
+        $this->review($pending['id'], 'refer', ['committee_id' => $committee])->assertConflict()->assertJsonPath('code', 'committee_not_approved');
+        $this->assertSame('pending', DB::table('applications')->where('id', $pending['id'])->value('review_status'));
+
+        // Another account's page, and a missing application.
+        $this->browser('POST', "/api/admin/applications/{$pending['id']}/review/exclude", ['account_context' => 'stale', 'reason' => 'سبب'])
+            ->assertConflict()->assertJsonPath('code', 'account_mismatch');
+        $this->review(999999, 'exclude', ['reason' => 'سبب'])->assertNotFound();
+
+        // Without applications.review (viewing alone is not enough).
+        $permission = DB::table('permissions')->where('code', AdminAccess::REVIEW_APPLICATIONS)->value('id');
+        DB::table('role_permissions')->where('permission_id', $permission)->delete();
+        $this->read("/api/admin/applications/{$pending['id']}")->assertOk();
+        $this->review($pending['id'], 'exclude', ['reason' => 'سبب'])->assertForbidden();
+
+        // Candidates and judges.
+        $judge = User::factory()->create(['email' => 'judge@example.org']);
+        $this->appoint('culture_and_arts', $judge->email, existing: true)->assertCreated();
+        foreach ([$this->candidate, $judge] as $user) {
+            $this->signIn($user->email);
+            $this->browser('POST', "/api/admin/applications/{$pending['id']}/review/exclude", ['account_context' => AccountContext::for($user), 'reason' => 'سبب'])->assertForbidden();
+        }
+        $this->assertSame([0, 0], [DB::table('audit_logs')->whereIn('action', ['application.referred', 'application.excluded'])->count(), DB::table('judging_assignments')->count()]);
+        $this->assertSame('pending', DB::table('applications')->where('id', $pending['id'])->value('review_status'));
+    }
+
+    public function test_the_backfill_keeps_existing_judging_history_as_a_legacy_referral(): void
+    {
+        [$judges, $committee] = $this->approvedCommittee('creativity', ['l1', 'l2', 'l3']);
+        $judged = $this->submitApplication($this->candidate);
+        $waiting = $this->submitApplication($this->person('omar@example.org'), ['title' => 'لم يُحكَّم']);
+        $this->readyToSubmit($this->person('draft@example.org'), ['title' => 'مسودة'], confirmStage3: false);
+        $this->signInAdmin();
+        $this->review($judged['id'], 'refer', ['committee_id' => $committee])->assertOk();
+        $this->signIn($judges[0]->email);
+        $this->browser('POST', "/api/judge/projects/{$judged['id']}/evaluation", [
+            'account_context' => AccountContext::for($judges[0]), 'score' => null, 'notes' => 'مخالفة', 'recommendations' => 'يُستبعد', 'excluded' => true,
+        ])->assertOk();
+        $history = [DB::table('judging_assignments')->orderBy('id')->get(), DB::table('evaluations')->get(), DB::table('evaluation_scores')->get()];
+        $firstAssigned = DB::table('judging_assignments')->min('assigned_at');
+
+        // The state before the classification existed: history, no classification.
+        DB::table('applications')->update(['review_status' => null, 'review_source' => null, 'review_decided_by' => null, 'review_decided_at' => null, 'review_reason' => null, 'review_committee_id' => null]);
+        DB::table('applications')->where('id', $waiting['id'])->update(['status' => 'in_judging']);
+        $migration = require database_path('migrations/2026_10_29_900001_add_application_review_classification.php');
+
+        $counts = $migration->backfill();
+
+        $this->assertSame(['pending' => 1, 'legacy_referred' => 1, 'in_judging_without_assignments' => 1, 'assignments_in_several_committees' => 0], $counts);
+        $row = DB::table('applications')->where('id', $judged['id'])->first();
+        $this->assertSame(['referred', 'legacy', null, $committee], [$row->review_status, $row->review_source, $row->review_decided_by, (int) $row->review_committee_id], 'no administrator is invented');
+        $this->assertEquals($firstAssigned, $row->review_decided_at, 'the time of the first real assignment');
+        $this->assertSame('pending', DB::table('applications')->where('id', $waiting['id'])->value('review_status'), "a judge's exclusion is not an administrative one");
+        $this->assertNull(DB::table('applications')->where('title', 'مسودة')->value('review_status'), 'drafts stay unclassified');
+        $this->assertEquals($history, [DB::table('judging_assignments')->orderBy('id')->get(), DB::table('evaluations')->get(), DB::table('evaluation_scores')->get()]);
+        $this->assertSame('exclude', DB::table('evaluations')->value('recommendation'));
+        $this->assertSame(['pending' => 0, 'legacy_referred' => 0, 'in_judging_without_assignments' => 0, 'assignments_in_several_committees' => 0], $migration->backfill(), 'classified applications are left alone');
+
+        // The legacy referral still reaches its judges; the admin page says it is legacy.
+        $this->signIn($judges[1]->email);
+        $this->read('/api/judge/projects')->assertOk()->assertJsonPath('data.0.id', $judged['id']);
+        $this->signInAdmin();
+        $this->read("/api/admin/applications/{$judged['id']}")->assertJsonPath('data.review.legacy', true)->assertJsonPath('data.review.decided_by', null);
+    }
+
+    public function test_the_historical_purge_removes_only_the_retired_values_and_rehashes_the_snapshot(): void
+    {
+        [, $committee] = $this->approvedCommittee('creativity', ['p1', 'p2', 'p3']);
+        $submitted = $this->submitApplication($this->candidate);
+        $this->readyToSubmit($this->person('draft@example.org'), ['title' => 'مسودة'], confirmStage3: false);
+        $this->signInAdmin();
+        $this->review($submitted['id'], 'refer', ['committee_id' => $committee])->assertOk();
+        $draft = (int) DB::table('applications')->where('title', 'مسودة')->value('id');
+
+        // What the earlier form stored, written as it was then.
+        $version = DB::table('application_versions')->sole();
+        $legacy = json_decode((string) $version->data_snapshot, true);
+        $legacy['schema'] = 'candidate-submission/1';
+        $legacy['nomination_details'] += [
+            'implementation' => ['state' => 'ongoing', 'started_on' => '2021-09-15', 'ended_on' => null],
+            'locations' => [['country_code' => 'SY', 'governorate' => 'SY-DI', 'governorate_name' => 'دمشق', 'locality' => 'دمشق القديمة', 'address' => 'حي القيمرية']],
+            'funding' => ['type' => 'fully_funded', 'funder_name' => 'مؤسسة الروّاد', 'amount_usd' => '1500.50'],
+            'partnerships' => ['has_partnerships' => true, 'items' => [['name' => 'جمعية العاديات', 'contribution' => 'المكان']]],
+        ];
+        $oldHash = CanonicalJson::hash($legacy);
+        DB::table('application_versions')->where('id', $version->id)->update(['data_snapshot' => json_encode($legacy, JSON_UNESCAPED_UNICODE), 'content_hash' => $oldHash]);
+        foreach ([$submitted['id'], $draft] as $application) {
+            DB::table('application_locations')->insert(['application_id' => $application, 'country_code' => 'SY', 'governorate' => 'SY-DI', 'locality' => 'دمشق القديمة']);
+            DB::table('application_partnerships')->insert(['application_id' => $application, 'position' => 1, 'partner_name' => 'جمعية العاديات']);
+        }
+        $confirmed = DB::table('audit_logs')->where('action', 'nomination_details.confirmed')->orderBy('id')->get();
+        foreach ($confirmed as $row) {
+            DB::table('audit_logs')->where('id', $row->id)->update(['after_data' => json_encode(json_decode((string) $row->after_data, true) + ['funding_type' => 'fully_funded'], JSON_UNESCAPED_UNICODE)]);
+        }
+        $unrelated = DB::table('audit_logs')->insertGetId(['action' => 'award_cycle.geography_set', 'subject_type' => 'award_cycle', 'subject_id' => $this->cycleId,
+            'after_data' => json_encode(['implementation_country' => 'SY', 'funding_type' => 'kept']), 'occurred_at' => now()->format('Y-m-d H:i:s.u')]);
+        $retiredColumns = ['funding_type' => 'fully_funded', 'funder_name' => 'مؤسسة الروّاد', 'funding_amount_usd' => '1500.50', 'has_partnerships' => true,
+            'implementation_started_on' => '2021-09-15', 'implementation_status' => 'ongoing'];
+        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
+            // The retired columns refuse any new value on these engines.
+            try {
+                DB::table('applications')->where('id', $draft)->update(['funding_type' => 'self_funded']);
+                $this->fail('chk_applications_retired_work should refuse the value');
+            } catch (QueryException) {
+                $this->addToAssertionCount(1);
+            }
+        } else {
+            DB::table('applications')->whereIn('id', [$submitted['id'], $draft])->update($retiredColumns);
+        }
+        $kept = [DB::table('applications')->where('id', $submitted['id'])->first(['title', 'purpose_and_mission', 'objectives', 'documented_impact', 'status', 'review_status', 'reference_number', 'first_submitted_at']),
+            DB::table('judging_assignments')->orderBy('id')->get(), DB::table('file_links')->orderBy('id')->get(), DB::table('candidate_profiles')->get(), DB::table('applicant_individual_details')->get()];
+
+        $migration = require database_path('migrations/2026_10_29_900003_purge_retired_nomination_fields.php');
+        $counts = $migration->purge();
+
+        $this->assertSame(['locations' => 2, 'partnerships' => 2, 'versions' => 1, 'form_snapshots' => 0, 'audit_rows' => count($confirmed), 'unverified_old_hashes' => 0],
+            array_diff_key($counts, ['applications' => 0]));
+        foreach (DB::table('applications')->get() as $application) {
+            foreach (array_keys($retiredColumns) + ['implementation_ended_on'] as $column) {
+                $this->assertNull($application->{$column}, $column);
+            }
+        }
+        $this->assertSame([0, 0], [DB::table('application_locations')->count(), DB::table('application_partnerships')->count()]);
+
+        $after = DB::table('application_versions')->sole();
+        $snapshot = json_decode((string) $after->data_snapshot, true);
+        $expected = $legacy;
+        unset($expected['nomination_details']['implementation'], $expected['nomination_details']['locations'], $expected['nomination_details']['funding'], $expected['nomination_details']['partnerships']);
+        $this->assertSame($expected, $snapshot, 'only the retired keys go; the rest is unchanged');
+        $this->assertSame(CanonicalJson::hash($snapshot), $after->content_hash);
+        $this->assertNotSame($oldHash, $after->content_hash);
+        foreach (['id', 'application_id', 'version_number', 'submission_type', 'submitted_by', 'submitted_at', 'form_snapshot', 'created_at'] as $column) {
+            $this->assertEquals($version->{$column}, $after->{$column}, $column);
+        }
+        foreach (['مؤسسة الروّاد', '1500.50', 'العاديات', 'القيمرية', '2021-09-15'] as $value) {
+            $this->assertStringNotContainsString($value, (string) $after->data_snapshot);
+            $this->assertSame(0, DB::table('audit_logs')->where('after_data', 'like', "%{$value}%")->count(), "no copy of {$value} is kept");
+        }
+        $record = collect(DB::table('audit_logs')->where('action', 'nomination_fields.purged')->pluck('after_data'))->map(fn ($data) => json_decode((string) $data, true));
+        $this->assertSame([['application_version_id' => (int) $version->id, 'old_hash' => $oldHash, 'new_hash' => $after->content_hash, 'old_hash_verified' => true]], $record->first(fn (array $data): bool => is_array($data['versions'] ?? null))['versions']);
+
+        // Audit events stay, without the retired key; other events are untouched.
+        foreach (DB::table('audit_logs')->where('action', 'nomination_details.confirmed')->orderBy('id')->get() as $index => $row) {
+            $this->assertSame(json_decode((string) $confirmed[$index]->after_data, true), json_decode((string) $row->after_data, true), 'the event is kept, only funding_type goes');
+        }
+        $this->assertSame(['implementation_country' => 'SY', 'funding_type' => 'kept'], json_decode((string) DB::table('audit_logs')->where('id', $unrelated)->value('after_data'), true));
+        $this->assertEquals($kept, [DB::table('applications')->where('id', $submitted['id'])->first(['title', 'purpose_and_mission', 'objectives', 'documented_impact', 'status', 'review_status', 'reference_number', 'first_submitted_at']),
+            DB::table('judging_assignments')->orderBy('id')->get(), DB::table('file_links')->orderBy('id')->get(), DB::table('candidate_profiles')->get(), DB::table('applicant_individual_details')->get()]);
+
+        // Idempotent; the admin and judge views show what remains.
+        $this->assertSame(0, array_sum(array_intersect_key($migration->purge(), array_flip(['applications', 'locations', 'partnerships', 'versions', 'audit_rows']))));
+        $this->read("/api/admin/applications/{$submitted['id']}")->assertOk()->assertJsonMissingPath('data.nomination_details.funding')
+            ->assertJsonPath('data.summary.content_hash', $after->content_hash);
+
+        // A rollback that would need the removed values is refused.
+        try {
+            $migration->down();
+            $this->fail('the rollback should be refused');
+        } catch (RuntimeException $refusal) {
+            $this->assertStringContainsString('cannot recreate', $refusal->getMessage());
+        }
+    }
+
     public function test_the_application_card_uses_the_submitted_version_and_is_audited(): void
     {
         $submitted = $this->submitApplication($this->candidate, ['title' => 'العنوان كما أُرسل']);
@@ -787,6 +1048,44 @@ class AdministrationTest extends TestCase
     }
 
     // ---------- helpers ----------
+
+    /**
+     * An approved judging committee of existing accounts: [judges, committee id].
+     *
+     * @param  list<string>  $names
+     * @return array{0: list<User>, 1: int}
+     */
+    private function approvedCommittee(string $domain, array $names): array
+    {
+        $this->signInAdmin();
+        $this->adminPost('/committees', ['domain' => $domain, 'name' => "لجنة {$domain}"])->assertCreated();
+        $judges = [];
+        foreach ($names as $name) {
+            $judges[] = $judge = User::factory()->create(['email' => "{$name}@judges.example.org", 'name' => "حكَم {$name}"]);
+            $this->appoint($domain, $judge->email, existing: true)->assertCreated();
+        }
+        $this->approve($domain)->assertOk();
+
+        return [$judges, (int) DB::table('committees')->where('name_ar', "لجنة {$domain}")->value('id')];
+    }
+
+    /**
+     * «إرسال إلى اللجنة» (refer) or «استبعاد وأرشفة» (exclude), from the signed-in administrator's page.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function review(int $applicationId, string $decision, array $payload): TestResponse
+    {
+        return $this->browser('POST', "/api/admin/applications/{$applicationId}/review/{$decision}", $payload + ['account_context' => AccountContext::for($this->admin)]);
+    }
+
+    /**
+     * Refers to the committee the page shows.
+     */
+    private function refer(int $applicationId): TestResponse
+    {
+        return $this->review($applicationId, 'refer', ['committee_id' => (int) $this->read("/api/admin/applications/{$applicationId}")->json('data.review.target.committee.id')]);
+    }
 
     /**
      * @return list<list<mixed>>

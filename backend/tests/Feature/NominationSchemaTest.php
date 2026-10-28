@@ -13,7 +13,7 @@ use Tests\UsesDisposableSchemaDatabase;
  * database: applying them on a deployed schema without touching existing
  * applications, refusing a rollback that would lose Stage 2 data, and the
  * constraints that keep subcategories inside their domain and cycle and
- * funding declarations consistent.
+ * retired work columns empty.
  */
 class NominationSchemaTest extends TestCase
 {
@@ -167,36 +167,28 @@ class NominationSchemaTest extends TestCase
         $this->assertDatabaseRejects('parent_in_use', fn () => $this->db('cycle_domain_subcategories')->where('id', $arts)->delete(), 'subcategory in use');
     }
 
-    public function test_funding_declarations_and_journeys_are_consistent(): void
+    public function test_retired_work_columns_refuse_values_and_journeys_are_consistent(): void
     {
         $this->ensurePlatformSchema();
         $this->schemaDb()->beginTransaction();
         $cycle = $this->cycle();
         $domain = $this->cycleDomain($cycle);
 
-        $valid = [
-            ['fully_funded', 'جهة', '1500.50'], ['partially_funded', 'جهة', '0.01'], ['self_funded', null, '999999999999.99'], ['not_needed', null, null], [null, null, null],
+        // The funding, partnership and implementation-schedule columns are
+        // retired (2026_10_29_900003): only NULL is accepted, whatever the
+        // earlier funding checks allowed.
+        $this->application($cycle, $domain, ['funding_type' => null, 'funder_name' => null, 'funding_amount_usd' => null]);
+        $retired = [
+            'funding type' => ['funding_type' => 'not_needed'],
+            'funded declaration' => ['funding_type' => 'fully_funded', 'funder_name' => 'جهة', 'funding_amount_usd' => '1500.50'],
+            'self-funded declaration' => ['funding_type' => 'self_funded', 'funding_amount_usd' => '10.00'],
+            'partnership answer' => ['has_partnerships' => false],
+            'start date' => ['implementation_started_on' => '2021-09-15'],
+            'end date' => ['implementation_ended_on' => '2022-01-01'],
+            'implementation state' => ['implementation_status' => 'ongoing'],
         ];
-        foreach ($valid as [$type, $funder, $amount]) {
-            $id = $this->application($cycle, $domain, ['funding_type' => $type, 'funder_name' => $funder, 'funding_amount_usd' => $amount]);
-            $this->assertSame($amount, $this->db('applications')->where('id', $id)->value('funding_amount_usd'), "exact amount for {$type}");
-        }
-
-        $invalid = [
-            'unknown type' => ['grant', null, null],
-            'funded without funder' => ['fully_funded', null, '10.00'],
-            'funded without amount' => ['partially_funded', 'جهة', null],
-            'self-funded with funder' => ['self_funded', 'جهة', '10.00'],
-            'self-funded without amount' => ['self_funded', null, null],
-            'no funding with amount' => ['not_needed', null, '10.00'],
-            'no funding with funder' => ['not_needed', 'جهة', null],
-            'values without a type' => [null, 'جهة', '10.00'],
-            'zero amount' => ['self_funded', null, '0.00'],
-            'negative amount' => ['self_funded', null, '-5.00'],
-            'empty funder' => ['fully_funded', '', '10.00'],
-        ];
-        foreach ($invalid as $label => [$type, $funder, $amount]) {
-            $this->assertDatabaseRejects('check_failed', fn () => $this->application($cycle, $domain, ['funding_type' => $type, 'funder_name' => $funder, 'funding_amount_usd' => $amount]), $label);
+        foreach ($retired as $label => $values) {
+            $this->assertDatabaseRejects('check_failed', fn () => $this->application($cycle, $domain, $values), $label);
         }
 
         // Partnerships: positions 1–10, unique per application.

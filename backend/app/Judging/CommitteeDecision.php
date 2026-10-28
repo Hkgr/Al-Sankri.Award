@@ -12,20 +12,26 @@ use Illuminate\Support\Facades\DB;
  * the participant is non-compliant: that judge records no mark. Once every
  * current member has sent, the decision is their average, unless any of
  * them excluded the participant, in which case the result is exclusion.
+ *
+ * Only an application the administration referred is judged, by the
+ * committee it was referred to; for any other, `referred` is false and no
+ * judge is listed (they never received it).
  */
 class CommitteeDecision
 {
     /**
-     * @return array{ready: bool, expected: int, received: int, decision: string|null, excluded: bool, scores: list<array{name: string, score: string|null, notes: string|null, recommendations: string|null, excluded: bool, sent_at: string|null}>}
+     * @return array{ready: bool, referred: bool, expected: int, received: int, decision: string|null, excluded: bool, scores: list<array{name: string, score: string|null, notes: string|null, recommendations: string|null, excluded: bool, sent_at: string|null}>}
      */
     public function forApplication(Application $application): array
     {
-        $empty = ['ready' => false, 'expected' => 0, 'received' => 0, 'decision' => null, 'excluded' => false, 'scores' => []];
-        if ($application->current_version_id === null) {
+        $referred = $application->review_status === Application::REVIEW_REFERRED && $application->review_committee_id !== null;
+        $empty = ['ready' => false, 'referred' => $referred, 'expected' => 0, 'received' => 0, 'decision' => null, 'excluded' => false, 'scores' => []];
+        if ($application->current_version_id === null || ! $referred) {
             return $empty;
         }
 
         $committee = DB::table('committees')
+            ->where('id', $application->review_committee_id)
             ->where('cycle_domain_id', $application->cycle_domain_id)
             ->where('type', 'judging')
             ->where('status', 'approved')
@@ -80,6 +86,7 @@ class CommitteeDecision
 
         return [
             'ready' => true,
+            'referred' => true,
             'expected' => $members->count(),
             'received' => $received,
             'decision' => $complete && ! $excluded ? Scores::average($marks) : null,

@@ -26,7 +26,7 @@ class CandidateOverviewController extends Controller
                 'basic_information' => $profiles->stage($request->user()),
                 'nomination_details' => $nominations->stage($request->user()),
                 'documentation' => $documentation->stage($request->user()),
-                // The receipt only: reference number, time and version.
+                // The receipt only: reference number, time, version and processing status.
                 'submission' => $journey === null ? null : $submissions->receipt(Application::query()->findOrFail($journey->application_id)),
             ],
         ]);
