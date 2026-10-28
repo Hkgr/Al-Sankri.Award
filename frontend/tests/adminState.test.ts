@@ -45,3 +45,19 @@ test('a restored address (back, forward, return link) decides the scope, and «a
   assert.equal(tableScope(all, 2, cycles), 'all')
   assert.equal(tableQuery(all, 'all'), 'domain=creativity', 'no cycle filter for «all»; a domain some cycle has is kept')
 })
+
+test('users: the header cycle, the address and the request agree, and every account stays in scope', async () => {
+  const { usersQuery, usersScope, withUsersCycle } = await import('../src/pages/admin/users/usersState.ts')
+  const ids = [2, 1]
+  // Header → cycle 2: page reset, other filters kept (no account filter depends on the cycle).
+  const after = `?${withUsersCycle('?cycle=1&progress=ready&role=judge&page=4', 2)}`
+  assert.equal(usersScope(after, 1, ids), 2)
+  assert.equal(usersQuery(after, usersScope(after, 1, ids)), 'cycle=2&role=judge&progress=ready')
+  // A restored address decides; «all», unknown or missing fall back to the selected cycle (progress is per cycle).
+  assert.equal(usersScope('?cycle=1', 2, ids), 1)
+  assert.equal(usersScope('?cycle=all', 2, ids), 2)
+  assert.equal(usersScope('?cycle=99', 2, ids), 2)
+  // No cycle exists: no cycle in the request, accounts still listed.
+  assert.equal(usersScope('', null, []), null)
+  assert.equal(usersQuery('?q=layla', null), 'q=layla')
+})

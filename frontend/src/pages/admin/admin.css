@@ -826,3 +826,142 @@ a.admin-nav__link[aria-current='page']:hover {
   color: var(--sa-color-error);
   font-weight: var(--sa-font-weight-medium);
 }
+
+/* ---------- Users ---------- */
+
+.admin-verified {
+  display: inline-block;
+  margin-inline-start: var(--sa-space-2);
+  padding: 0 var(--sa-space-1);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
+  border-radius: var(--sa-radius-sm);
+  font-size: var(--sa-font-size-caption);
+  white-space: nowrap;
+}
+
+.admin-verified[data-verified='true'] {
+  border-color: var(--sa-color-success);
+  color: var(--sa-color-success);
+}
+
+.admin-verified[data-verified='false'] {
+  border-color: var(--sa-color-text-accent);
+  color: var(--sa-color-text-accent);
+}
+
+.admin-state[data-state='active'] {
+  border-color: var(--sa-color-success);
+  background: var(--sa-color-success-surface);
+  color: var(--sa-color-success);
+}
+
+.admin-state[data-state='disabled'] {
+  border-color: var(--sa-color-error);
+  background: var(--sa-color-error-surface);
+  color: var(--sa-color-error);
+}
+
+.admin-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sa-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-role {
+  padding: 0 var(--sa-space-2);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
+  border-radius: var(--sa-radius-sm);
+  background: var(--sa-color-surface-raised);
+  font-size: var(--sa-font-size-caption);
+  white-space: nowrap;
+}
+
+.admin-role[data-role='award_admin'] {
+  border-color: var(--sa-brand-deep-green);
+  background: var(--sa-brand-deep-green);
+  color: var(--sa-color-text-on-dark);
+}
+
+/* Cycle-scoped roles name their cycle and domain. */
+.admin-role--cycle {
+  display: grid;
+  border-color: var(--sa-color-text-accent);
+  background: var(--sa-ext-gold-tint);
+  white-space: normal;
+}
+
+.admin-role__scope {
+  color: var(--sa-color-text-muted);
+}
+
+.admin-progress {
+  min-inline-size: 12rem;
+}
+
+.admin-progress__label {
+  display: block;
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.admin-progress__label[data-state='submitted'],
+.admin-progress__label[data-state='ready'] {
+  color: var(--sa-color-success);
+}
+
+.admin-progress__label[data-state='not_required'] {
+  color: var(--sa-color-text-muted);
+  font-weight: var(--sa-font-weight-regular);
+}
+
+.admin-stages {
+  display: flex;
+  gap: var(--sa-space-1);
+  margin: var(--sa-space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-stages li {
+  display: grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
+  border-radius: 50%;
+  font-size: var(--sa-font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The state is also in each indicator's text, not in colour alone. */
+.admin-stages li[data-state='complete'] {
+  border-color: var(--sa-color-success);
+  background: var(--sa-color-success);
+  color: var(--sa-color-text-on-dark);
+}
+
+.admin-stages li[data-state='incomplete'] {
+  border-color: var(--sa-color-text-accent);
+  border-style: dashed;
+  background: var(--sa-ext-gold-tint);
+  color: var(--sa-color-text-accent);
+}
+
+.admin-submitted {
+  display: block;
+  color: var(--sa-color-success);
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.admin-submission-time {
+  display: block;
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-caption);
+}
+
+.admin-row-link {
+  display: block;
+  margin-block-start: var(--sa-space-1);
+}

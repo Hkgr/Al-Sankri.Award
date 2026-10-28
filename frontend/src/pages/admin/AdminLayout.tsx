@@ -18,6 +18,7 @@ const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري'
 /** In this exact order; the last two are not available in this phase. */
 const NAV_ITEMS: { href: string; label: string; soon?: boolean }[] = [
   { href: '/admin', label: 'الرئيسية' },
+  { href: '/admin/users', label: 'المستخدمون' },
   { href: '/admin/applications', label: 'ملفات الترشح' },
   { href: '/admin/committees', label: 'لجان الحكام' },
   { href: '/admin/schedule', label: 'المواعيد', soon: true },

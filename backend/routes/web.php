@@ -36,6 +36,7 @@ Route::middleware('judge.page')->group(function () {
 
 Route::middleware('admin.page')->group(function () {
     Route::get('/admin', SpaController::class);
+    Route::get('/admin/users', SpaController::class);
     Route::get('/admin/applications', SpaController::class);
     Route::get('/admin/applications/{application}', SpaController::class)->whereNumber('application');
     Route::get('/admin/committees', SpaController::class);

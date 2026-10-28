@@ -30,7 +30,7 @@ export type RefreshOptions = { keepAccount?: boolean }
 /** 'account_changed' when keepAccount found another account signed in (nothing was updated). */
 export type RefreshResult = 'updated' | 'account_changed'
 
-export type AdminPermission = 'applications.view_submitted' | 'committees.manage_judging'
+export type AdminPermission = 'applications.view_submitted' | 'committees.manage_judging' | 'users.view_registered'
 
 /**
  * Where a signed-in account belongs: the administration dashboard, the

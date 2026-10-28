@@ -135,7 +135,7 @@ trait UsesDisposableSchemaDatabase
      *
      * @var list<string>
      */
-    protected const ADMINISTRATION_MIGRATIONS = ['2026_10_28_600001_provision_administration_and_judge_roles'];
+    protected const ADMINISTRATION_MIGRATIONS = ['2026_10_28_600001_provision_administration_and_judge_roles', '2026_10_28_700001_add_registered_users_permission'];
 
     /**
      * @var list<string>

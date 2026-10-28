@@ -4,10 +4,16 @@ import { usePageTitle } from '../auth/usePageTitle'
 import type { AdminCycle } from './adminApi'
 import { cycleLabel, CYCLE_STATUS_LABELS } from './adminApi'
 
-/** A short welcome with the two modules of this phase. */
+/** A short welcome with the available modules. */
 export function AdminHomePage({ user, cycle }: { user: User; cycle: AdminCycle | null }) {
   usePageTitle('لوحة الإدارة')
   const modules = [
+    {
+      href: '/admin/users',
+      title: 'المستخدمون',
+      text: 'كل الحسابات المسجّلة للعرض فقط: الأدوار الحالية، وحالة الحساب، وتقدّم الترشح في الدورة المختارة.',
+      allowed: user.admin_permissions.includes('users.view_registered'),
+    },
     {
       href: '/admin/applications',
       title: 'ملفات الترشح',
