@@ -5,6 +5,8 @@ import { SiteFooter } from './components/layout/SiteFooter'
 import { SiteHeader } from './components/layout/SiteHeader'
 import { Link } from './lib/router'
 import { useRouter } from './lib/useRouter'
+import { AdminApp } from './pages/admin/AdminApp'
+import { isAdminPath } from './pages/admin/adminPaths'
 import { AccountPage } from './pages/auth/AccountPage'
 import { AuthLayout } from './pages/auth/AuthLayout'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -83,8 +85,9 @@ function CurrentPage() {
 function App() {
   const { location } = useRouter()
 
-  // The candidate area has its own layout (CandidateLayout).
+  // The candidate and administration areas have their own layouts.
   if (['/dashboard', '/dashboard/basic-information', '/dashboard/nomination-details', '/dashboard/documentation', '/dashboard/review'].includes(location.pathname)) return <CandidateApp />
+  if (isAdminPath(location.pathname)) return <AdminApp />
 
   return (
     <>

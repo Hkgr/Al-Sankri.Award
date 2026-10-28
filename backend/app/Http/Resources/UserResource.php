@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Admin\AdminAccess;
 use App\Auth\CandidateRole;
 use App\Auth\GoogleAccounts;
 use App\Candidates\AccountContext;
@@ -31,6 +32,9 @@ class UserResource extends JsonResource
             'has_password' => $this->hasPassword(),
             'google_linked' => app(GoogleAccounts::class)->isLinked($this->resource),
             'is_candidate' => app(CandidateRole::class)->isHeldBy($this->resource),
+            // Codes only; current role grants decide them on the server.
+            'admin_permissions' => app(AdminAccess::class)->permissionsOf($this->resource),
+            'is_judge' => app(AdminAccess::class)->isJudge((int) $this->resource->getKey()),
             // Opaque; candidate pages send it back so the server can refuse
             // requests made under a stale account snapshot.
             'account_context' => AccountContext::for($this->resource),

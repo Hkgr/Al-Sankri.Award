@@ -6,7 +6,11 @@ export type Location = {
   hash: string
 }
 
-export type NavigateOptions = { replace?: boolean }
+/**
+ * keepPosition: the same page with new query values (a table's filters):
+ * the scroll position and focus stay where they are.
+ */
+export type NavigateOptions = { replace?: boolean; keepPosition?: boolean }
 
 export type RouterValue = {
   location: Location

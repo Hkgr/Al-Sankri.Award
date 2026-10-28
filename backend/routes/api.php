@@ -1,8 +1,12 @@
 <?php
 
+use App\Admin\AdminAccess;
 use App\Http\Controllers\Account\GoogleLinkController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountPolicyController;
+use App\Http\Controllers\Admin\AdminContextController;
+use App\Http\Controllers\Admin\ApplicationsController;
+use App\Http\Controllers\Admin\CommitteesController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\AuthOptionsController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
@@ -99,4 +103,36 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
     Route::get('review/journey', [SubmissionController::class, 'show'])->middleware(['candidate.context', 'documentation.journey']);
     Route::post('submission', [SubmissionController::class, 'store'])
         ->middleware(['throttle:candidate-confirm', 'candidate.context', 'documentation.journey']);
+});
+
+/*
+ * The administration dashboard (first phase: «ملفات الترشح» and
+ * «لجان الحكام»). Every endpoint needs an active account holding the named
+ * permission through a current role grant (App\Admin\AdminAccess);
+ * candidates and judges are refused. Writes also carry the page's
+ * account_context, so a page showing another account never changes
+ * anything, and are attributed to the signed-in administrator.
+ */
+Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admin')->group(function () {
+    Route::get('context', AdminContextController::class);
+
+    Route::middleware('admin:'.AdminAccess::VIEW_APPLICATIONS)->group(function () {
+        Route::get('applications', [ApplicationsController::class, 'index']);
+        Route::get('applications/{application}', [ApplicationsController::class, 'show'])->whereNumber('application');
+        Route::get('applications/{application}/files/{attachment}', [ApplicationsController::class, 'file'])
+            ->whereNumber(['application', 'attachment']);
+    });
+
+    Route::middleware('admin:'.AdminAccess::MANAGE_COMMITTEES)->prefix('cycles/{cycle}')->whereNumber('cycle')->group(function () {
+        Route::get('committees', [CommitteesController::class, 'index']);
+        Route::middleware(['account.context', 'throttle:admin-writes'])->group(function () {
+            Route::post('committees', [CommitteesController::class, 'store']);
+            Route::post('judges/lookup', [CommitteesController::class, 'lookup']);
+            Route::post('judges', [CommitteesController::class, 'appoint']);
+            Route::post('committees/{domain}/approve', [CommitteesController::class, 'approve']);
+            Route::post('committees/{domain}/return-to-draft', [CommitteesController::class, 'returnToDraft']);
+            Route::post('committees/{domain}/members/{member}/end', [CommitteesController::class, 'end'])->whereNumber('member');
+            Route::post('committees/{domain}/members/{member}/setup-link', [CommitteesController::class, 'setupLink'])->whereNumber('member');
+        });
+    });
 });

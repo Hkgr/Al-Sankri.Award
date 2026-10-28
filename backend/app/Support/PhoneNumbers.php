@@ -50,6 +50,30 @@ final class PhoneNumbers
     }
 
     /**
+     * The E.164 form of a number written in international form (with its
+     * own "+" or "00" prefix), or null when it is not a valid number.
+     */
+    public static function internationalToE164(mixed $number): ?string
+    {
+        if (! is_string($number) || strlen($number) > 32) {
+            return null;
+        }
+
+        $util = PhoneNumberUtil::getInstance();
+        $number = preg_replace('/^00/', '+', trim($number));
+        if (! str_starts_with((string) $number, '+')) {
+            return null;
+        }
+        try {
+            $parsed = $util->parse((string) $number, 'ZZ');
+        } catch (NumberParseException) {
+            return null;
+        }
+
+        return $util->isValidNumber($parsed) ? $util->format($parsed, PhoneNumberFormat::E164) : null;
+    }
+
+    /**
      * The E.164 form of a number entered for the given country, or null when
      * it is not a valid number. A number typed with its own "+" or "00"
      * prefix must still belong to the selected country.

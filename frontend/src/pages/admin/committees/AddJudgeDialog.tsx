@@ -1,0 +1,244 @@
+import { useId, useState } from 'react'
+import type { FormEvent } from 'react'
+import type { User } from '../../../auth/useAuth'
+import { FormAlert, TextField } from '../../../components/forms/FormControls'
+import { ApiError, api, errorMessage } from '../../../lib/api'
+import type { AccountSummary, AppointmentResult, CommitteesResponse, DomainCode, DomainCommittee } from '../adminApi'
+import { AdminDialog } from './AdminDialog'
+
+type Step = { kind: 'email' } | { kind: 'new' } | { kind: 'existing'; account: AccountSummary }
+
+/**
+ * Adds a judge to the committee of one MAIN domain (no subcategory). First
+ * the email: an existing account is shown as it is and appointed only on
+ * explicit confirmation (its name, password, verification and sign-in
+ * methods are never changed); otherwise a new account is created with the
+ * name and optional phone, and its owner receives the password-reset link
+ * to set a password.
+ */
+export function AddJudgeDialog({
+  open,
+  user,
+  cycleId,
+  committees,
+  initialDomain,
+  onClose,
+  onDone,
+  onCreateCommittee,
+}: {
+  open: boolean
+  user: User
+  cycleId: number
+  committees: DomainCommittee[]
+  initialDomain: DomainCode
+  onClose: () => void
+  onDone: (response: CommitteesResponse & { appointment: AppointmentResult }) => void
+  onCreateCommittee: (domain: DomainCode) => void
+}) {
+  const [domain, setDomain] = useState<DomainCode>(initialDomain)
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [specialty, setSpecialty] = useState('')
+  const [step, setStep] = useState<Step>({ kind: 'email' })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [alert, setAlert] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const domainId = useId()
+  const target = committees.find((item) => item.domain.code === domain)
+  const committee = target?.committee ?? null
+  const blocked = committee === null ? 'missing' : committee.status !== 'draft' ? 'approved' : null
+
+  const fail = (error: unknown) => {
+    if (error instanceof ApiError && error.status === 422) {
+      setErrors(Object.fromEntries(Object.entries(error.errors).map(([field, list]) => [field, list[0]])))
+      setAlert('صحّح الحقول المشار إليها.')
+    } else {
+      setAlert(errorMessage(error))
+    }
+  }
+
+  const lookup = async (event: FormEvent) => {
+    event.preventDefault()
+    setBusy(true)
+    setErrors({})
+    setAlert(null)
+    try {
+      const response = await api.post<{ data: { account: AccountSummary | null } }>(`/api/admin/cycles/${cycleId}/judges/lookup`, {
+        email,
+        account_context: user.account_context,
+      })
+      setStep(response.data.account ? { kind: 'existing', account: response.data.account } : { kind: 'new' })
+    } catch (error) {
+      fail(error)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const appoint = async (event: FormEvent) => {
+    event.preventDefault()
+    const existing = step.kind === 'existing'
+    setBusy(true)
+    setErrors({})
+    setAlert(null)
+    try {
+      onDone(
+        await api.post<CommitteesResponse & { appointment: AppointmentResult }>(`/api/admin/cycles/${cycleId}/judges`, {
+          domain,
+          email,
+          existing,
+          name: existing ? null : name,
+          phone: existing || !phone.trim() ? null : phone,
+          specialty: specialty.trim() || null,
+          account_context: user.account_context,
+        }),
+      )
+    } catch (error) {
+      // Someone created this email meanwhile: show the account to confirm instead.
+      if (error instanceof ApiError && error.code === 'account_exists' && error.payload.account) {
+        setStep({ kind: 'existing', account: error.payload.account as unknown as AccountSummary })
+      }
+      fail(error)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <AdminDialog open={open} title="إضافة حكَم" titleId="add-judge-title" onClose={onClose} wide>
+      <form className="admin-dialog__body admin-form" onSubmit={step.kind === 'email' ? lookup : appoint} noValidate>
+        {alert && <FormAlert tone="error">{<p>{alert}</p>}</FormAlert>}
+
+        <div className="field">
+          <label className="field__label" htmlFor={domainId}>
+            المجال الرئيسي <span className="field__required">(مطلوب)</span>
+          </label>
+          <select id={domainId} className="field__input field__select" value={domain} onChange={(event) => setDomain(event.target.value as DomainCode)} required>
+            {committees.map((item) => (
+              <option key={item.domain.code} value={item.domain.code}>
+                {item.domain.name}
+              </option>
+            ))}
+          </select>
+          <p className="field__hint">يُصنَّف الحكَم بالمجال الرئيسي فقط، ويعمل في لجنة هذا المجال لكل فئاته الفرعية.</p>
+        </div>
+
+        {blocked === 'missing' && (
+          <div className="admin-inline-notice">
+            <p>لا توجد لجنة تحكيم لمجال «{target?.domain.name}» في هذه الدورة بعد. أنشئها أولاً، ثم أضف إليها الحكام.</p>
+            <button type="button" className="button button--secondary button--small" onClick={() => onCreateCommittee(domain)}>
+              إنشاء اللجنة
+            </button>
+          </div>
+        )}
+        {blocked === 'approved' && (
+          <div className="admin-inline-notice">
+            <p>لجنة هذا المجال معتمدة. أعدها إلى المسودة أولاً لتغيير أعضائها.</p>
+          </div>
+        )}
+
+        <TextField
+          id="judge-email"
+          label="البريد الإلكتروني"
+          type="email"
+          value={email}
+          onChange={(value) => {
+            setEmail(value)
+            if (step.kind !== 'email') setStep({ kind: 'email' })
+          }}
+          error={errors.email}
+          required
+          autoComplete="off"
+        />
+
+        {step.kind === 'existing' && (
+          <div className="admin-account" aria-live="polite">
+            <p className="admin-account__title">يوجد حساب مسجّل بهذا البريد</p>
+            <dl className="admin-facts admin-facts--compact">
+              <div>
+                <dt>الاسم</dt>
+                <dd>
+                  <bdi>{step.account.name}</bdi>
+                </dd>
+              </div>
+              <div>
+                <dt>البريد</dt>
+                <dd>
+                  <bdi dir="ltr">{step.account.email}</bdi>
+                </dd>
+              </div>
+              <div>
+                <dt>حالة الحساب</dt>
+                <dd>
+                  {step.account.active ? 'نشط' : 'معطّل'}
+                  {' · '}
+                  {step.account.email_verified ? 'البريد مؤكَّد' : 'البريد غير مؤكَّد'}
+                </dd>
+              </div>
+              {step.account.judging_domain && (
+                <div>
+                  <dt>عضوية حالية</dt>
+                  <dd>حكَم في لجنة «{step.account.judging_domain}» في هذه الدورة</dd>
+                </div>
+              )}
+              {step.account.submitted_in_cycle && (
+                <div>
+                  <dt>تعارض مصالح</dt>
+                  <dd>له مشاركة مرسلة في هذه الدورة</dd>
+                </div>
+              )}
+            </dl>
+            {!step.account.active ? (
+              <p className="admin-account__warning">هذا الحساب معطّل، فلا يُعيَّن حكَماً.</p>
+            ) : (
+              <p className="admin-muted">سيُعيَّن الحساب كما هو: لا يتغيّر اسمه ولا كلمة مروره ولا تأكيد بريده ولا طرق دخوله.</p>
+            )}
+          </div>
+        )}
+
+        {step.kind === 'new' && (
+          <>
+            <p className="admin-muted">لا يوجد حساب بهذا البريد. سيُنشأ حساب جديد بلا كلمة مرور، ويصل إلى البريد رابط لتعيين كلمة المرور.</p>
+            <TextField id="judge-name" label="الاسم الكامل" value={name} onChange={setName} error={errors.name} required autoComplete="off" maxLength={255} />
+            <TextField
+              id="judge-phone"
+              label="رقم الهاتف"
+              type="tel"
+              value={phone}
+              onChange={setPhone}
+              error={errors.phone}
+              optional
+              hint="بصيغته الدولية، مثل ‎+963 944 123 456"
+              autoComplete="off"
+            />
+          </>
+        )}
+
+        {step.kind !== 'email' && (
+          <TextField id="judge-specialty" label="التخصص" value={specialty} onChange={setSpecialty} error={errors.specialty} optional autoComplete="off" maxLength={150} />
+        )}
+
+        <div className="admin-dialog__actions">
+          <button type="button" className="button button--secondary" onClick={onClose}>
+            إلغاء
+          </button>
+          {step.kind === 'email' ? (
+            <button type="submit" className="button button--primary" disabled={busy || !email.trim()}>
+              {busy ? 'جارٍ التحقق…' : 'متابعة'}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="button button--primary"
+              disabled={busy || blocked !== null || (step.kind === 'existing' && !step.account.active)}
+              aria-busy={busy || undefined}
+            >
+              {busy ? 'جارٍ الحفظ…' : step.kind === 'existing' ? 'تعيين هذا الحساب حكَماً' : 'إنشاء الحساب وتعيينه حكَماً'}
+            </button>
+          )}
+        </div>
+      </form>
+    </AdminDialog>
+  )
+}

@@ -107,5 +107,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Stage 3: each file is its own request, per account.
         RateLimiter::for('candidate-upload', fn (Request $request) => Limit::perMinute(30)->by((string) $request->user()?->getKey())->response($tooMany));
+
+        // Administration writes (committees and judges), per administrator.
+        RateLimiter::for('admin-writes', fn (Request $request) => Limit::perMinute(60)->by((string) $request->user()?->getKey())->response($tooMany));
     }
 }

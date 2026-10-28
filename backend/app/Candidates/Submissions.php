@@ -2,6 +2,7 @@
 
 namespace App\Candidates;
 
+use App\Admin\AdminAccess;
 use App\Http\Resources\NominationDetailsResource;
 use App\Models\Application;
 use App\Models\ApplicationVersion;
@@ -44,12 +45,14 @@ class Submissions
 
     public const COMMITTEE_MEMBER = 'committee_member';
 
+    public const AWARD_ADMIN = 'award_admin';
+
     /** Committee types whose members may not apply in the same cycle (committees.type). */
     public const EXCLUDING_COMMITTEES = ['judging', 'integrity', 'trustees'];
 
     private const REFERENCE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-    public function __construct(private readonly Documentation $documentation) {}
+    public function __construct(private readonly Documentation $documentation, private readonly AdminAccess $access) {}
 
     /**
      * @return array{0: string, 1: array{reference_number: string, submitted_at: string, version_number: int}|null}
@@ -65,7 +68,13 @@ class Submissions
             if ($refusal !== null) {
                 return [$refusal, null];
             }
-            if ($this->sitsOnCycleCommittee($user, (int) $application->cycle_id)) {
+            // Read after the users row is locked: an appointment of this
+            // account (JudgingCommittees) holds the same lock, so its
+            // committed result is what is seen here.
+            if ($this->access->holdsAdminRole((int) $user->getKey())) {
+                return [self::AWARD_ADMIN, null];
+            }
+            if ($this->access->isJudge((int) $user->getKey(), (int) $application->cycle_id) || $this->sitsOnCycleCommittee($user, (int) $application->cycle_id)) {
                 return [self::COMMITTEE_MEMBER, null];
             }
             if ($reviewedRevision !== $journey->documentation_revision || ! $journey->documentationConfirmed()) {
@@ -124,11 +133,12 @@ class Submissions
     }
 
     /**
-     * The conflict-of-interest bar (database-rules.md §3): a current member
-     * (not left) of a judging, integrity or trustees committee of the
-     * application's cycle that is not dissolved may not apply. Award
-     * management roles are not checked here: no such role code is defined
-     * yet, and other roles are not a reason to refuse.
+     * The conflict-of-interest bar (database-rules.md §3), with the checks
+     * above: a current `award_admin` grant (any cycle) and a current `judge`
+     * grant of this cycle refuse too. Here: a current member (not left) of a
+     * judging, integrity or trustees committee of the application's cycle
+     * that is not dissolved may not apply. Other roles (the candidate
+     * classification included) are not a reason to refuse.
      */
     private function sitsOnCycleCommittee(User $user, int $cycleId): bool
     {

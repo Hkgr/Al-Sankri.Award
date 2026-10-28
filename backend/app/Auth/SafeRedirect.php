@@ -2,6 +2,7 @@
 
 namespace App\Auth;
 
+use App\Admin\AdminAccess;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -16,23 +17,39 @@ class SafeRedirect
     /** Where candidates land after signing in or registering. */
     public const DASHBOARD = '/dashboard';
 
-    /** The account page, for accounts that are not candidates. */
+    /** The account page, for accounts that are not candidates (judges included). */
     public const ACCOUNT = '/account';
+
+    /** The administration dashboard, for accounts with administration access. */
+    public const ADMIN = '/admin';
 
     /**
      * Paths (exact) and path prefixes (ending in "/") a visitor may return to.
      *
      * @var list<string>
      */
-    private const ALLOWED = ['/dashboard', '/dashboard/basic-information', '/account', '/email/verify/'];
+    private const ALLOWED = ['/dashboard', '/dashboard/basic-information', '/account', '/email/verify/', '/admin', '/admin/'];
 
     /**
-     * The default destination for an account: the candidate dashboard, or
-     * the account page for an account without the candidate classification.
+     * The default destination for an account: the administration dashboard
+     * for administrators; the account page for judges (there is no judge
+     * portal yet, and a judge is not sent to the candidate dashboard); the
+     * candidate dashboard for candidates; otherwise the account page.
      */
     public static function defaultFor(?User $user): string
     {
-        return $user !== null && app(CandidateRole::class)->isHeldBy($user) ? self::DASHBOARD : self::ACCOUNT;
+        if ($user === null) {
+            return self::ACCOUNT;
+        }
+        $access = app(AdminAccess::class);
+        if ($access->isAdmin($user)) {
+            return self::ADMIN;
+        }
+        if ($access->isJudge((int) $user->getKey())) {
+            return self::ACCOUNT;
+        }
+
+        return app(CandidateRole::class)->isHeldBy($user) ? self::DASHBOARD : self::ACCOUNT;
     }
 
     /**
@@ -92,9 +109,13 @@ class SafeRedirect
     public static function afterLogin(Request $request, mixed $requested = null): string
     {
         $intended = $request->session()->pull('url.intended');
+        $user = $request->user();
+        // The administration pages are a destination for administrators only.
+        $usable = fn (?string $path): ?string => $path !== null && preg_match('#^/admin(/|\?|$)#', $path) === 1
+            && ($user === null || ! app(AdminAccess::class)->isAdmin($user)) ? null : $path;
 
-        return self::fromIntended(is_string($intended) ? $intended : null, $request)
-            ?? self::path($requested)
-            ?? self::defaultFor($request->user());
+        return $usable(self::fromIntended(is_string($intended) ? $intended : null, $request))
+            ?? $usable(self::path($requested))
+            ?? self::defaultFor($user);
     }
 }

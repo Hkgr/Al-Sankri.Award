@@ -56,7 +56,7 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         // 2–3. Apply the platform and account migrations.
         $this->migrateAll();
-        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS) + count(self::NOMINATION_MIGRATIONS) + count(self::DOCUMENTATION_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS) + count(self::NOMINATION_MIGRATIONS) + count(self::DOCUMENTATION_MIGRATIONS) + count(self::ADMINISTRATION_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
         foreach ([...self::PLATFORM_TABLES, ...self::ACCOUNT_TABLES, ...self::CANDIDATE_TABLES, ...self::NOMINATION_TABLES, ...self::DOCUMENTATION_TABLES] as $table) {
             $this->assertContains($table, $this->tableNames(), "Missing table {$table}");
         }
@@ -87,7 +87,7 @@ class PlatformDatabaseMigrationTest extends TestCase
 
         // 6. Reapply.
         $this->migrateAll();
-        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS) + count(self::NOMINATION_MIGRATIONS) + count(self::DOCUMENTATION_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
+        $this->assertSame(12 + count(self::ACCOUNT_MIGRATIONS) + count(self::CANDIDATE_MIGRATIONS) + count(self::NOMINATION_MIGRATIONS) + count(self::DOCUMENTATION_MIGRATIONS) + count(self::ADMINISTRATION_MIGRATIONS), $this->schemaDb()->table('migrations')->where('batch', 2)->count());
         $this->assertExistingUserIntact($userId);
         $this->assertSame('active', $this->schemaDb()->table('users')->find($userId)->status);
     }

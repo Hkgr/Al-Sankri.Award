@@ -24,7 +24,9 @@ export function VerifyEmailPage() {
       )}
       <p className="auth-panel__switch">
         {user ? (
-          <Link href={homeFor(user)}>{user.is_candidate ? 'الانتقال إلى لوحة المترشح' : 'الانتقال إلى حسابي'}</Link>
+          <Link href={homeFor(user)}>
+            {homeFor(user) === '/admin' ? 'الانتقال إلى لوحة الإدارة' : homeFor(user) === '/dashboard' ? 'الانتقال إلى لوحة المترشح' : 'الانتقال إلى حسابي'}
+          </Link>
         ) : (
           <Link href="/login">تسجيل الدخول</Link>
         )}

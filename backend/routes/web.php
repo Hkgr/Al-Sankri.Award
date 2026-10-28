@@ -25,6 +25,15 @@ Route::get('/dashboard/review', SpaController::class);
 Route::get('/policies/privacy-policy', SpaController::class);
 Route::get('/policies/terms-of-use', SpaController::class);
 
+// The administration dashboard: signed-out visitors are sent to sign in;
+// accounts without administration access get the page with status 403.
+Route::middleware('admin.page')->group(function () {
+    Route::get('/admin', SpaController::class);
+    Route::get('/admin/applications', SpaController::class);
+    Route::get('/admin/applications/{application}', SpaController::class)->whereNumber('application');
+    Route::get('/admin/committees', SpaController::class);
+});
+
 /*
  * Google sign-in (server-side authorization-code flow with session state).
  * The callback URL must match GOOGLE_REDIRECT_URI and Google Cloud exactly.

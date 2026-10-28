@@ -106,7 +106,7 @@ Existing Laravel login accounts, **extended** (not recreated) by `2026_10_27_100
 
 ### `roles`
 
-Role catalogue. `scope` separates platform-wide roles (granted in `user_roles`) from cycle-scoped roles (granted in `cycle_user_roles`). No roles are seeded.
+Role catalogue. `scope` separates platform-wide roles (granted in `user_roles`) from cycle-scoped roles (granted in `cycle_user_roles`). Nothing is seeded; migrations provision `candidate` (platform), `award_admin` (platform, with `applications.view_submitted` and `committees.manage_judging`) and `judge` (cycle), see [candidate-onboarding.md](candidate-onboarding.md) and [administration.md](administration.md).
 
 | Column | Type | Null | Default | Notes |
 | --- | --- | --- | --- | --- |
