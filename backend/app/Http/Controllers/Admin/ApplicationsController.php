@@ -55,12 +55,12 @@ class ApplicationsController extends Controller
     /**
      * A file of the application's submitted version only.
      */
-    public function file(int $application, int $attachment): BinaryFileResponse|JsonResponse
+    public function file(Request $request, int $application, int $attachment): BinaryFileResponse|JsonResponse
     {
         $link = $this->applications->file($application, $attachment);
 
         return $link === null
             ? response()->json(['code' => 'not_found', 'message' => 'لم يُعثر على هذا الملف في النسخة المرسلة من ملف الترشح.'], 404)
-            : PrivateFileResponse::for($link->file);
+            : PrivateFileResponse::for($link->file, $request->query('download') === '1');
     }
 }

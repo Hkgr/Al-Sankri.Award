@@ -9,6 +9,8 @@ export type JudgeEvaluation = {
   status: 'pending' | 'sent'
   score: string | null
   notes?: string | null
+  recommendations?: string | null
+  excluded?: boolean
   sent_at?: string | null
 }
 
@@ -18,7 +20,7 @@ export type JudgeProjectRow = {
   title: string
   domain: { code: DomainCode; name: string }
   subcategory: { code: string; name: string } | null
-  evaluation: Pick<JudgeEvaluation, 'status' | 'score'>
+  evaluation: Pick<JudgeEvaluation, 'status' | 'score' | 'excluded'>
 }
 
 export type JudgeProject = {

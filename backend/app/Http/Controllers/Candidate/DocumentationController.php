@@ -142,7 +142,7 @@ class DocumentationController extends Controller
             return $this->refusal(Documentation::NOT_FOUND);
         }
 
-        return PrivateFileResponse::for($link->file);
+        return PrivateFileResponse::for($link->file, $request->query('download') === '1');
     }
 
     private function journey(Request $request): CandidateNomination

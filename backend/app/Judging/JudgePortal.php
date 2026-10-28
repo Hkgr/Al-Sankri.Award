@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\DB;
 /**
  * The judge portal: the signed-in judge's own assignments in an approved
  * committee. A judge sees the submitted work of their main domain, records
- * one mark out of 100 with notes, and sends it to the administration.
- * Another judge's mark is never included. Sending finalizes the evaluation;
- * it is not edited again here.
+ * one mark out of 100 with notes and recommendations, and may exclude the
+ * participant. Sending finalizes that evaluation for the administration.
+ * Another judge's mark is never included, and it is not edited again here.
  */
 class JudgePortal
 {
@@ -35,7 +35,7 @@ class JudgePortal
             'applications.id', 'applications.reference_number', 'applications.title',
             'award_domains.code as domain_code', 'cycle_domains.name_ar as domain_name',
             'cycle_domain_subcategories.code as subcategory_code', 'cycle_domain_subcategories.name_ar as subcategory_name',
-            'evaluations.status as evaluation_status', 'evaluation_scores.score',
+            'evaluations.status as evaluation_status', 'evaluations.recommendation', 'evaluation_scores.score',
         ]);
 
         return $rows->map(fn (object $row): array => [
@@ -47,6 +47,7 @@ class JudgePortal
             'evaluation' => [
                 'status' => $row->evaluation_status === 'finalized' ? 'sent' : 'pending',
                 'score' => $row->evaluation_status === 'finalized' && $row->score !== null ? Scores::present((string) $row->score) : null,
+                'excluded' => $row->evaluation_status === 'finalized' && $row->recommendation === 'exclude',
             ],
         ])->all();
     }
@@ -61,8 +62,8 @@ class JudgePortal
     {
         $assignment = $this->assignments($judge)->where('applications.id', $applicationId)->first([
             'judging_assignments.id as assignment_id',
-            'evaluations.status as evaluation_status', 'evaluations.overall_comment', 'evaluations.finalized_at',
-            'evaluation_scores.score',
+            'evaluations.status as evaluation_status', 'evaluations.overall_comment', 'evaluations.recommendation', 'evaluations.finalized_at',
+            'evaluation_scores.score', 'evaluation_scores.comment as recommendations',
         ]);
         if ($assignment === null) {
             return null;
@@ -83,6 +84,8 @@ class JudgePortal
                 'status' => $sent ? 'sent' : 'pending',
                 'score' => $sent && $assignment->score !== null ? Scores::present((string) $assignment->score) : null,
                 'notes' => $sent ? $assignment->overall_comment : null,
+                'recommendations' => $sent ? $assignment->recommendations : null,
+                'excluded' => $sent && $assignment->recommendation === 'exclude',
                 'sent_at' => $sent && $assignment->finalized_at !== null
                     ? Carbon::parse($assignment->finalized_at, 'UTC')->toIso8601ZuluString()
                     : null,
@@ -102,11 +105,12 @@ class JudgePortal
 
     /**
      * Finalizes this judge's mark. The score is already validated as 0–100
-     * with at most two decimals, and the notes are a non-empty trimmed string.
+     * with at most two decimals. Notes and recommendations are non-empty
+     * trimmed strings. Exclusion is the judge's own flag, not the award result.
      */
-    public function send(User $judge, int $applicationId, string $score, string $notes): string
+    public function send(User $judge, int $applicationId, string $score, string $notes, string $recommendations, bool $excluded): string
     {
-        return DB::transaction(function () use ($judge, $applicationId, $score, $notes): string {
+        return DB::transaction(function () use ($judge, $applicationId, $score, $notes, $recommendations, $excluded): string {
             User::query()->whereKey($judge->getKey())->lockForUpdate()->firstOrFail();
 
             $found = $this->assignments($judge)->where('applications.id', $applicationId)->first([
@@ -128,6 +132,7 @@ class JudgePortal
                 'rubric_id' => $assignment->rubric_id,
                 'status' => 'finalized',
                 'overall_comment' => $notes,
+                'recommendation' => $excluded ? 'exclude' : null,
                 'finalized_at' => $now,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -138,6 +143,7 @@ class JudgePortal
                 'criterion_id' => $found->criterion_id,
                 'criterion_max_score' => $found->max_score,
                 'score' => Scores::normalize($score),
+                'comment' => $recommendations,
                 'is_not_applicable' => false,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -147,6 +153,7 @@ class JudgePortal
                 'judging_assignment_id' => (int) $assignment->id,
                 'application_id' => $applicationId,
                 'score' => Scores::normalize($score),
+                'excluded' => $excluded,
             ]);
 
             return self::SENT;
