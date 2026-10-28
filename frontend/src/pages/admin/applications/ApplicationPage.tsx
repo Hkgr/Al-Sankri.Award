@@ -166,17 +166,18 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
         ) : (
           <>
             <p className="admin-muted">
-              {detail.judging.decision
-                ? `متوسط التقييمات ${detail.judging.decision} من 100.`
-                : `أُرسل ${detail.judging.received} من ${detail.judging.expected}. يظهر المتوسط عندما يرسل كل أعضاء اللجنة.`}
+              {detail.judging.excluded
+                ? 'النتيجة: استبعاد.'
+                : detail.judging.decision
+                  ? `متوسط التقييمات ${detail.judging.decision} من 100.`
+                  : `أُرسل ${detail.judging.received} من ${detail.judging.expected}. يظهر المتوسط عندما يرسل كل أعضاء اللجنة، ما لم يُستبعد المشارك.`}
             </p>
             <dl className="admin-facts">
               {detail.judging.scores.map((item, index) => (
                 <div key={`${item.name}-${index}`}>
                   <dt>{item.name}</dt>
                   <dd>
-                    {item.score === null ? 'بانتظار الإرسال' : `${item.score} من 100`}
-                    {item.excluded ? ' · استُبعد المشارك' : ''}
+                    {item.excluded ? 'استبعاد' : item.score === null ? 'بانتظار الإرسال' : `${item.score} من 100`}
                     {item.notes ? ` — الملاحظات: ${item.notes}` : ''}
                     {item.recommendations ? ` — التوصيات: ${item.recommendations}` : ''}
                   </dd>

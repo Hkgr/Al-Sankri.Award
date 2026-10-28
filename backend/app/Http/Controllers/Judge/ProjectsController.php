@@ -46,8 +46,11 @@ class ProjectsController extends Controller
 
     public function send(Request $request, int $application): JsonResponse
     {
+        $excluded = $request->boolean('excluded');
         $input = $request->validate([
-            'score' => ['required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
+            'score' => $excluded
+                ? ['prohibited']
+                : ['required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'notes' => ['required', 'string', 'max:4000'],
             'recommendations' => ['required', 'string', 'max:4000'],
             'excluded' => ['required', 'boolean'],
@@ -57,6 +60,7 @@ class ProjectsController extends Controller
             'score.min' => 'العلامة رقم من 0 إلى 100.',
             'score.max' => 'العلامة رقم من 0 إلى 100.',
             'score.decimal' => 'العلامة رقم من 0 إلى 100، بخانتين عشريتين على الأكثر.',
+            'score.prohibited' => 'لا تُوضع علامة عند استبعاد المشارك.',
             'notes.required' => 'اكتب الملاحظات قبل الإرسال.',
             'notes.max' => 'الملاحظات أطول مما يُقبل.',
             'recommendations.required' => 'اكتب التوصيات قبل الإرسال.',
@@ -85,10 +89,10 @@ class ProjectsController extends Controller
         $result = $this->portal->send(
             $request->user(),
             $application,
-            Scores::normalize($input['score']),
+            $excluded ? null : Scores::normalize($input['score']),
             $notes,
             $recommendations,
-            $request->boolean('excluded'),
+            $excluded,
         );
 
         return match ($result) {

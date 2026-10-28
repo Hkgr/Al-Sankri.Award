@@ -67,7 +67,9 @@ export function ProjectsPage({ user }: { user: User }) {
                 </span>
                 <span className={project.evaluation.status === 'sent' ? 'judge-sent' : 'judge-list__meta'}>
                   {project.evaluation.status === 'sent'
-                    ? `أُرسلت إلى الإدارة · ${project.evaluation.score} من 100${project.evaluation.excluded ? ' · استُبعد المشارك' : ''}`
+                    ? project.evaluation.excluded
+                      ? 'أُرسلت إلى الإدارة · استبعاد'
+                      : `أُرسلت إلى الإدارة · ${project.evaluation.score} من 100`
                     : 'بانتظار علامتك'}
                 </span>
               </Link>

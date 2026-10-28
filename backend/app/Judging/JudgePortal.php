@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * The judge portal: the signed-in judge's own assignments in an approved
  * committee. A judge sees the submitted work of their main domain, records
- * one mark out of 100 with notes and recommendations, and may exclude the
- * participant. Sending finalizes that evaluation for the administration.
+ * one mark out of 100 with notes and recommendations, or excludes the
+ * participant. An exclusion records no mark: the result is exclusion.
  * Another judge's mark is never included, and it is not edited again here.
  */
 class JudgePortal
@@ -105,10 +105,10 @@ class JudgePortal
 
     /**
      * Finalizes this judge's mark. The score is already validated as 0–100
-     * with at most two decimals. Notes and recommendations are non-empty
-     * trimmed strings. Exclusion is the judge's own flag, not the award result.
+     * with at most two decimals, or null when the participant is excluded.
+     * Notes and recommendations are non-empty trimmed strings.
      */
-    public function send(User $judge, int $applicationId, string $score, string $notes, string $recommendations, bool $excluded): string
+    public function send(User $judge, int $applicationId, ?string $score, string $notes, string $recommendations, bool $excluded): string
     {
         return DB::transaction(function () use ($judge, $applicationId, $score, $notes, $recommendations, $excluded): string {
             User::query()->whereKey($judge->getKey())->lockForUpdate()->firstOrFail();
@@ -142,9 +142,10 @@ class JudgePortal
                 'rubric_id' => $assignment->rubric_id,
                 'criterion_id' => $found->criterion_id,
                 'criterion_max_score' => $found->max_score,
-                'score' => Scores::normalize($score),
+                'score' => $excluded ? null : $score,
                 'comment' => $recommendations,
-                'is_not_applicable' => false,
+                'is_not_applicable' => $excluded,
+                'not_applicable_reason' => $excluded ? 'استبعاد' : null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
@@ -152,7 +153,7 @@ class JudgePortal
             AuditLog::record('evaluation.finalized', (int) $judge->getKey(), 'evaluation', (int) $evaluationId, [
                 'judging_assignment_id' => (int) $assignment->id,
                 'application_id' => $applicationId,
-                'score' => Scores::normalize($score),
+                'score' => $score,
                 'excluded' => $excluded,
             ]);
 

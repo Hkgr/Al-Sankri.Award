@@ -8,18 +8,19 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * What the administration sees for one submitted application: each current
- * judge's mark, notes, recommendations and exclusion, and the committee
- * decision (their average) once every current member has sent. An exclusion
- * is that judge's flag; the mark still counts in the average.
+ * judge's mark, notes and recommendations, or an exclusion. Exclusion means
+ * the participant is non-compliant: that judge records no mark. Once every
+ * current member has sent, the decision is their average, unless any of
+ * them excluded the participant, in which case the result is exclusion.
  */
 class CommitteeDecision
 {
     /**
-     * @return array{ready: bool, expected: int, received: int, decision: string|null, scores: list<array{name: string, score: string|null, notes: string|null, recommendations: string|null, excluded: bool, sent_at: string|null}>}
+     * @return array{ready: bool, expected: int, received: int, decision: string|null, excluded: bool, scores: list<array{name: string, score: string|null, notes: string|null, recommendations: string|null, excluded: bool, sent_at: string|null}>}
      */
     public function forApplication(Application $application): array
     {
-        $empty = ['ready' => false, 'expected' => 0, 'received' => 0, 'decision' => null, 'scores' => []];
+        $empty = ['ready' => false, 'expected' => 0, 'received' => 0, 'decision' => null, 'excluded' => false, 'scores' => []];
         if ($application->current_version_id === null) {
             return $empty;
         }
@@ -41,7 +42,9 @@ class CommitteeDecision
             ->get(['committee_members.id', 'users.name']);
 
         $scores = [];
-        $finalized = [];
+        $marks = [];
+        $received = 0;
+        $excluded = false;
         foreach ($members as $member) {
             $row = DB::table('judging_assignments')
                 ->leftJoin('evaluations', 'evaluations.judging_assignment_id', '=', 'judging_assignments.id')
@@ -51,27 +54,36 @@ class CommitteeDecision
                 ->where('judging_assignments.round_number', 1)
                 ->first(['evaluations.status', 'evaluations.overall_comment', 'evaluations.recommendation', 'evaluations.finalized_at', 'evaluation_scores.score', 'evaluation_scores.comment as recommendations']);
 
-            $sent = $row !== null && $row->status === 'finalized' && $row->score !== null;
-            if ($sent) {
-                $finalized[] = (string) $row->score;
+            $memberExcluded = $row !== null && $row->status === 'finalized' && $row->recommendation === 'exclude';
+            $scored = $row !== null && $row->status === 'finalized' && ! $memberExcluded && $row->score !== null;
+            if ($memberExcluded || $scored) {
+                $received++;
             }
+            if ($memberExcluded) {
+                $excluded = true;
+            }
+            if ($scored) {
+                $marks[] = (string) $row->score;
+            }
+            $sent = $memberExcluded || $scored;
             $scores[] = [
                 'name' => $member->name,
-                'score' => $sent ? Scores::present((string) $row->score) : null,
+                'score' => $scored ? Scores::present((string) $row->score) : null,
                 'notes' => $sent ? $row->overall_comment : null,
                 'recommendations' => $sent ? $row->recommendations : null,
-                'excluded' => $sent && $row->recommendation === 'exclude',
+                'excluded' => $memberExcluded,
                 'sent_at' => $sent ? Carbon::parse($row->finalized_at, 'UTC')->toIso8601ZuluString() : null,
             ];
         }
 
-        $complete = $members->isNotEmpty() && count($finalized) === $members->count();
+        $complete = $members->isNotEmpty() && $received === $members->count();
 
         return [
             'ready' => true,
             'expected' => $members->count(),
-            'received' => count($finalized),
-            'decision' => $complete ? Scores::average($finalized) : null,
+            'received' => $received,
+            'decision' => $complete && ! $excluded ? Scores::average($marks) : null,
+            'excluded' => $complete && $excluded,
             'scores' => $scores,
         ];
     }
