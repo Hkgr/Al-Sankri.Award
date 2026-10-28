@@ -163,7 +163,7 @@ Every export is made on the server, from the same services as the page it comes 
 | «المستخدمون» (results bar) | `users.view_registered` | `users` |
 | «ملفات الترشح» (results bar) | `applications.view_submitted` | `applications` |
 | Committee members (each committee panel) | `committees.manage_judging` | `committee-members` |
-| Judges' marks (an application's «قرار اللجنة») | `applications.view_submitted` | `judge-scores` |
+| Judges' marks, exclusion flags, notes and recommendations (an application's «قرار اللجنة») | `applications.view_submitted` | `judge-scores` |
 | «سجل الحركات» | `audit.view` | `audit` |
 | «الأخطاء التقنية» | `logs.view_system` | `system-logs` |
 
@@ -174,7 +174,7 @@ Every export is made on the server, from the same services as the page it comes 
 - **«بطاقة الترشح» (application card PDF):** on an application's page, «تنزيل بطاقة الترشح PDF». It is built from the same authorized detail service as the page:
   - Stage 1 comes from the profile the submitted version references;
   - Stages 2–3 come from the submitted snapshot and its version-linked file manifest;
-  - judging is a separate section, «حالة التحكيم وقت التصدير».
+  - judging is a separate section, «حالة التحكيم وقت التصدير»: each current judge's mark, own exclusion flag, notes and recommendations, as the application page shows them.
 
   It lists file names, types, sizes and scan status, and the links as text. It never embeds files, storage paths, temporary URLs or credentials, and never fetches links. Every value is escaped.
 - **Downloads:**
@@ -208,7 +208,7 @@ It reads the existing `audit_logs` table; no second log is added.
 - **Columns:** time (Damascus); actor («النظام» when no account is recorded); Arabic action label; record type and reference (application reference, committee name or account name); the cycle recorded with the event («بلا دورة» otherwise); a short description; expandable details.
 - **Order and paging:** newest first, with a stable order (time, then id); 25/50/100 per page, paged on the server.
 - **Filters** (all kept in the page address): date range, actor (a name or email, or `system`), action, record type and number, cycle (one cycle, «أحداث بلا دورة», or all), and request ID. A row's request ID filters to every event of that request.
-- **Details:** only allowlisted scalar fields are shown. The rest is only counted («حقول أخرى»). A judge's mark is never shown.
+- **Details:** only allowlisted scalar fields are shown. The rest is only counted («حقول أخرى»). A judge's mark and exclusion flag are never shown there.
 
 **Recorded events.** Each is written once per real change, in the same transaction as the change, so a refused or repeated request adds nothing. Each carries the request ID, and the cycle where one really applies.
 

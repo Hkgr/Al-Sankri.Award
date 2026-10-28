@@ -276,16 +276,32 @@ final class ApplicationCard
                 : "أُرسل {$judging['received']} من {$judging['expected']}؛ يظهر المتوسط عندما يرسل كل أعضاء اللجنة.",
         ]]];
         $section['groups'][] = ['title' => 'تقييمات الحكام', 'table' => [
-            'columns' => ['الحكَم', 'الدرجة', 'الملاحظات', 'وقت الإرسال'],
+            'columns' => ['الحكَم', 'الدرجة', 'الاستبعاد', 'الملاحظات', 'التوصيات', 'وقت الإرسال'],
             'rows' => array_map(fn (array $score): array => [
                 $score['name'],
                 $score['score'] === null ? 'بانتظار الإرسال' : "{$score['score']} من 100",
+                self::exclusion($score),
                 $score['notes'] ?: '—',
+                ($score['recommendations'] ?? null) ?: '—',
                 $score['sent_at'] ? Formats::dateTime($score['sent_at']) : '—',
             ], $judging['scores'] ?? []),
             'empty' => 'لا يوجد أعضاء حاليون في اللجنة.',
         ]];
 
         return $section;
+    }
+
+    /**
+     * A judge's own exclusion flag, as the application page shows it.
+     *
+     * @param  array{score: string|null, excluded?: bool}  $score
+     */
+    public static function exclusion(array $score): string
+    {
+        if ($score['score'] === null) {
+            return '—';
+        }
+
+        return ($score['excluded'] ?? false) ? 'استُبعد المشارك' : 'لا';
     }
 }

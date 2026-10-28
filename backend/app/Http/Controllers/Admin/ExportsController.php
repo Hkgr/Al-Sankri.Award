@@ -268,13 +268,16 @@ class ExportsController extends Controller
         $rows = array_map(fn (array $score): array => [
             'judge' => $score['name'],
             'score' => $score['score'] === null ? 'بانتظار الإرسال' : "{$score['score']} من 100",
+            'excluded' => ApplicationCard::exclusion($score),
             'notes' => $score['notes'] ?? '—',
+            'recommendations' => $score['recommendations'] ?? '—',
             'sent' => $score['sent_at'] ? Formats::dateTime($score['sent_at']) : '—',
         ], $judging['scores'] ?? []);
 
         return [new TableReport('judge-scores', 'تقييمات الحكام', [
             ['key' => 'judge', 'label' => 'الحكَم', 'width' => 26], ['key' => 'score', 'label' => 'الدرجة', 'width' => 16],
-            ['key' => 'notes', 'label' => 'الملاحظات', 'width' => 50], ['key' => 'sent', 'label' => 'وقت الإرسال', 'width' => 22],
+            ['key' => 'excluded', 'label' => 'الاستبعاد', 'width' => 18], ['key' => 'notes', 'label' => 'الملاحظات', 'width' => 45],
+            ['key' => 'recommendations', 'label' => 'التوصيات', 'width' => 45], ['key' => 'sent', 'label' => 'وقت الإرسال', 'width' => 22],
         ], $rows, [
             ['ملف الترشح', (string) $detail['summary']['reference_number']],
             ['النتيجة', ! ($judging['ready'] ?? false) ? 'لم تُعتمد لجنة تحكيم هذا المحور بعد' : ($judging['decision'] !== null ? "متوسط التقييمات {$judging['decision']} من 100" : "أُرسل {$judging['received']} من {$judging['expected']}")],
