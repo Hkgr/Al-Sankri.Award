@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use OpenSpout\Reader\XLSX\Reader;
 use Tests\ActsAsSpaBrowser;
 use Tests\Feature\Candidate\InteractsWithNominationStage;
 use Tests\TestCase;
@@ -152,6 +153,27 @@ class JudgePortalTest extends TestCase
             ->assertJsonPath('data.judging.scores.0.recommendations', 'يُستكمل التوثيق')
             ->assertJsonPath('data.judging.scores.0.excluded', true)
             ->assertJsonPath('data.judging.scores.1.excluded', false);
+
+        // The judges' marks export carries the same exclusion and recommendations.
+        $export = $this->browser('GET', '/api/admin/exports/judge-scores?format=xlsx&application='.$submitted['id'], headers: [
+            'X-Candidate-Context' => AccountContext::for($this->admin),
+        ])->assertOk();
+        $path = tempnam(sys_get_temp_dir(), 'scores');
+        file_put_contents($path, $this->body($export));
+        $reader = new Reader;
+        $reader->open($path);
+        $rows = [];
+        foreach ($reader->getSheetIterator() as $sheet) {
+            foreach ($sheet->getRowIterator() as $row) {
+                $rows[] = array_map(fn ($cell): string => (string) $cell->getValue(), $row->getCells());
+            }
+        }
+        $reader->close();
+        unlink($path);
+        $heading = array_key_first(array_filter($rows, fn (array $row): bool => ($row[2] ?? null) === 'الاستبعاد'));
+        $this->assertNotNull($heading);
+        $this->assertSame(['هدى الخالد', '80 من 100', 'استُبعد المشارك', 'توثيق دقيق', 'يُستكمل التوثيق'], array_slice($rows[$heading + 1], 0, 5));
+        $this->assertSame(['لا', 'لا'], [$rows[$heading + 2][2], $rows[$heading + 3][2]]);
 
         $this->signIn($this->candidate->email);
         $this->read('/api/judge/projects')->assertForbidden()->assertJsonPath('code', 'not_judge');

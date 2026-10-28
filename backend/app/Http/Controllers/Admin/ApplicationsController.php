@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Admin\SubmittedApplications;
-use App\Candidates\NominationTaxonomy;
 use App\Http\Controllers\Controller;
+use App\Support\AuditLog;
 use App\Support\PrivateFileResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
@@ -27,18 +27,7 @@ class ApplicationsController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->validate([
-            'cycle' => ['nullable', 'integer', 'min:1'],
-            'domain' => ['nullable', 'string', Rule::in(NominationTaxonomy::domainCodes())],
-            'subcategory' => ['nullable', 'string', 'max:64'],
-            'applicant_type' => ['nullable', Rule::in(array_keys(SubmittedApplications::APPLICANT_TYPES))],
-            'status' => ['nullable', Rule::in(SubmittedApplications::STATUSES)],
-            'q' => ['nullable', 'string', 'max:150'],
-            'sort' => ['nullable', Rule::in(array_keys(SubmittedApplications::SORTS))],
-            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
-            'page' => ['nullable', 'integer', 'min:1'],
-            'per_page' => ['nullable', 'integer', Rule::in(SubmittedApplications::PER_PAGE)],
-        ], ['*' => 'قيمة غير صالحة في مرشّحات الجدول.']);
+        $filters = $request->validate(SubmittedApplications::filterRules(), ['*' => 'قيمة غير صالحة في مرشّحات الجدول.']);
 
         return response()->json($this->applications->page($filters));
     }
@@ -58,9 +47,16 @@ class ApplicationsController extends Controller
     public function file(Request $request, int $application, int $attachment): BinaryFileResponse|JsonResponse
     {
         $link = $this->applications->file($application, $attachment);
+        if ($link === null) {
+            return response()->json(['code' => 'not_found', 'message' => 'لم يُعثر على هذا الملف في النسخة المرسلة من ملف الترشح.'], 404);
+        }
 
-        return $link === null
-            ? response()->json(['code' => 'not_found', 'message' => 'لم يُعثر على هذا الملف في النسخة المرسلة من ملف الترشح.'], 404)
-            : PrivateFileResponse::for($link->file, $request->query('download') === '1');
+        if (PrivateFileResponse::isFirstRead($request)) {
+            AuditLog::record('file.downloaded', (int) $request->user()->getKey(), 'application', $application, [
+                'file_link_id' => $attachment, 'role' => 'award_admin',
+            ], (int) DB::table('applications')->where('id', $application)->value('cycle_id'));
+        }
+
+        return PrivateFileResponse::for($link->file, $request->query('download') === '1');
     }
 }

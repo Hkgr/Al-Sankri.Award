@@ -62,6 +62,9 @@ class SetUpNominationStage extends Command
      */
     private array $changes = [];
 
+    /** The cycle being configured, for the audit rows' cycle attribution. */
+    private ?int $cycleId = null;
+
     /**
      * Execute the console command.
      */
@@ -69,6 +72,7 @@ class SetUpNominationStage extends Command
     {
         // The command object can be reused in one process (tests, queues).
         $this->changes = [];
+        $this->cycleId = null;
 
         if ($this->option('enable') && $this->option('close')) {
             $this->error('Use either --enable or --close, not both.');
@@ -97,6 +101,7 @@ class SetUpNominationStage extends Command
             DB::table('users')->where('id', $actor->getKey())->sharedLock()->first();
 
             $cycle = $this->cycle($actor);
+            $this->cycleId = (int) $cycle->id;
             $this->domains($cycle, $actor);
             $this->country($cycle, $actor);
             $this->stage($cycle, $actor);
@@ -299,7 +304,13 @@ class SetUpNominationStage extends Command
      */
     private function record(User $actor, string $action, string $subjectType, int $subjectId, array $after, string $summary): void
     {
-        AuditLog::record($action, (int) $actor->getKey(), $subjectType, $subjectId, $after ?: null);
+        // The configured cycle (a new cycle is its own subject); global domains stay unattributed.
+        $cycleId = match (true) {
+            $subjectType === 'award_domain' => null,
+            $subjectType === 'award_cycle' => $subjectId,
+            default => $this->cycleId,
+        };
+        AuditLog::record($action, (int) $actor->getKey(), $subjectType, $subjectId, $after ?: null, $cycleId);
         $this->changes[] = $summary;
     }
 }

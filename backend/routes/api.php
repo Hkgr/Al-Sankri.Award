@@ -7,6 +7,8 @@ use App\Http\Controllers\AccountPolicyController;
 use App\Http\Controllers\Admin\AdminContextController;
 use App\Http\Controllers\Admin\ApplicationsController;
 use App\Http\Controllers\Admin\CommitteesController;
+use App\Http\Controllers\Admin\ExportsController;
+use App\Http\Controllers\Admin\LogController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\AuthOptionsController;
@@ -137,9 +139,21 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admi
     // «المستخدمون»: read-only list of every registered account.
     Route::get('users', [UsersController::class, 'index'])->middleware('admin:'.AdminAccess::VIEW_USERS);
 
+    // «السجل»: the activity log and sanitized technical-log summaries, read-only.
+    Route::get('log/audit', [LogController::class, 'audit'])->middleware('admin:'.AdminAccess::VIEW_AUDIT);
+    Route::get('log/system', [LogController::class, 'system'])->middleware('admin:'.AdminAccess::VIEW_SYSTEM_LOGS);
+
+    // Table exports: reports.export here, the table's own viewing permission in the controller.
+    Route::get('exports/{table}', [ExportsController::class, 'table'])
+        ->where('table', '[a-z-]+')
+        ->middleware(['admin:'.AdminAccess::EXPORT_REPORTS, 'account.context', 'throttle:admin-exports']);
+
     Route::middleware('admin:'.AdminAccess::VIEW_APPLICATIONS)->group(function () {
         Route::get('applications', [ApplicationsController::class, 'index']);
         Route::get('applications/{application}', [ApplicationsController::class, 'show'])->whereNumber('application');
+        // «بطاقة الترشح» (also needs reports.export, checked in the controller).
+        Route::get('applications/{application}/card', [ExportsController::class, 'applicationCard'])->whereNumber('application')
+            ->middleware(['account.context', 'throttle:admin-exports']);
         Route::get('applications/{application}/files/{attachment}', [ApplicationsController::class, 'file'])
             ->whereNumber(['application', 'attachment']);
     });

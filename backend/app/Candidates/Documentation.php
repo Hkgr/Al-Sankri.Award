@@ -230,7 +230,7 @@ class Documentation
                     'purpose' => $purpose,
                     'size_bytes' => $check['size'],
                     'replaced' => $kind === 'explanatory' && $current->isNotEmpty(),
-                ]);
+                ], (int) $application->cycle_id);
 
                 return [self::STORED, $link];
             });
@@ -280,7 +280,7 @@ class Documentation
             AuditLog::record('documentation.file_removed', (int) $user->getKey(), 'application', (int) $application->getKey(), [
                 'file_link_id' => $attachmentId,
                 'purpose' => $link->purpose,
-            ]);
+            ], (int) $application->cycle_id);
 
             return self::SAVED;
         });
@@ -317,7 +317,7 @@ class Documentation
             }
 
             $this->changed($journey);
-            AuditLog::record('documentation.links_saved', (int) $user->getKey(), 'application', (int) $application->getKey(), ['count' => count($wanted)]);
+            AuditLog::record('documentation.links_saved', (int) $user->getKey(), 'application', (int) $application->getKey(), ['count' => count($wanted)], (int) $application->cycle_id);
 
             return self::SAVED;
         });
@@ -342,7 +342,7 @@ class Documentation
 
             if (! $journey->documentationConfirmed()) {
                 $journey->forceFill(['documentation_confirmed_revision' => $revision, 'documentation_confirmed_at' => now()])->save();
-                AuditLog::record('documentation.confirmed', (int) $user->getKey(), 'application', (int) $application->getKey(), ['revision' => $revision]);
+                AuditLog::record('documentation.confirmed', (int) $user->getKey(), 'application', (int) $application->getKey(), ['revision' => $revision], (int) $application->cycle_id);
             }
 
             return self::CONFIRMED;

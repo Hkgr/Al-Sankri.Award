@@ -154,7 +154,7 @@ class JudgePortal
                 'application_id' => $applicationId,
                 'score' => Scores::normalize($score),
                 'excluded' => $excluded,
-            ]);
+            ], (int) DB::table('applications')->where('id', $applicationId)->value('cycle_id'));
 
             return self::SENT;
         });

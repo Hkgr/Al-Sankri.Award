@@ -9,6 +9,7 @@ use App\Auth\SafeRedirect;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\ConfirmGoogleSignUp;
+use App\Support\AuditLog;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -172,6 +173,7 @@ class GoogleAuthController extends Controller
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
         $user->forceFill(['last_login_at' => now()])->save();
+        AuditLog::record('auth.login', (int) $user->getKey(), 'user', (int) $user->getKey(), ['method' => 'google']);
 
         return redirect(SafeRedirect::afterLogin($request, $request->session()->pull(self::REDIRECT_SESSION_KEY)));
     }

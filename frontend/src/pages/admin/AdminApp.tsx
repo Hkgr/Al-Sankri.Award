@@ -13,6 +13,7 @@ import { ApplicationPage } from './applications/ApplicationPage'
 import { ApplicationsPage } from './applications/ApplicationsPage'
 import { ALL_CYCLES, tableScope, withScope } from './applications/tableState'
 import { CommitteesPage } from './committees/CommitteesPage'
+import { LogPage } from './log/LogPage'
 import { UsersPage } from './users/UsersPage'
 import { usersScope, withUsersCycle } from './users/usersState'
 
@@ -137,10 +138,12 @@ export function AdminApp() {
         جارٍ تحميل لوحة الإدارة…
       </p>
     )
+  } else if (location.pathname === '/admin/log' && (can('audit.view') || can('logs.view_system'))) {
+    page = <LogPage key={user.account_context} user={user} cycles={cycles} />
   } else if (onUsers && can('users.view_registered')) {
     page = <UsersPage key={user.account_context} user={user} cycles={cycles} scope={usersCycle} />
   } else if (location.pathname === '/admin/applications' && can('applications.view_submitted')) {
-    page = <ApplicationsPage cycles={cycles} scope={scope ?? ALL_CYCLES} onScopeChange={changeCycle} />
+    page = <ApplicationsPage user={user} cycles={cycles} scope={scope ?? ALL_CYCLES} onScopeChange={changeCycle} />
   } else if (detail && can('applications.view_submitted')) {
     page = <ApplicationPage applicationId={Number(detail[1])} />
   } else if (location.pathname === '/admin/committees' && can('committees.manage_judging')) {

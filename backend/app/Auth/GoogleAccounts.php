@@ -3,6 +3,7 @@
 namespace App\Auth;
 
 use App\Models\User;
+use App\Support\AuditLog;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -108,6 +109,7 @@ class GoogleAccounts
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
+        AuditLog::record('auth.google_linked', (int) $user->getKey(), 'user', (int) $user->getKey());
 
         return self::LINKED;
     }
@@ -175,6 +177,7 @@ class GoogleAccounts
 
         $this->insertIdentity($user, $identity);
         app(CandidateRole::class)->grant($user, CandidateRole::SOURCE_GOOGLE);
+        AuditLog::record('user.registered', (int) $user->getKey(), 'user', (int) $user->getKey(), ['source' => CandidateRole::SOURCE_GOOGLE]);
 
         return $user;
     }

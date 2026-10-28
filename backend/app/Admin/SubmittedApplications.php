@@ -3,6 +3,7 @@
 namespace App\Admin;
 
 use App\Candidates\Documentation;
+use App\Candidates\NominationTaxonomy;
 use App\Http\Resources\BasicProfileResource;
 use App\Judging\CommitteeDecision;
 use App\Models\Application;
@@ -13,6 +14,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * «ملفات الترشح»: submitted participations only. An application appears
@@ -54,6 +56,27 @@ class SubmittedApplications
     public const PER_PAGE = [10, 25, 50];
 
     /**
+     * The table's filters (shared by the table and its exports).
+     *
+     * @return array<string, list<mixed>>
+     */
+    public static function filterRules(): array
+    {
+        return [
+            'cycle' => ['nullable', 'integer', 'min:1'],
+            'domain' => ['nullable', 'string', Rule::in(NominationTaxonomy::domainCodes())],
+            'subcategory' => ['nullable', 'string', 'max:64'],
+            'applicant_type' => ['nullable', Rule::in(array_keys(self::APPLICANT_TYPES))],
+            'status' => ['nullable', Rule::in(self::STATUSES)],
+            'q' => ['nullable', 'string', 'max:150'],
+            'sort' => ['nullable', Rule::in(array_keys(self::SORTS))],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', Rule::in(self::PER_PAGE)],
+        ];
+    }
+
+    /**
      * One page of the table.
      *
      * @param  array{cycle?: int|null, domain?: string|null, subcategory?: string|null, applicant_type?: string|null, status?: string|null, q?: string|null, sort?: string|null, direction?: string|null, page?: int|null, per_page?: int|null}  $filters
@@ -61,16 +84,49 @@ class SubmittedApplications
      */
     public function page(array $filters): array
     {
-        $query = $this->filtered($filters);
-        $total = (clone $query)->count();
+        $total = $this->count($filters);
         $perPage = (int) ($filters['per_page'] ?? 25);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = min(max(1, (int) ($filters['page'] ?? 1)), $lastPage);
 
+        return [
+            'data' => $this->rows($filters, $page, $perPage),
+            'meta' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'last_page' => $lastPage],
+        ];
+    }
+
+    /**
+     * How many submitted applications the filters match (the table's query).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function count(array $filters): int
+    {
+        return $this->filtered($filters)->count();
+    }
+
+    /**
+     * Every matching row, in the table's order and with the table's fields
+     * (exports). The caller checks count() against its limit first.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return list<array<string, mixed>>
+     */
+    public function export(array $filters): array
+    {
+        return $this->rows($filters);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return list<array<string, mixed>>
+     */
+    private function rows(array $filters, ?int $page = null, ?int $perPage = null): array
+    {
         $sort = self::SORTS[$filters['sort'] ?? 'submitted_at'] ?? self::SORTS['submitted_at'];
         $direction = ($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
-        $rows = $query
+        $rows = $this->filtered($filters)
             ->select([
                 'applications.id', 'applications.reference_number', 'applications.title', 'applications.status', 'applications.first_submitted_at',
                 'applicants.name_ar as applicant_name', 'applicants.type as applicant_type',
@@ -83,24 +139,21 @@ class SubmittedApplications
             )
             ->orderBy($sort, $direction)
             ->orderBy('applications.id', $direction)
-            ->forPage($page, $perPage)
+            ->when($page !== null, fn (Builder $q) => $q->forPage((int) $page, (int) $perPage))
             ->get();
 
-        return [
-            'data' => $rows->map(fn (object $row): array => [
-                'id' => (int) $row->id,
-                'reference_number' => $row->reference_number,
-                'title' => $row->title,
-                'applicant_name' => $row->applicant_name,
-                'applicant_type' => $row->applicant_type === 'individual' ? 'individual' : 'institution',
-                'domain' => ['code' => $row->domain_code, 'name' => $row->domain_name],
-                'subcategory' => $row->subcategory_code === null ? null : ['code' => $row->subcategory_code, 'name' => $row->subcategory_name],
-                'submitted_at' => Carbon::parse($row->first_submitted_at, 'UTC')->toIso8601ZuluString(),
-                'status' => $row->status,
-                'attachment_count' => (int) $row->attachment_count,
-            ])->all(),
-            'meta' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'last_page' => $lastPage],
-        ];
+        return $rows->map(fn (object $row): array => [
+            'id' => (int) $row->id,
+            'reference_number' => $row->reference_number,
+            'title' => $row->title,
+            'applicant_name' => $row->applicant_name,
+            'applicant_type' => $row->applicant_type === 'individual' ? 'individual' : 'institution',
+            'domain' => ['code' => $row->domain_code, 'name' => $row->domain_name],
+            'subcategory' => $row->subcategory_code === null ? null : ['code' => $row->subcategory_code, 'name' => $row->subcategory_name],
+            'submitted_at' => Carbon::parse($row->first_submitted_at, 'UTC')->toIso8601ZuluString(),
+            'status' => $row->status,
+            'attachment_count' => (int) $row->attachment_count,
+        ])->all();
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureAdministrationPage;
 use App\Http\Middleware\EnsureAdministrationPermission;
@@ -26,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Session cookies and CSRF protection for the React app's API calls.
         $middleware->statefulApi();
+        // One server-generated id per request, for logs and audit rows.
+        $middleware->prepend(AssignRequestId::class);
         $middleware->web(append: [UseArabicLocale::class]);
         $middleware->api(append: [UseArabicLocale::class]);
         $middleware->alias([

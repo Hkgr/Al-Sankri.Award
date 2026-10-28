@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Judge;
 use App\Http\Controllers\Controller;
 use App\Judging\JudgePortal;
 use App\Judging\Scores;
+use App\Support\AuditLog;
 use App\Support\PrivateFileResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
@@ -38,10 +40,17 @@ class ProjectsController extends Controller
     public function file(Request $request, int $application, int $attachment): BinaryFileResponse|JsonResponse
     {
         $link = $this->portal->file($request->user(), $application, $attachment);
+        if ($link === null) {
+            return response()->json(['code' => 'not_found', 'message' => 'لم يُعثر على هذا الملف في المشروع المسند إليك.'], 404);
+        }
 
-        return $link === null
-            ? response()->json(['code' => 'not_found', 'message' => 'لم يُعثر على هذا الملف في المشروع المسند إليك.'], 404)
-            : PrivateFileResponse::for($link->file, $request->query('download') === '1');
+        if (PrivateFileResponse::isFirstRead($request)) {
+            AuditLog::record('file.downloaded', (int) $request->user()->getKey(), 'application', $application, [
+                'file_link_id' => $attachment, 'role' => 'judge',
+            ], (int) DB::table('applications')->where('id', $application)->value('cycle_id'));
+        }
+
+        return PrivateFileResponse::for($link->file, $request->query('download') === '1');
     }
 
     public function send(Request $request, int $application): JsonResponse

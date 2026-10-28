@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Candidates\Documentation;
 use App\Models\StoredFile;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -18,6 +19,18 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
  */
 final class PrivateFileResponse
 {
+    /**
+     * Whether this request starts reading the file (no Range, or a range
+     * from byte 0). A video plays through many range requests; only the
+     * first is a file access worth recording.
+     */
+    public static function isFirstRead(Request $request): bool
+    {
+        $range = $request->headers->get('Range');
+
+        return $range === null || preg_match('/^bytes=0-/', $range) === 1;
+    }
+
     public static function for(StoredFile $file, bool $forceDownload = false): BinaryFileResponse
     {
         $video = str_starts_with($file->detected_mime_type, 'video/');

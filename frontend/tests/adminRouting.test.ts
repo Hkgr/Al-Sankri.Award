@@ -18,10 +18,10 @@ test('administrators land on /admin, judges on the judge portal, candidates on t
 })
 
 test('only the real administration pages are handled by the admin app', () => {
-  for (const path of ['/admin', '/admin/users', '/admin/applications', '/admin/applications/42', '/admin/committees']) {
+  for (const path of ['/admin', '/admin/users', '/admin/applications', '/admin/applications/42', '/admin/committees', '/admin/log']) {
     assert.equal(isAdminPath(path), true, path)
   }
-  for (const path of ['/admin/', '/admin/applications/abc', '/admin/schedule', '/admin/log', '/administrator']) {
+  for (const path of ['/admin/', '/admin/applications/abc', '/admin/schedule', '/admin/log/x', '/administrator']) {
     assert.equal(isAdminPath(path), false, path)
   }
 })

@@ -1,4 +1,4 @@
-# Administration dashboard, phase 1 («ملفات الترشح» and «لجان الحكام»)
+# Administration dashboard («المستخدمون»، «ملفات الترشح»، «لجان الحكام»، «السجل» and reports)
 
 For the people who deploy, operate and review the platform. Related: [candidate-documentation-submission.md](candidate-documentation-submission.md) (the submission these pages show), [database-schema.md](database-schema.md) §A and §F (roles and committees), [database-rules.md](database-rules.md) §3 (conflict-of-interest bar).
 
@@ -13,14 +13,14 @@ For the people who deploy, operate and review the platform. Related: [candidate-
 | «ملفات الترشح» | Complete: the submitted participations, read-only |
 | «لجان الحكام» | Complete: the three main-domain judging committees |
 | «المواعيد» | Shown as «قريباً», not a link: **deferred** |
-| «السجل» | Shown as «قريباً», not a link: **deferred** |
+| «السجل» | Complete: «سجل الحركات» (the audit trail) and «الأخطاء التقنية» (sanitized application-log summaries) (§8) |
 
 Also deferred, deliberately:
 - rankings and award results (a judge's mark and the committee average are recorded; rankings are not);
-- eligibility decisions, exports and bulk actions;
+- eligibility decisions and bulk actions;
 - editing a submitted application.
 
-Real pages: `/admin`, `/admin/users`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal. Judges use `/judge` and `/judge/projects/<id>`.
+Real pages: `/admin`, `/admin/users`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees`, `/admin/log` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal. Judges use `/judge` and `/judge/projects/<id>`.
 
 ## 2. Access and roles
 
@@ -29,6 +29,7 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
 | Role | Scope | Granted by | Permissions |
 | --- | --- | --- | --- |
 | `award_admin` «مدير الجائزة» | platform (`user_roles`) | the command below only | `applications.view_submitted`, `committees.manage_judging`, `users.view_registered` (added by `2026_10_28_700001_add_registered_users_permission`; existing administrators receive it through their existing grant. The migration records the permission and the `award_admin` link it creates separately in `audit_logs`, and its rollback removes only those. A rollback is refused, with nothing changed, while another role is linked to a permission it created) |
+| `award_admin`, continued | | | `reports.export` «تصدير التقارير», `audit.view` «عرض سجل الحركات», `logs.view_system` «عرض الأخطاء التقنية» (added by `2026_10_29_800001_add_reports_and_audit_permissions`, with the same per-row ownership markers and the same refusing rollback) |
 | `judge` «حكَم» | cycle (`cycle_user_roles`) | appointing a judge in «لجان الحكام» | none. The portal checks this grant, not a permission |
 
 - **Server-side checks:** every admin API checks the permission of the account's current, unrevoked grants on the server (`App\Admin\AdminAccess`, middleware `admin:<permission>`). Candidates and judges are refused (`403 not_admin`). No role, permission or actor is read from a request.
@@ -152,3 +153,107 @@ Nothing else changes: no `.env`, Plesk, Document Root, `deploy.sh` or mail setti
 - **Changing cycle:** changing the cycle changes the progress shown and resets the page, but never removes accounts.
 - **Filters:** search (name/email), role (with «حكَم» scoped to the selected cycle), account state, email verification, progress (the same expression as the labels), sorting by name, registration date and last sign-in, and 10/25/50 per page. All of them live in the page address.
 - **Privacy:** the list returns only the table's fields (`no-store`). Never included: identity numbers, addresses, profile details, funding, narratives, password hashes, tokens or storage paths.
+
+## 7. Reports and exports
+
+Every export is made on the server, from the same services as the page it comes from: the same validation, permission checks, projections, progress rules, cycle and sort. There are no per-row API calls and no paging loops. An export needs `reports.export` **and** the permission of the page it exports. Candidates and judges get nothing.
+
+| Export (where) | Source permission | Code in `/api/admin/exports/{code}` |
+| --- | --- | --- |
+| «المستخدمون» (results bar) | `users.view_registered` | `users` |
+| «ملفات الترشح» (results bar) | `applications.view_submitted` | `applications` |
+| Committee members (each committee panel) | `committees.manage_judging` | `committee-members` |
+| Judges' marks, exclusion flags, notes and recommendations (an application's «قرار اللجنة») | `applications.view_submitted` | `judge-scores` |
+| «سجل الحركات» | `audit.view` | `audit` |
+| «الأخطاء التقنية» | `logs.view_system` | `system-logs` |
+
+- **What is exported:** **all** rows matching the current filters, search, sort and cycle, never just the visible page. Each file states the scope, the filters in Arabic, the generation time (Damascus) and the row count.
+- **Limits** (one place: `App\Reports\ExportLimits`): 1,000 rows for PDF and 10,000 for Excel. Above a limit the export is refused with a clear message (`422 export_too_large`) and nothing is cut. Narrow the filters, or use Excel.
+- **Excel (.xlsx):** a real workbook (OpenSpout). The sheet is right-to-left, with Arabic headings, a styled heading row that stays frozen with everything above it, column widths, and filters over the heading and exactly the data rows. The sheet tab gets a safe name (at most 31 characters, without `\ / ? * : [ ]` or apostrophes); the full title is the first row. Values are written as text cells (only whole counts are numbers), so a value starting with `=`, `+`, `-` or `@` is never evaluated as a formula.
+- **Table PDF:** the page size follows the column count (A4 portrait, A4 landscape above 5 columns, A3 landscape above 9). Headings repeat on every page and cells wrap. Actions and internal fields are left out.
+- **«بطاقة الترشح» (application card PDF):** on an application's page, «تنزيل بطاقة الترشح PDF». It is built from the same authorized detail service as the page:
+  - Stage 1 comes from the profile the submitted version references;
+  - Stages 2–3 come from the submitted snapshot and its version-linked file manifest;
+  - judging is a separate section, «حالة التحكيم وقت التصدير»: each current judge's mark, own exclusion flag, notes and recommendations, as the application page shows them.
+
+  It lists file names, types, sizes and scan status, and the links as text. It never embeds files, storage paths, temporary URLs or credentials, and never fetches links. Every value is escaped.
+- **Downloads:**
+  - authenticated, `no-store`, and bound to the displayed account (`X-Candidate-Context`; another account gives `409`);
+  - rate-limited to 10 a minute per account (`throttle:admin-exports`);
+  - a 2-minute client deadline with loading and error feedback;
+  - ASCII file names such as `applications-2026-10-29-143000.xlsx`.
+- **Storage:**
+  - PDFs are generated in memory;
+  - an Excel file is written to `storage/app/private/exports/` (never under `public/`) and deleted once it is sent; leftovers from an interrupted request are removed after an hour;
+  - mPDF's temporary files live in `storage/framework/cache/mpdf/`.
+- **Audit:** each generated export and card is recorded once as `report.exported` (table code, format and row count, plus the application and cycle for a card), only after its PDF or workbook was generated successfully. A failed generation records nothing. The event does not prove the browser received or saved the file. Filter values are not recorded. A protected attachment opened by an administrator or a judge is recorded once as `file.downloaded`; range requests from video playback don't add rows.
+
+### Dependencies and fonts
+
+| Package | Licence | Use |
+| --- | --- | --- |
+| `mpdf/mpdf` 8.3 | **GPL-2.0-only** | PDF (Arabic shaping, RTL). **The owner should confirm this licence is acceptable.** The alternative, TCPDF (LGPL), shapes Arabic noticeably worse |
+| `openspout/openspout` 4.32 | MIT | XLSX |
+| Tajawal (`backend/resources/fonts/tajawal/`) | SIL OFL 1.1 (`OFL.txt` beside it) | PDF text only. The site font Rayat ships as CFF-based OpenType (`OTTO`), which mPDF cannot embed. Noto Sans Arabic and Noto Naskh Arabic failed in mPDF's OpenType layout. DejaVu Sans (bundled with mPDF) covers missing glyphs |
+
+Both packages are pure PHP and install with a normal `composer install`: no browser, daemon or external service. **Required PHP extensions:** `gd`, `mbstring`, `zip`, `dom`, `xml`, `xmlreader`, `fileinfo`, `intl`, `zlib` (plus `filter`, `libxml` and `iconv`, which are usually built in).
+
+## 8. «السجل»
+
+`/admin/log` has two tabs, each shown only with its permission.
+
+### «سجل الحركات» (`audit.view`)
+
+It reads the existing `audit_logs` table; no second log is added.
+- **Columns:** time (Damascus); actor («النظام» when no account is recorded); Arabic action label; record type and reference (application reference, committee name or account name); the cycle recorded with the event («بلا دورة» otherwise); a short description; expandable details.
+- **Order and paging:** newest first, with a stable order (time, then id); 25/50/100 per page, paged on the server.
+- **Filters** (all kept in the page address): date range, actor (a name or email, or `system`), action, record type and number, cycle (one cycle, «أحداث بلا دورة», or all), and request ID. A row's request ID filters to every event of that request.
+- **Details:** only allowlisted scalar fields are shown. The rest is only counted («حقول أخرى»). A judge's mark and exclusion flag are never shown there.
+
+**Recorded events.** Each is written once per real change, in the same transaction as the change, so a refused or repeated request adds nothing. Each carries the request ID, and the cycle where one really applies.
+
+| Area | Events |
+| --- | --- |
+| Accounts and sign-in | `user.registered` (password and Google), `auth.login` (with the method), `auth.login_failed` (the account if one exists; never the typed email or password), `auth.login_throttled`, `auth.login_refused` (disabled account), `auth.logout`, `auth.password_reset`, `auth.email_verified`, `auth.google_linked` |
+| Grants | `user_role.granted`, `cycle_user_role.granted` / `.revoked`, `user.created` (judge appointment) |
+| Candidate stages | `candidate_profile.completed` (Stage 1 is account-level, so **no cycle**), `nomination_details.confirmed`, `documentation.file_added` / `.file_removed` / `.links_saved` / `.confirmed`, `application.submitted` |
+| Judging | `committee.created` / `.approved` / `.returned_to_draft`, `committee_member.added` / `.ended`, `judging_assignments.provisioned`, `evaluation.finalized` |
+| Reports and files | `report.exported`, `file.downloaded` |
+| Set-up commands and migrations | award cycle, domain, subcategory, stage and policy set-up; `role.provisioned`, `permission.provisioned`, `role_permission.provisioned` |
+
+A test fails if any recorded action lacks an Arabic label.
+
+**Not recorded:**
+- viewing pages and tables;
+- saving Stage 1–2 drafts (only confirmations are recorded);
+- failed validation;
+- password-reset link requests (recording them would reveal whether an email exists).
+
+**Historical rows:**
+- **Older rows:** rows written before this release have no request ID, and most have no cycle. They show as «بلا دورة» and are never back-filled or guessed.
+- **Migration markers:** the markers that migrations rely on for ownership are kept unchanged.
+- **Payloads:** no stored payload is modified.
+
+### «الأخطاء التقنية» (`logs.view_system`)
+
+A read-only view of Laravel's own log files. Nothing is installed or streamed.
+- **Sources:** only the files of the configured `single`/`daily` channels that lie directly in `storage/logs` (`laravel.log`, `laravel-YYYY-MM-DD.log`). They are chosen by an id from a server list. There is no path input, and the reader cannot follow symlinks, open other folders or delete anything.
+- **Reading:**
+  - newest first, backwards, at most 1 MB scanned per page (32 MB per export), 50 entries per page;
+  - «قراءة إدخالات أقدم» continues from a byte cursor;
+  - each multiline entry (a stack trace) is read as one entry, and its body is then discarded.
+- **Shown fields:** time, level, exception class or category, the file and line where it was thrown (base name only), request ID and a generic Arabic summary.
+- **Never shown:** messages, SQL, payloads, links, credentials, OAuth codes or stack traces. An entry without an exception gets the generic «إدخال سجل نصي؛ محتواه مخفي لأسباب أمنية».
+- **Coverage:** the page states the channels read, the retention (`days` of the daily channel), the oldest file present, and the window actually scanned.
+- **Limits of coverage:** it covers the whole application (not per cycle), and only what the log files still hold. Errors logged elsewhere (the web server, PHP-FPM, Plesk) are not visible here.
+- **No files:** when no file can be read, the page says so plainly.
+
+## 9. Deploying reports and «السجل»
+
+1. Back up the database.
+2. `composer install --no-dev --optimize-autoloader` adds `mpdf/mpdf` and `openspout/openspout`. Check the PHP extensions in §7.
+3. `php artisan migrate --force` runs one additive migration (three permissions linked to `award_admin`). Existing administrators receive them through their existing grant.
+4. Build and publish the frontend as today.
+5. `storage/` must stay writable (already required). The `storage/app/private/exports/` and `storage/framework/cache/mpdf/` folders are created on first use.
+
+No `.env`, Plesk, Document Root, `deploy.sh`, queue or scheduler change is needed.

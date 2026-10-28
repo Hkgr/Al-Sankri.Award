@@ -33,8 +33,15 @@ class AdminAccess
 
     public const VIEW_USERS = 'users.view_registered';
 
+    /** Exports (with the source module's own viewing permission). */
+    public const EXPORT_REPORTS = 'reports.export';
+
+    public const VIEW_AUDIT = 'audit.view';
+
+    public const VIEW_SYSTEM_LOGS = 'logs.view_system';
+
     /** The administration permissions this dashboard knows (anything else is ignored). */
-    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS];
+    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS, self::EXPORT_REPORTS, self::VIEW_AUDIT, self::VIEW_SYSTEM_LOGS];
 
     public const SOURCE_COMMAND = 'admin_grant_access_command';
 

@@ -199,3 +199,50 @@ export const USER_ROLE_FILTERS = { candidate: 'مترشح', award_admin: 'مدي
 
 export const USER_SORT_LABELS = { name: 'الاسم', registered_at: 'تاريخ التسجيل', last_login_at: 'آخر تسجيل دخول' } as const
 export type UserSortKey = keyof typeof USER_SORT_LABELS
+
+export type AuditEntry = {
+  id: number
+  occurred_at: string
+  actor: { id: number; name: string; email: string } | null
+  action: string
+  action_label: string
+  subject: { type: string; type_label: string; id: number; reference: string | null } | null
+  cycle: { id: number; name: string; year: number } | null
+  request_id: string | null
+  summary: string
+  details: { key: string; label: string; value: string }[]
+}
+
+export type AuditPage = {
+  data: AuditEntry[]
+  meta: { page: number; per_page: number; total: number; last_page: number }
+  actions: Record<string, string>
+  subjects: Record<string, string>
+}
+
+export type SystemLogEntry = {
+  offset: number
+  time: string | null
+  level: string
+  category: string
+  summary: string
+  location: string | null
+  request_id: string | null
+  user_id: number | null
+}
+
+export type SystemLogSource = { id: string; size_bytes: number; modified_at: string }
+
+export type SystemLogPage = {
+  status: 'available' | 'unavailable'
+  sources: SystemLogSource[]
+  coverage: { channels: string[]; retention_days: number | null; oldest_file: string | null }
+  data: {
+    source: { id: string; size_bytes: number }
+    entries: SystemLogEntry[]
+    next_cursor: number | null
+    window: { from_byte: number; to_byte: number; scanned_bytes: number; newest: string | null; oldest: string | null; skipped_by_filters: number; reached_start: boolean }
+  } | null
+}
+
+export const LOG_LEVELS = ['EMERGENCY', 'ALERT', 'CRITICAL', 'ERROR', 'WARNING', 'NOTICE', 'INFO', 'DEBUG'] as const

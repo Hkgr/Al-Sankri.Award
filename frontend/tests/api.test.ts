@@ -6,7 +6,7 @@
  */
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, mock, test } from 'node:test'
-import { api, ApiError, NetworkError, REQUEST_TIMEOUT_MS, RequestTimeoutError, UPLOAD_TIMEOUT_MS } from '../src/lib/api.ts'
+import { api, ApiError, DOWNLOAD_TIMEOUT_MS, NetworkError, REQUEST_TIMEOUT_MS, RequestTimeoutError, UPLOAD_TIMEOUT_MS } from '../src/lib/api.ts'
 
 type Call = { url: string; method: string; signal: AbortSignal; headers: Record<string, string>; body: unknown }
 
@@ -213,4 +213,31 @@ test('an upload sends multipart form data and has its own, longer deadline', asy
 test('a 413 from the server or a proxy gets an understandable message', async () => {
   replies.push(async () => new Response('<html>413 Request Entity Too Large</html>', { status: 413 }))
   await assert.rejects(api.upload('/api/candidate/documentation/files', new FormData()), (error: unknown) => error instanceof ApiError && error.status === 413 && error.message.includes('أكبر من الحد'))
+})
+
+test('a download keeps its own longer deadline and returns the file with its safe name', async () => {
+  replies.push(noHeaders)
+  const stalled = track(api.download('/api/admin/exports/users?format=xlsx', { 'X-Candidate-Context': 'ctx' }))
+  mock.timers.tick(REQUEST_TIMEOUT_MS + 1)
+  await settle()
+  assert.equal(stalled.settled, false, 'not bound by the 20-second request deadline')
+  mock.timers.tick(DOWNLOAD_TIMEOUT_MS - REQUEST_TIMEOUT_MS)
+  await settle()
+  assert.ok(stalled.error instanceof RequestTimeoutError)
+  assert.equal(calls[0].headers['X-Candidate-Context'], 'ctx')
+
+  replies.push(async () => new Response('PK', { status: 200, headers: { 'Content-Disposition': 'attachment; filename="users-2026-10-28-120000.xlsx"' } }))
+  const file = await api.download('/api/admin/exports/users?format=xlsx')
+  assert.equal(file.filename, 'users-2026-10-28-120000.xlsx')
+  assert.equal(await file.blob.text(), 'PK')
+
+  // Laravel's file downloads send a plain ASCII name unquoted.
+  replies.push(async () => new Response('PK', { status: 200, headers: { 'Content-Disposition': 'attachment; filename=audit-2026-10-28-120000.xlsx' } }))
+  assert.equal((await api.download('/api/admin/exports/audit?format=xlsx')).filename, 'audit-2026-10-28-120000.xlsx')
+})
+
+test('a refused export arrives as an ApiError with the server message', async () => {
+  replies.push(json(422, { code: 'export_too_large', message: 'ضيّق المرشّحات', limit: 1000 }))
+  await assert.rejects(api.download('/api/admin/exports/users?format=pdf'), (error: unknown) =>
+    error instanceof ApiError && error.code === 'export_too_large' && error.message === 'ضيّق المرشّحات')
 })
