@@ -5,6 +5,8 @@ use App\Http\Middleware\EnsureAdministrationPage;
 use App\Http\Middleware\EnsureAdministrationPermission;
 use App\Http\Middleware\EnsureCandidateAccountContext;
 use App\Http\Middleware\EnsureDocumentationJourney;
+use App\Http\Middleware\EnsureJudge;
+use App\Http\Middleware\EnsureJudgePage;
 use App\Http\Middleware\EnsureNominationStageIsOpen;
 use App\Http\Middleware\EnsureUserIsCandidate;
 use App\Http\Middleware\PreventCaching;
@@ -34,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'account.context' => EnsureCandidateAccountContext::class,
             'admin' => EnsureAdministrationPermission::class,
             'admin.page' => EnsureAdministrationPage::class,
+            'judge' => EnsureJudge::class,
+            'judge.page' => EnsureJudgePage::class,
             'nomination.gate' => EnsureNominationStageIsOpen::class,
             'documentation.journey' => EnsureDocumentationJourney::class,
             'no-store' => PreventCaching::class,

@@ -18,6 +18,7 @@ These decisions override older documents in `docs/`.
 | Three domains: الثقافة والفنون، التراث المادي واللامادي، الإبداع | Rows in `award_domains` / `cycle_domains`, entered as data. Nothing is seeded by migrations; `php artisan nomination:setup` provisions them for an explicitly named cycle. |
 | **Confirmed subcategories:** الثقافة والفنون (الثقافة، الفنون); التراث (التراث المادي، التراث اللامادي); الإبداع (المسؤولية المجتمعية، ريادة الأعمال، الجودة). This supersedes the earlier notes that treated the Creativity sub-areas as unresolved and Quality as only a cross-cutting approach. | `cycle_domain_subcategories`, one per cycle domain and code. An application's `subcategory_id` must belong to its own domain and cycle (composite keys). The subcategories have no slots, rankings, committees or rubrics. |
 | Each domain has its own judging committee of 3 or 5 known judges | `committees` of type `judging`, one current per cycle domain (DB). The 3-or-5 count is checked when a committee is activated (application layer, §3). |
+| Each current member scores every submitted application in that domain: one mark out of 100 plus notes. The committee decision is the average, shown once every member has sent | On approval, and when an application is submitted later, one judging_assignments row per member and submitted version. The rubric uses aggregation_method average and criterion overall_score (maximum 100). Sending finalizes evaluations and evaluation_scores. |
 | Public voting and the audience award are cancelled | No voting, voter or audience-award table, column, status or permission |
 | Field verification and field visits are cancelled | No field-visit or verifier table, file-link target, consent or permission |
 | Documentary evidence stays part of applications | `files` + `file_links` targeting draft applications and submitted versions |
@@ -171,7 +172,7 @@ These cannot be expressed as row-level constraints, or they depend on workflow. 
 
 ## 4. Open business decisions and where they will live
 
-**No defaults have been chosen for any of these.** Each has a place to be stored, so the decision can be recorded later without changing the meaning of existing data.
+**Unless a row says the decision is now made, no default has been chosen.** Each open item has a place to be stored, so the decision can be recorded later without changing the meaning of existing data.
 
 | Open decision | Where it will be stored | Current state |
 | --- | --- | --- |
@@ -179,10 +180,10 @@ These cannot be expressed as row-level constraints, or they depend on workflow. 
 | Whether third-party nominations are allowed | `award_cycles.submission_rules`, e.g. `{"third_party_nominations": …}`. The schema already separates `applications.created_by` from the applicant's representative and members. | Null |
 | Whether subcategories ever get their own award slots, rubrics or committees | A future decision; `cycle_domain_subcategories` exists, and slots and rubrics stay per cycle domain | Not modelled (the subcategory structure itself is now confirmed, §1) |
 | Scoring weights | `evaluation_criteria.weight` (a percentage) | Nullable until a rubric is approved |
-| Aggregation method | `evaluation_rubrics.aggregation_method` | Null until approved; no average is assumed |
+| Aggregation method | `evaluation_rubrics.aggregation_method` | Decided for this portal: `average` of one mark out of 100 (§1) |
 | Tie-breaking rules | A future nullable rubric-level field, added by a small migration once the rule's shape is known | Not stored |
 | Appeal deadlines | A `cycle_stages` row for the appeal window (`opens_at`/`closes_at`), read by the appeal service | No stage or deadline is created |
-| Whether every judge evaluates every application | Recorded with the rubric or cycle configuration once decided; `judging_assignments` supports both full and partial assignment | No constraint either way |
+| Whether every judge evaluates every application | `judging_assignments`, one row per current member and submitted version | Decided: yes, for the approved committee's main domain (§1) |
 | Whether one application may receive more than one award slot | Application-layer rule once decided | No constraint |
 | Geographic scope of later cycles (the first cycle is Syria) | `award_cycles.eligibility_rules` (`implementation_country`, set explicitly by `nomination:setup`) | Locations accept any ISO country in the schema; the candidate form offers only a country with a vetted governorate list (Syria) |
 

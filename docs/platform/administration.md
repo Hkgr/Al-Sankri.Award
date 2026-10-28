@@ -15,12 +15,11 @@ For the people who deploy, operate and review the platform. Related: [candidate-
 | «السجل» | Shown as «قريباً», not a link: **deferred** |
 
 Also deferred, deliberately:
-- the judge portal and the evaluation workflow (rubrics, scores, rankings, results);
-- assigning applications to judges;
+- rankings and award results (a judge's mark and the committee average are recorded; rankings are not);
 - eligibility decisions, exports and bulk actions;
 - editing a submitted application.
 
-Real pages: `/admin`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal.
+Real pages: `/admin`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal. Judges use `/judge` and `/judge/projects/<id>`.
 
 ## 2. Access and roles
 
@@ -29,13 +28,13 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
 | Role | Scope | Granted by | Permissions |
 | --- | --- | --- | --- |
 | `award_admin` «مدير الجائزة» | platform (`user_roles`) | the command below only | `applications.view_submitted`, `committees.manage_judging` |
-| `judge` «حكَم» | cycle (`cycle_user_roles`) | appointing a judge in «لجان الحكام» | none (no judge portal yet) |
+| `judge` «حكَم» | cycle (`cycle_user_roles`) | appointing a judge in «لجان الحكام» | none. The portal checks this grant, not a permission |
 
 - **Server-side checks:** every admin API checks the permission of the account's current, unrevoked grants on the server (`App\Admin\AdminAccess`, middleware `admin:<permission>`). Candidates and judges are refused (`403 not_admin`). No role, permission or actor is read from a request.
 - **Writes:** each write also carries the page's `account_context`. A page showing another account than the signed-in one changes nothing (`409 account_mismatch`). Audit rows name the signed-in administrator.
 - **After sign-in:**
   - administrators go to `/admin`;
-  - judges go to their account page, with a short note that there is no judge portal yet (never to the candidate dashboard just because they are judges);
+  - judges go to `/judge` (never to the candidate dashboard just because they are judges);
   - candidates go to `/dashboard` as before.
 - **Registration:** public registration still grants only the candidate classification. Existing roles and their history are kept.
 

@@ -93,11 +93,9 @@ function AccountDetails({ user }: { user: User }) {
         </p>
       )}
       {user.is_judge && (
-        <FormAlert tone="info">
-          <p>
-            حسابك مسجّل حكَماً في إحدى لجان تحكيم الجائزة. لا توجد بوابة للحكام في المنصة بعد؛ ستتواصل معك إدارة الجائزة بشأن مهام التحكيم ومواعيدها.
-          </p>
-        </FormAlert>
+        <p className="auth-panel__text">
+          <Link href="/judge">الانتقال إلى التحكيم</Link>
+        </p>
       )}
       {user.is_candidate && (
         <p className="auth-panel__text">
