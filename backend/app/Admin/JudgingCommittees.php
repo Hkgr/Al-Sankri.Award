@@ -4,6 +4,7 @@ namespace App\Admin;
 
 use App\Auth\GoogleAccounts;
 use App\Candidates\NominationTaxonomy;
+use App\Judging\Assignments;
 use App\Models\User;
 use App\Support\AuditLog;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -348,6 +349,7 @@ class JudgingCommittees
             $now = now();
             DB::table('committees')->where('id', $committee->id)->update(['status' => 'approved', 'approved_by' => $actor->getKey(), 'approved_at' => $now, 'updated_at' => $now]);
             AuditLog::record('committee.approved', (int) $actor->getKey(), 'committee', (int) $committee->id, ['member_count' => $members->count(), 'domain' => $domain->code]);
+            app(Assignments::class)->provisionCommittee((int) $committee->id, (int) $actor->getKey());
 
             return self::UPDATED;
         });

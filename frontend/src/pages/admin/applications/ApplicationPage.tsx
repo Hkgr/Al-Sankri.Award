@@ -160,6 +160,31 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
         </dl>
       </Section>
 
+      <Section id="admin-decision" title="قرار اللجنة">
+        {!detail.judging.ready ? (
+          <p className="admin-muted">لم تُعتمد لجنة تحكيم هذا المحور بعد.</p>
+        ) : (
+          <>
+            <p className="admin-muted">
+              {detail.judging.decision
+                ? `متوسط التقييمات ${detail.judging.decision} من 100.`
+                : `أُرسل ${detail.judging.received} من ${detail.judging.expected}. يظهر المتوسط عندما يرسل كل أعضاء اللجنة.`}
+            </p>
+            <dl className="admin-facts">
+              {detail.judging.scores.map((item, index) => (
+                <div key={`${item.name}-${index}`}>
+                  <dt>{item.name}</dt>
+                  <dd>
+                    {item.score === null ? 'بانتظار الإرسال' : `${item.score} من 100`}
+                    {item.notes ? ` — ${item.notes}` : ''}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        )}
+      </Section>
+
       <Section id="admin-stage-1" title="المرحلة 1: البيانات الأساسية">
         {detail.basic_information ? (
           <ProfileSummary groups={summaryFromProfile(detail.basic_information)} headingLevel={3} />

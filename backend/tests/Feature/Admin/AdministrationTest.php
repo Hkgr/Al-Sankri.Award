@@ -120,14 +120,16 @@ class AdministrationTest extends TestCase
         $this->browser('POST', "/api/admin/cycles/{$this->cycleId}/committees", ['domain' => 'creativity', 'name' => 'لجنة', 'account_context' => 'stale'])
             ->assertConflict()->assertJsonPath('code', 'account_mismatch');
 
-        // A judge (an existing candidate appointed here): no administration, no candidate dashboard redirect.
+        // A judge (an existing candidate appointed here): the judge portal, never the candidate dashboard or administration.
         $this->createCommittee('creativity')->assertCreated();
         $this->appoint('creativity', $this->candidate->email, existing: true, extra: ['role' => 'award_admin', 'actor_id' => $this->operator->id])->assertCreated();
         $this->assertSame((int) $this->admin->id, (int) DB::table('audit_logs')->where('action', 'committee_member.added')->value('actor_user_id'));
         $this->cookieJar = [];
         $this->startCsrfSession();
-        $this->browser('POST', '/api/auth/login', ['email' => $this->candidate->email, 'password' => 'password'])->assertOk()->assertJsonPath('redirect', '/account');
+        $this->browser('POST', '/api/auth/login', ['email' => $this->candidate->email, 'password' => 'password'])->assertOk()->assertJsonPath('redirect', '/judge');
         $this->signedIn = $this->candidate;
+        $this->navigate('/judge')->assertOk();
+        $this->navigate('/judge/projects/1')->assertOk();
         $this->read('/api/user')->assertJsonPath('data.is_judge', true)->assertJsonPath('data.is_candidate', true)->assertJsonPath('data.admin_permissions', []);
         $this->read('/api/admin/applications')->assertForbidden();
         $this->navigate('/admin')->assertForbidden();
@@ -345,7 +347,6 @@ class AdministrationTest extends TestCase
 
     public function test_approval_needs_three_or_five_current_judges_and_changes_need_a_draft(): void
     {
-        $application = $this->submitApplication($this->candidate);
         $this->signInAdmin();
         $this->createCommittee('creativity')->assertCreated();
         foreach (['a', 'b'] as $name) {
@@ -375,17 +376,12 @@ class AdministrationTest extends TestCase
         $this->assertSame(1, DB::table('cycle_user_roles')->whereNotNull('revoked_at')->whereNotNull('revocation_reason')->count());
         $this->approve('creativity')->assertUnprocessable();
 
-        // Judging history makes ending a membership or a return to draft unsafe.
+        // Approving when a project is already submitted starts judging, so the committee can no longer return to draft.
         $this->appoint('creativity', 'f@judges.example.org')->assertCreated();
         $this->approve('creativity')->assertOk();
-        $committee = DB::table('committees')->sole();
-        $member = DB::table('committee_members')->whereNull('left_at')->orderBy('id')->first();
-        $rubric = DB::table('evaluation_rubrics')->insertGetId(['cycle_domain_id' => $committee->cycle_domain_id, 'version_number' => 1, 'name_ar' => 'معايير', 'status' => 'draft']);
-        DB::table('judging_assignments')->insert([
-            'application_version_id' => DB::table('applications')->where('id', $application['id'])->value('current_version_id'), 'application_id' => $application['id'],
-            'cycle_domain_id' => $committee->cycle_domain_id, 'committee_id' => $committee->id, 'committee_member_id' => $member->id, 'rubric_id' => $rubric,
-            'assigned_by' => $this->admin->id, 'assigned_at' => now(),
-        ]);
+        $this->submitApplication($this->candidate);
+        $this->signInAdmin();
+        $this->assertGreaterThan(0, DB::table('judging_assignments')->count());
         $this->adminPost('/committees/creativity/return-to-draft', [])->assertConflict()->assertJsonPath('code', 'judging_history');
         $this->assertSame('approved', DB::table('committees')->value('status'));
     }
