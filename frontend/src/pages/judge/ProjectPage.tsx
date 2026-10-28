@@ -54,7 +54,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
     event.preventDefault()
     if (sending || !pending) return
     const next = {
-      score: score.trim() === '' ? 'ضع العلامة من 100.' : undefined,
+      score: !excluded && score.trim() === '' ? 'ضع العلامة من 100.' : undefined,
       notes: notes.trim() === '' ? 'اكتب الملاحظات قبل الإرسال.' : undefined,
       recommendations: recommendations.trim() === '' ? 'اكتب التوصيات قبل الإرسال.' : undefined,
     }
@@ -66,7 +66,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
     try {
       const saved = await api.post<{ data: JudgeProject }>(`/api/judge/projects/${applicationId}/evaluation`, {
         account_context: user.account_context,
-        score: score.trim(),
+        ...(excluded ? {} : { score: score.trim() }),
         notes: notes.trim(),
         recommendations: recommendations.trim(),
         excluded,
@@ -184,10 +184,9 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
         {sent ? (
           <FormAlert tone="success">
             <p>
-              أُرسلت إلى الإدارة: {project.evaluation.score} من 100
+              أُرسلت إلى الإدارة: {project.evaluation.excluded ? 'استبعاد' : `${project.evaluation.score} من 100`}
               {project.evaluation.sent_at ? `، في ${formatDamascusDateTime(project.evaluation.sent_at)} بتوقيت دمشق` : ''}.
             </p>
-            {project.evaluation.excluded && <p>استُبعد المشارك.</p>}
             {project.evaluation.notes && <p>الملاحظات: {project.evaluation.notes}</p>}
             {project.evaluation.recommendations && <p>التوصيات: {project.evaluation.recommendations}</p>}
           </FormAlert>
@@ -198,20 +197,22 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
                 <p>{formError}</p>
               </FormAlert>
             )}
-            <TextField
-              id="score"
-              label="العلامة من 100"
-              value={score}
-              onChange={(value) => {
-                setScore(value)
-                setFieldErrors((current) => ({ ...current, score: undefined }))
-              }}
-              error={fieldErrors.score}
-              required
-              autoComplete="off"
-              inputMode="decimal"
-              dir="ltr"
-            />
+            {!excluded && (
+              <TextField
+                id="score"
+                label="العلامة من 100"
+                value={score}
+                onChange={(value) => {
+                  setScore(value)
+                  setFieldErrors((current) => ({ ...current, score: undefined }))
+                }}
+                error={fieldErrors.score}
+                required
+                autoComplete="off"
+                inputMode="decimal"
+                dir="ltr"
+              />
+            )}
             <div className="field">
               <FieldLabel htmlFor="notes" label="الملاحظات" required />
               <textarea
@@ -246,9 +247,20 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
               />
               <FieldMessages id="recommendations" error={fieldErrors.recommendations} />
             </div>
-            <CheckboxField id="excluded" checked={excluded} onChange={setExcluded}>
+            <CheckboxField
+              id="excluded"
+              checked={excluded}
+              onChange={(checked) => {
+                setExcluded(checked)
+                if (checked) {
+                  setScore('')
+                  setFieldErrors((current) => ({ ...current, score: undefined }))
+                }
+              }}
+            >
               استبعاد المشارك
             </CheckboxField>
+            <p className="field__hint">المشارك مخالف، فلا تُوضع له علامة، ونتيجته استبعاد.</p>
             <button type="submit" className="button button--primary" disabled={sending}>
               {sending ? 'جارٍ الإرسال…' : 'إرسال إلى الإدارة'}
             </button>

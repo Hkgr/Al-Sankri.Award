@@ -123,11 +123,11 @@ class JudgePortalTest extends TestCase
         $this->assertStringStartsWith("\x00\x00\x00\x18ftyp", $this->body($downloaded));
         Storage::disk(Documentation::DISK)->delete("applications/{$submitted['id']}/judge-video.mp4");
 
-        $this->sendMark($judges[0], $submitted['id'], '80', 'توثيق دقيق', 'يُستكمل التوثيق', true)->assertOk()
+        $this->sendMark($judges[0], $submitted['id'], '80', 'توثيق دقيق', 'يُستكمل التوثيق')->assertOk()
             ->assertJsonPath('data.evaluation.status', 'sent')
             ->assertJsonPath('data.evaluation.score', '80')
             ->assertJsonPath('data.evaluation.recommendations', 'يُستكمل التوثيق')
-            ->assertJsonPath('data.evaluation.excluded', true);
+            ->assertJsonPath('data.evaluation.excluded', false);
         $this->sendMark($judges[0], $submitted['id'], '80', 'مرة ثانية')->assertConflict()->assertJsonPath('code', 'already_sent');
         $this->sendMark($judges[0], $submitted['id'], '101', 'خارج الحد')->assertUnprocessable();
 
@@ -151,8 +151,8 @@ class JudgePortalTest extends TestCase
             ->assertJsonPath('data.judging.scores.0.score', '80')
             ->assertJsonPath('data.judging.scores.0.notes', 'توثيق دقيق')
             ->assertJsonPath('data.judging.scores.0.recommendations', 'يُستكمل التوثيق')
-            ->assertJsonPath('data.judging.scores.0.excluded', true)
-            ->assertJsonPath('data.judging.scores.1.excluded', false);
+            ->assertJsonPath('data.judging.excluded', false)
+            ->assertJsonPath('data.judging.scores.0.excluded', false);
 
         // The judges' marks export carries the same exclusion and recommendations.
         $export = $this->browser('GET', '/api/admin/exports/judge-scores?format=xlsx&application='.$submitted['id'], headers: [
@@ -211,6 +211,28 @@ class JudgePortalTest extends TestCase
             'recommendations' => 'توصية',
             'excluded' => false,
         ])->assertConflict()->assertJsonPath('code', 'account_mismatch');
+
+        $this->sendMark($judges[0], $submitted['id'], null, 'مخالفة الشروط', 'يُستبعد', true)->assertOk()
+            ->assertJsonPath('data.evaluation.score', null)
+            ->assertJsonPath('data.evaluation.excluded', true)
+            ->assertJsonPath('data.evaluation.notes', 'مخالفة الشروط');
+        $this->assertNull(DB::table('evaluation_scores')->value('score'));
+        $this->assertSame(1, (int) DB::table('evaluation_scores')->value('is_not_applicable'));
+
+        $this->signIn($judges[1]->email);
+        $this->sendMark($judges[1], $submitted['id'], '90', 'علامة')->assertOk();
+        $this->signIn($judges[2]->email);
+        $this->sendMark($judges[2], $submitted['id'], '70', 'علامة')->assertOk();
+
+        $this->signInAdmin();
+        $this->read('/api/admin/applications/'.$submitted['id'])->assertOk()
+            ->assertJsonPath('data.judging.received', 3)
+            ->assertJsonPath('data.judging.decision', null)
+            ->assertJsonPath('data.judging.excluded', true)
+            ->assertJsonPath('data.judging.scores.0.score', null)
+            ->assertJsonPath('data.judging.scores.0.excluded', true)
+            ->assertJsonPath('data.judging.scores.1.score', '90')
+            ->assertJsonPath('data.judging.scores.1.excluded', false);
     }
 
     /**
@@ -285,15 +307,19 @@ class JudgePortalTest extends TestCase
         return (string) ob_get_clean();
     }
 
-    private function sendMark(User $judge, int $applicationId, string $score, string $notes, string $recommendations = 'توصية', bool $excluded = false): TestResponse
+    private function sendMark(User $judge, int $applicationId, ?string $score, string $notes, string $recommendations = 'توصية', bool $excluded = false): TestResponse
     {
-        return $this->browser('POST', "/api/judge/projects/{$applicationId}/evaluation", [
+        $payload = [
             'account_context' => AccountContext::for($judge),
-            'score' => $score,
             'notes' => $notes,
             'recommendations' => $recommendations,
             'excluded' => $excluded,
-        ]);
+        ];
+        if ($score !== null) {
+            $payload['score'] = $score;
+        }
+
+        return $this->browser('POST', "/api/judge/projects/{$applicationId}/evaluation", $payload);
     }
 
     /**

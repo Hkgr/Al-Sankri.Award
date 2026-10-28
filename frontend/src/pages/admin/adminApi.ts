@@ -70,6 +70,7 @@ export type ApplicationDetail = {
     expected: number
     received: number
     decision: string | null
+    excluded: boolean
     scores: { name: string; score: string | null; notes: string | null; recommendations: string | null; excluded: boolean; sent_at: string | null }[]
   }
   declarations: {
