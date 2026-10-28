@@ -56,6 +56,9 @@ export const REQUEST_TIMEOUT_MS = 20_000
  */
 export const UPLOAD_TIMEOUT_MS = 5 * 60_000
 
+/** Reports are built inside the request; a download has its own, longer deadline. */
+export const DOWNLOAD_TIMEOUT_MS = 2 * 60_000
+
 export const messages = {
   network: 'تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',
   sessionExpired: 'انتهت صلاحية الجلسة. أعد تحميل الصفحة ثم حاول مرة أخرى.',
@@ -200,6 +203,22 @@ export const api = {
    * after a timeout is unknown, like any write: callers reconcile.
    */
   upload: <T>(url: string, form: FormData) => request<T>('POST', url, form, undefined, UPLOAD_TIMEOUT_MS),
+  /**
+   * A generated file (a report), with the download deadline. A refusal
+   * arrives as JSON and becomes an ApiError like any other answer.
+   */
+  download: (url: string, headers?: Record<string, string>): Promise<{ blob: Blob; filename: string }> =>
+    withDeadline(async (signal) => {
+      const response = await send('GET', url, signal, undefined, headers)
+      if (!response.ok) throw await toError(response)
+      const disposition = response.headers.get('Content-Disposition') ?? ''
+      const filename = /filename="?([A-Za-z0-9._-]+)"?(?:;|$)/.exec(disposition)?.[1] ?? 'report'
+      try {
+        return { blob: await response.blob(), filename }
+      } catch {
+        throw new NetworkError(messages.network)
+      }
+    }, DOWNLOAD_TIMEOUT_MS),
 }
 
 /** The message to show for any failure thrown by `api`. */

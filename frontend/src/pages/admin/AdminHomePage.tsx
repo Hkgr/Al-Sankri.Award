@@ -26,6 +26,12 @@ export function AdminHomePage({ user, cycle }: { user: User; cycle: AdminCycle |
       text: 'لجنة تحكيم لكل مجال رئيسي: إضافة الحكام وإنهاء العضويات واعتماد اللجنة بثلاثة أو خمسة حكام.',
       allowed: user.admin_permissions.includes('committees.manage_judging'),
     },
+    {
+      href: '/admin/log',
+      title: 'السجل',
+      text: 'سجل الحركات المسجّلة في المنصة، وملخّصات منقّحة للأخطاء التقنية في سجلات التطبيق.',
+      allowed: user.admin_permissions.includes('audit.view') || user.admin_permissions.includes('logs.view_system'),
+    },
   ]
 
   return (
@@ -56,7 +62,7 @@ export function AdminHomePage({ user, cycle }: { user: User; cycle: AdminCycle |
             </li>
           ))}
       </ul>
-      <p className="admin-page__note">«المواعيد» و«السجل» قيد الإعداد، وستُتاح في مرحلة لاحقة.</p>
+      <p className="admin-page__note">«المواعيد» قيد الإعداد، وستُتاح في مرحلة لاحقة.</p>
     </div>
   )
 }

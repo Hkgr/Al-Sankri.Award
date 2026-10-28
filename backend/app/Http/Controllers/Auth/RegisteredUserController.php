@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Support\AuditLog;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +37,7 @@ class RegisteredUserController extends Controller
             ])->save();
 
             $candidateRole->grant($user, CandidateRole::SOURCE_REGISTRATION);
+            AuditLog::record('user.registered', (int) $user->getKey(), 'user', (int) $user->getKey(), ['source' => CandidateRole::SOURCE_REGISTRATION]);
 
             return $user;
         });

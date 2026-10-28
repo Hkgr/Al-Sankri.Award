@@ -136,7 +136,7 @@ class JudgingCommittees
                     'cycle_id' => $cycleId, 'cycle_domain_id' => $domain->cycle_domain_id, 'type' => 'judging', 'name_ar' => $name,
                     'status' => 'draft', 'created_at' => $now, 'updated_at' => $now,
                 ]);
-                AuditLog::record('committee.created', (int) $actor->getKey(), 'committee', $id, ['cycle_id' => $cycleId, 'domain' => $domain->code, 'type' => 'judging']);
+                AuditLog::record('committee.created', (int) $actor->getKey(), 'committee', $id, ['cycle_id' => $cycleId, 'domain' => $domain->code, 'type' => 'judging'], $cycleId);
 
                 return [self::CREATED, $id];
             });
@@ -245,12 +245,12 @@ class JudgingCommittees
 
                 $actorId = (int) $actor->getKey();
                 if ($created) {
-                    AuditLog::record('user.created', $actorId, 'user', (int) $target->getKey(), ['source' => 'judge_appointment']);
+                    AuditLog::record('user.created', $actorId, 'user', (int) $target->getKey(), ['source' => 'judge_appointment'], $cycleId);
                 }
-                AuditLog::record('cycle_user_role.granted', $actorId, 'user', (int) $target->getKey(), ['role' => AdminAccess::JUDGE_ROLE, 'cycle_id' => $cycleId]);
+                AuditLog::record('cycle_user_role.granted', $actorId, 'user', (int) $target->getKey(), ['role' => AdminAccess::JUDGE_ROLE, 'cycle_id' => $cycleId], $cycleId);
                 AuditLog::record('committee_member.added', $actorId, 'committee', (int) $committee->id, [
                     'committee_member_id' => $memberId, 'user_id' => $target->getKey(), 'domain' => $domain->code,
-                ]);
+                ], $cycleId);
 
                 return ['member_id' => $memberId, 'user' => $target, 'created' => $created];
             });
@@ -308,8 +308,8 @@ class JudgingCommittees
                 ->update(['revoked_at' => $now, 'revoked_by' => $actor->getKey(), 'revocation_reason' => 'انتهاء العضوية في لجنة التحكيم', 'updated_at' => $now]);
 
             $actorId = (int) $actor->getKey();
-            AuditLog::record('committee_member.ended', $actorId, 'committee', (int) $committee->id, ['committee_member_id' => $member->id, 'user_id' => $target->getKey()]);
-            AuditLog::record('cycle_user_role.revoked', $actorId, 'user', (int) $target->getKey(), ['role' => AdminAccess::JUDGE_ROLE, 'cycle_id' => $cycleId]);
+            AuditLog::record('committee_member.ended', $actorId, 'committee', (int) $committee->id, ['committee_member_id' => $member->id, 'user_id' => $target->getKey()], $cycleId);
+            AuditLog::record('cycle_user_role.revoked', $actorId, 'user', (int) $target->getKey(), ['role' => AdminAccess::JUDGE_ROLE, 'cycle_id' => $cycleId], $cycleId);
 
             return self::UPDATED;
         });
@@ -348,7 +348,7 @@ class JudgingCommittees
 
             $now = now();
             DB::table('committees')->where('id', $committee->id)->update(['status' => 'approved', 'approved_by' => $actor->getKey(), 'approved_at' => $now, 'updated_at' => $now]);
-            AuditLog::record('committee.approved', (int) $actor->getKey(), 'committee', (int) $committee->id, ['member_count' => $members->count(), 'domain' => $domain->code]);
+            AuditLog::record('committee.approved', (int) $actor->getKey(), 'committee', (int) $committee->id, ['member_count' => $members->count(), 'domain' => $domain->code], $cycleId);
             app(Assignments::class)->provisionCommittee((int) $committee->id, (int) $actor->getKey());
 
             return self::UPDATED;
@@ -380,7 +380,7 @@ class JudgingCommittees
             }
 
             DB::table('committees')->where('id', $committee->id)->update(['status' => 'draft', 'approved_by' => null, 'approved_at' => null, 'updated_at' => now()]);
-            AuditLog::record('committee.returned_to_draft', (int) $actor->getKey(), 'committee', (int) $committee->id, ['domain' => $domain->code]);
+            AuditLog::record('committee.returned_to_draft', (int) $actor->getKey(), 'committee', (int) $committee->id, ['domain' => $domain->code], $cycleId);
 
             return self::UPDATED;
         });

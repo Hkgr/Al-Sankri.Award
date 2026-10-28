@@ -147,7 +147,7 @@ class JudgePortal
                 'judging_assignment_id' => (int) $assignment->id,
                 'application_id' => $applicationId,
                 'score' => Scores::normalize($score),
-            ]);
+            ], (int) DB::table('applications')->where('id', $applicationId)->value('cycle_id'));
 
             return self::SENT;
         });

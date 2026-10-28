@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { User } from '../../../auth/useAuth'
 import { FormAlert } from '../../../components/forms/FormControls'
 import { api, errorMessage } from '../../../lib/api'
 import { Link } from '../../../lib/router'
@@ -8,6 +9,7 @@ import { usePageTitle } from '../../auth/usePageTitle'
 import { formatDamascusDateTime } from '../../candidate/candidateApi'
 import type { AdminCycle, ApplicationsPage as Page, ApplicationStatus, SortKey } from '../adminApi'
 import { APPLICANT_TYPE_LABELS, cycleLabel, SORT_LABELS, STATUS_LABELS } from '../adminApi'
+import { ExportMenu } from '../ExportMenu'
 import { StatusBadge } from './StatusBadge'
 import { ALL_CYCLES, tableQuery } from './tableState'
 
@@ -18,7 +20,17 @@ import { ALL_CYCLES, tableQuery } from './tableState'
  * scope comes from AdminApp (tableScope), and changing it here or in the
  * header goes through the same onScopeChange.
  */
-export function ApplicationsPage({ cycles, scope, onScopeChange }: { cycles: AdminCycle[]; scope: string; onScopeChange: (scope: string) => void }) {
+export function ApplicationsPage({
+  user,
+  cycles,
+  scope,
+  onScopeChange,
+}: {
+  user: User
+  cycles: AdminCycle[]
+  scope: string
+  onScopeChange: (scope: string) => void
+}) {
   usePageTitle('ملفات الترشح')
   const { location, navigate } = useRouter()
   const params = new URLSearchParams(location.search)
@@ -216,9 +228,12 @@ export function ApplicationsPage({ cycles, scope, onScopeChange }: { cycles: Adm
         </div>
       </div>
 
-      <p className="admin-results" role="status" aria-live="polite">
-        {loading ? 'جارٍ التحميل…' : meta ? `${meta.total === 0 ? 'لا نتائج' : `${meta.total} مشاركة مرسلة`} · النطاق: ${cycle ? cycleLabel(cycle) : 'كل الدورات'}` : ''}
-      </p>
+      <div className="admin-results-bar">
+        <p className="admin-results" role="status" aria-live="polite">
+          {loading ? 'جارٍ التحميل…' : meta ? `${meta.total === 0 ? 'لا نتائج' : `${meta.total} مشاركة مرسلة`} · النطاق: ${cycle ? cycleLabel(cycle) : 'كل الدورات'}` : ''}
+        </p>
+        <ExportMenu user={user} url={(format) => `/api/admin/exports/applications?format=${format}&${queryString}`} />
+      </div>
 
       {error ? (
         <FormAlert tone="error">

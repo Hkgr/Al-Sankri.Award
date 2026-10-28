@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Support\AuditLog;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Auth\UserProvider;
@@ -75,6 +76,8 @@ class LoginRequest extends FormRequest
         if (! $user instanceof User || ! $provider->validateCredentials($user, $credentials)) {
             RateLimiter::hit($this->throttleKey());
             event(new Failed('web', $user, ['email' => $credentials['email']]));
+            // The account, when one uses this email; the email itself is never recorded.
+            AuditLog::record('auth.login_failed', null, 'user', $user instanceof User ? (int) $user->getKey() : null, ['method' => 'password']);
 
             throw ValidationException::withMessages(['email' => self::INVALID_CREDENTIALS]);
         }
@@ -95,6 +98,7 @@ class LoginRequest extends FormRequest
         }
 
         event(new Lockout($this));
+        AuditLog::record('auth.login_throttled', null, null, null, ['method' => 'password']);
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([

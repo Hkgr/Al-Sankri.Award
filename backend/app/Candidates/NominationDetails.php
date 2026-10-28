@@ -312,7 +312,7 @@ class NominationDetails
             'domain' => $data['domain'],
             'subcategory' => $data['subcategory'],
             'funding_type' => $funding,
-        ]);
+        ], $cycleId);
 
         return [self::CONFIRMED, $journey];
     }

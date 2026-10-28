@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useAuth } from '../../../auth/useAuth'
+import type { User } from '../../../auth/useAuth'
 import { FormAlert } from '../../../components/forms/FormControls'
 import { ApiError, api, errorMessage } from '../../../lib/api'
 import { Link } from '../../../lib/router'
@@ -7,7 +9,7 @@ import { useRouter } from '../../../lib/useRouter'
 import { usePageTitle } from '../../auth/usePageTitle'
 import { ProfileSummary } from '../../candidate/basic/ProfileSummary'
 import { summaryFromProfile } from '../../candidate/basic/summaries'
-import { formatDamascusDateTime, POLICY_NAMES } from '../../candidate/candidateApi'
+import { contextHeader, formatDamascusDateTime, POLICY_NAMES } from '../../candidate/candidateApi'
 import type { PolicyCode } from '../../candidate/candidateApi'
 import { AttachmentList, LinkList } from '../../candidate/documentation/AttachmentList'
 import type { AttachmentKind } from '../../candidate/documentation/documentationApi'
@@ -15,7 +17,41 @@ import { SECTION_TITLES } from '../../candidate/documentation/documentationApi'
 import { nominationSummaryFromDetails } from '../../candidate/nomination/nominationSummaries'
 import type { ApplicationDetail } from '../adminApi'
 import { adminFileUrl, cycleLabel, TABLE_PARAMS } from '../adminApi'
+import { ExportMenu } from '../ExportMenu'
+import { saveFile } from '../saveFile'
 import { StatusBadge } from './StatusBadge'
+
+/** «تنزيل بطاقة الترشح PDF»: the submitted application as a server-made PDF. */
+function CardDownload({ user, applicationId }: { user: User; applicationId: number }) {
+  const [busy, setBusy] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+
+  const download = async () => {
+    setBusy(true)
+    setFailure(null)
+    try {
+      const file = await api.download(`/api/admin/applications/${applicationId}/card`, contextHeader(user))
+      saveFile(file.blob, file.filename)
+    } catch (error) {
+      setFailure(errorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="admin-export">
+      <button type="button" className="button button--primary button--small" onClick={() => void download()} disabled={busy} aria-busy={busy || undefined}>
+        {busy ? 'جارٍ إعداد البطاقة…' : 'تنزيل بطاقة الترشح PDF'}
+      </button>
+      {failure && (
+        <p className="admin-export__error" role="alert">
+          {failure}
+        </p>
+      )}
+    </div>
+  )
+}
 
 /** The table address to return to: only the table's own query values are kept. */
 function backAddress(from: string | null): string {
@@ -47,6 +83,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
  * downloads and native video playback, and the recorded declarations.
  */
 export function ApplicationPage({ applicationId }: { applicationId: number }) {
+  const { user } = useAuth()
   usePageTitle('ملف ترشح')
   const { location } = useRouter()
   const back = backAddress(new URLSearchParams(location.search).get('from'))
@@ -109,11 +146,14 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
   return (
     <div className="admin-page">
       {backLink}
-      <header className="admin-page__header">
-        <p className="admin-page__eyebrow">ملف ترشح مرسل · للعرض فقط</p>
-        <h1 className="admin-page__title">
-          <bdi>{detail.nomination_details?.title ?? summary.reference_number}</bdi>
-        </h1>
+      <header className="admin-page__header admin-page__header--actions">
+        <div>
+          <p className="admin-page__eyebrow">ملف ترشح مرسل · للعرض فقط</p>
+          <h1 className="admin-page__title">
+            <bdi>{detail.nomination_details?.title ?? summary.reference_number}</bdi>
+          </h1>
+        </div>
+        {user?.admin_permissions.includes('reports.export') && <CardDownload user={user} applicationId={summary.id} />}
       </header>
 
       <Section id="admin-summary" title="ملخص الإرسال">
@@ -161,6 +201,11 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
       </Section>
 
       <Section id="admin-decision" title="قرار اللجنة">
+        {user && detail.judging.ready && (
+          <div className="admin-section__tools">
+            <ExportMenu user={user} label="تصدير تقييمات الحكام" url={(format) => `/api/admin/exports/judge-scores?format=${format}&application=${summary.id}`} />
+          </div>
+        )}
         {!detail.judging.ready ? (
           <p className="admin-muted">لم تُعتمد لجنة تحكيم هذا المحور بعد.</p>
         ) : (

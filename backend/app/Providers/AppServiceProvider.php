@@ -110,5 +110,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Administration writes (committees and judges), per administrator.
         RateLimiter::for('admin-writes', fn (Request $request) => Limit::perMinute(60)->by((string) $request->user()?->getKey())->response($tooMany));
+
+        // Reports are built inside the request: a few per minute per administrator.
+        RateLimiter::for('admin-exports', fn (Request $request) => Limit::perMinute(10)->by((string) $request->user()?->getKey())->response($tooMany));
     }
 }

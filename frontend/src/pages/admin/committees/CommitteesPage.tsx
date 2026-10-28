@@ -9,6 +9,7 @@ import { useAccountFailure } from '../../candidate/useCandidateRequests'
 import type { AdminCycle, Committee, CommitteeMember, CommitteesResponse, DomainCode, DomainCommittee } from '../adminApi'
 import { cycleLabel } from '../adminApi'
 import { AddJudgeDialog } from './AddJudgeDialog'
+import { ExportMenu } from '../ExportMenu'
 import { AdminDialog, ConfirmDialog } from './AdminDialog'
 
 type Notice = { tone: 'success' | 'error' | 'info'; content: ReactNode }
@@ -210,6 +211,9 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
                   onReturnToDraft={() => setPending({ kind: 'draft', domain: item.domain.code })}
                   onEnd={(member) => setPending({ kind: 'end', domain: item.domain.code, member })}
                   onResendLink={(member) => void resendLink(item.domain.code, member)}
+                  exportMenu={
+                    <ExportMenu user={user} url={(format) => `/api/admin/exports/committee-members?format=${format}&cycle=${cycle.id}&domain=${item.domain.code}`} />
+                  }
                 />
               ) : (
                 <div className="admin-empty">
@@ -300,6 +304,7 @@ function CommitteePanel({
   onReturnToDraft,
   onEnd,
   onResendLink,
+  exportMenu,
 }: {
   domain: DomainCommittee
   committee: Committee
@@ -310,6 +315,7 @@ function CommitteePanel({
   onReturnToDraft: () => void
   onEnd: (member: CommitteeMember) => void
   onResendLink: (member: CommitteeMember) => void
+  exportMenu: ReactNode
 }) {
   const draft = committee.status === 'draft'
   const sizeOk = committee.allowed_sizes.includes(committee.current_count)
@@ -332,6 +338,7 @@ function CommitteePanel({
           </p>
         </div>
         <div className="admin-committee__actions">
+          {exportMenu}
           {draft ? (
             <>
               <button type="button" className="button button--secondary" onClick={onAdd} disabled={busy}>

@@ -8,6 +8,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * «المستخدمون»: every registered account, once, with its current roles and
@@ -47,6 +48,18 @@ class RegisteredUsers
         'basic_information_only',
     ];
 
+    /** The labels the table shows for PROGRESS (exports use the same). */
+    public const PROGRESS_LABELS = [
+        'no_basic_information' => 'لم يستكمل البيانات الأساسية',
+        'awaiting_nomination' => 'بانتظار فئة الترشح وبيانات العمل',
+        'awaiting_documentation' => 'بانتظار ملفات العمل',
+        'documentation_incomplete' => 'توثيق العمل غير مكتمل',
+        'ready' => 'جاهز للإرسال',
+        'submitted' => 'تم إرسال ملف الترشح',
+        'not_required' => 'غير مطلوب لهذا الدور',
+        'basic_information_only' => 'البيانات الأساسية مكتملة (لا دورة)',
+    ];
+
     public const ROLE_FILTERS = ['candidate', 'award_admin', 'judge'];
 
     public const SORTS = ['name' => 'users.name', 'registered_at' => 'users.created_at', 'last_login_at' => 'users.last_login_at'];
@@ -56,23 +69,91 @@ class RegisteredUsers
     public function __construct(private readonly NominationCycles $cycles) {}
 
     /**
+     * The table's filters (shared by the table and its exports).
+     *
+     * @return array<string, list<mixed>>
+     */
+    public static function filterRules(): array
+    {
+        return [
+            'cycle' => ['nullable', 'integer', 'min:1'],
+            'q' => ['nullable', 'string', 'max:150'],
+            'role' => ['nullable', Rule::in(self::ROLE_FILTERS)],
+            'state' => ['nullable', Rule::in(['active', 'disabled'])],
+            'verified' => ['nullable', Rule::in(['verified', 'unverified'])],
+            'progress' => ['nullable', Rule::in(self::PROGRESS)],
+            'sort' => ['nullable', Rule::in(array_keys(self::SORTS))],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', Rule::in(self::PER_PAGE)],
+        ];
+    }
+
+    /**
+     * The progress cycle: the requested one, or the default one when none is
+     * named; false for an unknown cycle (never replaced by another).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function cycleFor(array $filters, AdminCycles $cycles): int|false|null
+    {
+        $cycleId = isset($filters['cycle']) ? (int) $filters['cycle'] : $cycles->context()['default_cycle_id'];
+
+        return $cycleId !== null && ! $cycles->exists($cycleId) ? false : $cycleId;
+    }
+
+    /**
+     * One page of the table.
+     *
      * @param  array<string, mixed>  $filters
      * @return array{data: list<array<string, mixed>>, meta: array<string, mixed>}
      */
     public function page(array $filters, ?int $cycleId, bool $canViewApplications): array
     {
-        [$progressSql, $progressBindings] = $this->progressExpression($cycleId);
-        $query = $this->base($cycleId);
-        $this->filter($query, $filters, $cycleId, $progressSql, $progressBindings);
-
-        $total = (clone $query)->count();
+        $total = $this->count($filters, $cycleId);
         $perPage = (int) ($filters['per_page'] ?? 25);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = min(max(1, (int) ($filters['page'] ?? 1)), $lastPage);
+
+        return [
+            'data' => $this->rows($filters, $cycleId, $canViewApplications, $page, $perPage),
+            'meta' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'last_page' => $lastPage, 'cycle' => $this->cycleMeta($cycleId)],
+        ];
+    }
+
+    /**
+     * How many accounts the filters match (the same query as the table).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function count(array $filters, ?int $cycleId): int
+    {
+        return $this->matching($filters, $cycleId)->count();
+    }
+
+    /**
+     * Every matching account, in the table's order and with the table's
+     * fields (exports). The caller checks count() against its limit first.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array{data: list<array<string, mixed>>, cycle: array<string, mixed>|null}
+     */
+    public function export(array $filters, ?int $cycleId, bool $canViewApplications): array
+    {
+        return ['data' => $this->rows($filters, $cycleId, $canViewApplications), 'cycle' => $this->cycleMeta($cycleId)];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return list<array<string, mixed>>
+     */
+    private function rows(array $filters, ?int $cycleId, bool $canViewApplications, ?int $page = null, ?int $perPage = null): array
+    {
+        [$progressSql, $progressBindings] = $this->progressExpression($cycleId);
         $sort = self::SORTS[$filters['sort'] ?? 'registered_at'] ?? self::SORTS['registered_at'];
         $direction = ($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
-        $rows = $query
+        $rows = $this->matching($filters, $cycleId)
             ->select([
                 'users.id', 'users.name', 'users.email', 'users.email_verified_at', 'users.status', 'users.created_at', 'users.last_login_at',
                 'profiles.id as profile_id', 'journeys.id as journey_id', 'journeys.documentation_revision',
@@ -83,32 +164,43 @@ class RegisteredUsers
             ->when($sort === self::SORTS['last_login_at'], fn (Builder $q) => $q->orderByRaw('CASE WHEN users.last_login_at IS NULL THEN 1 ELSE 0 END'))
             ->orderBy($sort, $direction)
             ->orderBy('users.id', $direction)
-            ->forPage($page, $perPage)
+            ->when($page !== null, fn (Builder $q) => $q->forPage((int) $page, (int) $perPage))
             ->get();
 
         $roles = $this->rolesOf($rows->pluck('id')->map(fn ($id) => (int) $id)->all());
 
-        return [
-            'data' => $rows->map(fn (object $row): array => [
-                'id' => (int) $row->id,
-                'name' => $row->name,
-                'email' => $row->email,
-                'email_verified' => $row->email_verified_at !== null,
-                'active' => $row->status === 'active',
-                'registered_at' => $this->iso($row->created_at),
-                'last_login_at' => $this->iso($row->last_login_at),
-                'roles' => $roles[(int) $row->id] ?? ['platform' => [], 'cycle' => []],
-                'progress' => $this->stages($row),
-                'submission' => $row->progress !== 'submitted' ? null : [
-                    // The read-only application page, for administrators allowed to open it.
-                    'application_id' => $canViewApplications ? (int) $row->application_id : null,
-                    'reference_number' => $row->reference_number,
-                    'submitted_at' => $this->iso($row->first_submitted_at),
-                    'status' => $row->application_status,
-                ],
-            ])->all(),
-            'meta' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'last_page' => $lastPage, 'cycle' => $this->cycleMeta($cycleId)],
-        ];
+        return $rows->map(fn (object $row): array => [
+            'id' => (int) $row->id,
+            'name' => $row->name,
+            'email' => $row->email,
+            'email_verified' => $row->email_verified_at !== null,
+            'active' => $row->status === 'active',
+            'registered_at' => $this->iso($row->created_at),
+            'last_login_at' => $this->iso($row->last_login_at),
+            'roles' => $roles[(int) $row->id] ?? ['platform' => [], 'cycle' => []],
+            'progress' => $this->stages($row),
+            'submission' => $row->progress !== 'submitted' ? null : [
+                // The read-only application page, for administrators allowed to open it.
+                'application_id' => $canViewApplications ? (int) $row->application_id : null,
+                'reference_number' => $row->reference_number,
+                'submitted_at' => $this->iso($row->first_submitted_at),
+                'status' => $row->application_status,
+            ],
+        ])->all();
+    }
+
+    /**
+     * The filtered query, shared by the table, its count and its exports.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    private function matching(array $filters, ?int $cycleId): Builder
+    {
+        [$progressSql, $progressBindings] = $this->progressExpression($cycleId);
+        $query = $this->base($cycleId);
+        $this->filter($query, $filters, $cycleId, $progressSql, $progressBindings);
+
+        return $query;
     }
 
     private function base(?int $cycleId): Builder

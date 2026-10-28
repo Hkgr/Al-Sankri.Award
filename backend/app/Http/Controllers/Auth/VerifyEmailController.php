@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\AuditLog;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class VerifyEmailController extends Controller
         }
 
         $user->markEmailAsVerified();
+        AuditLog::record('auth.email_verified', (int) $user->getKey(), 'user', (int) $user->getKey());
         event(new Verified($user));
 
         return redirect('/verify-email?status=verified');

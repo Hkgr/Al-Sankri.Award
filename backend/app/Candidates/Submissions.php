@@ -127,7 +127,7 @@ class Submissions
                 'application_version_id' => $version->getKey(),
                 'reference_number' => $reference,
                 'documentation_revision' => $journey->documentation_revision,
-            ]);
+            ], (int) $application->cycle_id);
 
             app(Assignments::class)->provisionApplication((int) $application->getKey());
 

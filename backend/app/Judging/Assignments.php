@@ -115,7 +115,7 @@ class Assignments
             AuditLog::record('judging_assignments.provisioned', $assignedBy, 'committee', (int) $committee->id, [
                 'created' => $created,
                 'rubric_id' => $rubricId,
-            ]);
+            ], (int) $committee->cycle_id);
         }
     }
 

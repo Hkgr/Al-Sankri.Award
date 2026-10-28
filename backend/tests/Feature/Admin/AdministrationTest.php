@@ -3,10 +3,13 @@
 namespace Tests\Feature\Admin;
 
 use App\Admin\AdminAccess;
+use App\Admin\AuditTrail;
+use App\Admin\SubmittedApplications;
 use App\Auth\CandidateRole;
 use App\Candidates\AccountContext;
 use App\Models\ApplicantIndividualDetail;
 use App\Models\User;
+use App\Reports\ApplicationCard;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -20,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Mockery;
+use OpenSpout\Reader\XLSX\Reader;
 use RuntimeException;
 use Tests\ActsAsSpaBrowser;
 use Tests\Feature\Candidate\InteractsWithNominationStage;
@@ -109,7 +113,10 @@ class AdministrationTest extends TestCase
         $this->startCsrfSession();
         $this->browser('POST', '/api/auth/login', ['email' => $this->admin->email, 'password' => 'password', 'redirect' => '/admin/committees'])->assertJsonPath('redirect', '/admin/committees');
         $this->signedIn = $this->admin;
-        $this->read('/api/user')->assertJsonPath('data.admin_permissions', [AdminAccess::VIEW_APPLICATIONS, AdminAccess::MANAGE_COMMITTEES, AdminAccess::VIEW_USERS]);
+        $this->read('/api/user')->assertJsonPath('data.admin_permissions', [
+            AdminAccess::VIEW_APPLICATIONS, AdminAccess::VIEW_AUDIT, AdminAccess::MANAGE_COMMITTEES,
+            AdminAccess::VIEW_SYSTEM_LOGS, AdminAccess::EXPORT_REPORTS, AdminAccess::VIEW_USERS,
+        ]);
         $this->navigate('/admin/applications')->assertOk();
         $this->navigate('/admin/applications/12')->assertOk();
         $this->navigate('/admin/settings')->assertNotFound();
@@ -537,7 +544,204 @@ class AdministrationTest extends TestCase
         }
     }
 
+    public function test_reports_and_logs_are_refused_without_their_permissions(): void
+    {
+        $this->signIn();
+        foreach (['/api/admin/exports/users?format=xlsx', '/api/admin/log/audit', '/api/admin/log/system', '/api/admin/applications/1/card'] as $uri) {
+            $this->read($uri)->assertForbidden()->assertJsonPath('code', 'not_admin');
+        }
+
+        // An account allowed to view users, but not to export, and not the log.
+        $viewer = User::factory()->create(['email' => 'viewer@example.org']);
+        $role = DB::table('roles')->insertGetId(['code' => 'users_viewer', 'name_ar' => 'مطّلع', 'scope' => 'platform', 'created_at' => now(), 'updated_at' => now()]);
+        $grant = fn (string $code) => DB::table('role_permissions')->insert(['role_id' => $role, 'permission_id' => DB::table('permissions')->where('code', $code)->value('id'), 'created_at' => now()]);
+        $grant(AdminAccess::VIEW_USERS);
+        DB::table('user_roles')->insert(['user_id' => $viewer->id, 'role_id' => $role, 'assigned_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        $this->signIn($viewer->email);
+        $this->read('/api/admin/users')->assertOk();
+        $this->read('/api/admin/exports/users?format=xlsx')->assertForbidden();
+        // reports.export alone does not open another module's data.
+        $grant(AdminAccess::EXPORT_REPORTS);
+        $this->read('/api/admin/exports/audit?format=xlsx')->assertForbidden();
+        $this->read('/api/admin/exports/applications?format=xlsx')->assertForbidden();
+        $this->read('/api/admin/log/audit')->assertForbidden();
+        $this->browser('GET', '/api/admin/exports/users?format=xlsx', headers: ['X-Candidate-Context' => 'stale'])->assertConflict()->assertJsonPath('code', 'account_mismatch');
+        $this->read('/api/admin/exports/users?format=csv')->assertUnprocessable();
+        $this->read('/api/admin/exports/nothing?format=xlsx')->assertNotFound();
+        $this->assertSame(0, DB::table('audit_logs')->where('action', 'report.exported')->count());
+    }
+
+    public function test_exports_cover_every_matching_row_with_the_table_rules_and_safe_text(): void
+    {
+        foreach (range(1, 30) as $index) {
+            User::factory()->candidate()->create([
+                'email' => sprintf('person%02d@example.org', $index),
+                'name' => $index === 7 ? '=HYPERLINK("http://evil.example","x")' : "شخص {$index}",
+            ]);
+        }
+        $this->signInAdmin();
+        $query = "cycle={$this->cycleId}&progress=no_basic_information&sort=name&direction=asc";
+
+        // The table, page by page, is the reference.
+        $first = $this->read("/api/admin/users?{$query}&per_page=10")->assertOk();
+        $this->assertGreaterThan(25, $first->json('meta.total'));
+        $table = collect(range(1, $first->json('meta.last_page')))
+            ->flatMap(fn (int $page) => $this->read("/api/admin/users?{$query}&per_page=10&page={$page}")->json('data'))->pluck('email')->all();
+
+        $response = $this->read("/api/admin/exports/users?format=xlsx&{$query}&page=2&per_page=10")->assertOk();
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+        $path = $response->baseResponse->getFile()->getPathname();
+        $this->assertStringStartsWith(realpath(storage_path('app/private/exports')), realpath($path));
+        $sheet = $this->sheetRows($path);
+        $heading = array_search('الاسم', array_map(fn (array $row) => $row[0] ?? null, $sheet), true);
+        $exported = array_map(fn (array $row) => $row[1], array_slice($sheet, $heading + 1));
+        $this->assertSame($table, $exported, 'every matching row, in the table order, not only one page');
+        $scope = array_column(array_slice($sheet, 1, $heading - 1), 1, 0);
+        $this->assertSame('لم يستكمل البيانات الأساسية', $scope['تقدّم الترشح']);
+        $this->assertSame(count($table), $scope['عدد الصفوف']);
+
+        $zip = new \ZipArchive;
+        $zip->open($path);
+        $xml = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+        $this->assertStringNotContainsString('<f>', $xml, 'no formula cells');
+        $this->assertStringContainsString('=HYPERLINK', html_entity_decode($xml));
+        $this->assertStringContainsString('rightToLeft="true"', $xml);
+        $this->assertStringContainsString('frozen', $xml);
+        $this->assertStringContainsString('<autoFilter', $xml);
+        ob_start();
+        $response->baseResponse->sendContent();
+        ob_end_clean();
+        $this->assertFileDoesNotExist($path, 'the temporary file goes once sent');
+
+        $pdf = $this->read("/api/admin/exports/users?format=pdf&{$query}")->assertOk();
+        $this->assertStringStartsWith('%PDF', (string) $pdf->getContent());
+        $this->assertSame('application/pdf', $pdf->headers->get('Content-Type'));
+        $this->assertSame([$this->cycleId, $this->cycleId], DB::table('audit_logs')->where('action', 'report.exported')->pluck('cycle_id')->map(fn ($id) => (int) $id)->all());
+
+        // Above the PDF limit: refused, nothing truncated, nothing recorded.
+        DB::table('users')->insert(array_map(fn (int $index) => [
+            'name' => "حساب {$index}", 'email' => "bulk{$index}@example.org", 'status' => 'active', 'created_at' => now(), 'updated_at' => now(),
+        ], range(1, 1001)));
+        $this->read("/api/admin/exports/users?format=pdf&cycle={$this->cycleId}")->assertUnprocessable()
+            ->assertJsonPath('code', 'export_too_large')->assertJsonPath('limit', 1000);
+        $this->assertSame(2, DB::table('audit_logs')->where('action', 'report.exported')->count());
+    }
+
+    public function test_the_application_card_uses_the_submitted_version_and_is_audited(): void
+    {
+        $submitted = $this->submitApplication($this->candidate, ['title' => 'العنوان كما أُرسل']);
+        DB::table('applications')->where('id', $submitted['id'])->update(['title' => 'عنوان معدَّل بعد الإرسال']);
+        $this->signInAdmin();
+
+        $card = json_encode(ApplicationCard::build(app(SubmittedApplications::class)->show($submitted['id'])), JSON_UNESCAPED_UNICODE);
+        $this->assertStringContainsString('العنوان كما أُرسل', $card);
+        $this->assertStringNotContainsString('عنوان معدَّل', $card);
+        $this->assertStringContainsString('حالة التحكيم وقت التصدير', $card);
+        $this->assertStringContainsString('بانتظار الفحص', $card);
+        foreach (['applications/', '/api/', 'storage', 'sha256'] as $hidden) {
+            $this->assertStringNotContainsString($hidden, $card, $hidden);
+        }
+
+        $response = $this->read("/api/admin/applications/{$submitted['id']}/card")->assertOk();
+        $this->assertStringStartsWith('%PDF', (string) $response->getContent());
+        $this->assertStringContainsString('attachment; filename="application-card-', (string) $response->headers->get('Content-Disposition'));
+        $event = DB::table('audit_logs')->where('action', 'report.exported')->sole();
+        $this->assertSame(['application', $submitted['id'], $this->cycleId], [$event->subject_type, (int) $event->subject_id, (int) $event->cycle_id]);
+
+        DB::table('applications')->where('id', $submitted['id'])->update(['status' => 'draft']);
+        $this->read("/api/admin/applications/{$submitted['id']}/card")->assertNotFound();
+        $this->signIn();
+        $this->read("/api/admin/applications/{$submitted['id']}/card")->assertForbidden();
+    }
+
+    public function test_every_recorded_action_has_an_arabic_label_in_the_activity_log(): void
+    {
+        $recorded = [];
+        foreach (File::allFiles(app_path()) as $file) {
+            preg_match_all("/AuditLog::record\(\s*'([a-z_.]+)'/", $file->getContents(), $matches);
+            array_push($recorded, ...$matches[1]);
+        }
+
+        $this->assertNotEmpty($recorded);
+        $this->assertSame([], array_values(array_diff(array_unique($recorded), array_keys(AuditTrail::ACTIONS))));
+    }
+
+    public function test_the_activity_log_attributes_events_once_to_their_real_cycle_with_safe_details(): void
+    {
+        $this->signInAdmin();
+        $this->createCommittee('creativity')->assertCreated();
+        $this->createCommittee('creativity')->assertConflict();
+        $created = DB::table('audit_logs')->where('action', 'committee.created')->sole();
+        $this->assertSame($this->cycleId, (int) $created->cycle_id);
+        $this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', (string) $created->request_id);
+        $login = DB::table('audit_logs')->where('action', 'auth.login')->where('actor_user_id', $this->admin->id)->first();
+        $this->assertNotNull($login);
+        $this->assertNull($login->cycle_id, 'an account event has no cycle');
+
+        // A stored payload with private fields: shown only through the allowlist, never changed.
+        $payload = json_encode(['score' => '87.5', 'national_id_number' => '04019876543', 'notes' => 'سري', 'judging_assignment_id' => 3]);
+        $synthetic = DB::table('audit_logs')->insertGetId(['action' => 'evaluation.finalized', 'subject_type' => 'evaluation', 'subject_id' => 1,
+            'after_data' => $payload, 'occurred_at' => now()->subYear()->format('Y-m-d H:i:s.u')]);
+
+        $all = $this->read('/api/admin/log/audit?per_page=100')->assertOk();
+        $actions = array_column($all->json('data'), 'action');
+        foreach (['committee.created', 'auth.login', 'evaluation.finalized', 'permission.provisioned'] as $action) {
+            $this->assertContains($action, $actions, $action);
+        }
+        $body = (string) $all->getContent();
+        foreach (['87.5', '04019876543', 'سري'] as $private) {
+            $this->assertStringNotContainsString($private, $body, $private);
+        }
+        $this->assertSame($payload, DB::table('audit_logs')->where('id', $synthetic)->value('after_data'), 'stored rows are not rewritten');
+        $occurred = array_column($all->json('data'), 'occurred_at');
+        $sorted = $occurred;
+        rsort($sorted);
+        $this->assertSame($sorted, $occurred, 'newest first');
+
+        $inCycle = $this->read("/api/admin/log/audit?cycle={$this->cycleId}&per_page=100")->assertOk()->json('data');
+        $this->assertContains('committee.created', array_column($inCycle, 'action'));
+        $this->assertNotContains('auth.login', array_column($inCycle, 'action'));
+        $this->assertSame([$this->cycleId], array_values(array_unique(array_column(array_column($inCycle, 'cycle'), 'id'))));
+        $this->assertNotContains('committee.created', array_column($this->read('/api/admin/log/audit?cycle=none&per_page=100')->json('data'), 'action'));
+        $this->assertSame(['committee.created'], array_column($this->read("/api/admin/log/audit?request_id={$created->request_id}")->json('data'), 'action'));
+        $this->assertContains('permission.provisioned', array_column($this->read('/api/admin/log/audit?actor=system&per_page=100')->json('data'), 'action'));
+
+        $export = $this->read("/api/admin/exports/audit?format=xlsx&cycle={$this->cycleId}")->assertOk();
+        $this->assertSame(count($inCycle), $this->sheetScope($export->baseResponse->getFile()->getPathname())['عدد الصفوف']);
+    }
+
     // ---------- helpers ----------
+
+    /**
+     * @return list<list<mixed>>
+     */
+    private function sheetRows(string $path): array
+    {
+        $reader = new Reader;
+        $reader->open($path);
+        $rows = [];
+        foreach ($reader->getSheetIterator() as $sheet) {
+            foreach ($sheet->getRowIterator() as $row) {
+                $rows[] = $row->toArray();
+            }
+            break;
+        }
+        $reader->close();
+
+        return $rows;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sheetScope(string $path): array
+    {
+        $rows = $this->sheetRows($path);
+        @unlink($path);
+
+        return array_column(array_filter($rows, fn (array $row) => count($row) === 2), 1, 0);
+    }
 
     private function person(string $email): User
     {

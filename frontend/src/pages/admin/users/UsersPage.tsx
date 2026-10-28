@@ -9,6 +9,7 @@ import { usePageTitle } from '../../auth/usePageTitle'
 import { formatDamascusDateTime } from '../../candidate/candidateApi'
 import type { AdminCycle, StageState, UserProgressState, UserRow, UserSortKey, UsersPage as Page } from '../adminApi'
 import { cycleLabel, PROGRESS_LABELS, USER_ROLE_FILTERS, USER_SORT_LABELS } from '../adminApi'
+import { ExportMenu } from '../ExportMenu'
 import { usersQuery } from './usersState'
 
 const STAGE_LABELS: Record<StageState, string> = { complete: 'مكتملة', incomplete: 'غير مكتملة', none: 'لم تُحفظ بعد' }
@@ -222,9 +223,12 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
         </div>
       </div>
 
-      <p className="admin-results" role="status" aria-live="polite">
-        {loading ? 'جارٍ التحميل…' : meta ? `${meta.total === 0 ? 'لا نتائج' : `${meta.total} حساب`} · التقدّم في: ${meta.cycle ? cycleLabel(meta.cycle) : 'لا دورة'}` : ''}
-      </p>
+      <div className="admin-results-bar">
+        <p className="admin-results" role="status" aria-live="polite">
+          {loading ? 'جارٍ التحميل…' : meta ? `${meta.total === 0 ? 'لا نتائج' : `${meta.total} حساب`} · التقدّم في: ${meta.cycle ? cycleLabel(meta.cycle) : 'لا دورة'}` : ''}
+        </p>
+        <ExportMenu user={user} url={(format) => `/api/admin/exports/users?format=${format}&${queryString}`} />
+      </div>
 
       {error ? (
         <FormAlert tone="error">
