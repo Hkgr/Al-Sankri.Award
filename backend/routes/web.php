@@ -27,6 +27,13 @@ Route::get('/policies/terms-of-use', SpaController::class);
 
 // The administration dashboard: signed-out visitors are sent to sign in;
 // accounts without administration access get the page with status 403.
+// The judge portal: signed-out visitors are sent to sign in; anyone else
+// who is not a current judge gets the page with status 403.
+Route::middleware('judge.page')->group(function () {
+    Route::get('/judge', SpaController::class);
+    Route::get('/judge/projects/{application}', SpaController::class)->whereNumber('application');
+});
+
 Route::middleware('admin.page')->group(function () {
     Route::get('/admin', SpaController::class);
     Route::get('/admin/users', SpaController::class);

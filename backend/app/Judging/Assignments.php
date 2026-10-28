@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Judging;
+
+use App\Models\Application;
+use App\Support\AuditLog;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Gives every current member of an approved judging committee one
+ * assignment for every submitted application in that committee's main
+ * domain, under one rubric: a single mark out of 100, aggregated by
+ * average.
+ *
+ * Called when the committee is approved and when an application is
+ * submitted afterwards. The committee row is locked by the caller (or
+ * here, for a submission), so the two cannot create the same assignment
+ * twice. Nothing is created for a draft committee.
+ */
+class Assignments
+{
+    public const CRITERION = 'overall_score';
+
+    /**
+     * The committee was just approved (its row is already locked).
+     */
+    public function provisionCommittee(int $committeeId, int $assignedBy): void
+    {
+        $committee = DB::table('committees')->where('id', $committeeId)->first();
+        if ($committee === null || $committee->type !== 'judging' || $committee->status !== 'approved') {
+            return;
+        }
+
+        $this->assign($committee, $assignedBy);
+    }
+
+    /**
+     * An application now has a submitted version. Assigns it when its
+     * domain's judging committee is approved.
+     */
+    public function provisionApplication(int $applicationId): void
+    {
+        $application = DB::table('applications')->where('id', $applicationId)->first();
+        if ($application === null || $application->current_version_id === null) {
+            return;
+        }
+
+        $committee = DB::table('committees')
+            ->where('cycle_domain_id', $application->cycle_domain_id)
+            ->where('type', 'judging')
+            ->where('status', 'approved')
+            ->lockForUpdate()
+            ->first();
+        if ($committee === null || $committee->approved_by === null) {
+            return;
+        }
+
+        $this->assign($committee, (int) $committee->approved_by, (int) $application->id);
+    }
+
+    private function assign(object $committee, int $assignedBy, ?int $onlyApplicationId = null): void
+    {
+        $rubricId = $this->rubricId((int) $committee->cycle_domain_id, $assignedBy);
+        $members = DB::table('committee_members')
+            ->where('committee_id', $committee->id)
+            ->whereNull('left_at')
+            ->pluck('id');
+
+        $applications = DB::table('applications')
+            ->where('cycle_domain_id', $committee->cycle_domain_id)
+            ->whereNotNull('current_version_id')
+            ->whereNotIn('status', [Application::STATUS_DRAFT, 'withdrawn', 'closed'])
+            ->when($onlyApplicationId !== null, fn ($query) => $query->where('id', $onlyApplicationId))
+            ->get(['id', 'current_version_id', 'status']);
+
+        $now = now();
+        $created = 0;
+        foreach ($applications as $application) {
+            foreach ($members as $memberId) {
+                $exists = DB::table('judging_assignments')
+                    ->where('application_version_id', $application->current_version_id)
+                    ->where('committee_member_id', $memberId)
+                    ->where('round_number', 1)
+                    ->exists();
+                if ($exists) {
+                    continue;
+                }
+
+                DB::table('judging_assignments')->insert([
+                    'application_version_id' => $application->current_version_id,
+                    'application_id' => $application->id,
+                    'cycle_domain_id' => $committee->cycle_domain_id,
+                    'committee_id' => $committee->id,
+                    'committee_member_id' => $memberId,
+                    'rubric_id' => $rubricId,
+                    'round_number' => 1,
+                    'assigned_by' => $assignedBy,
+                    'assigned_at' => $now,
+                    'status' => 'assigned',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                $created++;
+            }
+
+            if ($application->status === Application::STATUS_SUBMITTED) {
+                DB::table('applications')->where('id', $application->id)->update([
+                    'status' => Application::STATUS_IN_JUDGING,
+                    'updated_at' => $now,
+                ]);
+            }
+        }
+
+        if ($created > 0) {
+            AuditLog::record('judging_assignments.provisioned', $assignedBy, 'committee', (int) $committee->id, [
+                'created' => $created,
+                'rubric_id' => $rubricId,
+            ]);
+        }
+    }
+
+    /**
+     * The domain's approved single-mark rubric, created once.
+     */
+    private function rubricId(int $cycleDomainId, int $approvedBy): int
+    {
+        $existing = DB::table('evaluation_criteria')
+            ->join('evaluation_rubrics', 'evaluation_rubrics.id', '=', 'evaluation_criteria.rubric_id')
+            ->where('evaluation_rubrics.cycle_domain_id', $cycleDomainId)
+            ->where('evaluation_rubrics.status', 'approved')
+            ->where('evaluation_criteria.code', self::CRITERION)
+            ->where('evaluation_criteria.max_score', 100)
+            ->orderByDesc('evaluation_rubrics.version_number')
+            ->value('evaluation_rubrics.id');
+        if ($existing !== null) {
+            return (int) $existing;
+        }
+
+        $version = (int) DB::table('evaluation_rubrics')->where('cycle_domain_id', $cycleDomainId)->max('version_number');
+        $now = now();
+        $id = DB::table('evaluation_rubrics')->insertGetId([
+            'cycle_domain_id' => $cycleDomainId,
+            'version_number' => $version + 1,
+            'name_ar' => 'علامة التحكيم',
+            'aggregation_method' => 'average',
+            'status' => 'approved',
+            'approved_by' => $approvedBy,
+            'approved_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        DB::table('evaluation_criteria')->insert([
+            'rubric_id' => $id,
+            'code' => self::CRITERION,
+            'name_ar' => 'العلامة',
+            'weight' => '100.0000',
+            'max_score' => '100.00',
+            'is_required' => true,
+            'display_order' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return (int) $id;
+    }
+}

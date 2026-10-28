@@ -19,6 +19,8 @@ class Application extends Model
 
     public const STATUS_SUBMITTED = 'submitted';
 
+    public const STATUS_IN_JUDGING = 'in_judging';
+
     public const IMPLEMENTATION_ONGOING = 'ongoing';
 
     public const IMPLEMENTATION_COMPLETED = 'completed';

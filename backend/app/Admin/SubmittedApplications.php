@@ -4,6 +4,7 @@ namespace App\Admin;
 
 use App\Candidates\Documentation;
 use App\Http\Resources\BasicProfileResource;
+use App\Judging\CommitteeDecision;
 use App\Models\Application;
 use App\Models\ApplicationVersion;
 use App\Models\CandidateProfile;
@@ -150,6 +151,7 @@ class SubmittedApplications
                 ])->all(),
                 'links' => $snapshot['documentation']['links'] ?? [],
             ],
+            'judging' => app(CommitteeDecision::class)->forApplication($application),
             'declarations' => [
                 'data_accuracy_declared_at' => $snapshot['basic_information']['data_accuracy_declared_at'] ?? null,
                 'accepted_policies' => array_map(fn (array $policy): array => [

@@ -15,6 +15,8 @@ import { RegisterPage } from './pages/auth/RegisterPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
 import { CandidateApp } from './pages/candidate/CandidateApp'
+import { JudgeApp } from './pages/judge/JudgeApp'
+import { isJudgePath } from './pages/judge/judgePaths'
 import { HomePage } from './pages/home/HomePage'
 import { PolicyPage } from './pages/policies/PolicyPage'
 
@@ -88,6 +90,7 @@ function App() {
   // The candidate and administration areas have their own layouts.
   if (['/dashboard', '/dashboard/basic-information', '/dashboard/nomination-details', '/dashboard/documentation', '/dashboard/review'].includes(location.pathname)) return <CandidateApp />
   if (isAdminPath(location.pathname)) return <AdminApp />
+  if (isJudgePath(location.pathname)) return <JudgeApp />
 
   return (
     <>

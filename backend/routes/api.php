@@ -20,6 +20,7 @@ use App\Http\Controllers\Candidate\DocumentationController;
 use App\Http\Controllers\Candidate\NominationDetailsController;
 use App\Http\Controllers\Candidate\ReferenceDataController;
 use App\Http\Controllers\Candidate\SubmissionController;
+use App\Http\Controllers\Judge\ProjectsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -107,12 +108,28 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
 });
 
 /*
- * The administration dashboard (first phase: «ملفات الترشح» and
- * «لجان الحكام»). Every endpoint needs an active account holding the named
- * permission through a current role grant (App\Admin\AdminAccess);
- * candidates and judges are refused. Writes also carry the page's
- * account_context, so a page showing another account never changes
- * anything, and are attributed to the signed-in administrator.
+ * The judge portal. A current `judge` grant (given by appointing the account
+ * in «لجان الحكام») is required; the role carries no permission of its own.
+ * Reads and the file download carry the page's account_context. Sending a
+ * mark finalizes that judge's evaluation for one assigned project.
+ */
+Route::middleware(['no-store', 'auth:sanctum', 'active', 'judge'])->prefix('judge')->group(function () {
+    Route::middleware('account.context')->group(function () {
+        Route::get('projects', [ProjectsController::class, 'index']);
+        Route::get('projects/{application}', [ProjectsController::class, 'show'])->whereNumber('application');
+    });
+    Route::get('projects/{application}/files/{attachment}', [ProjectsController::class, 'file'])
+        ->middleware('account.context:query')
+        ->whereNumber(['application', 'attachment']);
+    Route::post('projects/{application}/evaluation', [ProjectsController::class, 'send'])
+        ->middleware(['account.context', 'throttle:admin-writes'])
+        ->whereNumber('application');
+});
+
+/*
+ * The administration dashboard. Every endpoint needs an active account
+ * holding the named permission through a current role grant; candidates
+ * and judges are refused. Writes carry the page's account_context.
  */
 Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admin')->group(function () {
     Route::get('context', AdminContextController::class);

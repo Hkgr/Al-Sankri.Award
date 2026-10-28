@@ -11,7 +11,7 @@ export type User = {
   is_candidate: boolean
   /** Administration permissions from current role grants (empty for everyone else). */
   admin_permissions: AdminPermission[]
-  /** A current judge of an award cycle (there is no judge portal yet). */
+  /** A current judge of an award cycle (the judge portal is /judge). */
   is_judge: boolean
   /**
    * Opaque value identifying this account snapshot. Candidate pages send it
@@ -34,13 +34,13 @@ export type AdminPermission = 'applications.view_submitted' | 'committees.manage
 
 /**
  * Where a signed-in account belongs: the administration dashboard, the
- * account page for a judge (never the candidate dashboard just because
- * there is no judge portal), the candidate dashboard, or the account page.
+ * judge portal (never the candidate dashboard just because a judge also
+ * holds that classification), the candidate dashboard, or the account page.
  * Mirrors SafeRedirect::defaultFor on the server.
  */
 export function homeFor(user: Pick<User, 'is_candidate' | 'admin_permissions' | 'is_judge'>): string {
   if (user.admin_permissions.length > 0) return '/admin'
-  if (user.is_judge) return '/account'
+  if (user.is_judge) return '/judge'
   return user.is_candidate ? '/dashboard' : '/account'
 }
 

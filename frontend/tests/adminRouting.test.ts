@@ -9,11 +9,11 @@ import { test } from 'node:test'
 import { homeFor } from '../src/auth/useAuth.ts'
 import { isAdminPath } from '../src/pages/admin/adminPaths.ts'
 
-test('administrators land on /admin, judges on their account page, candidates on their dashboard', () => {
+test('administrators land on /admin, judges on the judge portal, candidates on their dashboard', () => {
   const person = { is_candidate: true, admin_permissions: [], is_judge: false }
   assert.equal(homeFor(person), '/dashboard')
-  assert.equal(homeFor({ ...person, is_judge: true }), '/account', 'a judge is not sent to the candidate dashboard')
-  assert.equal(homeFor({ ...person, admin_permissions: ['applications.view_submitted'] }), '/admin')
+  assert.equal(homeFor({ ...person, is_judge: true }), '/judge', 'a judge is not sent to the candidate dashboard')
+  assert.equal(homeFor({ ...person, admin_permissions: ['applications.view_submitted'], is_judge: true }), '/admin')
   assert.equal(homeFor({ is_candidate: false, admin_permissions: [], is_judge: false }), '/account')
 })
 

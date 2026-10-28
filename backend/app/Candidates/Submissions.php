@@ -4,6 +4,7 @@ namespace App\Candidates;
 
 use App\Admin\AdminAccess;
 use App\Http\Resources\NominationDetailsResource;
+use App\Judging\Assignments;
 use App\Models\Application;
 use App\Models\ApplicationVersion;
 use App\Models\CandidateNomination;
@@ -127,6 +128,8 @@ class Submissions
                 'reference_number' => $reference,
                 'documentation_revision' => $journey->documentation_revision,
             ]);
+
+            app(Assignments::class)->provisionApplication((int) $application->getKey());
 
             return [self::SUBMITTED, $this->receipt($application->refresh())];
         });

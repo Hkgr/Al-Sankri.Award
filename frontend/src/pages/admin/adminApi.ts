@@ -65,6 +65,13 @@ export type ApplicationDetail = {
   basic_information: BasicProfile | null
   nomination_details: NominationDetails | null
   documentation: { confirmed_at: string | null; attachments: Attachment[]; links: DocumentationLink[] }
+  judging: {
+    ready: boolean
+    expected: number
+    received: number
+    decision: string | null
+    scores: { name: string; score: string | null; notes: string | null; sent_at: string | null }[]
+  }
   declarations: {
     data_accuracy_declared_at: string | null
     accepted_policies: { code: string; title: string | null; version_number: number; accepted_at: string | null; text_sha256: string }[]
