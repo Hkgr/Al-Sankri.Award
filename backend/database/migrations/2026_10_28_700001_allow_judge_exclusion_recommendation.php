@@ -49,8 +49,9 @@ return new class extends Migration
 
     private function replace(string $expression): void
     {
-        $drop = DB::getDriverName() === 'mysql' ? 'DROP CHECK' : 'DROP CONSTRAINT';
-        DB::statement("ALTER TABLE `evaluations` {$drop} `chk_evaluations_recommendation`");
+        // The app connection is named mysql even when the server is MariaDB.
+        // MariaDB rejects DROP CHECK; DROP CONSTRAINT is the form both accept.
+        DB::statement('ALTER TABLE `evaluations` DROP CONSTRAINT `chk_evaluations_recommendation`');
         DB::statement("ALTER TABLE `evaluations` ADD CONSTRAINT `chk_evaluations_recommendation` CHECK ({$expression})");
     }
 };
