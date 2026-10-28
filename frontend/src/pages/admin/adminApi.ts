@@ -136,3 +136,59 @@ export function cycleLabel(cycle: Pick<AdminCycle, 'name' | 'year'>): string {
   // A dash, not parentheses: a parenthesised Latin year after Arabic text reorders oddly in RTL.
   return `${cycle.name} — ${cycle.year}`
 }
+
+export type UserProgressState =
+  | 'no_basic_information'
+  | 'awaiting_nomination'
+  | 'awaiting_documentation'
+  | 'documentation_incomplete'
+  | 'ready'
+  | 'submitted'
+  | 'not_required'
+  | 'basic_information_only'
+
+/** The overall candidate state in the selected cycle (RegisteredUsers::PROGRESS). */
+export const PROGRESS_LABELS: Record<UserProgressState, string> = {
+  no_basic_information: 'لم يستكمل البيانات الأساسية',
+  awaiting_nomination: 'بانتظار فئة الترشح وبيانات العمل',
+  awaiting_documentation: 'بانتظار ملفات العمل',
+  documentation_incomplete: 'توثيق العمل غير مكتمل',
+  ready: 'جاهز للإرسال',
+  submitted: 'تم إرسال ملف الترشح',
+  not_required: 'غير مطلوب لهذا الدور',
+  basic_information_only: 'البيانات الأساسية مكتملة (لا دورة)',
+}
+
+export type StageState = 'complete' | 'incomplete' | 'none'
+
+export type UserRow = {
+  id: number
+  name: string
+  email: string
+  email_verified: boolean
+  active: boolean
+  registered_at: string | null
+  last_login_at: string | null
+  roles: {
+    platform: { code: string; name: string }[]
+    cycle: { code: string; name: string; cycle: { id: number; name: string; year: number }; domain: string | null }[]
+  }
+  progress: { state: UserProgressState; stage1: StageState; stage2: StageState; stage3: StageState }
+  submission: { application_id: number | null; reference_number: string; submitted_at: string | null; status: ApplicationStatus } | null
+}
+
+export type UsersPage = {
+  data: UserRow[]
+  meta: {
+    page: number
+    per_page: number
+    total: number
+    last_page: number
+    cycle: { id: number; code: string; name: string; year: number; stage_open: boolean } | null
+  }
+}
+
+export const USER_ROLE_FILTERS = { candidate: 'مترشح', award_admin: 'مدير الجائزة', judge: 'حكَم في الدورة المختارة' } as const
+
+export const USER_SORT_LABELS = { name: 'الاسم', registered_at: 'تاريخ التسجيل', last_login_at: 'آخر تسجيل دخول' } as const
+export type UserSortKey = keyof typeof USER_SORT_LABELS

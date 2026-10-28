@@ -8,7 +8,8 @@ For the people who deploy, operate and review the platform. Related: [candidate-
 
 | Item | State |
 | --- | --- |
-| «الرئيسية» | A short welcome linking to the two modules |
+| «الرئيسية» | A short welcome linking to the modules |
+| «المستخدمون» | Complete: every registered account, read-only, with roles and candidate progress (§6) |
 | «ملفات الترشح» | Complete: the submitted participations, read-only |
 | «لجان الحكام» | Complete: the three main-domain judging committees |
 | «المواعيد» | Shown as «قريباً», not a link: **deferred** |
@@ -20,7 +21,7 @@ Also deferred, deliberately:
 - eligibility decisions, exports and bulk actions;
 - editing a submitted application.
 
-Real pages: `/admin`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal.
+Real pages: `/admin`, `/admin/users`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal.
 
 ## 2. Access and roles
 
@@ -28,7 +29,7 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
 
 | Role | Scope | Granted by | Permissions |
 | --- | --- | --- | --- |
-| `award_admin` «مدير الجائزة» | platform (`user_roles`) | the command below only | `applications.view_submitted`, `committees.manage_judging` |
+| `award_admin` «مدير الجائزة» | platform (`user_roles`) | the command below only | `applications.view_submitted`, `committees.manage_judging`, `users.view_registered` (added by `2026_10_28_700001_add_registered_users_permission`; existing administrators receive it through their existing grant) |
 | `judge` «حكَم» | cycle (`cycle_user_roles`) | appointing a judge in «لجان الحكام» | none (no judge portal yet) |
 
 - **Server-side checks:** every admin API checks the permission of the account's current, unrevoked grants on the server (`App\Admin\AdminAccess`, middleware `admin:<permission>`). Candidates and judges are refused (`403 not_admin`). No role, permission or actor is read from a request.
@@ -121,3 +122,34 @@ The bar works both ways: a person who already submitted in the cycle is not appo
 4. Grant the first administrator: `php artisan admin:grant-access --email="…"`.
 
 Nothing else changes: no `.env`, Plesk, Document Root, `deploy.sh` or mail settings. The setup link uses the mailer already configured for password resets.
+
+## 6. «المستخدمون»
+
+`/admin/users` (permission `users.view_registered`) lists **every registered account exactly once**. That includes accounts without a candidate profile, staff, and unverified or disabled accounts. It is read-only: no editing, deletion, role assignment, password reset, impersonation, bulk action or messaging.
+
+**Columns:** name; email with a verified/unverified badge; current roles; account state; registration date; last sign-in («لم يسجّل دخولاً» when there is none); candidate progress; final submission, with a link to the read-only application page for administrators who may open it.
+
+**Roles:**
+- **Platform roles:** current, unrevoked `user_roles` grants, all shown (for example «مترشح» and «مدير الجائزة» together).
+- **Cycle roles:** current `cycle_user_roles` grants (not revoked, inside `starts_at`/`ends_at`), shown with their cycle and, for a judge, the main domain of the current membership.
+- **Hidden:** revoked or expired grants.
+
+**Progress** is computed for the **cycle selected in the header**, from stored records only. There are no progress columns and no second copy of stage state.
+
+| Label | Stored state in the selected cycle |
+| --- | --- |
+| «لم يستكمل البيانات الأساسية» | No `candidate_profiles` row |
+| «بانتظار فئة الترشح وبيانات العمل» | A profile (Stage 1 is account-level), but no `candidate_nominations` row for this profile **and this cycle** |
+| «بانتظار ملفات العمل» | The journey exists; no documentation change saved (`documentation_revision = 0`) |
+| «توثيق العمل غير مكتمل» | Documentation changes saved, but not confirmed for the current revision (including a confirmation made stale by a later change) |
+| «جاهز للإرسال» | `documentation_confirmed_revision = documentation_revision` and not submitted |
+| «تم إرسال ملف الترشح» | The journey's application has a submitted version, whatever its workflow status became since |
+| «غير مطلوب لهذا الدور» | No profile, and the account is an administrator, a current judge, or has no candidate classification |
+| «البيانات الأساسية مكتملة (لا دورة)» | No cycle exists, so only Stage 1 can be known |
+
+- **What isn't tracked:** form input that was never saved (Stages 1–2) isn't stored, so there are no "started" states or completion percentages.
+- **Other cycles:** a participation in another cycle never counts for the selected one, and no user's "latest" application is chosen.
+- **Closed stages:** closing a cycle or stage doesn't erase completed stages. The page says separately when the selected cycle's nomination stage isn't open now.
+- **Changing cycle:** changing the cycle changes the progress shown and resets the page, but never removes accounts.
+- **Filters:** search (name/email), role (with «حكَم» scoped to the selected cycle), account state, email verification, progress (the same expression as the labels), sorting by name, registration date and last sign-in, and 10/25/50 per page. All of them live in the page address.
+- **Privacy:** the list returns only the table's fields (`no-store`). Never included: identity numbers, addresses, profile details, funding, narratives, password hashes, tokens or storage paths.

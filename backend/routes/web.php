@@ -29,6 +29,7 @@ Route::get('/policies/terms-of-use', SpaController::class);
 // accounts without administration access get the page with status 403.
 Route::middleware('admin.page')->group(function () {
     Route::get('/admin', SpaController::class);
+    Route::get('/admin/users', SpaController::class);
     Route::get('/admin/applications', SpaController::class);
     Route::get('/admin/applications/{application}', SpaController::class)->whereNumber('application');
     Route::get('/admin/committees', SpaController::class);

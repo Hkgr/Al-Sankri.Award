@@ -13,6 +13,8 @@ import { ApplicationPage } from './applications/ApplicationPage'
 import { ApplicationsPage } from './applications/ApplicationsPage'
 import { ALL_CYCLES, tableScope, withScope } from './applications/tableState'
 import { CommitteesPage } from './committees/CommitteesPage'
+import { UsersPage } from './users/UsersPage'
+import { usersScope, withUsersCycle } from './users/usersState'
 
 const CYCLE_KEY = 'sa-admin-cycle'
 
@@ -73,16 +75,22 @@ export function AdminApp() {
   // On «ملفات الترشح» the address holds the scope; the header shows that same scope.
   const scope = onTable ? tableScope(location.search, cycle?.id ?? null, cycles) : null
 
-  if (scope && scope !== ALL_CYCLES && Number(scope) !== cycleId) {
+  // On «المستخدمون» the address holds one specific cycle (progress is per cycle).
+  const onUsers = location.pathname === '/admin/users'
+  const usersCycle = onUsers ? usersScope(location.search, cycle?.id ?? null, cycles.map((item) => item.id)) : null
+  const addressCycle = scope && scope !== ALL_CYCLES ? Number(scope) : usersCycle
+
+  if (addressCycle !== null && addressCycle !== cycleId) {
     // The address names another cycle (back/forward, a return link): the
     // header and the remembered selection follow it. No navigation here.
-    setCycleId(Number(scope))
+    setCycleId(addressCycle)
   }
 
-  /** The header or the table's cycle filter: one change, one address, one request. */
+  /** The header or a page's cycle filter: one change, one address, one request. */
   const changeCycle = (value: string) => {
     if (value !== ALL_CYCLES) setCycleId(Number(value))
     if (onTable && value !== scope) navigate(`/admin/applications?${withScope(location.search, value, cycles)}`, { keepPosition: true })
+    if (onUsers && value !== ALL_CYCLES && Number(value) !== usersCycle) navigate(`/admin/users?${withUsersCycle(location.search, Number(value))}`, { keepPosition: true })
   }
 
   if (!user) {
@@ -129,6 +137,8 @@ export function AdminApp() {
         جارٍ تحميل لوحة الإدارة…
       </p>
     )
+  } else if (onUsers && can('users.view_registered')) {
+    page = <UsersPage key={user.account_context} user={user} cycles={cycles} scope={usersCycle} />
   } else if (location.pathname === '/admin/applications' && can('applications.view_submitted')) {
     page = <ApplicationsPage cycles={cycles} scope={scope ?? ALL_CYCLES} onScopeChange={changeCycle} />
   } else if (detail && can('applications.view_submitted')) {
@@ -146,7 +156,7 @@ export function AdminApp() {
   }
 
   return (
-    <AdminLayout user={user} cycles={cycles} cycleValue={onTable ? scope : cycle ? String(cycle.id) : null} includeAll={onTable} onCycleChange={changeCycle}>
+    <AdminLayout user={user} cycles={cycles} cycleValue={onTable ? scope : onUsers ? (usersCycle === null ? null : String(usersCycle)) : cycle ? String(cycle.id) : null} includeAll={onTable} onCycleChange={changeCycle}>
       {page}
     </AdminLayout>
   )

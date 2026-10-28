@@ -7,6 +7,7 @@ use App\Http\Controllers\AccountPolicyController;
 use App\Http\Controllers\Admin\AdminContextController;
 use App\Http\Controllers\Admin\ApplicationsController;
 use App\Http\Controllers\Admin\CommitteesController;
+use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\AuthOptionsController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
@@ -115,6 +116,9 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
  */
 Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admin')->group(function () {
     Route::get('context', AdminContextController::class);
+
+    // «المستخدمون»: read-only list of every registered account.
+    Route::get('users', [UsersController::class, 'index'])->middleware('admin:'.AdminAccess::VIEW_USERS);
 
     Route::middleware('admin:'.AdminAccess::VIEW_APPLICATIONS)->group(function () {
         Route::get('applications', [ApplicationsController::class, 'index']);

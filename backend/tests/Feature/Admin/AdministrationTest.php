@@ -109,7 +109,7 @@ class AdministrationTest extends TestCase
         $this->startCsrfSession();
         $this->browser('POST', '/api/auth/login', ['email' => $this->admin->email, 'password' => 'password', 'redirect' => '/admin/committees'])->assertJsonPath('redirect', '/admin/committees');
         $this->signedIn = $this->admin;
-        $this->read('/api/user')->assertJsonPath('data.admin_permissions', [AdminAccess::VIEW_APPLICATIONS, AdminAccess::MANAGE_COMMITTEES]);
+        $this->read('/api/user')->assertJsonPath('data.admin_permissions', [AdminAccess::VIEW_APPLICATIONS, AdminAccess::MANAGE_COMMITTEES, AdminAccess::VIEW_USERS]);
         $this->navigate('/admin/applications')->assertOk();
         $this->navigate('/admin/applications/12')->assertOk();
         $this->navigate('/admin/settings')->assertNotFound();
@@ -425,6 +425,122 @@ class AdministrationTest extends TestCase
         $this->assertSame(1, DB::table('applications')->where('created_by', $staff->id)->count());
     }
 
+    public function test_registered_users_are_listed_once_with_progress_from_stored_records(): void
+    {
+        User::factory()->candidate()->unverified()->create(['email' => 'fresh@example.org']);
+        $basic = $this->person('basic@example.org');
+        $this->completeStage1($basic);
+        $nominated = $this->person('nominated@example.org');
+        $this->completeStage1($nominated);
+        $this->signIn($nominated->email);
+        $this->confirm($this->payload(), $this->journeyKey())->assertCreated();
+        $this->readyToSubmit($this->person('uploading@example.org'), confirmStage3: false);
+        $this->readyToSubmit($this->person('ready@example.org'));
+        // Confirmed, then a link saved later: the confirmation is stale.
+        $staleKey = $this->readyToSubmit($this->person('stale@example.org'));
+        $this->send('/api/candidate/documentation/links', ['links' => [['title' => 'رابط', 'url' => 'https://example.org']]], $staleKey)->assertOk();
+        $this->submitApplication($this->candidate);
+        $this->artisan('admin:grant-access', ['--email' => $this->candidate->email])->assertSuccessful();
+        User::factory()->candidate()->create(['email' => 'off@example.org', 'status' => 'disabled', 'disabled_at' => now()]);
+
+        $this->signInAdmin();
+        $this->createCommittee('creativity')->assertCreated();
+        $this->appoint('creativity', 'judge@example.org')->assertCreated();
+        $gone = (int) $this->appoint('creativity', 'gone@example.org')->json('data.2.committee.members.1.id');
+        $this->adminPost("/committees/creativity/members/{$gone}/end", [])->assertOk();
+        // An expired judge grant is not a current role.
+        DB::table('cycle_user_roles')->insert(['cycle_id' => $this->cycleId, 'user_id' => $basic->id, 'role_id' => app(AdminAccess::class)->roleId('judge'),
+            'starts_at' => now()->subMonth(), 'ends_at' => now()->subDay()]);
+
+        $all = $this->read("/api/admin/users?cycle={$this->cycleId}&per_page=50")->assertOk();
+        $rows = collect($all->json('data'))->keyBy('email');
+        $this->assertSame(User::query()->count(), $all->json('meta.total'), 'every account, once');
+        $this->assertCount($all->json('meta.total'), $rows);
+        $expected = [
+            'fresh@example.org' => ['no_basic_information', 'none', 'none', 'none'],
+            'basic@example.org' => ['awaiting_nomination', 'complete', 'none', 'none'],
+            'nominated@example.org' => ['awaiting_documentation', 'complete', 'complete', 'none'],
+            'uploading@example.org' => ['documentation_incomplete', 'complete', 'complete', 'incomplete'],
+            'ready@example.org' => ['ready', 'complete', 'complete', 'complete'],
+            'stale@example.org' => ['documentation_incomplete', 'complete', 'complete', 'incomplete'],
+            'layla@example.org' => ['submitted', 'complete', 'complete', 'complete'],
+            'off@example.org' => ['no_basic_information', 'none', 'none', 'none'],
+            'admin@example.org' => ['not_required', 'none', 'none', 'none'],
+            'operator@example.org' => ['not_required', 'none', 'none', 'none'],
+            'judge@example.org' => ['not_required', 'none', 'none', 'none'],
+        ];
+        foreach ($expected as $email => $progress) {
+            $this->assertSame($progress, array_values($rows[$email]['progress']), $email);
+        }
+        $this->assertFalse($rows['fresh@example.org']['email_verified']);
+        $this->assertFalse($rows['off@example.org']['active']);
+        $this->assertNull($rows['fresh@example.org']['last_login_at']);
+        $this->assertSame(['award_admin', 'candidate'], array_column($rows['layla@example.org']['roles']['platform'], 'code'), 'candidate history kept beside the new role');
+        $this->assertNotNull($rows['layla@example.org']['submission']['application_id']);
+        $this->assertSame([['judge', 'الإبداع']], array_map(fn ($role) => [$role['code'], $role['domain']], $rows['judge@example.org']['roles']['cycle']));
+        $this->assertSame([], $rows['gone@example.org']['roles']['cycle'], 'a revoked grant is not shown');
+        $this->assertSame([], $rows['basic@example.org']['roles']['cycle'], 'an expired grant is not shown');
+
+        // Every filter agrees with the labels shown.
+        $emails = fn (string $query): array => collect($this->read("/api/admin/users?cycle={$this->cycleId}&per_page=50&{$query}")->assertOk()->json('data'))->pluck('email')->sort()->values()->all();
+        foreach (array_unique(array_column(array_column($rows->all(), 'progress'), 'state')) as $state) {
+            $this->assertSame($rows->filter(fn ($row) => $row['progress']['state'] === $state)->keys()->sort()->values()->all(), $emails("progress={$state}"), $state);
+        }
+        $this->assertSame($rows->filter(fn ($row) => ! $row['email_verified'])->keys()->sort()->values()->all(), $emails('verified=unverified'));
+        $this->assertSame(['off@example.org'], $emails('state=disabled'));
+        $this->assertSame(['admin@example.org', 'layla@example.org'], $emails('role=award_admin'));
+        $this->assertSame(['judge@example.org'], $emails('role=judge'));
+        $this->assertSame(['stale@example.org'], $emails('q=STALE'));
+        $page = $this->read("/api/admin/users?cycle={$this->cycleId}&per_page=10&page=2&sort=name&direction=asc")->assertOk();
+        $this->assertSame([2, $rows->count()], [$page->json('meta.page'), $page->json('meta.total')]);
+        $this->assertCount($rows->count() - 10, $page->json('data'));
+        $this->read('/api/admin/users?sort=password')->assertUnprocessable();
+
+        // Another cycle: nobody is dropped, nothing from 2026 is counted; the closed cycle keeps its history.
+        $this->runSetup('cycle-2026', ['--close' => true]);
+        $this->configureCycle('cycle-2027');
+        $next = (int) DB::table('award_cycles')->where('code', 'cycle-2027')->value('id');
+        $other = $this->read("/api/admin/users?cycle={$next}&per_page=50")->assertOk()->assertJsonPath('meta.cycle.stage_open', true);
+        $this->assertSame($rows->count(), $other->json('meta.total'));
+        $otherRows = collect($other->json('data'))->keyBy('email');
+        foreach (['basic', 'nominated', 'uploading', 'ready', 'stale', 'layla'] as $name) {
+            $this->assertSame('awaiting_nomination', $otherRows["{$name}@example.org"]['progress']['state'], $name);
+        }
+        $this->assertNull($otherRows['layla@example.org']['submission']);
+        $this->assertSame([], collect($this->read("/api/admin/users?cycle={$next}&role=judge")->json('data'))->pluck('email')->all(), 'judge is cycle-scoped');
+        $closed = collect($this->read("/api/admin/users?cycle={$this->cycleId}&per_page=50")->assertJsonPath('meta.cycle.stage_open', false)->json('data'))->keyBy('email');
+        $this->assertSame(['submitted', 'ready'], [$closed['layla@example.org']['progress']['state'], $closed['ready@example.org']['progress']['state']]);
+        $this->read('/api/admin/users?cycle=999')->assertNotFound();
+    }
+
+    public function test_the_users_list_is_refused_to_others_and_carries_no_private_fields(): void
+    {
+        $this->submitApplication($this->candidate);
+        $judge = $this->person('judge@example.org');
+        $this->completeStage1($judge);
+        $this->signInAdmin();
+        $this->createCommittee('heritage')->assertCreated();
+        $this->appoint('heritage', $judge->email, existing: true)->assertCreated();
+
+        $response = $this->read('/api/admin/users?per_page=50')->assertOk();
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+        $this->assertSame(
+            ['id', 'name', 'email', 'email_verified', 'active', 'registered_at', 'last_login_at', 'roles', 'progress', 'submission'],
+            array_keys($response->json('data.0')),
+        );
+        $body = (string) $response->getContent();
+        foreach ([self::NATIONAL_ID, '1500.50', 'مبادرة ذاكرة الحيّ', 'حي القيمرية', 'password', 'remember_token', 'storage_path', '1990-04-02'] as $private) {
+            $this->assertStringNotContainsString($private, $body, $private);
+        }
+        $this->navigate('/admin/users')->assertOk();
+
+        foreach ([$this->candidate->email, $judge->email] as $email) {
+            $this->signIn($email);
+            $this->read('/api/admin/users')->assertForbidden()->assertJsonPath('code', 'not_admin');
+            $this->navigate('/admin/users')->assertForbidden();
+        }
+    }
+
     // ---------- helpers ----------
 
     private function person(string $email): User
@@ -483,7 +599,7 @@ class AdministrationTest extends TestCase
      *
      * @param  array<string, mixed>  $details
      */
-    private function readyToSubmit(User $user, array $details = []): string
+    private function readyToSubmit(User $user, array $details = [], bool $confirmStage3 = true): string
     {
         $this->completeStage1($user);
         $applicantId = (int) DB::table('candidate_profiles')->where('user_id', $user->id)->value('applicant_id');
@@ -502,7 +618,9 @@ class AdministrationTest extends TestCase
             'kind' => 'explanatory', 'operation_id' => (string) Str::uuid(),
             'account_context' => AccountContext::for($user), 'journey_key' => $docKey,
         ], files: ['file' => new UploadedFile($path, 'شرح العمل.pdf', null, null, true)])->assertCreated();
-        $this->send('/api/candidate/documentation/confirm', ['revision' => 1], $docKey)->assertOk();
+        if ($confirmStage3) {
+            $this->send('/api/candidate/documentation/confirm', ['revision' => 1], $docKey)->assertOk();
+        }
 
         return $docKey;
     }

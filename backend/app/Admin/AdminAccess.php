@@ -31,6 +31,11 @@ class AdminAccess
 
     public const MANAGE_COMMITTEES = 'committees.manage_judging';
 
+    public const VIEW_USERS = 'users.view_registered';
+
+    /** The administration permissions this dashboard knows (anything else is ignored). */
+    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS];
+
     public const SOURCE_COMMAND = 'admin_grant_access_command';
 
     /**
@@ -45,7 +50,7 @@ class AdminAccess
             ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
             ->where('user_roles.user_id', $user->getKey())
             ->whereNull('user_roles.revoked_at')
-            ->whereIn('permissions.code', [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES])
+            ->whereIn('permissions.code', self::PERMISSIONS)
             ->orderBy('permissions.code')
             ->distinct()
             ->pluck('permissions.code')
