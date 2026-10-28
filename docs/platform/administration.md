@@ -29,7 +29,7 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
 
 | Role | Scope | Granted by | Permissions |
 | --- | --- | --- | --- |
-| `award_admin` «مدير الجائزة» | platform (`user_roles`) | the command below only | `applications.view_submitted`, `committees.manage_judging`, `users.view_registered` (added by `2026_10_28_700001_add_registered_users_permission`; existing administrators receive it through their existing grant) |
+| `award_admin` «مدير الجائزة» | platform (`user_roles`) | the command below only | `applications.view_submitted`, `committees.manage_judging`, `users.view_registered` (added by `2026_10_28_700001_add_registered_users_permission`; existing administrators receive it through their existing grant. The migration records the permission and the `award_admin` link it creates separately in `audit_logs`, and its rollback removes only those. A rollback is refused, with nothing changed, while another role is linked to a permission it created) |
 | `judge` «حكَم» | cycle (`cycle_user_roles`) | appointing a judge in «لجان الحكام» | none (no judge portal yet) |
 
 - **Server-side checks:** every admin API checks the permission of the account's current, unrevoked grants on the server (`App\Admin\AdminAccess`, middleware `admin:<permission>`). Candidates and judges are refused (`403 not_admin`). No role, permission or actor is read from a request.
