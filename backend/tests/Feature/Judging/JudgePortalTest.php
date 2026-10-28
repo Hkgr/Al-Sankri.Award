@@ -3,6 +3,7 @@
 namespace Tests\Feature\Judging;
 
 use App\Candidates\AccountContext;
+use App\Candidates\Documentation;
 use App\Models\ApplicantIndividualDetail;
 use App\Models\Application;
 use App\Models\User;
@@ -20,9 +21,9 @@ use Tests\TestCase;
 
 /**
  * The judge portal: an approved committee's members each score every
- * submitted project in their main domain (one mark out of 100 and notes)
- * and send it to the administration, which shows the average once all of
- * them have sent.
+ * submitted project in their main domain (one mark out of 100, notes,
+ * recommendations, and an optional exclusion) and send it to the
+ * administration, which shows the average once all of them have sent.
  */
 class JudgePortalTest extends TestCase
 {
@@ -98,13 +99,34 @@ class JudgePortalTest extends TestCase
         $this->assertStringNotContainsString(self::NATIONAL_ID, $this->read('/api/judge/projects/'.$submitted['id'])->getContent());
 
         $link = (int) DB::table('file_links')->whereNotNull('application_version_id')->value('id');
-        $this->browser('GET', '/api/judge/projects/'.$submitted['id'].'/files/'.$link, [
+        $document = $this->browser('GET', '/api/judge/projects/'.$submitted['id'].'/files/'.$link, [
             'account_context' => AccountContext::for($judges[0]),
         ])->assertOk();
+        $this->assertStringStartsWith('%PDF', $this->body($document));
+        $this->assertStringStartsWith('application/pdf', (string) $document->headers->get('Content-Type'));
 
-        $this->sendMark($judges[0], $submitted['id'], '80', 'توثيق دقيق')->assertOk()
+        $video = $this->attachVideo($submitted['id']);
+        $played = $this->browser('GET', '/api/judge/projects/'.$submitted['id'].'/files/'.$video, [
+            'account_context' => AccountContext::for($judges[0]),
+        ])->assertOk();
+        $this->assertStringStartsWith('video/mp4', (string) $played->headers->get('Content-Type'));
+        $this->assertStringStartsWith('inline;', (string) $played->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith("\x00\x00\x00\x18ftyp", $this->body($played));
+        $downloaded = $this->browser('GET', '/api/judge/projects/'.$submitted['id'].'/files/'.$video, [
+            'account_context' => AccountContext::for($judges[0]),
+            'download' => '1',
+        ])->assertOk();
+        $this->assertStringStartsWith('video/mp4', (string) $downloaded->headers->get('Content-Type'));
+        $this->assertStringStartsWith('attachment;', (string) $downloaded->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('mp4', (string) $downloaded->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith("\x00\x00\x00\x18ftyp", $this->body($downloaded));
+        Storage::disk(Documentation::DISK)->delete("applications/{$submitted['id']}/judge-video.mp4");
+
+        $this->sendMark($judges[0], $submitted['id'], '80', 'توثيق دقيق', 'يُستكمل التوثيق', true)->assertOk()
             ->assertJsonPath('data.evaluation.status', 'sent')
-            ->assertJsonPath('data.evaluation.score', '80');
+            ->assertJsonPath('data.evaluation.score', '80')
+            ->assertJsonPath('data.evaluation.recommendations', 'يُستكمل التوثيق')
+            ->assertJsonPath('data.evaluation.excluded', true);
         $this->sendMark($judges[0], $submitted['id'], '80', 'مرة ثانية')->assertConflict()->assertJsonPath('code', 'already_sent');
         $this->sendMark($judges[0], $submitted['id'], '101', 'خارج الحد')->assertUnprocessable();
 
@@ -126,7 +148,10 @@ class JudgePortalTest extends TestCase
             ->assertJsonPath('data.judging.received', 3)
             ->assertJsonPath('data.judging.decision', '80.17')
             ->assertJsonPath('data.judging.scores.0.score', '80')
-            ->assertJsonPath('data.judging.scores.0.notes', 'توثيق دقيق');
+            ->assertJsonPath('data.judging.scores.0.notes', 'توثيق دقيق')
+            ->assertJsonPath('data.judging.scores.0.recommendations', 'يُستكمل التوثيق')
+            ->assertJsonPath('data.judging.scores.0.excluded', true)
+            ->assertJsonPath('data.judging.scores.1.excluded', false);
 
         $this->signIn($this->candidate->email);
         $this->read('/api/judge/projects')->assertForbidden()->assertJsonPath('code', 'not_judge');
@@ -161,6 +186,8 @@ class JudgePortalTest extends TestCase
             'account_context' => 'stale',
             'score' => '10',
             'notes' => 'ملاحظة',
+            'recommendations' => 'توصية',
+            'excluded' => false,
         ])->assertConflict()->assertJsonPath('code', 'account_mismatch');
     }
 
@@ -228,12 +255,57 @@ class JudgePortalTest extends TestCase
         return $this->adminPost("/committees/{$domain}/approve", []);
     }
 
-    private function sendMark(User $judge, int $applicationId, string $score, string $notes): TestResponse
+    private function body(TestResponse $response): string
+    {
+        ob_start();
+        $response->baseResponse->sendContent();
+
+        return (string) ob_get_clean();
+    }
+
+    private function sendMark(User $judge, int $applicationId, string $score, string $notes, string $recommendations = 'توصية', bool $excluded = false): TestResponse
     {
         return $this->browser('POST', "/api/judge/projects/{$applicationId}/evaluation", [
             'account_context' => AccountContext::for($judge),
             'score' => $score,
             'notes' => $notes,
+            'recommendations' => $recommendations,
+            'excluded' => $excluded,
+        ]);
+    }
+
+    /**
+     * A video linked to the submitted version, with an Arabic name. The
+     * bytes are a minimal ftyp box, enough to prove the response is the
+     * video and not an error document.
+     */
+    private function attachVideo(int $applicationId): int
+    {
+        $versionId = (int) DB::table('applications')->where('id', $applicationId)->value('current_version_id');
+        $bytes = "\x00\x00\x00\x18ftypisom\x00\x00\x02\x00isom";
+        $path = "applications/{$applicationId}/judge-video.mp4";
+        Storage::disk(Documentation::DISK)->put($path, $bytes);
+        $fileId = DB::table('files')->insertGetId([
+            'uploaded_by' => $this->candidate->id,
+            'storage_disk' => Documentation::DISK,
+            'storage_path' => $path,
+            'original_name' => 'فيديو العمل.mp4',
+            'detected_mime_type' => 'video/mp4',
+            'size_bytes' => strlen($bytes),
+            'sha256' => hash('sha256', $bytes),
+            'scan_status' => 'pending',
+            'access_level' => 'private',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return DB::table('file_links')->insertGetId([
+            'file_id' => $fileId,
+            'application_version_id' => $versionId,
+            'purpose' => 'documentation_video',
+            'display_order' => 2,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 }
