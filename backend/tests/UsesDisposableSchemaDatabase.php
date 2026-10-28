@@ -118,6 +118,18 @@ trait UsesDisposableSchemaDatabase
     protected const NOMINATION_TABLES = ['cycle_domain_subcategories', 'application_partnerships', 'candidate_nominations'];
 
     /**
+     * Stage 3 and the final submission: documentation links and stage state.
+     *
+     * @var list<string>
+     */
+    protected const DOCUMENTATION_MIGRATIONS = ['2026_10_27_500001_add_candidate_documentation'];
+
+    /**
+     * @var list<string>
+     */
+    protected const DOCUMENTATION_TABLES = ['application_documentation_links'];
+
+    /**
      * @var list<string>
      */
     protected const CANDIDATE_TABLES = [
@@ -251,9 +263,9 @@ trait UsesDisposableSchemaDatabase
     {
         $schema = Schema::connection(self::SCHEMA_CONNECTION);
 
-        $later = [...self::ACCOUNT_MIGRATIONS, ...self::CANDIDATE_MIGRATIONS, ...self::NOMINATION_MIGRATIONS];
+        $later = [...self::ACCOUNT_MIGRATIONS, ...self::CANDIDATE_MIGRATIONS, ...self::NOMINATION_MIGRATIONS, ...self::DOCUMENTATION_MIGRATIONS];
 
-        if ($schema->hasTable('migrations') && $schema->hasTable('audit_logs') && $schema->hasTable('candidate_nominations')
+        if ($schema->hasTable('migrations') && $schema->hasTable('audit_logs') && $schema->hasTable('application_documentation_links')
             && $this->schemaDb()->table('migrations')->where('migration', 'like', '2026_10_27_1000%')->count() === 12
             && $this->schemaDb()->table('migrations')->whereIn('migration', $later)->count() === count($later)) {
             return;

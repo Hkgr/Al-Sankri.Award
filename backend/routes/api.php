@@ -11,8 +11,10 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Candidate\BasicProfileController;
 use App\Http\Controllers\Candidate\CandidateOverviewController;
+use App\Http\Controllers\Candidate\DocumentationController;
 use App\Http\Controllers\Candidate\NominationDetailsController;
 use App\Http\Controllers\Candidate\ReferenceDataController;
+use App\Http\Controllers\Candidate\SubmissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,4 +72,31 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
         ->middleware(['throttle:candidate-check', 'candidate.context', 'nomination.gate']);
     Route::post('nomination-details', [NominationDetailsController::class, 'store'])
         ->middleware(['throttle:candidate-confirm', 'candidate.context', 'nomination.gate']);
+
+    // Stage 3 and the final submission. Writes and file reads also pass
+    // documentation.journey: the page's journey_key must name this account's
+    // confirmed Stage 2 journey. Every write rechecks, inside its
+    // transaction, that the application is still an unsubmitted draft.
+    Route::get('documentation', [DocumentationController::class, 'show'])->middleware('candidate.context');
+    // Reconciling an upload or a submission whose answer was lost: that
+    // page's journey only (journey_key in the query), even once its cycle
+    // closed. Never the journey of another cycle.
+    Route::get('documentation/journey', [DocumentationController::class, 'show'])->middleware(['candidate.context', 'documentation.journey']);
+    Route::post('documentation/files', [DocumentationController::class, 'upload'])
+        ->middleware(['throttle:candidate-upload', 'candidate.context', 'documentation.journey']);
+    Route::post('documentation/files/remove', [DocumentationController::class, 'remove'])
+        ->middleware(['throttle:candidate-check', 'candidate.context', 'documentation.journey']);
+    Route::post('documentation/links', [DocumentationController::class, 'links'])
+        ->middleware(['throttle:candidate-check', 'candidate.context', 'documentation.journey']);
+    Route::post('documentation/confirm', [DocumentationController::class, 'confirm'])
+        ->middleware(['throttle:candidate-confirm', 'candidate.context', 'documentation.journey']);
+    // The owner's file (a link or a <video> cannot send headers: the account
+    // context and journey key come in the query).
+    Route::get('documentation/files/{attachment}', [DocumentationController::class, 'download'])
+        ->middleware(['candidate.context:query', 'documentation.journey']);
+
+    Route::get('review', [SubmissionController::class, 'show'])->middleware('candidate.context');
+    Route::get('review/journey', [SubmissionController::class, 'show'])->middleware(['candidate.context', 'documentation.journey']);
+    Route::post('submission', [SubmissionController::class, 'store'])
+        ->middleware(['throttle:candidate-confirm', 'candidate.context', 'documentation.journey']);
 });

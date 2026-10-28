@@ -21,6 +21,13 @@ export type Overview = {
     reason: string | null
     confirmed_at: string | null
   }
+  /** Stage 3: statuses and dates only. */
+  documentation: {
+    status: 'locked' | 'unavailable' | 'not_started' | 'in_progress' | 'completed' | 'submitted'
+    confirmed_at: string | null
+  }
+  /** The submission receipt once the participation was sent. */
+  submission: { reference_number: string; submitted_at: string; version_number: number } | null
 }
 
 export type PolicyCode = 'privacy_policy' | 'terms_of_use'

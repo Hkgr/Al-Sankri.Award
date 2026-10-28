@@ -6,10 +6,13 @@ import { AuthLayout } from '../auth/AuthLayout'
 import { BasicInformationPage } from './basic/BasicInformationPage'
 import { CandidateLayout } from './CandidateLayout'
 import { DashboardPage } from './DashboardPage'
+import { DocumentationPage } from './documentation/DocumentationPage'
 import { NominationDetailsPage } from './nomination/NominationDetailsPage'
+import { ReviewPage } from './review/ReviewPage'
 
 /**
- * /dashboard, /dashboard/basic-information and /dashboard/nomination-details. Signed-out visitors go to the
+ * /dashboard and its stage pages (basic-information, nomination-details,
+ * documentation) and the review page. Signed-out visitors go to the
  * sign-in page and come back here afterwards; accounts without the
  * candidate classification are pointed to their account page.
  */
@@ -51,6 +54,10 @@ export function CandidateApp() {
         <BasicInformationPage key={user.account_context} user={user} />
       ) : location.pathname === '/dashboard/nomination-details' ? (
         <NominationDetailsPage key={user.account_context} user={user} />
+      ) : location.pathname === '/dashboard/documentation' ? (
+        <DocumentationPage key={user.account_context} user={user} />
+      ) : location.pathname === '/dashboard/review' ? (
+        <ReviewPage key={user.account_context} user={user} />
       ) : (
         <DashboardPage key={user.account_context} user={user} />
       )}

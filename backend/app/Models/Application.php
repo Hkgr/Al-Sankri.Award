@@ -8,12 +8,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * An application to one cycle domain (database-schema.md, applications).
- * The candidate journey only ever creates drafts: submission, versions and
- * reference numbers belong to later workflows. Nothing is mass assignable.
+ * The candidate journey creates a draft (Stage 2), attaches its
+ * documentation (Stage 3), and submits it once (App\Candidates\Submissions):
+ * status `submitted`, a reference number, first_submitted_at and version 1.
+ * Nothing is mass assignable.
  */
 class Application extends Model
 {
     public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_SUBMITTED = 'submitted';
 
     public const IMPLEMENTATION_ONGOING = 'ongoing';
 
@@ -34,6 +38,7 @@ class Application extends Model
             // Kept as an exact string ("1500.50"), never a float.
             'funding_amount_usd' => 'decimal:2',
             'has_partnerships' => 'boolean',
+            'first_submitted_at' => 'datetime',
         ];
     }
 
@@ -50,5 +55,29 @@ class Application extends Model
     public function partnerships(): HasMany
     {
         return $this->hasMany(ApplicationPartnership::class)->orderBy('position');
+    }
+
+    /** Draft attachments (Stage 3), in display order. */
+    public function fileLinks(): HasMany
+    {
+        return $this->hasMany(FileLink::class)->orderBy('display_order')->orderBy('id');
+    }
+
+    public function documentationLinks(): HasMany
+    {
+        return $this->hasMany(DocumentationLink::class)->orderBy('position');
+    }
+
+    public function currentVersion(): BelongsTo
+    {
+        return $this->belongsTo(ApplicationVersion::class, 'current_version_id');
+    }
+
+    /**
+     * Whether the candidate may still change it: a draft never submitted.
+     */
+    public function isEditable(): bool
+    {
+        return $this->status === self::STATUS_DRAFT && $this->current_version_id === null;
     }
 }

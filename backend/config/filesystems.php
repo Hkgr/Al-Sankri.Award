@@ -38,6 +38,17 @@ return [
             'report' => false,
         ],
 
+        // Candidate documentation (Stage 3): private, never served by URL.
+        // Files are stored under generated names and downloaded only through
+        // the authenticated candidate endpoints.
+        'candidate_evidence' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/candidate-evidence'),
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

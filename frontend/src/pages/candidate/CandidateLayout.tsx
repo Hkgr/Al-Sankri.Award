@@ -16,6 +16,8 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'الرئيسية' },
   { href: '/dashboard/basic-information', label: 'البيانات الأساسية' },
   { href: '/dashboard/nomination-details', label: 'فئة الترشح وبيانات العمل' },
+  { href: '/dashboard/documentation', label: 'ملفات العمل وتوثيقه' },
+  { href: '/dashboard/review', label: 'المراجعة والإرسال' },
 ]
 
 /**

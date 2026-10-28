@@ -89,6 +89,30 @@ class NominationCycles
     }
 
     /**
+     * Whether one cycle's nomination stage is open now: the cycle published,
+     * its `nomination_details` stage enabled and now inside its window.
+     * Stage 3 and the final submission of a journey follow the stage of
+     * that journey's own cycle. With $lock (after lockConfiguration()), the
+     * rows are read as last committed and held until the transaction ends.
+     */
+    public function stageOpenFor(int $cycleId, bool $lock = false): bool
+    {
+        $now = now();
+
+        return DB::table('award_cycles as cycles')
+            ->join('cycle_stages as stages', function ($join): void {
+                $join->on('stages.cycle_id', '=', 'cycles.id')->where('stages.code', '=', self::STAGE_CODE);
+            })
+            ->where('cycles.id', $cycleId)
+            ->where('cycles.status', 'published')
+            ->where('stages.status', 'enabled')
+            ->where(fn ($query) => $query->whereNull('stages.opens_at')->orWhere('stages.opens_at', '<=', $now))
+            ->where(fn ($query) => $query->whereNull('stages.closes_at')->orWhere('stages.closes_at', '>', $now))
+            ->when($lock, fn ($query) => $query->sharedLock())
+            ->first(['cycles.id']) !== null;
+    }
+
+    /**
      * The supported implementation country configured for the cycle, or null.
      */
     public function country(object $cycle): ?string

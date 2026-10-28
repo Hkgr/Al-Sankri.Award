@@ -25,6 +25,7 @@ Generated from the migrated schema on MySQL 8.4.7 (information_schema), then ann
 - **J. External sign-in (account migrations):** [`oauth_identities`](#oauth_identities)
 - **K. Candidate onboarding (stage 1):** [`account_policy_versions`](#account_policy_versions), [`account_policy_acceptances`](#account_policy_acceptances), [`candidate_profiles`](#candidate_profiles), [`applicant_individual_details`](#applicant_individual_details), [`applicant_institution_details`](#applicant_institution_details), [`applicant_social_links`](#applicant_social_links)
 - **L. Candidate Stage 2 (nomination details):** [`cycle_domain_subcategories`](#cycle_domain_subcategories), [`applications` additions](#applications-stage-2-columns), [`application_partnerships`](#application_partnerships), [`candidate_nominations`](#candidate_nominations)
+- **M. Candidate Stage 3 and final submission:** [`files` addition](#files-upload-operation), [`application_documentation_links`](#application_documentation_links), [`candidate_nominations` additions](#candidate_nominations-documentation-columns)
 
 ## Conventions
 
@@ -1692,3 +1693,36 @@ The candidate dashboard's journey in one cycle: which draft application it creat
 
 - **Unique** `uq_candidate_nominations_journey` (`candidate_profile_id`, `cycle_id`): one journey per candidate profile and cycle; the final guard of an idempotent confirmation. It limits this dashboard journey only; `applications` has no new unique key.
 - **Unique** `uq_candidate_nominations_application` (`application_id`).
+
+## M. Candidate Stage 3 and final submission
+
+Migration `2026_10_27_500001_add_candidate_documentation` (additive). Stage 3 attachments are rows of the existing `files`, attached to the draft through `file_links` (`application_id` target). The submission writes the existing `application_versions` and links the same files to the version (`application_version_id` target), one target per row as before. It also fills the existing `applications` columns `status` (`submitted`), `reference_number`, `first_submitted_at` and `current_version_id`. Purposes in `file_links.purpose`: `explanatory_document`, `supporting_document`, `documentation_video`. Operation: [candidate-documentation-submission.md](candidate-documentation-submission.md).
+
+### `files` upload operation
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `upload_operation_id` | `char(36)` | yes | The browser's identifier for one upload (UUID). Unique with `uploaded_by` (`uq_files_upload_operation`), so a retried upload finds its file instead of adding another. |
+
+### `application_documentation_links`
+
+External documentation links of a draft application: title and HTTPS address, kept exactly as validated; their content is never fetched. The submission copies them into the version's `data_snapshot`.
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `bigint unsigned` | no | PK. |
+| `application_id` | `bigint unsigned` | no | `fk_application_documentation_links_application` → `applications`, RESTRICT. |
+| `position` | `tinyint unsigned` | no | 1–20 (`chk_application_documentation_links_position`); unique with `application_id` (`uq_application_documentation_links_position`). |
+| `title` | `varchar(150)` | no | Not empty (`chk_application_documentation_links_title`). |
+| `url` | `varchar(2048)` | no | Starts with `https://` (`chk_application_documentation_links_url`); the request also refuses credentials and any other scheme. |
+| `created_at`, `updated_at` | `datetime` | yes |  |
+
+### `candidate_nominations` documentation columns
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `documentation_revision` | `int unsigned` | no | Default 0; raised by every change to the attachments or links. |
+| `documentation_confirmed_revision` | `int unsigned` | yes | The revision for which Stage 3 was confirmed; Stage 3 counts as complete only while it equals `documentation_revision`. |
+| `documentation_confirmed_at` | `datetime` | yes | Set together with the revision (`chk_candidate_nominations_documentation`). |
+
+**Rollback** is refused before anything changes while any Stage 3 state exists: links, uploads with an operation identifier, or a journey with documentation. When `400003` is in the same batch (a fresh install), the Stage 2 state is counted too, so a batch rollback never stops half-way.

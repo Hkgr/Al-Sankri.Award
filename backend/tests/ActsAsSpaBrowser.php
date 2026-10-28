@@ -42,7 +42,7 @@ trait ActsAsSpaBrowser
      * @param  array<string, mixed>  $data
      * @param  array<string, string>  $headers  Extra request headers, as the app would send them.
      */
-    protected function browser(string $method, string $uri, array $data = [], bool $withCsrfHeader = true, array $headers = []): TestResponse
+    protected function browser(string $method, string $uri, array $data = [], bool $withCsrfHeader = true, array $headers = [], array $files = []): TestResponse
     {
         $this->forgetRequestState();
 
@@ -62,14 +62,15 @@ trait ActsAsSpaBrowser
 
         $content = null;
         $parameters = [];
-        if ($method === 'GET') {
+        if ($method === 'GET' || $files !== []) {
+            // Query parameters, or a multipart form with files.
             $parameters = $data;
         } else {
             $server['CONTENT_TYPE'] = 'application/json';
             $content = json_encode($data, JSON_THROW_ON_ERROR);
         }
 
-        $response = $this->call($method, $uri, $parameters, $this->cookieJar, [], $server, $content);
+        $response = $this->call($method, $uri, $parameters, $this->cookieJar, $files, $server, $content);
         $this->rememberCookies($response);
 
         return $response;

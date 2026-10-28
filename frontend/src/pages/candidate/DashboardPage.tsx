@@ -12,10 +12,9 @@ import { useAccountFailure } from './useCandidateRequests'
 import { VerifyEmailNotice } from './VerifyEmailNotice'
 
 /**
- * The candidate's home: a welcome, the stages of the nomination file and
- * their real state from the backend. Only stage 1 exists so far; later
- * stages are announced honestly as not yet available, without inventing
- * their content or dates.
+ * The candidate's home: a welcome, the three stages of the nomination file
+ * and the final review and submission, with their real state from the
+ * backend.
  */
 export function DashboardPage({ user }: { user: User }) {
   usePageTitle('لوحة المترشح')
@@ -61,7 +60,7 @@ export function DashboardPage({ user }: { user: User }) {
       )}
       {params.get('saved') === 'nomination-details' && (
         <FormAlert tone="success">
-          <p>حُفظت فئة الترشح وبيانات العمل، وأصبحت متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ ستُتاح بقية مراحل ملف الترشح لاحقاً.</p>
+          <p>حُفظت فئة الترشح وبيانات العمل، وأصبحت متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ تابع إلى ملفات العمل وتوثيقه (المرحلة 3).</p>
         </FormAlert>
       )}
       {params.get('saved') === 'basic-information' && (
@@ -94,16 +93,15 @@ export function DashboardPage({ user }: { user: User }) {
           <ol className="stage-list">
             <BasicInformationStage stage={overview.basic_information} />
             <NominationDetailsStage stage={overview.nomination_details} />
-            <li className="stage-card stage-card--upcoming">
-              <p className="stage-card__number">المراحل التالية</p>
-              <h3 className="stage-card__title">غير متاحة بعد</h3>
-              <p className="stage-card__text">ستُتاح بقية مراحل ملف الترشح لاحقاً، وتظهر هنا عند فتحها.</p>
-            </li>
+            <DocumentationStage stage={overview.documentation} />
+            <SubmissionStage overview={overview} />
           </ol>
         )}
 
         <p className="candidate-section__note">
-          استكمال هذه المراحل خطوات في ملف الترشح، ولا يعني تقديم طلب الترشح النهائي للجائزة.
+          {overview?.submission
+            ? 'أُرسلت المشاركة للجنة الحكام، وأصبحت كلها متاحة للعرض فقط.'
+            : 'استكمال المراحل لا يعني إرسال المشاركة: تُرسل المشاركة من صفحة المراجعة بعد استكمال المراحل الثلاث.'}
         </p>
       </section>
     </div>
@@ -137,6 +135,82 @@ function BasicInformationStage({ stage }: { stage: Overview['basic_information']
       {stage.status !== 'unavailable' && (
         <Link className={`button ${completed ? 'button--secondary' : 'button--primary'}`} href="/dashboard/basic-information">
           {completed ? 'عرض البيانات' : 'ابدأ الاستكمال'}
+        </Link>
+      )}
+    </li>
+  )
+}
+
+function DocumentationStage({ stage }: { stage: Overview['documentation'] }) {
+  const done = stage.status === 'completed' || stage.status === 'submitted'
+  const open = stage.status !== 'locked' && stage.status !== 'unavailable'
+
+  return (
+    <li className={`stage-card${done ? ' stage-card--completed' : ''}${open ? '' : ' stage-card--waiting'}`}>
+      <p className="stage-card__number">المرحلة 3</p>
+      <h3 className="stage-card__title">ملفات العمل وتوثيقه</h3>
+      <p className="stage-card__status">
+        <StatusIcon tone={done ? 'success' : 'info'} />
+        <span>
+          {stage.status === 'submitted'
+            ? 'أُرسلت مع المشاركة'
+            : stage.status === 'completed' && stage.confirmed_at
+              ? `مكتملة، حُفظت في ${formatDamascusDateTime(stage.confirmed_at)} بتوقيت دمشق`
+              : stage.status === 'locked'
+                ? 'تُتاح بعد المرحلة 2'
+                : stage.status === 'unavailable'
+                  ? 'غير متاحة حالياً'
+                  : stage.status === 'in_progress'
+                    ? 'قيد الاستكمال'
+                    : 'لم تبدأ بعد'}
+        </span>
+      </p>
+      <p className="stage-card__text">
+        {stage.status === 'locked'
+          ? 'أكّد حفظ فئة الترشح وبيانات العمل أولاً، ثم تُتاح هذه المرحلة.'
+          : stage.status === 'unavailable'
+            ? 'باب الترشح لهذه الدورة غير مفتوح حالياً.'
+            : 'وثيقة شرح العمل (مطلوبة)، ووثائق داعمة وفيديوهات وروابط توثيق اختيارية.'}
+      </p>
+      {stage.status !== 'locked' && (
+        <Link className={`button ${done || stage.status === 'unavailable' ? 'button--secondary' : 'button--primary'}`} href="/dashboard/documentation">
+          {done || stage.status === 'unavailable' ? 'عرض الملفات' : stage.status === 'in_progress' ? 'متابعة المرحلة' : 'ابدأ المرحلة'}
+        </Link>
+      )}
+    </li>
+  )
+}
+
+function SubmissionStage({ overview }: { overview: Overview }) {
+  const receipt = overview.submission
+  const ready = overview.documentation.status === 'completed'
+
+  return (
+    <li className={`stage-card${receipt ? ' stage-card--completed' : ''}${receipt || ready ? '' : ' stage-card--waiting'}`}>
+      <p className="stage-card__number">المراجعة والإرسال</p>
+      <h3 className="stage-card__title">{receipt ? 'تم إرسال المشاركة' : 'مراجعة المشاركة وإرسالها'}</h3>
+      <p className="stage-card__status">
+        <StatusIcon tone={receipt ? 'success' : 'info'} />
+        <span>
+          {receipt
+            ? `أُرسلت في ${formatDamascusDateTime(receipt.submitted_at)} بتوقيت دمشق`
+            : ready
+              ? 'جاهزة للمراجعة'
+              : 'تُتاح بعد المرحلة 3'}
+        </span>
+      </p>
+      <p className="stage-card__text">
+        {receipt ? (
+          <>
+            الرقم المرجعي: <bdi dir="ltr">{receipt.reference_number}</bdi>. المشاركة متاحة للعرض فقط.
+          </>
+        ) : (
+          'مراجعة المراحل الثلاث كما حُفظت، ثم إرسال المشاركة للجنة الحكام.'
+        )}
+      </p>
+      {(receipt || ready) && (
+        <Link className={`button ${receipt ? 'button--secondary' : 'button--primary'}`} href="/dashboard/review">
+          {receipt ? 'عرض المشاركة' : 'مراجعة المشاركة'}
         </Link>
       )}
     </li>

@@ -6,9 +6,9 @@
  */
 import assert from 'node:assert/strict'
 import { afterEach, beforeEach, mock, test } from 'node:test'
-import { api, ApiError, NetworkError, REQUEST_TIMEOUT_MS, RequestTimeoutError } from '../src/lib/api.ts'
+import { api, ApiError, NetworkError, REQUEST_TIMEOUT_MS, RequestTimeoutError, UPLOAD_TIMEOUT_MS } from '../src/lib/api.ts'
 
-type Call = { url: string; method: string; signal: AbortSignal; headers: Record<string, string> }
+type Call = { url: string; method: string; signal: AbortSignal; headers: Record<string, string>; body: unknown }
 
 let calls: Call[] = []
 let replies: ((call: Call) => Promise<Response>)[] = []
@@ -26,6 +26,7 @@ beforeEach(() => {
       method: init?.method ?? 'GET',
       signal: init?.signal as AbortSignal,
       headers: (init?.headers ?? {}) as Record<string, string>,
+      body: init?.body,
     }
     calls.push(call)
     const reply = replies.shift()
@@ -189,4 +190,27 @@ test('a slow but finished body within the deadline is read', async () => {
   finish()
   await settle()
   assert.deepEqual(state.value, { data: 'done' })
+})
+
+test('an upload sends multipart form data and has its own, longer deadline', async () => {
+  replies.push(noHeaders)
+  const form = new FormData()
+  form.append('kind', 'video')
+  const state = track(api.upload('/api/candidate/documentation/files', form))
+  await settle()
+  assert.equal(calls[0].body, form, 'the form is sent as it is')
+  assert.equal(calls[0].headers['Content-Type'], undefined, 'the browser sets the multipart boundary')
+
+  mock.timers.tick(REQUEST_TIMEOUT_MS)
+  await settle()
+  assert.equal(state.settled, false, 'not cut off at the ordinary deadline')
+
+  mock.timers.tick(UPLOAD_TIMEOUT_MS - REQUEST_TIMEOUT_MS)
+  await settle()
+  assert.ok(state.error instanceof RequestTimeoutError)
+})
+
+test('a 413 from the server or a proxy gets an understandable message', async () => {
+  replies.push(async () => new Response('<html>413 Request Entity Too Large</html>', { status: 413 }))
+  await assert.rejects(api.upload('/api/candidate/documentation/files', new FormData()), (error: unknown) => error instanceof ApiError && error.status === 413 && error.message.includes('أكبر من الحد'))
 })
