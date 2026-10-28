@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureAdministrationPage;
+use App\Http\Middleware\EnsureAdministrationPermission;
 use App\Http\Middleware\EnsureCandidateAccountContext;
 use App\Http\Middleware\EnsureDocumentationJourney;
 use App\Http\Middleware\EnsureNominationStageIsOpen;
@@ -28,6 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureAccountIsActive::class,
             'candidate' => EnsureUserIsCandidate::class,
             'candidate.context' => EnsureCandidateAccountContext::class,
+            // The same account-snapshot check, for administration writes.
+            'account.context' => EnsureCandidateAccountContext::class,
+            'admin' => EnsureAdministrationPermission::class,
+            'admin.page' => EnsureAdministrationPage::class,
             'nomination.gate' => EnsureNominationStageIsOpen::class,
             'documentation.journey' => EnsureDocumentationJourney::class,
             'no-store' => PreventCaching::class,

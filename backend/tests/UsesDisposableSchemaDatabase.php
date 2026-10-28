@@ -130,6 +130,14 @@ trait UsesDisposableSchemaDatabase
     protected const DOCUMENTATION_TABLES = ['application_documentation_links'];
 
     /**
+     * The administration phase: the award_admin and judge roles and their
+     * permissions (rows only, no tables).
+     *
+     * @var list<string>
+     */
+    protected const ADMINISTRATION_MIGRATIONS = ['2026_10_28_600001_provision_administration_and_judge_roles'];
+
+    /**
      * @var list<string>
      */
     protected const CANDIDATE_TABLES = [
@@ -263,7 +271,7 @@ trait UsesDisposableSchemaDatabase
     {
         $schema = Schema::connection(self::SCHEMA_CONNECTION);
 
-        $later = [...self::ACCOUNT_MIGRATIONS, ...self::CANDIDATE_MIGRATIONS, ...self::NOMINATION_MIGRATIONS, ...self::DOCUMENTATION_MIGRATIONS];
+        $later = [...self::ACCOUNT_MIGRATIONS, ...self::CANDIDATE_MIGRATIONS, ...self::NOMINATION_MIGRATIONS, ...self::DOCUMENTATION_MIGRATIONS, ...self::ADMINISTRATION_MIGRATIONS];
 
         if ($schema->hasTable('migrations') && $schema->hasTable('audit_logs') && $schema->hasTable('application_documentation_links')
             && $this->schemaDb()->table('migrations')->where('migration', 'like', '2026_10_27_1000%')->count() === 12

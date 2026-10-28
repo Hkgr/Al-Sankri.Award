@@ -6,19 +6,23 @@ import { fileUrl, formatBytes, formatName } from './documentationApi'
 /**
  * Stored attachments, one per row: name, optional title, format, size and
  * state, with a download (documents) or native playback (videos), and a
- * removal control only when one is given.
+ * removal control only when one is given. Files come from the owner's
+ * route (user and journeyKey), or from the route `urlFor` names (the
+ * administration's read-only view).
  */
 export function AttachmentList({
   attachments,
   user,
   journeyKey,
+  urlFor,
   onRemove,
   busyId,
   emptyText,
 }: {
   attachments: Attachment[]
-  user: Pick<User, 'account_context'>
-  journeyKey: string
+  user?: Pick<User, 'account_context'>
+  journeyKey?: string
+  urlFor?: (attachment: Attachment) => string
   onRemove?: (attachment: Attachment) => void
   busyId?: number | null
   emptyText: string
@@ -28,7 +32,7 @@ export function AttachmentList({
   return (
     <ul className="attachment-list">
       {attachments.map((attachment) => {
-        const url = fileUrl(user, journeyKey, attachment)
+        const url = urlFor ? urlFor(attachment) : fileUrl(user!, journeyKey!, attachment)
         const video = attachment.mime_type.startsWith('video/')
         return (
           <li key={attachment.id} className="attachment">

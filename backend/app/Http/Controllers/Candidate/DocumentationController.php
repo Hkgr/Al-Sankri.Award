@@ -12,12 +12,10 @@ use App\Http\Requests\Candidate\DocumentationUploadRequest;
 use App\Models\Application;
 use App\Models\CandidateNomination;
 use App\Models\DocumentationLink;
+use App\Support\PrivateFileResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 /**
  * Stage 3 («ملفات العمل وتوثيقه») for the signed-in candidate: the
@@ -144,20 +142,7 @@ class DocumentationController extends Controller
             return $this->refusal(Documentation::NOT_FOUND);
         }
 
-        $file = $link->file;
-        $video = str_starts_with($file->detected_mime_type, 'video/');
-        $response = new BinaryFileResponse(Storage::disk(Documentation::DISK)->path($file->storage_path), 200, [
-            'Content-Type' => $file->detected_mime_type,
-            'X-Content-Type-Options' => 'nosniff',
-            'Content-Security-Policy' => "default-src 'none'; media-src 'self'; sandbox",
-        ], false);
-        $response->setContentDisposition(
-            $video ? ResponseHeaderBag::DISPOSITION_INLINE : ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            $file->original_name,
-            Str::ascii($file->original_name) !== '' ? (string) preg_replace('/[^A-Za-z0-9._-]/', '_', Str::ascii($file->original_name)) : 'file',
-        );
-
-        return $response;
+        return PrivateFileResponse::for($link->file);
     }
 
     private function journey(Request $request): CandidateNomination

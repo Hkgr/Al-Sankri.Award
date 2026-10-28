@@ -87,9 +87,21 @@ function AccountDetails({ user }: { user: User }) {
 
   return (
     <AuthLayout title="حسابي" wide>
+      {user.admin_permissions.length > 0 && (
+        <p className="auth-panel__text">
+          <Link href="/admin">الانتقال إلى لوحة الإدارة</Link>
+        </p>
+      )}
+      {user.is_judge && (
+        <FormAlert tone="info">
+          <p>
+            حسابك مسجّل حكَماً في إحدى لجان تحكيم الجائزة. لا توجد بوابة للحكام في المنصة بعد؛ ستتواصل معك إدارة الجائزة بشأن مهام التحكيم ومواعيدها.
+          </p>
+        </FormAlert>
+      )}
       {user.is_candidate && (
         <p className="auth-panel__text">
-          <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+          <Link href="/dashboard">{user.is_judge ? 'لوحة المترشح' : 'العودة إلى لوحة المترشح'}</Link>
         </p>
       )}
       {welcome && (

@@ -20,6 +20,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   // The question to ask before leaving a page with unsaved input (useLeaveWarning).
   const leaveWarning = useRef<string | null>(null)
   const shownLocation = useRef(location)
+  const keepPosition = useRef(false)
 
   const confirmLeave = useCallback(() => {
     const message = leaveWarning.current
@@ -69,6 +70,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
       } else {
         window.history.pushState(null, '', target)
       }
+      keepPosition.current = options.keepPosition === true
       setLocation({ pathname: url.pathname, search: url.search, hash: url.hash })
     },
     [confirmLeave],
@@ -79,6 +81,10 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false
+      return
+    }
+    if (keepPosition.current) {
+      keepPosition.current = false
       return
     }
     const target = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null
