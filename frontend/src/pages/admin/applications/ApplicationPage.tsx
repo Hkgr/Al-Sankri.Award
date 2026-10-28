@@ -221,7 +221,9 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
                   <dt>{item.name}</dt>
                   <dd>
                     {item.score === null ? 'بانتظار الإرسال' : `${item.score} من 100`}
-                    {item.notes ? ` — ${item.notes}` : ''}
+                    {item.excluded ? ' · استُبعد المشارك' : ''}
+                    {item.notes ? ` — الملاحظات: ${item.notes}` : ''}
+                    {item.recommendations ? ` — التوصيات: ${item.recommendations}` : ''}
                   </dd>
                 </div>
               ))}

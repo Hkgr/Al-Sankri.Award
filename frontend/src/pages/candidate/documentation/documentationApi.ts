@@ -112,6 +112,58 @@ export function fileUrl(user: Pick<User, 'account_context'>, journeyKey: string,
   return `/api/candidate/documentation/files/${attachment.id}?${query.toString()}`
 }
 
+/** The name saved on disk: a video keeps an extension the player recognises. */
+export function savedName(attachment: Pick<Attachment, 'name' | 'mime_type'>): string {
+  if (!attachment.mime_type.startsWith('video/')) return attachment.name
+  if (/\.(mp4|webm)$/i.test(attachment.name)) return attachment.name
+  return `${attachment.name}${attachment.mime_type === 'video/webm' ? '.webm' : '.mp4'}`
+}
+
+const DOWNLOAD_TIMEOUT_MS = 5 * 60_000
+
+/**
+ * Saves the file the address names. The request is the same kind the page
+ * uses (session cookie and Origin), and a JSON error is shown instead of
+ * being saved as a file. `download=1` asks the server for an attachment.
+ */
+export async function saveAttachment(url: string, name: string): Promise<string | null> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS)
+  const address = `${url}${url.includes('?') ? '&' : '?'}download=1`
+  try {
+    const response = await fetch(address, {
+      credentials: 'same-origin',
+      headers: { Accept: '*/*', 'X-Requested-With': 'XMLHttpRequest' },
+      signal: controller.signal,
+    })
+    const type = response.headers.get('Content-Type') ?? ''
+    if (!response.ok || type.includes('json')) {
+      let message = 'تعذّر تنزيل الملف.'
+      try {
+        const payload = (await response.json()) as { message?: string }
+        if (payload.message) message = payload.message
+      } catch {
+        // The body was not an error document.
+      }
+      return message
+    }
+    const blob = await response.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = objectUrl
+    anchor.download = name
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
+    return null
+  } catch {
+    return 'تعذّر تنزيل الملف. تحقق من الاتصال ثم أعد المحاولة.'
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /**
  * The state of one journey only, for reconciling an upload or a submission
  * whose answer was lost: the server resolves the journey the key names,

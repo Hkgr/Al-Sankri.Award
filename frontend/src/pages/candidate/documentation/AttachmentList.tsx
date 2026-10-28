@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import type { User } from '../../../auth/useAuth'
 import { StatusIcon } from '../../../components/forms/FormControls'
 import type { Attachment, DocumentationLink } from './documentationApi'
-import { fileUrl, formatBytes, formatName } from './documentationApi'
+import { fileUrl, formatBytes, formatName, saveAttachment, savedName } from './documentationApi'
 
 /**
  * Stored attachments, one per row: name, optional title, format, size and
@@ -27,7 +28,18 @@ export function AttachmentList({
   busyId?: number | null
   emptyText: string
 }) {
+  const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const [downloadError, setDownloadError] = useState<{ id: number; message: string } | null>(null)
+
   if (attachments.length === 0) return <p className="attachment-empty">{emptyText}</p>
+
+  const download = async (attachment: Attachment, url: string) => {
+    setDownloadingId(attachment.id)
+    setDownloadError(null)
+    const message = await saveAttachment(url, savedName(attachment))
+    setDownloadingId(null)
+    if (message) setDownloadError({ id: attachment.id, message })
+  }
 
   return (
     <ul className="attachment-list">
@@ -65,10 +77,16 @@ export function AttachmentList({
               )}
             </div>
             <div className="attachment__actions">
-              <a className="button button--secondary button--small" href={url} download={video ? undefined : attachment.name}>
-                {video ? 'فتح الفيديو' : 'تنزيل'}
+              <button
+                type="button"
+                className="button button--secondary button--small"
+                onClick={() => void download(attachment, url)}
+                disabled={downloadingId === attachment.id}
+              >
+                {downloadingId === attachment.id ? 'جارٍ التنزيل…' : 'تنزيل'}
                 <span className="visually-hidden"> {attachment.title ?? attachment.name}</span>
-              </a>
+              </button>
+              {downloadError?.id === attachment.id && <p className="field__error">{downloadError.message}</p>}
               {onRemove && (
                 <button type="button" className="button button--quiet button--small" onClick={() => onRemove(attachment)} disabled={busyId === attachment.id}>
                   {busyId === attachment.id ? 'جارٍ الحذف…' : 'حذف'}

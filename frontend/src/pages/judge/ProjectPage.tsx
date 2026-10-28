@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { User } from '../../auth/useAuth'
 import { FieldLabel, FieldMessages, FormAlert, TextField } from '../../components/forms/FormControls'
+import { CheckboxField } from '../candidate/basic/fields'
 import { ApiError, api, errorMessage } from '../../lib/api'
 import { Link } from '../../lib/router'
 import { useLeaveWarning, useRouter } from '../../lib/useRouter'
@@ -24,7 +25,9 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
   const [error, setError] = useState<{ message: string; missing: boolean } | null>(null)
   const [score, setScore] = useState('')
   const [notes, setNotes] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<{ score?: string; notes?: string }>({})
+  const [recommendations, setRecommendations] = useState('')
+  const [excluded, setExcluded] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<{ score?: string; notes?: string; recommendations?: string }>({})
   const [sending, setSending] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -44,7 +47,8 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
   }, [load])
 
   const pending = project?.evaluation.status !== 'sent'
-  useLeaveWarning(pending && (score.trim() !== '' || notes.trim() !== '') ? 'علامتك لم تُرسل إلى الإدارة بعد. هل تغادر الصفحة؟' : null)
+  const dirty = score.trim() !== '' || notes.trim() !== '' || recommendations.trim() !== '' || excluded
+  useLeaveWarning(pending && dirty ? 'علامتك لم تُرسل إلى الإدارة بعد. هل تغادر الصفحة؟' : null)
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -52,9 +56,10 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
     const next = {
       score: score.trim() === '' ? 'ضع العلامة من 100.' : undefined,
       notes: notes.trim() === '' ? 'اكتب الملاحظات قبل الإرسال.' : undefined,
+      recommendations: recommendations.trim() === '' ? 'اكتب التوصيات قبل الإرسال.' : undefined,
     }
     setFieldErrors(next)
-    if (next.score || next.notes) return
+    if (next.score || next.notes || next.recommendations) return
 
     setSending(true)
     setFormError(null)
@@ -63,13 +68,21 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
         account_context: user.account_context,
         score: score.trim(),
         notes: notes.trim(),
+        recommendations: recommendations.trim(),
+        excluded,
       })
       setProject(saved.data)
       setScore('')
       setNotes('')
+      setRecommendations('')
+      setExcluded(false)
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 422) {
-        setFieldErrors({ score: failure.errors.score?.[0], notes: failure.errors.notes?.[0] })
+        setFieldErrors({
+          score: failure.errors.score?.[0],
+          notes: failure.errors.notes?.[0],
+          recommendations: failure.errors.recommendations?.[0],
+        })
       }
       setFormError(errorMessage(failure))
       if (failure instanceof ApiError && failure.code === 'already_sent') void load()
@@ -174,7 +187,9 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
               أُرسلت إلى الإدارة: {project.evaluation.score} من 100
               {project.evaluation.sent_at ? `، في ${formatDamascusDateTime(project.evaluation.sent_at)} بتوقيت دمشق` : ''}.
             </p>
-            {project.evaluation.notes && <p>{project.evaluation.notes}</p>}
+            {project.evaluation.excluded && <p>استُبعد المشارك.</p>}
+            {project.evaluation.notes && <p>الملاحظات: {project.evaluation.notes}</p>}
+            {project.evaluation.recommendations && <p>التوصيات: {project.evaluation.recommendations}</p>}
           </FormAlert>
         ) : (
           <form onSubmit={(event) => void onSubmit(event)} noValidate>
@@ -214,6 +229,26 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
               />
               <FieldMessages id="notes" error={fieldErrors.notes} />
             </div>
+            <div className="field">
+              <FieldLabel htmlFor="recommendations" label="التوصيات" required />
+              <textarea
+                id="recommendations"
+                name="recommendations"
+                className="field__input field__textarea"
+                value={recommendations}
+                onChange={(event) => {
+                  setRecommendations(event.target.value)
+                  setFieldErrors((current) => ({ ...current, recommendations: undefined }))
+                }}
+                required
+                maxLength={4000}
+                aria-invalid={fieldErrors.recommendations ? true : undefined}
+              />
+              <FieldMessages id="recommendations" error={fieldErrors.recommendations} />
+            </div>
+            <CheckboxField id="excluded" checked={excluded} onChange={setExcluded}>
+              استبعاد المشارك
+            </CheckboxField>
             <button type="submit" className="button button--primary" disabled={sending}>
               {sending ? 'جارٍ الإرسال…' : 'إرسال إلى الإدارة'}
             </button>

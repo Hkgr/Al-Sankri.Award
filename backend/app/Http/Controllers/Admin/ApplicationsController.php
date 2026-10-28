@@ -57,6 +57,6 @@ class ApplicationsController extends Controller
             ], (int) DB::table('applications')->where('id', $application)->value('cycle_id'));
         }
 
-        return PrivateFileResponse::for($link->file);
+        return PrivateFileResponse::for($link->file, $request->query('download') === '1');
     }
 }

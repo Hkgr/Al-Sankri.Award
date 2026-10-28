@@ -8,13 +8,14 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * What the administration sees for one submitted application: each current
- * judge's mark and notes, and the committee decision (their average) once
- * every current member has sent.
+ * judge's mark, notes, recommendations and exclusion, and the committee
+ * decision (their average) once every current member has sent. An exclusion
+ * is that judge's flag; the mark still counts in the average.
  */
 class CommitteeDecision
 {
     /**
-     * @return array{ready: bool, expected: int, received: int, decision: string|null, scores: list<array{name: string, score: string|null, notes: string|null, sent_at: string|null}>}
+     * @return array{ready: bool, expected: int, received: int, decision: string|null, scores: list<array{name: string, score: string|null, notes: string|null, recommendations: string|null, excluded: bool, sent_at: string|null}>}
      */
     public function forApplication(Application $application): array
     {
@@ -48,7 +49,7 @@ class CommitteeDecision
                 ->where('judging_assignments.committee_member_id', $member->id)
                 ->where('judging_assignments.application_version_id', $application->current_version_id)
                 ->where('judging_assignments.round_number', 1)
-                ->first(['evaluations.status', 'evaluations.overall_comment', 'evaluations.finalized_at', 'evaluation_scores.score']);
+                ->first(['evaluations.status', 'evaluations.overall_comment', 'evaluations.recommendation', 'evaluations.finalized_at', 'evaluation_scores.score', 'evaluation_scores.comment as recommendations']);
 
             $sent = $row !== null && $row->status === 'finalized' && $row->score !== null;
             if ($sent) {
@@ -58,6 +59,8 @@ class CommitteeDecision
                 'name' => $member->name,
                 'score' => $sent ? Scores::present((string) $row->score) : null,
                 'notes' => $sent ? $row->overall_comment : null,
+                'recommendations' => $sent ? $row->recommendations : null,
+                'excluded' => $sent && $row->recommendation === 'exclude',
                 'sent_at' => $sent ? Carbon::parse($row->finalized_at, 'UTC')->toIso8601ZuluString() : null,
             ];
         }

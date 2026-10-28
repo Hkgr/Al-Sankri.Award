@@ -50,7 +50,7 @@ class ProjectsController extends Controller
             ], (int) DB::table('applications')->where('id', $application)->value('cycle_id'));
         }
 
-        return PrivateFileResponse::for($link->file);
+        return PrivateFileResponse::for($link->file, $request->query('download') === '1');
     }
 
     public function send(Request $request, int $application): JsonResponse
@@ -58,6 +58,8 @@ class ProjectsController extends Controller
         $input = $request->validate([
             'score' => ['required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'notes' => ['required', 'string', 'max:4000'],
+            'recommendations' => ['required', 'string', 'max:4000'],
+            'excluded' => ['required', 'boolean'],
         ], [
             'score.required' => 'ضع العلامة من 100.',
             'score.numeric' => 'العلامة رقم من 0 إلى 100.',
@@ -66,17 +68,37 @@ class ProjectsController extends Controller
             'score.decimal' => 'العلامة رقم من 0 إلى 100، بخانتين عشريتين على الأكثر.',
             'notes.required' => 'اكتب الملاحظات قبل الإرسال.',
             'notes.max' => 'الملاحظات أطول مما يُقبل.',
+            'recommendations.required' => 'اكتب التوصيات قبل الإرسال.',
+            'recommendations.max' => 'التوصيات أطول مما يُقبل.',
+            'excluded.required' => 'حدّد إن كان المشارك يُستبعد.',
+            'excluded.boolean' => 'حدّد إن كان المشارك يُستبعد.',
         ]);
 
         $notes = trim($input['notes']);
-        if ($notes === '') {
+        $recommendations = trim($input['recommendations']);
+        if ($notes === '' || $recommendations === '') {
+            $errors = [];
+            if ($notes === '') {
+                $errors['notes'] = ['اكتب الملاحظات قبل الإرسال.'];
+            }
+            if ($recommendations === '') {
+                $errors['recommendations'] = ['اكتب التوصيات قبل الإرسال.'];
+            }
+
             return response()->json([
-                'message' => 'اكتب الملاحظات قبل الإرسال.',
-                'errors' => ['notes' => ['اكتب الملاحظات قبل الإرسال.']],
+                'message' => $errors['notes'][0] ?? $errors['recommendations'][0],
+                'errors' => $errors,
             ], 422);
         }
 
-        $result = $this->portal->send($request->user(), $application, Scores::normalize($input['score']), $notes);
+        $result = $this->portal->send(
+            $request->user(),
+            $application,
+            Scores::normalize($input['score']),
+            $notes,
+            $recommendations,
+            $request->boolean('excluded'),
+        );
 
         return match ($result) {
             JudgePortal::NOT_ASSIGNED => response()->json(['code' => 'not_assigned', 'message' => self::NOT_FOUND], 404),

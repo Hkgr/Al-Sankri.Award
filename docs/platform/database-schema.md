@@ -1126,7 +1126,7 @@ One evaluation per assignment. **A judge's recommendation is not the award resul
 | `rubric_id` | `bigint unsigned` | no | — | Refinement: copied from the assignment (composite key) so scores can be tied to this rubric. |
 | `status` | `varchar(16)` | no | `draft` | `draft` or `finalized` (`finalized_at` set if and only if finalized). |
 | `overall_comment` | `text` | yes | — |  |
-| `recommendation` | `varchar(16)` | yes | — | `recommend`, `not_recommend`, `abstain`. |
+| `recommendation` | `varchar(16)` | yes | — | `recommend`, `not_recommend`, `abstain`, or `exclude` when the judge excludes the participant. Not the award result. |
 | `finalized_at` | `datetime` | yes | — |  |
 | `reopened_by` | `bigint unsigned` | yes | — |  |
 | `reopened_at` | `datetime` | yes | — |  |
@@ -1152,7 +1152,7 @@ One evaluation per assignment. **A judge's recommendation is not the award resul
 **CHECK constraints**
 
 - `chk_evaluations_finalized`: `((status = 'finalized') = (finalized_at is not null))`
-- `chk_evaluations_recommendation`: `((recommendation is null) or (recommendation in ('recommend','not_recommend','abstain')))`
+- `chk_evaluations_recommendation`: `((recommendation is null) or (recommendation in ('recommend','not_recommend','abstain','exclude')))`
 - `chk_evaluations_reopened`: `(((reopened_at is null) = (reopened_by is null)) and ((reopened_at is null) = (reopen_reason is null)))`
 - `chk_evaluations_status`: `(status in ('draft','finalized'))`
 

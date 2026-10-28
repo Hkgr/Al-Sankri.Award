@@ -33,7 +33,7 @@ export function ProjectsPage({ user }: { user: User }) {
       <header className="candidate-page__header">
         <p className="eyebrow">بوابة الحكم</p>
         <h1 className="candidate-page__title">التحكيم</h1>
-        <p className="candidate-page__intro">مشاريع محورك. ضع علامة من 100 مع الملاحظات، ثم أرسلها إلى الإدارة.</p>
+        <p className="candidate-page__intro">مشاريع محورك. ضع علامة من 100 مع الملاحظات والتوصيات، ثم أرسلها إلى الإدارة.</p>
       </header>
 
       {error ? (
@@ -66,7 +66,9 @@ export function ProjectsPage({ user }: { user: User }) {
                   {project.subcategory ? ` · ${project.subcategory.name}` : ''}
                 </span>
                 <span className={project.evaluation.status === 'sent' ? 'judge-sent' : 'judge-list__meta'}>
-                  {project.evaluation.status === 'sent' ? `أُرسلت إلى الإدارة · ${project.evaluation.score} من 100` : 'بانتظار علامتك'}
+                  {project.evaluation.status === 'sent'
+                    ? `أُرسلت إلى الإدارة · ${project.evaluation.score} من 100${project.evaluation.excluded ? ' · استُبعد المشارك' : ''}`
+                    : 'بانتظار علامتك'}
                 </span>
               </Link>
             </li>
