@@ -82,13 +82,33 @@ class ExportsController extends Controller
             return $this->tooLarge(count($report->rows), $limit, $format);
         }
 
-        AuditLog::record('report.exported', (int) $request->user()->getKey(), null, null, [
+        // The event records a file the writer finished generating (it is not
+        // proof that the browser received or saved it): a failed rendering
+        // or file write records nothing.
+        $record = fn () => AuditLog::record('report.exported', (int) $request->user()->getKey(), null, null, [
             'report' => $report->code, 'format' => $format, 'rows' => count($report->rows),
         ], $cycleId);
 
-        return $format === 'pdf'
-            ? $this->pdf(app(PdfWriter::class)->table($report), $report->code)
-            : $this->xlsx($report);
+        if ($format === 'pdf') {
+            $bytes = app(PdfWriter::class)->table($report);
+            $record();
+
+            return $this->pdf($bytes, $report->code);
+        }
+
+        $path = $this->writeXlsx($report);
+        try {
+            $record();
+        } catch (\Throwable $exception) {
+            File::delete($path);
+
+            throw $exception;
+        }
+
+        return response()->download($path, Formats::filename($report->code, 'xlsx'), [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'X-Content-Type-Options' => 'nosniff',
+        ])->deleteFileAfterSend();
     }
 
     /**
@@ -436,7 +456,11 @@ class ExportsController extends Controller
         ]);
     }
 
-    private function xlsx(TableReport $report): BinaryFileResponse
+    /**
+     * Writes the workbook to a private temporary file and returns its path;
+     * a failed write leaves no file behind.
+     */
+    private function writeXlsx(TableReport $report): string
     {
         $directory = storage_path('app/private/exports');
         File::ensureDirectoryExists($directory);
@@ -456,9 +480,6 @@ class ExportsController extends Controller
             throw $exception;
         }
 
-        return response()->download($path, Formats::filename($report->code, 'xlsx'), [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'X-Content-Type-Options' => 'nosniff',
-        ])->deleteFileAfterSend();
+        return $path;
     }
 }

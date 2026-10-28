@@ -169,7 +169,7 @@ Every export is made on the server, from the same services as the page it comes 
 
 - **What is exported:** **all** rows matching the current filters, search, sort and cycle, never just the visible page. Each file states the scope, the filters in Arabic, the generation time (Damascus) and the row count.
 - **Limits** (one place: `App\Reports\ExportLimits`): 1,000 rows for PDF and 10,000 for Excel. Above a limit the export is refused with a clear message (`422 export_too_large`) and nothing is cut. Narrow the filters, or use Excel.
-- **Excel (.xlsx):** a real workbook (OpenSpout). The sheet is right-to-left, with Arabic headings, a styled frozen heading row, column widths and filters. Values are written as text cells (only whole counts are numbers), so a value starting with `=`, `+`, `-` or `@` is never evaluated as a formula.
+- **Excel (.xlsx):** a real workbook (OpenSpout). The sheet is right-to-left, with Arabic headings, a styled heading row that stays frozen with everything above it, column widths, and filters over the heading and exactly the data rows. The sheet tab gets a safe name (at most 31 characters, without `\ / ? * : [ ]` or apostrophes); the full title is the first row. Values are written as text cells (only whole counts are numbers), so a value starting with `=`, `+`, `-` or `@` is never evaluated as a formula.
 - **Table PDF:** the page size follows the column count (A4 portrait, A4 landscape above 5 columns, A3 landscape above 9). Headings repeat on every page and cells wrap. Actions and internal fields are left out.
 - **«بطاقة الترشح» (application card PDF):** on an application's page, «تنزيل بطاقة الترشح PDF». It is built from the same authorized detail service as the page:
   - Stage 1 comes from the profile the submitted version references;
@@ -186,7 +186,7 @@ Every export is made on the server, from the same services as the page it comes 
   - PDFs are generated in memory;
   - an Excel file is written to `storage/app/private/exports/` (never under `public/`) and deleted once it is sent; leftovers from an interrupted request are removed after an hour;
   - mPDF's temporary files live in `storage/framework/cache/mpdf/`.
-- **Audit:** every export and card is recorded as `report.exported` (table code, format and row count, plus the application and cycle for a card). Filter values are not recorded. A protected attachment opened by an administrator or a judge is recorded once as `file.downloaded`; range requests from video playback don't add rows.
+- **Audit:** each generated export and card is recorded once as `report.exported` (table code, format and row count, plus the application and cycle for a card), only after its PDF or workbook was generated successfully. A failed generation records nothing. The event does not prove the browser received or saved the file. Filter values are not recorded. A protected attachment opened by an administrator or a judge is recorded once as `file.downloaded`; range requests from video playback don't add rows.
 
 ### Dependencies and fonts
 

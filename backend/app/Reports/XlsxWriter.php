@@ -44,7 +44,8 @@ final class XlsxWriter
 
         try {
             $sheet = $writer->getCurrentSheet();
-            $sheet->setName(mb_substr($report->title, 0, 31));
+            // The tab gets a safe short name; the full title is the first row.
+            $sheet->setName(self::sheetName($report->title));
 
             $title = (new Style)->setFontBold()->setFontSize(14)->setFontColor(self::GREEN);
             $label = (new Style)->setFontBold()->setFontColor(self::GREEN);
@@ -56,7 +57,9 @@ final class XlsxWriter
             $writer->addRow(new Row([new StringCell('عدد الصفوف', $label), new NumericCell(count($report->rows), null)]));
             $writer->addRow(new Row([]));
 
-            $headerRow = count($report->scope) + 4;
+            // One-based: the title, the scope rows, the time, the count and a
+            // blank row come first; the data rows follow the heading.
+            $headerRow = count($report->scope) + 5;
             $heading = (new Style)->setFontBold()->setFontColor(self::LIGHT)->setBackgroundColor(self::GREEN)
                 ->setCellAlignment(CellAlignment::RIGHT)->setShouldWrapText();
             $writer->addRow(new Row(array_map(fn (array $column): Cell => new StringCell($column['label'], $heading), $report->columns)));
@@ -70,10 +73,26 @@ final class XlsxWriter
                 }, $report->columns)));
             }
 
+            // Everything down to the heading stays in view; the filter covers
+            // the heading and exactly the data rows (only the heading if none).
             $sheet->setSheetView((new SheetView)->setRightToLeft(true)->setFreezeRow($headerRow + 1));
-            $sheet->setAutoFilter(new AutoFilter(0, $headerRow, max(0, count($report->columns) - 1), $headerRow + max(1, count($report->rows))));
+            $sheet->setAutoFilter(new AutoFilter(0, $headerRow, max(0, count($report->columns) - 1), $headerRow + count($report->rows)));
         } finally {
             $writer->close();
         }
+    }
+
+    /**
+     * A worksheet name Excel and OpenSpout accept: none of \ / ? * : [ ],
+     * 1–31 characters, not the reserved "History". Apostrophes are dropped
+     * too: OpenSpout quotes the name unescaped in the filter's defined name.
+     */
+    public static function sheetName(string $title): string
+    {
+        $name = (string) preg_replace('/[\\\\\/?*:\[\]\'\p{Cc}]+/u', ' ', $title);
+        $name = trim((string) preg_replace('/\s+/u', ' ', $name));
+        $name = trim(mb_substr($name, 0, 31));
+
+        return $name === '' || mb_strtolower($name) === 'history' ? 'تقرير' : $name;
     }
 }

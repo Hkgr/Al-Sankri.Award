@@ -10,6 +10,9 @@ use App\Candidates\AccountContext;
 use App\Models\ApplicantIndividualDetail;
 use App\Models\User;
 use App\Reports\ApplicationCard;
+use App\Reports\PdfWriter;
+use App\Reports\TableReport;
+use App\Reports\XlsxWriter;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -626,6 +629,78 @@ class AdministrationTest extends TestCase
         $this->read("/api/admin/exports/users?format=pdf&cycle={$this->cycleId}")->assertUnprocessable()
             ->assertJsonPath('code', 'export_too_large')->assertJsonPath('limit', 1000);
         $this->assertSame(2, DB::table('audit_logs')->where('action', 'report.exported')->count());
+    }
+
+    public function test_a_committee_title_with_forbidden_sheet_characters_exports_with_its_full_title(): void
+    {
+        $name = "لجنة: التراث/الفنون [أ] *؟? \\ 'الأولى'";
+        $this->signInAdmin();
+        $this->adminPost('/committees', ['domain' => 'creativity', 'name' => $name])->assertCreated();
+        $query = "cycle={$this->cycleId}&domain=creativity";
+
+        $response = $this->read("/api/admin/exports/committee-members?format=xlsx&{$query}")->assertOk();
+        $path = $response->baseResponse->getFile()->getPathname();
+        $zip = new \ZipArchive;
+        $zip->open($path);
+        $workbook = (string) $zip->getFromName('xl/workbook.xml');
+        $zip->close();
+        $sheet = 'أعضاء لجنة التراث الفنون أ ؟ ال';
+        $this->assertSame(31, mb_strlen($sheet));
+        $this->assertSame($sheet, XlsxWriter::sheetName("أعضاء {$name}"));
+        $this->assertStringContainsString("<sheet name=\"{$sheet}\"", $workbook);
+        $this->assertStringContainsString("'{$sheet}'!\$A\$", $workbook, 'the filter reference quotes a name without inner apostrophes');
+        $this->assertSame("أعضاء {$name}", $this->sheetRows($path)[0][0], 'the full title stays in the report');
+        @unlink($path);
+
+        $this->read("/api/admin/exports/committee-members?format=pdf&{$query}")->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_a_report_event_is_recorded_once_and_only_after_its_file_was_generated(): void
+    {
+        $this->signInAdmin();
+        $query = "cycle={$this->cycleId}";
+        $events = fn () => DB::table('audit_logs')->where('action', 'report.exported')->get();
+        $exports = fn () => File::exists(storage_path('app/private/exports')) ? count(File::files(storage_path('app/private/exports'))) : 0;
+        $leftovers = $exports();
+
+        // A rendering failure and a failed file write record nothing and leave no file.
+        $this->app->instance(PdfWriter::class, new class
+        {
+            public function table(TableReport $report): string
+            {
+                throw new RuntimeException('rendering failed');
+            }
+        });
+        $this->read("/api/admin/exports/users?format=pdf&{$query}")->assertServerError();
+        $this->app->instance(XlsxWriter::class, new class
+        {
+            public function write(TableReport $report, string $path): void
+            {
+                file_put_contents($path, 'partial');
+
+                throw new RuntimeException('disk full');
+            }
+        });
+        $this->read("/api/admin/exports/users?format=xlsx&{$query}")->assertServerError();
+        $this->assertCount(0, $events());
+        $this->assertSame($leftovers, $exports(), 'the partial workbook was removed');
+
+        // A generated file: exactly one event each, with the actor, cycle and safe metadata.
+        $this->app->forgetInstance(PdfWriter::class);
+        $this->app->forgetInstance(XlsxWriter::class);
+        $this->read("/api/admin/exports/users?format=pdf&{$query}")->assertOk();
+        $workbook = $this->read("/api/admin/exports/users?format=xlsx&{$query}")->assertOk();
+        @unlink($workbook->baseResponse->getFile()->getPathname());
+
+        $recorded = $events();
+        $this->assertCount(2, $recorded);
+        $rows = DB::table('users')->count();
+        foreach (['pdf', 'xlsx'] as $index => $format) {
+            $this->assertSame($this->admin->id, (int) $recorded[$index]->actor_user_id);
+            $this->assertSame($this->cycleId, (int) $recorded[$index]->cycle_id);
+            $this->assertNull($recorded[$index]->subject_type);
+            $this->assertSame(['report' => 'users', 'format' => $format, 'rows' => $rows], json_decode($recorded[$index]->after_data, true));
+        }
     }
 
     public function test_the_application_card_uses_the_submitted_version_and_is_audited(): void
