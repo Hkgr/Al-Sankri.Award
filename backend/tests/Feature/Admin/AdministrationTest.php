@@ -287,7 +287,37 @@ class AdministrationTest extends TestCase
         $this->adminPost("/committees/creativity/members/{$memberId}/end", [], $otherCycle)->assertNotFound();
         $this->assertNull(DB::table('committee_members')->where('id', $memberId)->value('left_at'));
         $this->adminPost('/committees', ['domain' => 'creativity', 'name' => 'لجنة 2027'], $otherCycle)->assertCreated();
-        $this->adminPost('/judges', ['domain' => 'creativity', 'email' => $judge->email, 'existing' => true], $otherCycle)->assertCreated();
+        $this->appoint('creativity', $judge->email, existing: true, cycle: $otherCycle)->assertCreated();
+    }
+
+    public function test_an_existing_account_is_appointed_only_as_confirmed(): void
+    {
+        $this->signInAdmin();
+        $this->createCommittee('heritage')->assertCreated();
+        $other = $this->person('sami@example.org');
+        $other->forceFill(['phone' => '+963933000222'])->save();
+        $before = DB::table('users')->whereIn('id', [$this->candidate->id, $other->id])->orderBy('id')->get();
+
+        // A slow lookup of A is shown while the field now holds B: A's confirmation never appoints B.
+        $refOfA = (string) $this->adminPost('/judges/lookup', ['email' => $this->candidate->email])->json('data.account.account_ref');
+        $this->assertSame(64, strlen($refOfA));
+        $this->appoint('heritage', $other->email, existing: true, extra: ['account_ref' => $refOfA])->assertConflict()->assertJsonPath('code', 'account_changed');
+        // No confirmation at all: nothing is resolved by email alone.
+        $this->appoint('heritage', $other->email, existing: true, extra: ['account_ref' => null])->assertUnprocessable()->assertJsonValidationErrors(['account_ref']);
+
+        // A's email changed after the lookup: the old binding no longer matches, checked under A's lock.
+        DB::table('users')->where('id', $this->candidate->id)->update(['email' => 'layla.new@example.org']);
+        $this->appoint('heritage', 'layla.new@example.org', existing: true, extra: ['account_ref' => $refOfA])->assertConflict()->assertJsonPath('code', 'account_changed');
+        $this->appoint('heritage', 'layla@example.org', existing: true, extra: ['account_ref' => $refOfA])->assertConflict()->assertJsonPath('code', 'account_missing');
+        $this->assertSame(0, DB::table('committee_members')->count());
+        $this->assertSame(0, DB::table('cycle_user_roles')->count());
+        DB::table('users')->where('id', $this->candidate->id)->update(['email' => 'layla@example.org']);
+        $this->assertEquals($before, DB::table('users')->whereIn('id', [$this->candidate->id, $other->id])->orderBy('id')->get(), 'no account was changed');
+
+        // A fresh lookup, confirmed as shown, appoints exactly that account.
+        $this->appoint('heritage', $other->email, existing: true)->assertCreated();
+        $this->assertSame([(int) $other->id], DB::table('committee_members')->pluck('user_id')->map(fn ($id) => (int) $id)->all());
+        Notification::assertNotSentTo($other, ResetPassword::class);
     }
 
     public function test_setup_link_failure_keeps_the_appointment_and_can_be_retried(): void
@@ -428,11 +458,18 @@ class AdministrationTest extends TestCase
     }
 
     /**
+     * As the dialog does: an existing account is looked up first and
+     * confirmed with the binding that lookup returned.
+     *
      * @param  array<string, mixed>  $extra
      */
-    private function appoint(string $domain, string $email, bool $existing = false, array $extra = []): TestResponse
+    private function appoint(string $domain, string $email, bool $existing = false, array $extra = [], ?int $cycle = null): TestResponse
     {
-        return $this->adminPost('/judges', $extra + ['domain' => $domain, 'email' => $email, 'name' => 'حكَم '.Str::before($email, '@'), 'existing' => $existing]);
+        if ($existing && ! array_key_exists('account_ref', $extra)) {
+            $extra['account_ref'] = $this->adminPost('/judges/lookup', ['email' => $email], $cycle)->json('data.account.account_ref') ?? str_repeat('0', 64);
+        }
+
+        return $this->adminPost('/judges', $extra + ['domain' => $domain, 'email' => $email, 'name' => 'حكَم '.Str::before($email, '@'), 'existing' => $existing], $cycle);
     }
 
     private function approve(string $domain): TestResponse

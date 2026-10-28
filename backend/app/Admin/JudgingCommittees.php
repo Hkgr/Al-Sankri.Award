@@ -61,6 +61,9 @@ class JudgingCommittees
 
     public const ACCOUNT_MISSING = 'account_missing';
 
+    /** The confirmed account is no longer the one this email names (or no binding was sent). */
+    public const ACCOUNT_CHANGED = 'account_changed';
+
     public const ACCOUNT_DISABLED = 'account_disabled';
 
     public const ALREADY_JUDGE = 'already_judge';
@@ -163,10 +166,17 @@ class JudgingCommittees
      * its owner sets a password through the password-reset link sent after
      * the commit, independently of the appointment.
      *
+     * An existing account is appointed only with the `account_ref` of the
+     * lookup the administrator confirmed (accountRef()): it binds the exact
+     * account and its normalized email, and it is checked again under that
+     * account's lock. Another account, or the same account with another
+     * email, is refused (account_changed); it is never resolved by email
+     * alone.
+     *
      * @param  array{name: string, email: string, phone: string|null, specialty: string|null}  $input
      * @return array{0: string, 1: array<string, mixed>|null}
      */
-    public function appoint(User $actor, int $cycleId, string $domainCode, array $input, bool $existing): array
+    public function appoint(User $actor, int $cycleId, string $domainCode, array $input, bool $existing, ?string $accountRef = null): array
     {
         $domain = $this->domain($cycleId, $domainCode);
         if ($domain === null) {
@@ -180,13 +190,17 @@ class JudgingCommittees
         if ($target !== null && ! $existing) {
             return [self::ACCOUNT_EXISTS, $this->accountSummary($target, $cycleId)];
         }
+        if ($existing && ! is_string($accountRef)) {
+            return [self::ACCOUNT_CHANGED, null];
+        }
 
         try {
-            $result = DB::transaction(function () use ($actor, $cycleId, $domain, $input, $target): array {
+            $result = DB::transaction(function () use ($actor, $cycleId, $domain, $input, $target, $accountRef): array {
                 $created = $target === null;
                 $target = $created ? null : $this->lockAccounts($actor, $target);
-                if (! $created && ($target === null || $target->email !== $input['email'])) {
-                    throw new RefusedChange(self::ACCOUNT_MISSING);
+                // As now committed, under the account's lock: the confirmed account and email, or nothing.
+                if (! $created && ($target === null || $target->email !== $input['email'] || ! hash_equals($this->accountRef($target), (string) $accountRef))) {
+                    throw new RefusedChange(self::ACCOUNT_CHANGED);
                 }
                 if ($created) {
                     $this->lockAccounts($actor, null);
@@ -481,6 +495,16 @@ class JudgingCommittees
         return DB::table('applications')->where('cycle_id', $cycleId)->where('created_by', $userId)->whereNotNull('current_version_id')->exists();
     }
 
+    /**
+     * Binds a confirmation to one account and its normalized email: an HMAC
+     * with the application key, so it reveals neither and cannot be made
+     * for another account.
+     */
+    public function accountRef(User $user): string
+    {
+        return hash_hmac('sha256', 'judge-appointment|'.$user->getKey().'|'.mb_strtolower((string) $user->email), (string) config('app.key'));
+    }
+
     private function setupPending(User $user): bool
     {
         return ! $user->hasPassword() && ! $this->google->isLinked($user);
@@ -492,6 +516,7 @@ class JudgingCommittees
     private function accountSummary(User $user, int $cycleId): array
     {
         return [
+            'account_ref' => $this->accountRef($user),
             'name' => $user->name,
             'email' => $user->email,
             'phone' => $user->phone,

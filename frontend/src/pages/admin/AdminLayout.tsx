@@ -10,6 +10,7 @@ import { DamascusClock } from '../candidate/DamascusClock'
 import { ProfileMenu } from '../candidate/ProfileMenu'
 import type { AdminCycle } from './adminApi'
 import { cycleLabel } from './adminApi'
+import { ALL_CYCLES } from './applications/tableState'
 import './admin.css'
 
 const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري'
@@ -39,14 +40,18 @@ const PROFILE_LINKS = [
 export function AdminLayout({
   user,
   cycles,
-  cycle,
-  onSelectCycle,
+  cycleValue,
+  includeAll,
+  onCycleChange,
   children,
 }: {
   user: User
   cycles: AdminCycle[]
-  cycle: AdminCycle | null
-  onSelectCycle: (id: number) => void
+  /** The cycle shown: the selected one, or the table's scope on «ملفات الترشح» (possibly «all»). */
+  cycleValue: string | null
+  /** «كل الدورات» is a choice where the page has that scope (the applications table). */
+  includeAll: boolean
+  onCycleChange: (value: string) => void
   children: ReactNode
 }) {
   const { location } = useRouter()
@@ -74,8 +79,9 @@ export function AdminLayout({
           <p className="admin-header__title">لوحة الإدارة</p>
           <div className="admin-header__cycle">
             <label htmlFor={cycleSelectId}>الدورة</label>
-            {cycles.length > 0 && cycle ? (
-              <select id={cycleSelectId} value={cycle.id} onChange={(event) => onSelectCycle(Number(event.target.value))}>
+            {cycles.length > 0 && cycleValue ? (
+              <select id={cycleSelectId} value={cycleValue} onChange={(event) => onCycleChange(event.target.value)}>
+                {includeAll && <option value={ALL_CYCLES}>كل الدورات</option>}
                 {cycles.map((item) => (
                   <option key={item.id} value={item.id}>
                     {cycleLabel(item)}

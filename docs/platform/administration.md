@@ -61,6 +61,7 @@ php artisan admin:grant-access --email="existing-account@example.com"
   - **sorting:** whitelisted columns only;
   - **pages:** 10, 25 or 50 rows;
   - **state in the address:** the filters live in the page address, so a refresh or «العودة إلى جدول ملفات الترشح» restores them.
+  - **one cycle scope:** the address's `cycle` (a cycle, or `all` for «كل الدورات») is the table's scope. The header's cycle choice and the toolbar's cycle filter both change it, which resets the page and drops a domain or subcategory the new scope doesn't have. Back/forward and the return link restore it, and the header follows. The request always uses that same scope, and the results line names it.
 - **One application** (`/admin/applications/<id>`) is read-only. It shows:
   - **Stages 2 and 3, declarations and accepted policies:** taken from the **immutable submitted version** (`application_versions.data_snapshot`), with the files linked to that version;
   - **Stage 1:** the profile that the version references. It is confirmed once and never edited.
@@ -86,6 +87,8 @@ php artisan admin:grant-access --email="existing-account@example.com"
 
 **Judge accounts** (the «إضافة حكَم» dialog):
 - **Existing account:** shown as it is first, then appointed only on explicit confirmation. Its password, verified email, Google sign-in, name and phone are never changed. A disabled account is refused, not reactivated.
+  - **The confirmation is bound to the account shown.** The lookup returns an `account_ref` (an HMAC of the account id and normalized email). The appointment sends that account's own email with it, and the server checks both again under the account's lock. If the email no longer names exactly that account, nothing happens (`409 account_changed`) and the administrator looks the email up again. An account is never resolved by email alone.
+  - **In the dialog:** a late or out-of-order lookup answer is dropped, editing the email discards the account shown, and confirmation is unavailable while a lookup is pending.
 - **New email:**
   - **What is created:** an account with the given name and optional phone, **no password**, an unverified email and no candidate classification.
   - **Delivery of the link:** after the commit, the existing password-reset link is sent (same broker, mailer, 60-minute expiry and throttle). The appointment does not depend on the email.

@@ -33,6 +33,7 @@ class CommitteesController extends Controller
         JudgingCommittees::COMMITTEE_NOT_APPROVED => [409, 'اللجنة ليست معتمدة. لم يتغيّر شيء.'],
         JudgingCommittees::ACCOUNT_EXISTS => [409, 'يوجد حساب مسجّل بهذا البريد. راجع بياناته أدناه، ثم أكّد تعيينه إن كان هو المقصود.'],
         JudgingCommittees::ACCOUNT_MISSING => [409, 'لم يعد هذا الحساب موجوداً بهذا البريد. تحقّق من البريد ثم أعد المحاولة.'],
+        JudgingCommittees::ACCOUNT_CHANGED => [409, 'لم يعد البريد يشير إلى الحساب الذي عُرض عليك للتأكيد، فلم يُعيَّن أحد. ابحث عن البريد من جديد، وتحقّق من الحساب، ثم أكّد.'],
         JudgingCommittees::ACCOUNT_DISABLED => [409, 'هذا الحساب معطّل، فلا يُعيَّن حكَماً. لم يتغيّر شيء، ولم يُفعَّل الحساب.'],
         JudgingCommittees::ALREADY_JUDGE => [409, 'هذا الشخص حكَم في لجنة تحكيم أخرى من لجان هذه الدورة، ولا يكون للحكَم إلا لجنة مجال رئيسي واحدة في الدورة.'],
         JudgingCommittees::SUBMITTED_CANDIDATE => [409, 'لصاحب هذا الحساب مشاركة مرسلة في هذه الدورة، فلا يُعيَّن حكَماً فيها (تعارض مصالح). لم يتغيّر شيء، ولم تُمسّ مشاركته.'],
@@ -77,6 +78,8 @@ class CommitteesController extends Controller
             'domain' => ['required', Rule::in(NominationTaxonomy::domainCodes())],
             'email' => ['required', 'string', 'email', 'max:255'],
             'existing' => ['required', 'boolean'],
+            // The binding of the confirmed lookup (JudgingCommittees::accountRef).
+            'account_ref' => [Rule::requiredIf($existing), 'nullable', 'string', 'size:64'],
             // A new account's name and phone; an existing account keeps its own.
             'name' => [Rule::requiredIf(! $existing), 'nullable', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'],
             'phone' => ['nullable', 'string', 'max:32'],
@@ -84,6 +87,7 @@ class CommitteesController extends Controller
         ], [
             'domain.*' => 'اختر المجال الرئيسي للحكَم.',
             'email.*' => 'اكتب بريداً إلكترونياً صحيحاً.',
+            'account_ref.*' => 'ابحث عن البريد من جديد، ثم أكّد الحساب المعروض.',
             'name.*' => 'اكتب الاسم الكامل (حتى 255 حرفاً).',
             'specialty.*' => 'التخصص حتى 150 حرفاً.',
         ]);
@@ -101,7 +105,7 @@ class CommitteesController extends Controller
             'email' => $validated['email'],
             'phone' => $phone,
             'specialty' => filled($validated['specialty'] ?? null) ? Str::squish($validated['specialty']) : null,
-        ], $existing);
+        ], $existing, $existing ? $validated['account_ref'] : null);
 
         if ($outcome !== JudgingCommittees::APPOINTED) {
             return $this->refusal($outcome, $result === null ? [] : ['account' => $result]);

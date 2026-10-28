@@ -7,29 +7,22 @@ import { useRouter } from '../../../lib/useRouter'
 import { usePageTitle } from '../../auth/usePageTitle'
 import { formatDamascusDateTime } from '../../candidate/candidateApi'
 import type { AdminCycle, ApplicationsPage as Page, ApplicationStatus, SortKey } from '../adminApi'
-import { APPLICANT_TYPE_LABELS, cycleLabel, SORT_LABELS, STATUS_LABELS, TABLE_PARAMS } from '../adminApi'
+import { APPLICANT_TYPE_LABELS, cycleLabel, SORT_LABELS, STATUS_LABELS } from '../adminApi'
 import { StatusBadge } from './StatusBadge'
-
-const ALL_CYCLES = 'all'
+import { ALL_CYCLES, tableQuery } from './tableState'
 
 /**
  * «ملفات الترشح»: the submitted participations, searched, filtered, sorted
  * and paged on the server. The table's state lives in the address, so a
- * refresh, the back button or «العودة إلى الجدول» restores it.
+ * refresh, the back button or «العودة إلى الجدول» restores it. Its cycle
+ * scope comes from AdminApp (tableScope), and changing it here or in the
+ * header goes through the same onScopeChange.
  */
-export function ApplicationsPage({
-  cycles,
-  selectedCycle,
-  onSelectCycle,
-}: {
-  cycles: AdminCycle[]
-  selectedCycle: AdminCycle | null
-  onSelectCycle: (id: number) => void
-}) {
+export function ApplicationsPage({ cycles, scope, onScopeChange }: { cycles: AdminCycle[]; scope: string; onScopeChange: (scope: string) => void }) {
   usePageTitle('ملفات الترشح')
   const { location, navigate } = useRouter()
   const params = new URLSearchParams(location.search)
-  const cycleParam = params.get('cycle') ?? (selectedCycle ? String(selectedCycle.id) : ALL_CYCLES)
+  const cycleParam = scope
   const cycle = cycles.find((item) => String(item.id) === cycleParam) ?? null
   const domain = params.get('domain') ?? ''
   const sort = (params.get('sort') ?? 'submitted_at') as SortKey
@@ -37,17 +30,19 @@ export function ApplicationsPage({
   const [result, setResult] = useState<Page | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState(params.get('q') ?? '')
+  const q = params.get('q') ?? ''
+  const [search, setSearch] = useState(q)
+  const [shownQ, setShownQ] = useState(q)
+  if (q !== shownQ) {
+    // Back/forward restored another search: the box follows the address.
+    setShownQ(q)
+    setSearch(q)
+  }
   const [retry, setRetry] = useState(0)
   const latest = useRef(0)
   const ids = { search: useId(), cycle: useId(), domain: useId(), subcategory: useId(), type: useId(), status: useId(), perPage: useId(), caption: useId() }
 
-  const query = new URLSearchParams()
-  for (const name of TABLE_PARAMS) {
-    const value = name === 'cycle' ? (cycleParam === ALL_CYCLES ? '' : cycleParam) : params.get(name)
-    if (value) query.set(name, value)
-  }
-  const queryString = query.toString()
+  const queryString = tableQuery(location.search, scope)
 
   useEffect(() => {
     const request = ++latest.current
@@ -79,10 +74,6 @@ export function ApplicationsPage({
     update({ q: search.trim() || null })
   }
 
-  const onCycle = (value: string) => {
-    if (value !== ALL_CYCLES) onSelectCycle(Number(value))
-    update({ cycle: value, domain: null, subcategory: null })
-  }
 
   /** The same column flips its direction; a new one starts newest-first for dates, A–Z otherwise. */
   const onSort = (key: SortKey) => {
@@ -90,12 +81,22 @@ export function ApplicationsPage({
     update({ sort: key, direction: nextDirection })
   }
 
-  const domains = cycle?.domains ?? cycles.find((item) => item.domains.length > 0)?.domains ?? []
+  // «كل الدورات»: the main domains and subcategories of every cycle, once each.
+  const domains =
+    cycle?.domains ??
+    Object.values(
+      Object.fromEntries(
+        cycles
+          .flatMap((item) => item.domains)
+          .reverse()
+          .map((item) => [item.code, item]),
+      ),
+    )
   const subcategories = domains.find((item) => item.code === domain)?.subcategories ?? []
   const filtered = ['domain', 'subcategory', 'applicant_type', 'status', 'q'].some((name) => params.get(name))
   const meta = result?.meta
-  const back = new URLSearchParams(query)
-  back.set('cycle', cycleParam)
+  const back = new URLSearchParams(queryString)
+  back.set('cycle', scope)
   const backTo = `/admin/applications?${back.toString()}`
 
   const sortHeader = (key: SortKey, label: string) => (
@@ -136,7 +137,7 @@ export function ApplicationsPage({
         <div className="admin-toolbar__filters">
           <div className="admin-filter">
             <label htmlFor={ids.cycle}>الدورة</label>
-            <select id={ids.cycle} value={cycleParam} onChange={(event) => onCycle(event.target.value)}>
+            <select id={ids.cycle} value={scope} onChange={(event) => onScopeChange(event.target.value)}>
               <option value={ALL_CYCLES}>كل الدورات</option>
               {cycles.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -216,7 +217,7 @@ export function ApplicationsPage({
       </div>
 
       <p className="admin-results" role="status" aria-live="polite">
-        {loading ? 'جارٍ التحميل…' : meta ? (meta.total === 0 ? 'لا نتائج.' : `${meta.total} مشاركة مرسلة`) : ''}
+        {loading ? 'جارٍ التحميل…' : meta ? `${meta.total === 0 ? 'لا نتائج' : `${meta.total} مشاركة مرسلة`} · النطاق: ${cycle ? cycleLabel(cycle) : 'كل الدورات'}` : ''}
       </p>
 
       {error ? (

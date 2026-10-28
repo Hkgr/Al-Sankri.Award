@@ -11,6 +11,7 @@ import { AdminLayout } from './AdminLayout'
 import type { AdminContext } from './adminApi'
 import { ApplicationPage } from './applications/ApplicationPage'
 import { ApplicationsPage } from './applications/ApplicationsPage'
+import { ALL_CYCLES, tableScope, withScope } from './applications/tableState'
 import { CommitteesPage } from './committees/CommitteesPage'
 
 const CYCLE_KEY = 'sa-admin-cycle'
@@ -57,14 +58,32 @@ export function AdminApp() {
     if (isAdmin) void loadContext()
   }, [isAdmin, loadContext, user?.account_context])
 
-  const selectCycle = useCallback((id: number) => {
-    setCycleId(id)
+  useEffect(() => {
+    if (cycleId === null) return
     try {
-      window.localStorage.setItem(CYCLE_KEY, String(id))
+      window.localStorage.setItem(CYCLE_KEY, String(cycleId))
     } catch {
       // Not remembered in this browser; the selection still applies here.
     }
-  }, [])
+  }, [cycleId])
+
+  const cycles = context?.cycles ?? []
+  const cycle = cycles.find((item) => item.id === cycleId) ?? cycles.find((item) => item.id === context?.default_cycle_id) ?? cycles[0] ?? null
+  const onTable = location.pathname === '/admin/applications'
+  // On «ملفات الترشح» the address holds the scope; the header shows that same scope.
+  const scope = onTable ? tableScope(location.search, cycle?.id ?? null, cycles) : null
+
+  if (scope && scope !== ALL_CYCLES && Number(scope) !== cycleId) {
+    // The address names another cycle (back/forward, a return link): the
+    // header and the remembered selection follow it. No navigation here.
+    setCycleId(Number(scope))
+  }
+
+  /** The header or the table's cycle filter: one change, one address, one request. */
+  const changeCycle = (value: string) => {
+    if (value !== ALL_CYCLES) setCycleId(Number(value))
+    if (onTable && value !== scope) navigate(`/admin/applications?${withScope(location.search, value, cycles)}`, { keepPosition: true })
+  }
 
   if (!user) {
     return (
@@ -89,8 +108,6 @@ export function AdminApp() {
     )
   }
 
-  const cycles = context?.cycles ?? []
-  const cycle = cycles.find((item) => item.id === cycleId) ?? cycles.find((item) => item.id === context?.default_cycle_id) ?? cycles[0] ?? null
   const can = (permission: AdminPermission) => user.admin_permissions.includes(permission)
   const detail = /^\/admin\/applications\/(\d+)$/.exec(location.pathname)
 
@@ -113,7 +130,7 @@ export function AdminApp() {
       </p>
     )
   } else if (location.pathname === '/admin/applications' && can('applications.view_submitted')) {
-    page = <ApplicationsPage cycles={cycles} selectedCycle={cycle} onSelectCycle={selectCycle} />
+    page = <ApplicationsPage cycles={cycles} scope={scope ?? ALL_CYCLES} onScopeChange={changeCycle} />
   } else if (detail && can('applications.view_submitted')) {
     page = <ApplicationPage applicationId={Number(detail[1])} />
   } else if (location.pathname === '/admin/committees' && can('committees.manage_judging')) {
@@ -129,7 +146,7 @@ export function AdminApp() {
   }
 
   return (
-    <AdminLayout user={user} cycles={cycles} cycle={cycle} onSelectCycle={selectCycle}>
+    <AdminLayout user={user} cycles={cycles} cycleValue={onTable ? scope : cycle ? String(cycle.id) : null} includeAll={onTable} onCycleChange={changeCycle}>
       {page}
     </AdminLayout>
   )

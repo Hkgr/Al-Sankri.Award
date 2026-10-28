@@ -1,10 +1,11 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { User } from '../../../auth/useAuth'
 import { FormAlert, TextField } from '../../../components/forms/FormControls'
 import { ApiError, api, errorMessage } from '../../../lib/api'
 import type { AccountSummary, AppointmentResult, CommitteesResponse, DomainCode, DomainCommittee } from '../adminApi'
 import { AdminDialog } from './AdminDialog'
+import { existingAppointment, isCurrentLookup, normalizeEmail } from './judgeLookup'
 
 type Step = { kind: 'email' } | { kind: 'new' } | { kind: 'existing'; account: AccountSummary }
 
@@ -15,6 +16,12 @@ type Step = { kind: 'email' } | { kind: 'new' } | { kind: 'existing'; account: A
  * methods are never changed); otherwise a new account is created with the
  * name and optional phone, and its owner receives the password-reset link
  * to set a password.
+ *
+ * A confirmation is bound to the account shown: an answer to an older
+ * lookup, or one for an email the field no longer holds, is dropped;
+ * editing the email discards the shown account; and the appointment sends
+ * that account's own email and binding (the server refuses it if the email
+ * no longer names exactly that account).
  */
 export function AddJudgeDialog({
   open,
@@ -44,6 +51,9 @@ export function AddJudgeDialog({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [alert, setAlert] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [lookingUp, setLookingUp] = useState(false)
+  const latestLookup = useRef(0)
+  const currentEmail = useRef('')
   const domainId = useId()
   const target = committees.find((item) => item.domain.code === domain)
   const committee = target?.committee ?? null
@@ -58,27 +68,44 @@ export function AddJudgeDialog({
     }
   }
 
+  /** A new email: any shown account, confirmation or pending lookup no longer applies. */
+  const changeEmail = (value: string) => {
+    setEmail(value)
+    currentEmail.current = value
+    latestLookup.current += 1
+    setLookingUp(false)
+    setStep({ kind: 'email' })
+    setAlert(null)
+  }
+
   const lookup = async (event: FormEvent) => {
     event.preventDefault()
-    setBusy(true)
+    const requestId = ++latestLookup.current
+    const requested = email
+    setLookingUp(true)
     setErrors({})
     setAlert(null)
     try {
       const response = await api.post<{ data: { account: AccountSummary | null } }>(`/api/admin/cycles/${cycleId}/judges/lookup`, {
-        email,
+        email: requested,
         account_context: user.account_context,
       })
+      if (!isCurrentLookup(requestId, latestLookup.current, requested, currentEmail.current)) return
       setStep(response.data.account ? { kind: 'existing', account: response.data.account } : { kind: 'new' })
     } catch (error) {
-      fail(error)
+      if (isCurrentLookup(requestId, latestLookup.current, requested, currentEmail.current)) fail(error)
     } finally {
-      setBusy(false)
+      if (requestId === latestLookup.current) setLookingUp(false)
     }
   }
 
   const appoint = async (event: FormEvent) => {
     event.preventDefault()
-    const existing = step.kind === 'existing'
+    if (lookingUp || step.kind === 'email') return
+    const target =
+      step.kind === 'existing'
+        ? { ...existingAppointment(step.account), name: null, phone: null }
+        : { existing: false, email, name, phone: phone.trim() ? phone : null }
     setBusy(true)
     setErrors({})
     setAlert(null)
@@ -86,18 +113,20 @@ export function AddJudgeDialog({
       onDone(
         await api.post<CommitteesResponse & { appointment: AppointmentResult }>(`/api/admin/cycles/${cycleId}/judges`, {
           domain,
-          email,
-          existing,
-          name: existing ? null : name,
-          phone: existing || !phone.trim() ? null : phone,
+          ...target,
           specialty: specialty.trim() || null,
           account_context: user.account_context,
         }),
       )
     } catch (error) {
-      // Someone created this email meanwhile: show the account to confirm instead.
-      if (error instanceof ApiError && error.code === 'account_exists' && error.payload.account) {
-        setStep({ kind: 'existing', account: error.payload.account as unknown as AccountSummary })
+      const shown = error instanceof ApiError ? (error.payload.account as unknown as AccountSummary | undefined) : undefined
+      if (error instanceof ApiError && error.code === 'account_exists' && shown && shown.email === normalizeEmail(currentEmail.current)) {
+        // Someone created this email meanwhile: show that account to confirm instead.
+        setStep({ kind: 'existing', account: shown })
+      } else if (error instanceof ApiError && (error.code === 'account_changed' || error.code === 'account_missing')) {
+        // The shown account is no longer what this email names: look it up again.
+        latestLookup.current += 1
+        setStep({ kind: 'email' })
       }
       fail(error)
     } finally {
@@ -143,10 +172,7 @@ export function AddJudgeDialog({
           label="البريد الإلكتروني"
           type="email"
           value={email}
-          onChange={(value) => {
-            setEmail(value)
-            if (step.kind !== 'email') setStep({ kind: 'email' })
-          }}
+          onChange={changeEmail}
           error={errors.email}
           required
           autoComplete="off"
@@ -224,14 +250,14 @@ export function AddJudgeDialog({
             إلغاء
           </button>
           {step.kind === 'email' ? (
-            <button type="submit" className="button button--primary" disabled={busy || !email.trim()}>
-              {busy ? 'جارٍ التحقق…' : 'متابعة'}
+            <button type="submit" className="button button--primary" disabled={lookingUp || !email.trim()} aria-busy={lookingUp || undefined}>
+              {lookingUp ? 'جارٍ التحقق…' : 'متابعة'}
             </button>
           ) : (
             <button
               type="submit"
               className="button button--primary"
-              disabled={busy || blocked !== null || (step.kind === 'existing' && !step.account.active)}
+              disabled={busy || lookingUp || blocked !== null || (step.kind === 'existing' && !step.account.active)}
               aria-busy={busy || undefined}
             >
               {busy ? 'جارٍ الحفظ…' : step.kind === 'existing' ? 'تعيين هذا الحساب حكَماً' : 'إنشاء الحساب وتعيينه حكَماً'}

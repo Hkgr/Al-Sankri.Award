@@ -71,8 +71,7 @@ export type ApplicationDetail = {
   }
 }
 
-/** The table's query values, kept in the page address so returning restores them. */
-export const TABLE_PARAMS = ['cycle', 'domain', 'subcategory', 'applicant_type', 'status', 'q', 'sort', 'direction', 'page', 'per_page'] as const
+export { TABLE_PARAMS } from './applications/tableState'
 
 export const SORT_LABELS = {
   submitted_at: 'تاريخ الإرسال',
@@ -116,6 +115,8 @@ export type Committee = {
 export type DomainCommittee = { domain: { code: DomainCode; name: string }; committee: Committee | null }
 
 export type AccountSummary = {
+  /** Binds a confirmation to this exact account and email (checked again by the server). */
+  account_ref: string
   name: string
   email: string
   phone: string | null
