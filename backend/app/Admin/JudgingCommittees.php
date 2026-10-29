@@ -3,6 +3,7 @@
 namespace App\Admin;
 
 use App\Auth\GoogleAccounts;
+use App\Auth\RoleExclusivity;
 use App\Candidates\NominationTaxonomy;
 use App\Judging\Assignments;
 use App\Models\User;
@@ -28,6 +29,10 @@ use Throwable;
  * - approval needs exactly 3 or 5 current members, all with active accounts;
  * - a person has at most one current judging membership per cycle (also
  *   guarded by uq_cycle_user_roles_current on the judge grant);
+ * - appointing someone revokes their candidate classification, so they
+ *   are not a judge and a participant at once. Ending their last
+ *   judgeship restores that classification when an appointment had
+ *   revoked it;
  * - a disabled account, or one that submitted an application in this
  *   cycle, is not appointed (and an appointed judge cannot submit there:
  *   App\Candidates\Submissions);
@@ -88,7 +93,11 @@ class JudgingCommittees
 
     public const LINK_FAILED = 'failed';
 
-    public function __construct(private readonly AdminAccess $access, private readonly GoogleAccounts $google) {}
+    public function __construct(
+        private readonly AdminAccess $access,
+        private readonly GoogleAccounts $google,
+        private readonly RoleExclusivity $roles,
+    ) {}
 
     /**
      * The cycle's main domains in the approved order, each with its judging
@@ -251,6 +260,7 @@ class JudgingCommittees
                 AuditLog::record('committee_member.added', $actorId, 'committee', (int) $committee->id, [
                     'committee_member_id' => $memberId, 'user_id' => $target->getKey(), 'domain' => $domain->code,
                 ], $cycleId);
+                $this->roles->revokeCandidateForJudgeship($target, $actor, $cycleId);
 
                 return ['member_id' => $memberId, 'user' => $target, 'created' => $created];
             });
@@ -310,6 +320,7 @@ class JudgingCommittees
             $actorId = (int) $actor->getKey();
             AuditLog::record('committee_member.ended', $actorId, 'committee', (int) $committee->id, ['committee_member_id' => $member->id, 'user_id' => $target->getKey()], $cycleId);
             AuditLog::record('cycle_user_role.revoked', $actorId, 'user', (int) $target->getKey(), ['role' => AdminAccess::JUDGE_ROLE, 'cycle_id' => $cycleId], $cycleId);
+            $this->roles->restoreCandidateAfterJudgeship($target);
 
             return self::UPDATED;
         });
