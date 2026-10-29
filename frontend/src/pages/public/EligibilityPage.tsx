@@ -1,4 +1,5 @@
 import { domains, eligibility, pages } from '../../content/site'
+import { RichText } from '../../components/OrgLink'
 import type { MainDomain } from '../../content/site'
 import { Link } from '../../lib/router'
 import { usePageMeta } from '../../lib/usePageMeta'
@@ -35,7 +36,9 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
         </div>
         <div className="org-panel org-panel--warning">
           <Heading className="org-panel__title">منع تضارب المصالح</Heading>
-          <p>{eligibility.conflict}</p>
+          <p>
+            <RichText value={eligibility.conflict} />
+          </p>
         </div>
       </section>
 

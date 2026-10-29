@@ -8,11 +8,12 @@
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { clockOffset, countdownTarget, deadlineText, periodText, phaseAt, remaining } from '../src/lib/schedule.ts'
+import { applicationPhaseAt, clockOffset, countdownTarget, deadlineText, judgingPhaseAt, periodText, phaseAt, remaining } from '../src/lib/schedule.ts'
 import type { PublicSchedule } from '../src/lib/schedule.ts'
 
 const CLOSES = Date.parse('2026-11-16T00:00:00+03:00')
 const JUDGING_ENDS = Date.parse('2026-11-26T00:00:00+03:00')
+const OCTOBER_29 = Date.parse('2026-10-29T09:00:00+03:00')
 
 const schedule = (open: boolean): PublicSchedule => ({
   server_time: '2026-11-01T09:00:00Z',
@@ -30,19 +31,77 @@ test('the application phase ends exactly at the exclusive closing instant', () =
   const open = schedule(true)
   assert.equal(phaseAt(CLOSES - 1000, open), 'open')
   assert.equal(phaseAt(CLOSES - 1, open), 'open')
+  assert.equal(applicationPhaseAt(CLOSES - 1, open), 'open')
+  assert.equal(applicationPhaseAt(CLOSES, open), 'closed')
+  assert.equal(judgingPhaseAt(CLOSES - 1, open), 'upcoming')
+  assert.equal(judgingPhaseAt(CLOSES, open), 'current')
   assert.equal(phaseAt(CLOSES, open), 'judging', 'closed at the instant itself, without a reload')
   assert.equal(phaseAt(JUDGING_ENDS - 1, open), 'judging')
   assert.equal(phaseAt(JUDGING_ENDS, open), 'judged')
+  assert.equal(judgingPhaseAt(JUDGING_ENDS - 1, open), 'current')
+  assert.equal(judgingPhaseAt(JUDGING_ENDS, open), 'ended')
+  assert.equal(phaseAt(CLOSES, schedule(false)), 'judging')
+  assert.equal(phaseAt(JUDGING_ENDS, schedule(false)), 'judged')
   assert.equal(countdownTarget('open', open), CLOSES)
   assert.equal(countdownTarget('judging', open), null)
 })
 
 test('the server decides: a closed stage is never reopened by the client clock', () => {
-  assert.equal(phaseAt(CLOSES - 86_400_000, schedule(false)), 'judging')
+  assert.equal(phaseAt(CLOSES - 86_400_000, schedule(false)), 'unavailable')
   assert.equal(phaseAt(0, null), 'unknown')
   const notYet: PublicSchedule = { ...schedule(false), application: { opens_at: '2026-11-05T21:00:00Z', closes_at: '2026-11-15T21:00:00Z', open: false } }
   assert.equal(phaseAt(Date.parse('2026-11-05T20:00:00Z'), notYet), 'upcoming')
   assert.equal(countdownTarget('upcoming', notYet), Date.parse('2026-11-05T21:00:00Z'))
+  assert.equal(phaseAt(Date.parse('2026-11-05T21:00:00Z'), notYet), 'unavailable', 'the client cannot reopen a server-refused period at its planned opening')
+})
+
+test('incomplete configuration before a future deadline is unavailable, not elapsed or judging', () => {
+  const incomplete = schedule(false)
+  assert.equal(applicationPhaseAt(OCTOBER_29, incomplete), 'unavailable')
+  assert.equal(phaseAt(OCTOBER_29, incomplete), 'unavailable')
+  assert.equal(judgingPhaseAt(OCTOBER_29, incomplete), 'upcoming')
+  assert.equal(countdownTarget(phaseAt(OCTOBER_29, incomplete), incomplete), null)
+  assert.equal(deadlineText(incomplete.application!.closes_at!), 'بنهاية يوم 15 نوفمبر 2026')
+})
+
+test('administrative closure after opening does not complete a future application period', () => {
+  const administrativelyClosed: PublicSchedule = {
+    ...schedule(false),
+    application: { opens_at: '2026-10-01T00:00:00+03:00', closes_at: '2026-11-15T21:00:00Z', open: false },
+  }
+  assert.equal(applicationPhaseAt(OCTOBER_29, administrativelyClosed), 'unavailable')
+  assert.equal(phaseAt(OCTOBER_29, administrativelyClosed), 'unavailable')
+  assert.equal(phaseAt(CLOSES - 1, administrativelyClosed), 'unavailable')
+  assert.equal(applicationPhaseAt(CLOSES, administrativelyClosed), 'closed')
+  assert.equal(phaseAt(CLOSES, administrativelyClosed), 'judging')
+})
+
+test('unavailable applications with no judging window never imply judging', () => {
+  const noJudging: PublicSchedule = { ...schedule(false), judging: null }
+  assert.equal(phaseAt(OCTOBER_29, noJudging), 'unavailable')
+  assert.equal(judgingPhaseAt(OCTOBER_29, noJudging), 'unknown')
+  assert.equal(phaseAt(CLOSES, noJudging), 'closed')
+  assert.equal(phaseAt(JUDGING_ENDS, noJudging), 'closed')
+  const undated: PublicSchedule = { ...noJudging, application: { opens_at: null, closes_at: null, open: false } }
+  assert.equal(phaseAt(JUDGING_ENDS, undated), 'unavailable')
+})
+
+test('judging requires both valid interval boundaries and cannot start during a gap', () => {
+  const delayedStart = '2026-11-17T00:00:00+03:00'
+  const delayed: PublicSchedule = { ...schedule(false), judging: { opens_at: delayedStart, closes_at: '2026-11-25T21:00:00Z' } }
+  assert.equal(phaseAt(CLOSES, delayed), 'closed')
+  assert.equal(judgingPhaseAt(CLOSES, delayed), 'upcoming')
+  assert.equal(phaseAt(Date.parse(delayedStart), delayed), 'judging')
+  for (const judging of [
+    { opens_at: null, closes_at: '2026-11-25T21:00:00Z' },
+    { opens_at: '2026-11-15T21:00:00Z', closes_at: null },
+    { opens_at: 'not a date', closes_at: '2026-11-25T21:00:00Z' },
+    { opens_at: '2026-11-25T21:00:00Z', closes_at: '2026-11-15T21:00:00Z' },
+  ]) {
+    const invalid: PublicSchedule = { ...schedule(false), judging }
+    assert.equal(judgingPhaseAt(CLOSES, invalid), 'unknown')
+    assert.equal(phaseAt(CLOSES, invalid), 'closed')
+  }
 })
 
 test('the remaining time is computed from now, split into labelled units and clamped at zero', () => {

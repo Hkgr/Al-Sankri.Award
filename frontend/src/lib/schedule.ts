@@ -21,11 +21,15 @@ export type PublicSchedule = {
 /**
  * - `upcoming`: applications not open yet (the server says closed, and an opening instant lies ahead);
  * - `open`: applications open, counting down to the closing instant;
- * - `judging`: applications closed, the announced judging period not over;
+ * - `unavailable`: the server refuses applications, without an elapsed deadline;
+ * - `closed`: the application deadline has elapsed, without current judging;
+ * - `judging`: applications ended and the announced judging interval is current;
  * - `judged`: the judging period is over (no claim about results);
  * - `unknown`: no schedule published.
  */
-export type SchedulePhase = 'upcoming' | 'open' | 'judging' | 'judged' | 'unknown'
+export type ApplicationPhase = 'upcoming' | 'open' | 'unavailable' | 'closed' | 'unknown'
+export type JudgingPhase = 'upcoming' | 'current' | 'ended' | 'unknown'
+export type SchedulePhase = ApplicationPhase | 'judging' | 'judged'
 
 export type Remaining = { days: number; hours: number; minutes: number; seconds: number; totalMs: number }
 
@@ -38,22 +42,43 @@ function instant(value: string | null | undefined): number | null {
 }
 
 /**
- * The phase at `now` (milliseconds, already aligned to the server clock).
+ * Application availability at `now` (milliseconds aligned to the server clock).
  * An `open` answer from the server ends at its closing instant without
  * waiting for a reload; a closed one is never reopened by the client.
  */
-export function phaseAt(now: number, schedule: PublicSchedule | null): SchedulePhase {
+export function applicationPhaseAt(now: number, schedule: PublicSchedule | null): ApplicationPhase {
   const application = schedule?.application
   if (!application) return 'unknown'
   const opens = instant(application.opens_at)
   const closes = instant(application.closes_at)
-  const judgingEnds = instant(schedule?.judging?.closes_at)
 
-  if (application.open && (closes === null || now < closes)) return 'open'
-  if (!application.open && opens !== null && now < opens) return 'upcoming'
-  if (judgingEnds !== null && now >= judgingEnds) return 'judged'
+  if (closes !== null && now >= closes) return 'closed'
+  if (application.open) return 'open'
+  if (opens !== null && now < opens) return 'upcoming'
 
-  return 'judging'
+  return 'unavailable'
+}
+
+/** Judging is current only inside a complete, valid announced interval. */
+export function judgingPhaseAt(now: number, schedule: PublicSchedule | null): JudgingPhase {
+  const opens = instant(schedule?.judging?.opens_at)
+  const closes = instant(schedule?.judging?.closes_at)
+  if (opens === null || closes === null || closes <= opens) return 'unknown'
+  if (now < opens) return 'upcoming'
+  if (now >= closes) return 'ended'
+
+  return 'current'
+}
+
+/** Availability never implies that an application or judging period has elapsed. */
+export function phaseAt(now: number, schedule: PublicSchedule | null): SchedulePhase {
+  const application = applicationPhaseAt(now, schedule)
+  if (application !== 'closed') return application
+  const judging = judgingPhaseAt(now, schedule)
+  if (judging === 'current') return 'judging'
+  if (judging === 'ended') return 'judged'
+
+  return 'closed'
 }
 
 /** The instant the countdown runs to in this phase, or null when none is shown. */

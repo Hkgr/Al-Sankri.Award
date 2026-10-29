@@ -45,7 +45,7 @@ export const organizations = {
 export type OrganizationKey = keyof typeof organizations
 
 /** Prose that may name an organisation: plain strings and organisation links, in order. */
-export type RichText = (string | { org: OrganizationKey })[]
+export type RichText = (string | { org: OrganizationKey; label?: string })[]
 
 export type SitePage = { href: string; label: string; description: string }
 
@@ -287,8 +287,11 @@ export const eligibility = {
     ],
   },
   // Terms: «شرط منع تضارب المصالح الصارم».
-  conflict:
-    'يُحظر تماماً على أعضاء مجلس الأمناء، ولجان التحكيم، ولجنة النزاهة، وموظفي إدارة الجائزة في مؤسسة الروّاد الترشحُ للجائزة، أو التدخل والتأثير في أي ملفات ترشيح ذات صلة بهم، ضماناً للنزاهة والحياد التام.',
+  conflict: [
+    'يُحظر تماماً على أعضاء مجلس الأمناء، ولجان التحكيم، ولجنة النزاهة، وموظفي إدارة الجائزة في ',
+    { org: 'rowad', label: 'مؤسسة الروّاد' },
+    ' الترشحُ للجائزة، أو التدخل والتأثير في أي ملفات ترشيح ذات صلة بهم، ضماناً للنزاهة والحياد التام.',
+  ] satisfies RichText,
   // Terms: «معايير التقديم»; the impact criterion is verified through the evidence (no field visits).
   criteria: [
     { title: 'الأصالة والابتكار', text: 'تقديم حلول ريادية أو مجتمعية مبتكرة تعالج احتياجات محلية حقيقية.' },

@@ -1,6 +1,6 @@
 import { award, confirmedSchedule, journey, pages } from '../../content/site'
 import type { JourneyPhase } from '../../content/site'
-import { deadlineText, periodText, phaseAt } from '../../lib/schedule'
+import { applicationPhaseAt, deadlineText, judgingPhaseAt, periodText } from '../../lib/schedule'
 import type { PublicSchedule } from '../../lib/schedule'
 import { usePageMeta } from '../../lib/usePageMeta'
 import { useSchedule, useServerNow } from '../../lib/useSchedule'
@@ -15,19 +15,20 @@ type Status = { label: string; tone: 'planned' | 'current' | 'done' | 'neutral' 
  * carry no completion claim (planned phases say so).
  */
 function statusOf(key: JourneyPhase['key'], now: number, schedule: PublicSchedule | null | undefined): Status | null {
-  const phase = schedule ? phaseAt(now, schedule) : 'unknown'
-  const judgingStarts = schedule?.judging?.opens_at ? Date.parse(schedule.judging.opens_at) : null
+  const application = applicationPhaseAt(now, schedule ?? null)
+  const judging = judgingPhaseAt(now, schedule ?? null)
 
   switch (key) {
     case 'application':
-      if (phase === 'open') return { label: 'جارية الآن', tone: 'current' }
-      if (phase === 'upcoming') return { label: 'مقبلة', tone: 'planned' }
-      if (phase === 'judging' || phase === 'judged') return { label: 'انتهت', tone: 'done' }
+      if (application === 'open') return { label: 'جارية الآن', tone: 'current' }
+      if (application === 'upcoming') return { label: 'مقبلة', tone: 'planned' }
+      if (application === 'unavailable') return { label: 'الترشح غير متاح حالياً', tone: 'neutral' }
+      if (application === 'closed') return { label: 'انتهت', tone: 'done' }
       return null
     case 'judging':
-      if (phase === 'judged') return { label: 'انتهت', tone: 'done' }
-      if (phase === 'judging' && (judgingStarts === null || now >= judgingStarts)) return { label: 'جارية الآن', tone: 'current' }
-      if (phase === 'open' || phase === 'upcoming' || phase === 'judging') return { label: 'مقبلة', tone: 'planned' }
+      if (judging === 'ended') return { label: 'انتهت', tone: 'done' }
+      if (judging === 'current') return { label: 'جارية الآن', tone: 'current' }
+      if (judging === 'upcoming') return { label: 'مقبلة', tone: 'planned' }
       return null
     case 'recognition':
       return { label: 'مخطط لها', tone: 'planned' }
@@ -43,11 +44,14 @@ export function JourneyPage() {
   usePageMeta(page.label, page.description)
   const { schedule, offset } = useSchedule()
   const now = useServerNow(offset, Boolean(schedule))
+  const application = applicationPhaseAt(now, schedule ?? null)
 
   const closes = schedule?.application?.closes_at ? deadlineText(schedule.application.closes_at) : null
   const judging = schedule?.judging ? periodText(schedule.judging.opens_at, schedule.judging.closes_at) : null
   const dates: Partial<Record<JourneyPhase['key'], string>> = {
-    application: closes ? `يغلق باب الترشح ${closes} — بتوقيت دمشق` : confirmedSchedule.deadline,
+    application: closes
+      ? `${application === 'closed' ? 'أُغلق باب الترشح' : application === 'unavailable' ? 'الموعد المحدد لإغلاق باب الترشح' : 'يغلق باب الترشح'} ${closes} — بتوقيت دمشق`
+      : confirmedSchedule.deadline,
     judging: judging ? `فترة التحكيم: ${judging}` : confirmedSchedule.judging,
   }
 

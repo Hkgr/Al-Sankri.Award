@@ -39,6 +39,8 @@ Minute-only CLI input resets seconds to zero. Client arithmetic uses absolute in
 
 The hook shares requests for up to one minute between mounts. A mounted page keeps its received schedule until it is remounted/reloaded; operator date changes are not pushed live. Failed/missing responses show confirmed informational text without a running timer or an open invitation.
 
+Application availability and calendar completion are separate. A server-refused application period before its deadline says «الترشح غير متاح حالياً» and labels the future deadline as its configured closing date. Journey marks applications complete only once that deadline has elapsed. Judging is current only inside a complete, valid announced interval; a missing window or a gap before judging does not imply current judging. Registration CTAs remain unavailable whenever the server refuses applications.
+
 ## Configure an existing cycle
 
 These are operator instructions, not commands executed against production during this task. From `backend`, first confirm the existing cycle code, its `Asia/Damascus` timezone and the existing operator account. The admin schedule page identifies the selected cycle and timezone. Replace the two placeholder values below; do not invent a production cycle code.
@@ -67,7 +69,9 @@ The corrected [walkthrough](public-site-walkthrough.py) retains all original che
 
 Two real schedule issues were fixed separately: CLI dates inheriting the operator's current seconds, and the API advertising open applications despite incomplete nomination configuration. Focused regressions also cover ambiguous cycles, dry-run rollback, admin schedule compatibility and unchanged judging activation. Integration with PR #18 updates the stale frontend route test to recognize `/admin/schedule`.
 
-Final checks ran against the branch integrated with `develop` / PR #18:
+The focused PR #19 availability/link correction passes 28 frontend tests (including 10 schedule tests), lint, explicit TypeScript checking and production build. One targeted Chromium run passed 10/10 checks: three unavailable scenarios on the homepage and Journey, plus the exact conflict wording and accessible Al-Rowad link on all four eligibility pages. Backend code was unchanged; backend tests, database matrices and the full walkthrough were not repeated for this correction.
+
+The original full-feature checks, before that focused correction, ran against the branch integrated with `develop` / PR #18:
 
 | Check | Result |
 | --- | --- |

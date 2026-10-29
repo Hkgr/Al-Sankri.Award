@@ -1,5 +1,5 @@
 import { confirmedSchedule } from '../content/site'
-import { countdownTarget, deadlineText, periodText, phaseAt, remaining } from '../lib/schedule'
+import { applicationPhaseAt, countdownTarget, deadlineText, periodText, phaseAt, remaining } from '../lib/schedule'
 import type { PublicSchedule, SchedulePhase } from '../lib/schedule'
 import { useServerNow } from '../lib/useSchedule'
 
@@ -13,6 +13,8 @@ const UNITS = [
 const HEADINGS: Record<SchedulePhase, string> = {
   upcoming: 'يُفتح باب الترشح بعد',
   open: 'يغلق باب الترشح بعد',
+  unavailable: 'الترشح غير متاح حالياً',
+  closed: 'أُغلق باب الترشح',
   judging: 'أُغلق باب الترشح',
   judged: 'انتهت فترة التحكيم',
   unknown: 'مواعيد الدورة الأولى',
@@ -30,13 +32,14 @@ export function Countdown({ schedule, offset }: { schedule: PublicSchedule | nul
   const ready = schedule !== undefined && schedule !== null
   const now = useServerNow(offset, ready)
   const phase = ready ? phaseAt(now, schedule) : 'unknown'
+  const application = applicationPhaseAt(now, schedule ?? null)
   const target = countdownTarget(phase, ready ? schedule : null)
   const left = target === null ? null : remaining(now, target)
 
   const deadline = ready && schedule.application?.closes_at ? deadlineText(schedule.application.closes_at) : null
   const judging = ready && schedule.judging ? periodText(schedule.judging.opens_at, schedule.judging.closes_at) : null
   const deadlineLine = deadline
-    ? `${phase === 'open' || phase === 'upcoming' ? 'يغلق' : 'أُغلق'} باب الترشح ${deadline} — بتوقيت دمشق`
+    ? `${application === 'closed' ? 'أُغلق باب الترشح' : application === 'unavailable' ? 'الموعد المحدد لإغلاق باب الترشح' : 'يغلق باب الترشح'} ${deadline} — بتوقيت دمشق`
     : phase === 'unknown'
       ? confirmedSchedule.deadline
       : null
@@ -75,7 +78,7 @@ export function Countdown({ schedule, offset }: { schedule: PublicSchedule | nul
       </dl>
 
       <p className="visually-hidden" aria-live="polite">
-        {phase === 'judging' || phase === 'judged' ? HEADINGS[phase] : ''}
+        {phase === 'unavailable' || phase === 'closed' || phase === 'judging' || phase === 'judged' ? HEADINGS[phase] : ''}
       </p>
     </section>
   )
