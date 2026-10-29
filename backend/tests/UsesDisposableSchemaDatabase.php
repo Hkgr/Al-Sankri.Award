@@ -142,6 +142,7 @@ trait UsesDisposableSchemaDatabase
         '2026_10_28_700001_allow_judge_exclusion_recommendation', '2026_10_29_800001_add_reports_and_audit_permissions',
         '2026_10_29_900001_add_application_review_classification', '2026_10_29_900002_add_application_review_permission',
         '2026_10_29_900003_purge_retired_nomination_fields', '2026_10_29_900004_separate_judge_and_candidate_roles',
+        '2026_10_29_900005_add_schedule_permission_and_cycle_windows',
     ];
 
     /**

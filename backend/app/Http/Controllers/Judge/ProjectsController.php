@@ -107,6 +107,10 @@ class ProjectsController extends Controller
         return match ($result) {
             JudgePortal::NOT_ASSIGNED => response()->json(['code' => 'not_assigned', 'message' => self::NOT_FOUND], 404),
             JudgePortal::ALREADY_SENT => response()->json(['code' => 'already_sent', 'message' => 'أُرسلت علامتك إلى الإدارة، ولا تُعدَّل من هنا.'], 409),
+            JudgePortal::STAGE_CLOSED => response()->json([
+                'code' => 'stage_closed',
+                'message' => 'فترة التحكيم غير مفتوحة الآن، فلا تُرسل العلامة.',
+            ], 403),
             default => response()->json(['data' => $this->portal->show($request->user(), $application)]),
         };
     }

@@ -151,7 +151,7 @@ These cannot be expressed as row-level constraints, or they depend on workflow. 
 | The publication consent of a story is for a **publication** policy, and its file links point only at **public**, scanned-clean files | Needs the policy code or file attributes of other rows | Check on approval and on linking |
 | A policy version's cycle matches the application's cycle | Two hops away (version → application → cycle) | Check when recording consent |
 | `appeals.challenged_record_id` exists in the table matching `challenged_record_type`, and belongs to the same cycle | Polymorphic reference without a foreign key | Map each type code to one table in code. **Never accept a class name or table name from a request.** |
-| Stage windows gate actions (submission, completion, appeals) | Workflow and time | Read `cycle_stages` by code, in the cycle's timezone |
+| Stage windows gate actions (submission, completion, appeals, judging) | Workflow and time | Read `cycle_stages` by code (`nomination_details`, `judging`), stored UTC and interpreted in the cycle's timezone. Administration edits them in «المواعيد» (`schedules.manage`, `App\Admin\CycleSchedule`) |
 | Published policy text and approved rubrics are not edited; new versions are created instead | No triggers | Enforced by services |
 | Application status transitions follow the approved workflow | Workflow | The CHECKs only limit statuses to the listed codes |
 | Only authorised accounts edit an applicant or application; **membership alone grants nothing** | Authorisation | Policies, from the representative account and granted roles |

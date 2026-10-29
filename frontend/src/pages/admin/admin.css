@@ -831,6 +831,23 @@ a.admin-nav__link[aria-current='page']:hover {
   padding: 0;
 }
 
+.admin-schedule-block {
+  display: grid;
+  gap: var(--sa-space-3);
+  margin-block-end: var(--sa-space-6);
+}
+
+.admin-schedule-fields {
+  display: grid;
+  gap: var(--sa-space-4);
+}
+
+@media (min-width: 40rem) {
+  .admin-schedule-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .admin-inline-notice {
   display: grid;
   justify-items: start;

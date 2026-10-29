@@ -43,8 +43,11 @@ class AdminAccess
     /** Referral or exclusion of a pending submission (with VIEW_APPLICATIONS). */
     public const REVIEW_APPLICATIONS = 'applications.review';
 
+    /** Registration and judging windows («المواعيد»). */
+    public const MANAGE_SCHEDULE = 'schedules.manage';
+
     /** The administration permissions this dashboard knows (anything else is ignored). */
-    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS, self::EXPORT_REPORTS, self::VIEW_AUDIT, self::VIEW_SYSTEM_LOGS, self::REVIEW_APPLICATIONS];
+    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS, self::EXPORT_REPORTS, self::VIEW_AUDIT, self::VIEW_SYSTEM_LOGS, self::REVIEW_APPLICATIONS, self::MANAGE_SCHEDULE];
 
     public const SOURCE_COMMAND = 'admin_grant_access_command';
 
