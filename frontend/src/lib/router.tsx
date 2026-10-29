@@ -92,8 +92,11 @@ export function RouterProvider({ children }: { children: ReactNode }) {
       target.scrollIntoView()
       return
     }
-    window.scrollTo(0, 0)
     document.getElementById('main')?.focus({ preventScroll: true })
+    // Native hash scrolling can apply after React effects. Reset on the next
+    // frame so a page change also cancels that pending scroll.
+    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }))
+    return () => window.cancelAnimationFrame(frame)
   }, [location.pathname, location.search, location.hash])
 
   const value = useMemo(

@@ -1,94 +1,108 @@
-# Homepage: implementation and verification notes
+﻿# Public website: implementation and operator notes
 
-This is the first public homepage, together with only the shared shell it needs. It is a single client-rendered page in the existing React 19 + TypeScript + Vite app. **No dependency was added.**
+Updated 2026-10-29. This continues the existing React 19 / TypeScript / Vite implementation and Laravel routes. No dependency was added.
 
-## Structure
+## Pages and presentation
 
-| Path | Role |
+| Path | Content |
 | --- | --- |
-| `frontend/index.html` | `lang="ar" dir="rtl"`, title, description, Open Graph text, theme colour, a `<noscript>` line, and an empty favicon (none has been supplied). |
-| `frontend/src/main.tsx` | Imports `fonts.css`, `brand-tokens.css`, `styles/base.css` and the layout styles. |
-| `frontend/src/styles/base.css` | Scoped base: body typography, `font-synthesis: none`, focus ring, buttons, containers, smooth scrolling only without reduced motion. |
-| `frontend/src/components/layout/` | `SiteHeader` (skip link, logo, in-page navigation, disclosure menu), `SiteFooter`, `layout.css`. |
-| `frontend/src/components/Photo.tsx` | `<picture>` helper: WebP `srcset`, art-directed narrow crops, JPEG fallback, intrinsic sizes. |
-| `frontend/src/content/home.ts` | All homepage copy and data, with the source of each statement. |
-| `frontend/src/pages/home/` | `HomePage.tsx` (six sections) and `home.css`. |
-| `frontend/src/assets/photos/` | Photo derivatives; see [photo-provenance.md](photo-provenance.md). |
+| `/` | Official name and slogan, authentic portrait, countdown, introduction, three domains, journey preview and platform actions. |
+| `/about` | Purpose, values, documented impact, implementing organization and Dr. Sankari's legacy with the mosque-visit photograph. |
+| `/journey` | Preparation, applications, administrative review, judging and planned award week. |
+| `/eligibility` | Shared eligibility, evidence, conflicts of interest and evaluation criteria. |
+| `/eligibility/culture-and-arts` | Culture and arts. |
+| `/eligibility/heritage` | Tangible and intangible heritage. |
+| `/eligibility/creativity` | Social responsibility, entrepreneurship and quality. |
 
-**Removed:** the Vite starter (`App.css`, `index.css`, `hero.png`, `react.svg`, `vite.svg`, `public/favicon.svg`, `public/icons.svg`).
+Copy and asset mappings live in `frontend/src/content/site.ts` (replacing `content/home.ts`). Domain pages reuse the documented shared conditions; their scope descriptions introduce no extra eligibility requirements. No prize amounts, winners or ceremony dates are invented. Applications go through administrative review before committee referral.
 
-## Where the content comes from
+The header links to four pages and marks the current section, including eligibility detail pages. The disclosure menu closes on Escape and restores toggle focus. The footer groups pages, domains, platform and policy links. The existing router retains hash navigation, history and unsaved-input protections. Page titles/descriptions update on public navigation.
 
-| Section | Source |
-| --- | --- |
-| Name, slogan, implementing organisation | Award plan and launch plan (`docs/*.docx`) |
-| Opening explanation | Identity guide p. 7 («جائزة سنوية ذات طابع ثقافي وتنموي ومجتمعي…»), plus the implementing organisation from the plan |
-| Why this award | Guide p. 16 (statement) and the plan's «الغاية الأساسية» (three aims) |
-| The human legacy | HAND, *USD 40 Million Donation by Dr. Sankari…* (20 Dec 2025) and *In the historic surroundings of the Umayyad Mosque…* (11 May 2026). **No amounts, dates beyond those stated, quotations or endorsements were used.** The closing sentence connects his documented preference for keeping out of the spotlight to the award's documented aim of recognising overlooked impact. |
-| Six domains | Labels from guide pp. 6, 10–15. Each description and symbol meaning is taken from that domain's own page. |
-| Quality | «منهج أساسي متقاطع في كافة المحاور» (plan). It is shown apart from the five domains as a cross-cutting approach. The page says nothing about how it is nominated. |
-| Award journey | The plan's three stages and their contents. «التمكين البعدي» comes from the launch plan. No dates are given, and nothing says applications are open. |
-| Closing | Guide p. 16 |
+The green/gold identity, supplied original vector artwork and five locally hosted SA ITF Rayat weights are preserved. Creativity deliberately imports `domain-volunteer-work.svg`. Photographs retain their embedded watermarks and responsive derivatives. Separate visible photo-source credits were removed; sources and hashes remain in [photo-provenance.md](photo-provenance.md). HAND and Al-Rowad mentions link to their supplied organization URLs with `target="_blank"`, `rel="noopener noreferrer"` and accessible new-tab wording.
 
-**Deliberately absent:** contact details, social accounts, legal pages, news, winners, counters, countdowns, application buttons and nomination forms. The only external links are verified ones: Al-Rowad's own site and the two HAND source pages.
+## Schedule behavior
 
-## Design decisions (Proposed, following the merged identity)
+`GET /api/public/schedule` is an unauthenticated, throttled, `no-store` read. It returns the server clock, selected published cycle, application window and optional judging window, with UTC instants. It writes nothing and does not refer files, approve committees or grant judging permissions.
 
-- **Opening.** Photography leads.
-  - On narrow screens, the portrait comes first.
-  - From 768px, it sits beside the text, with the guide's gold vertical rule between them.
-  - The slogan is the only `h1`, set in Black 900 with a deliberate break after the ellipsis.
-- **Surfaces.** Light and white surfaces alternate, and the closing and footer are deep green. The line pattern appears once, behind the opening. Gold is used only for rules, markers and large text on deep green (4.41:1).
-- **Logo.**
-  - The light-background logo is used in the header.
-  - The dark-background logo is used only on `#14413D`.
-  - Neither is ever animated or deformed, and both stay at or above the 200px minimum.
-- **Domains.**
-  - **Layout:** three then two across, with Quality in its own band.
-  - **Symbols:** they are decorative (`alt=""`), because the visible label names them.
-  - **«معنى الرمز»:** a native `<details>` disclosure.
-- **Motion.** One 640ms fade-and-rise on the opening, plus 120ms colour transitions. All are removed under `prefers-reduced-motion`, which also disables smooth scrolling.
-- **Mobile menu.** It is a non-modal disclosure, so focus is not trapped.
-  - The toggle's `aria-expanded` and `aria-controls` reflect the menu's state.
-  - Escape closes the menu and returns focus to the toggle.
-  - Following a link or clicking outside closes it.
-  - Widening the viewport to the inline navigation (64rem) closes it.
-  - Below 24rem, the toggle shows its icon only, keeping «القائمة» as its accessible name.
+The application window is `cycle_stages.nomination_details`, the existing server submission cutoff. Open applications additionally require `NominationCycles::current()` to find exactly one usable cycle with supported geography and active domain/subcategory options. Missing or ambiguous configuration never produces an open CTA. Otherwise, the latest configured published cycle can supply informational dates after closure.
 
-## Verification performed
+The judging window is the same `judging` stage used by the administration schedule merged in PR #18. Public reads preserve the existing judging gate. `nomination:setup` creates a missing judging row as `planned` and preserves an existing row's status and activation metadata. Updating the dates of an already enabled judging stage also updates the calendar window enforced by that existing gate; the CLI does not enable it.
 
-**Environment:** Chromium 151 driven by Playwright 1.62 on Windows, against the production build served by `vite preview`. axe-core 4.10.3 was installed in a temporary folder outside the project.
+Confirmed 2026 schedule, Asia/Damascus:
+
+| Period | Last included day | Exclusive ending instant | UTC |
+| --- | --- | --- | --- |
+| Applications | 15 November, throughout the day | `2026-11-16T00:00:00+03:00` | `2026-11-15T21:00:00Z` |
+| Judging, starting 16 November | 25 November, throughout the day | `2026-11-26T00:00:00+03:00` | `2026-11-25T21:00:00Z` |
+
+Minute-only CLI input resets seconds to zero. Client arithmetic uses absolute instants and a server clock offset; displayed dates always use Damascus. The countdown ends at the exclusive cutoff without a reload, changes the signed-out CTA from registration to login, and announces phase changes politely without reading every tick. After judging, application and judging phases say «انتهت»; award week stays «مخطط لها». No results or ceremony announcement is inferred.
+
+The hook shares requests for up to one minute between mounts. A mounted page keeps its received schedule until it is remounted/reloaded; operator date changes are not pushed live. Failed/missing responses show confirmed informational text without a running timer or an open invitation.
+
+## Configure an existing cycle
+
+These are operator instructions, not commands executed against production during this task. From `backend`, first confirm the existing cycle code, its `Asia/Damascus` timezone and the existing operator account. The admin schedule page identifies the selected cycle and timezone. Replace the two placeholder values below; do not invent a production cycle code.
+
+```sh
+CYCLE_CODE='REPLACE_WITH_EXISTING_CYCLE_CODE'
+OPERATOR_EMAIL='REPLACE_WITH_EXISTING_OPERATOR_EMAIL'
+
+php artisan nomination:setup "$CYCLE_CODE" --actor="$OPERATOR_EMAIL" --closes-at="2026-11-16 00:00" --judging-opens-at="2026-11-16 00:00" --judging-closes-at="2026-11-26 00:00" --dry-run --no-interaction
+
+# After reviewing the dry run, apply the same configuration:
+php artisan nomination:setup "$CYCLE_CODE" --actor="$OPERATOR_EMAIL" --closes-at="2026-11-16 00:00" --judging-opens-at="2026-11-16 00:00" --judging-closes-at="2026-11-26 00:00" --no-interaction
+```
+
+No `--create-cycle`, `--publish-cycle`, `--enable` or `--open-domains` is included. The existing application opening instant is preserved; the command configures dates and repairs missing approved taxonomy records. Check the reported availability and the public endpoint afterward. A newly planned judging stage requires the existing administration workflow to activate judging; this public feature does not activate it. The administration schedule UI edits the same records using inclusive closing calendar days.
+
+Use the repository's existing release process for Laravel code and the built frontend assets; this feature adds no migration beyond those already on `develop`. Apply the existing base migrations in their normal release order before verifying the shared schedule. No `.env`, Plesk, Document Root or `deploy.sh` change is needed. No deployment or policy database publication was performed here.
+
+## Verification and walkthrough corrections
+
+The corrected [walkthrough](public-site-walkthrough.py) retains all original checks and uses observable readiness:
+
+- **Artwork:** compares canonical rendered SVG content against the original file, including paths and colours. Vite's data URL has no filename; the original failure was a brittle test, and artwork code was already correct.
+- **Navigation:** waits for route, rendered heading, title, main focus and completed scroll after the committed browser frame. The original route-only assertion raced React effects. A final integrated run also reproduced a real smooth-scroll race: route, title and focus were ready, but scrolling settled at 3px. Ordinary page changes now reset the top instantly on the next animation frame, cancelling unfinished hash scrolling. Six rapid keyboard-navigation repetitions passed after the fix. Hash navigation, history and unsaved-input protections retain their existing branches.
+- **Journey after judging:** waits for the schedule response body and the two completed statuses plus planned award-week status. The original check read the loading state. The application behavior was already correct.
+
+Two real schedule issues were fixed separately: CLI dates inheriting the operator's current seconds, and the API advertising open applications despite incomplete nomination configuration. Focused regressions also cover ambiguous cycles, dry-run rollback, admin schedule compatibility and unchanged judging activation. Integration with PR #18 updates the stale frontend route test to recognize `/admin/schedule`.
+
+Final checks ran against the branch integrated with `develop` / PR #18:
 
 | Check | Result |
 | --- | --- |
-| `npm run lint` | Pass |
-| `npm run build` (`tsc -b && vite build`) | Pass |
+| Frontend tests | 24 passed, including 6 countdown/date tests |
+| ESLint, explicit TypeScript check, production build | All exit 0; existing bundle-size warning remains |
+| `PublicScheduleTest` + `SpaRoutingTest` | 9 tests, 156 assertions passed on in-memory SQLite |
+| Pint | Passed for all seven changed PHP files; `--dirty` also passed |
+| Corrected browser walkthrough | 84/84 checks passed, exit 0 |
+| axe WCAG A/AA checks | No violations on all seven public pages at desktop width |
 | `git diff --check` | Clean |
-| Widths 320, 390, 768, 1024, 1440 | No horizontal overflow. All 11 images load, with the expected WebP chosen per width. All requests are local, with no HTTP errors and no console errors or warnings. |
-| Fonts | All five `SA ITF Rayat` faces `loaded`. Per text node (CDP), every node renders with the itf rayat face matching its weight: 107 nodes, 0 wrong faces, 0 fallback glyphs. |
-| axe (WCAG 2.0/2.1/2.2 A–AA + best practice) | **0 violations** at every width. "Incomplete" covers only the opening's photo credit over the background pattern. Checked by hand: the worst case is muted text on the darkest pattern line, at 6.00:1. |
-| Headings | One `h1` (the slogan) → `h2` per section → `h3` items |
-| Keyboard | Tab order is skip link → logo → navigation → opening actions → photo credits → six «معنى الرمز» disclosures → footer links, and every stop shows a visible 3px ring (deep green on light, gold on deep green). The skip link moves focus to `<main>`. The disclosures open and close with Enter. |
-| Mobile menu (390px) | `aria-expanded` toggles. The menu opens with Enter and Space. Escape closes it and returns focus to the toggle. An outside click and following a link both close it. Widening the viewport closes it. |
-| Links | 18 links. Every in-page target exists, and the three external URLs are verified sources. The only `<button>` is the menu toggle. |
-| Reduced motion | 0 running animations, `scroll-behavior: auto`, 0s transitions |
-| **Real 200% browser zoom** | Headed Chromium, with the profile's default page zoom set to 200% in a 1280px window. The browser reports `devicePixelRatio` 2 and a 632px CSS viewport, which confirms genuine zoom rather than DPR emulation. Result: no overflow, the page reflows to one column, and the menu works. |
-| Photos | The face is fully visible in every crop at all five widths and at 200% zoom (screenshots reviewed). |
 
-**Review screenshots:** [screenshots/homepage-1440.jpg](screenshots/homepage-1440.jpg) (desktop, full page, scaled to 1000px) and [screenshots/homepage-390.jpg](screenshots/homepage-390.jpg) (mobile, full page).
+Browser checks use Chromium, desktop 1440px, mobile 390px and 320px navigation/footer, plus a simulated deadline transition with a Los Angeles device timezone. Synthetic responses are used only for boundary/unavailable-state checks; the main walkthrough uses a real local Laravel endpoint and disposable SQLite database. The script refuses nonlocal base URLs. Screenshots wait for the rendered schedule and disable transient entrance animations.
 
-**Not checked:**
+Review screenshots: [desktop hero](screenshots/public-site/home-hero-1440.png), [mobile hero](screenshots/public-site/home-hero-390.png), [inner page](screenshots/public-site/creativity-1440.png), [320px menu](screenshots/public-site/menu-320.png), [footer](screenshots/public-site/footer-320.png), [closed deadline](screenshots/public-site/transition-closed-1440.png), [journey after judging](screenshots/public-site/journey-judged-390.png).
 
-- Safari/iOS and Firefox;
-- screen readers (NVDA/VoiceOver);
-- real mobile devices;
-- non-Windows fallback fonts.
+```sh
+# Frontend (frontend/)
+npm test
+npm run lint
+npx tsc -b --pretty false
+npm run build
 
-## Known limitations
+# Backend (backend/); override any application database and config cache.
+APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: DB_URL='' APP_CONFIG_CACHE=/tmp/public-site-no-config.php php artisan test --compact --filter='PublicScheduleTest|SpaRoutingTest'
+php vendor/bin/pint --dirty --format agent
 
-- **Indexing.** The page is **client-rendered** (Vite SPA), with no SSR or prerendering. Crawlers that do not run JavaScript see only the `<title>`, the meta description and a `<noscript>` line. Whether to prerender, add SSR, or exclude pre-launch environments from indexing is a Phase 5 decision. No `robots` rules, canonical URL or `og:image` are set, because there is no production domain or approved sharing image yet.
-- **Photographs.** Reuse permission from HAND and approval of his portrait's prominence are still to be confirmed (see [photo-provenance.md](photo-provenance.md)). The portrait source is 1200 × 790.
-- **Favicon.** None has been supplied. `index.html` uses an empty icon so that browsers do not request a missing file.
-- **Content decisions.**
-  - The visit caption writes the month as «أيار/مايو». The date convention is still open (identity-guidelines §9).
-  - Domain descriptions and stage texts come from the source documents. Edited copy should come from the award owner.
+# Root, against a separately prepared disposable local preview:
+python docs/design/public-site-walkthrough.py docs/design/screenshots/public-site /path/to/axe.min.js http://127.0.0.1:8021
+git diff --check
+```
+
+## Handoff and limitations
+
+- The Git index was empty at takeover. `docs/privacy.txt`, `docs/terms.txt` and the modified `docs/نهائي/التصور التنفيذي لحفل الجائزة.docx` were unstaged and remain unchanged local work, outside this feature's commits. No staged document was omitted.
+- All 22 untracked preview copies initially under `backend/public/index.html` and `backend/public/assets` matched the task build byte for byte. They were moved to a temporary archive outside the repository; no tracked, initially staged or unknown public asset was removed. Final preview served `frontend/dist` directly. No preview bundle is committed.
+- **Official logo limitation:** supplied logo artwork still contains the older award wording/tagline. It is preserved unchanged; surrounding copy and accessible names use the approved name/slogan. Updated official master artwork is needed to change the lettering inside the logo.
+- Vite SPA rendering remains client-side. A production canonical URL, sharing image and favicon have not been supplied. The combined application bundle still produces Vite's over-500-kB warning.
+- Existing photo-permission and source-resolution notes remain in the provenance record. Browser coverage is Chromium on Windows; Safari/iOS, Firefox, physical mobile devices and screen readers were not tested.

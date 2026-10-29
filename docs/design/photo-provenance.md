@@ -1,6 +1,6 @@
-# Photo provenance: homepage photographs
+# Photo provenance: public-site photographs
 
-The homepage uses **two authentic photographs of Dr. Abdul Qader Sankari** (الدكتور عبد القادر سنكري). Both were published by **HAND Organization (Human Aid and Development)**, which he founded and chairs.
+The public site uses **two authentic photographs of Dr. Abdul Qader Sankari** (الدكتور عبد القادر سنكري). The portrait leads the homepage and also appears on `/about`; the mosque visit appears on `/about`. Both were published by **HAND Organization (Human Aid and Development)**, which he founded and chairs.
 
 - No photographs were supplied in `docs/`, so these were sourced from verified primary sources.
 - No image was generated, retouched, reconstructed or replaced with stock.
@@ -13,7 +13,7 @@ The homepage uses **two authentic photographs of Dr. Abdul Qader Sankari** (ال
 | **Downloaded file** | WebP, 1200 × 790, SHA-256 `6689c38c8a6e9febb38a70768e144c4370f94c1d5efed2c71cb0d0168e48721f` | WebP, 1920 × 1220, SHA-256 `e40c8f8de9b68cb14da27294fd08d88685b6d2a6f4c8469cd2aaf77e6a4b2aeb` |
 | **Subject** | Head-and-shoulders portrait of Dr. Sankari: white ghutra, black agal, dark-framed glasses, white beard, plain white background. | Eleven men standing in a hall of the Umayyad Mosque, beneath a Qur'anic mosaic frieze. Dr. Sankari wears Emirati dress (white ghutra, dark thobe), glasses and a white beard. |
 | **Verified context** | A studio-style portrait, not an event photo. The source does not give its date or place. | His visit to the Umayyad Mosque during his first visit to Damascus since 2011, accompanied by officials and representatives of HAND and Al-Rowad. This was a **formal visit**, and the page describes it as such, not as fieldwork. |
-| **Attribution shown on the page** | «الصورة: منظمة HAND», linked to the source page | «الصورة: منظمة HAND», linked to the source article. The HAND watermark in the image is kept. |
+| **Visible presentation** | Caption names Dr. Sankari. Separate photo-source credit elements were removed by owner request. | Caption describes the visit. Separate photo-source credit elements were removed; the embedded HAND watermark is preserved. |
 | **Usage limitation stated by the source** | The site footer reads "Copyright © 2025 HAND Human Aid & Development \| All Rights Reserved". No reuse licence is stated. | Same |
 
 ## How identity was verified
@@ -50,13 +50,13 @@ Made with Pillow 13 (outside the project's dependency tree).
 
 | File set | Crop from source (px) | Widths | Used |
 | --- | --- | --- | --- |
-| `sankari-portrait-{400,640,800}.webp`, `-800.jpg` | x 0–800, y 0–790: keeps the whole head and shoulders and drops the empty white background on the right of the source image | 400, 640, 800 | Opening, all widths. CSS `object-fit: cover` shows a 4:3 frame (`object-position: 55% 30%`) below 768px and a 4:5 frame (`62% 50%`) from 768px up. The face stays inside both. |
-| `sankari-umayyad-mosque-visit-{960,1600}.webp`, `-1600.jpg` | Full frame, uncropped | 960, 1600 | Legacy section, 768px and up |
-| `sankari-umayyad-mosque-visit-narrow-{480,912}.webp`, `-912.jpg` | x 0–912, y 110–1220: the mosaic frieze, Dr. Sankari and the four men nearest him, and the HAND watermark | 480, 912 | Legacy section below 768px, where the full group would make faces too small. Art-directed with `<picture media>`. |
+| `sankari-portrait-{400,640,800}.webp`, `-800.jpg` | x 0–800, y 0–790: keeps the whole head and shoulders and drops the empty white background on the right of the source image | 400, 640, 800 | Homepage hero uses a square frame, `object-fit: cover`, `object-position: 58% 40%`; `/about` reuses these derivatives. |
+| `sankari-umayyad-mosque-visit-{960,1600}.webp`, `-1600.jpg` | Full frame, uncropped | 960, 1600 | `/about` legacy section, 768px and up |
+| `sankari-umayyad-mosque-visit-narrow-{480,912}.webp`, `-912.jpg` | x 0–912, y 110–1220: the mosaic frieze, Dr. Sankari and the four men nearest him, and the HAND watermark | 480, 912 | `/about` below 768px, where the full group would make faces too small. Art-directed with `<picture media>`. |
 
 ## Open items for the award owner
 
 - **Permission.** HAND states "All Rights Reserved" and publishes no reuse licence. HAND and Al-Rowad (the award's implementing organisation) are both founded and chaired by Dr. Sankari, but **written permission from HAND to reuse these two photographs on the award site should be confirmed before public launch.**
 - **Prominence.** HAND notes that Dr. Sankari has often asked that his contributions remain unpublicised. The award owner should confirm that he, or his office, approves his portrait leading the homepage.
 - **Resolution.** The best available portrait source is 1200 × 790. At 1440px on a high-density (2×) screen, it shows at about 1.4 device pixels per image pixel, so it is slightly soft. It is sharp at 1×. An original, higher-resolution file from HAND or the photographer would be better.
-- **Photographer credit.** The sources do not name the photographer. If HAND supplies a name, add it to the captions.
+- **Photographer credit.** The sources do not name the photographer. Keep any later credit and permission records here; visible credit wording needs the owner's approval. Organization mentions in public prose still link to HAND and Al-Rowad with an accessible new-tab indication.
