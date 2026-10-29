@@ -4,7 +4,6 @@ namespace App\Candidates;
 
 use App\Admin\AdminAccess;
 use App\Http\Resources\NominationDetailsResource;
-use App\Judging\Assignments;
 use App\Models\Application;
 use App\Models\ApplicationVersion;
 use App\Models\CandidateNomination;
@@ -16,7 +15,7 @@ use App\Support\CanonicalJson;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The final submission of the candidate journey («إرسال للجنة الحكام»).
+ * The final submission of the candidate journey («إرسال ملف الترشح»).
  *
  * One transaction, in the shared lock order (Documentation::lockForChange):
  * it checks again that the application is an unsubmitted draft, the cycle's
@@ -26,11 +25,14 @@ use Illuminate\Support\Facades\DB;
  * writes immutable version 1 (`initial`) with the data and form snapshots
  * and their canonical SHA-256, links every attached file to that version
  * as well (same bytes, one target per link row), assigns a reference
- * number, and sets the application to `submitted`.
+ * number, and sets the application to `submitted` with the administrative
+ * classification `pending`: it reaches award administration first, for
+ * initial review (App\Admin\ApplicationReviews).
  *
  * A retry (double click, second tab, lost answer) finds the version and
  * returns the same receipt. Nothing is sent to judging: no assignments,
- * evaluations or committee records are created.
+ * evaluations or committee records are created; only an administrator's
+ * referral does that.
  *
  * The snapshot references Stage 1 by identifiers (profile, applicant,
  * accepted policy versions with a hash of their text); it never copies
@@ -56,7 +58,7 @@ class Submissions
     public function __construct(private readonly Documentation $documentation, private readonly AdminAccess $access) {}
 
     /**
-     * @return array{0: string, 1: array{reference_number: string, submitted_at: string, version_number: int}|null}
+     * @return array{0: string, 1: array{reference_number: string, submitted_at: string, version_number: int, processing: string}|null}
      */
     public function submit(User $user, CandidateNomination $journey, int $reviewedRevision): array
     {
@@ -118,6 +120,7 @@ class Submissions
 
             $application->forceFill([
                 'status' => Application::STATUS_SUBMITTED,
+                'review_status' => Application::REVIEW_PENDING,
                 'reference_number' => $reference,
                 'first_submitted_at' => $now,
                 'current_version_id' => $version->getKey(),
@@ -128,8 +131,6 @@ class Submissions
                 'reference_number' => $reference,
                 'documentation_revision' => $journey->documentation_revision,
             ], (int) $application->cycle_id);
-
-            app(Assignments::class)->provisionApplication((int) $application->getKey());
 
             return [self::SUBMITTED, $this->receipt($application->refresh())];
         });
@@ -156,9 +157,11 @@ class Submissions
     }
 
     /**
-     * The receipt of a submitted application, or null for a draft.
+     * The receipt of a submitted application, or null for a draft, with its
+     * processing status for the owner: pending, referred or excluded (the
+     * code only, never an administrator's reason or name).
      *
-     * @return array{reference_number: string, submitted_at: string, version_number: int}|null
+     * @return array{reference_number: string, submitted_at: string, version_number: int, processing: string}|null
      */
     public function receipt(Application $application): ?array
     {
@@ -172,6 +175,7 @@ class Submissions
             'reference_number' => (string) $application->reference_number,
             'submitted_at' => $version->submitted_at->toIso8601ZuluString(),
             'version_number' => $version->version_number,
+            'processing' => $application->review_status ?? Application::REVIEW_PENDING,
         ];
     }
 
@@ -185,7 +189,7 @@ class Submissions
         $kindOf = array_flip(array_map(fn (array $kind): string => $kind['purpose'], Documentation::KINDS));
 
         return [
-            'schema' => 'candidate-submission/1',
+            'schema' => 'candidate-submission/2',
             'application' => [
                 'id' => (int) $application->getKey(),
                 'reference_number' => $reference,

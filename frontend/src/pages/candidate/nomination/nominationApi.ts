@@ -7,18 +7,12 @@ import volunteerWork from '../../../assets/brand/domain-volunteer-work.svg'
  * (backend: /api/candidate/nomination-details).
  */
 
-export type ImplementationState = 'ongoing' | 'completed'
-
-export type FundingType = 'fully_funded' | 'partially_funded' | 'self_funded' | 'not_needed'
-
 export type DomainOption = {
   code: string
   name: string
   artwork: string
   subcategories: { code: string; name: string }[]
 }
-
-export type Governorate = { code: string; name: string }
 
 export type Availability = 'available' | 'confirmed' | 'not_configured' | 'ambiguous'
 
@@ -32,10 +26,6 @@ export type NominationDetails = {
   purpose_and_mission: string
   objectives: string
   impact: string
-  implementation: { state: ImplementationState; started_on: string; ended_on: string | null }
-  locations: { country_code: string; governorate: string; governorate_name: string; locality: string; address: string | null }[]
-  funding: { type: FundingType; funder_name: string | null; amount_usd: string | null }
-  partnerships: { has_partnerships: boolean; items: { name: string; contribution: string | null }[] }
 }
 
 export type NominationState = {
@@ -45,8 +35,6 @@ export type NominationState = {
   journey_key?: string
   options?: {
     domains: DomainOption[]
-    country: { code: string; name: string }
-    governorates: Governorate[]
   }
 }
 
@@ -57,13 +45,6 @@ export type NominationState = {
 export type JourneyOutcome = {
   data: NominationDetails | null
   journey: { status: 'confirmed' | 'open' | 'changed' | 'unavailable' }
-}
-
-export const FUNDING_LABELS: Record<FundingType, string> = {
-  fully_funded: 'ممول بالكامل',
-  partially_funded: 'ممول جزئيًا',
-  self_funded: 'تمويل شخصي',
-  not_needed: 'لا يحتاج تمويل',
 }
 
 /**

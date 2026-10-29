@@ -4,20 +4,36 @@ namespace App\Http\Resources;
 
 use App\Candidates\NominationTaxonomy;
 use App\Models\CandidateNomination;
-use App\Support\SyrianGovernorates;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 
 /**
  * The confirmed Stage 2, for its owner only (behind auth, candidate,
- * candidate.context and no-store). The only place where the work's places
- * and funding are returned; the overview and /api/user never include them.
+ * candidate.context and no-store): the domain and subcategory and the
+ * work's title, purpose and mission, objectives and impact. The overview
+ * and /api/user never include the work's text. It is also the
+ * nomination_details part of a submitted version's snapshot.
  *
  * @mixin CandidateNomination
  */
 class NominationDetailsResource extends JsonResource
 {
+    /** Keys of the retired questions, as older snapshots held them. */
+    public const RETIRED_KEYS = ['implementation', 'locations', 'funding', 'partnerships'];
+
+    /**
+     * Stage 2 as stored in a snapshot, without any retired key (they were
+     * removed from stored snapshots; this keeps any copy from being shown).
+     *
+     * @param  array<string, mixed>|null  $details
+     * @return array<string, mixed>|null
+     */
+    public static function withoutRetired(?array $details): ?array
+    {
+        return $details === null ? null : array_diff_key($details, array_flip(self::RETIRED_KEYS));
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -47,31 +63,6 @@ class NominationDetailsResource extends JsonResource
             'purpose_and_mission' => $application->purpose_and_mission,
             'objectives' => $application->objectives,
             'impact' => $application->documented_impact,
-            'implementation' => [
-                'state' => $application->implementation_status,
-                'started_on' => $application->implementation_started_on?->toDateString(),
-                'ended_on' => $application->implementation_ended_on?->toDateString(),
-            ],
-            'locations' => $application->locations->map(fn ($location): array => [
-                'country_code' => $location->country_code,
-                'governorate' => $location->governorate,
-                'governorate_name' => SyrianGovernorates::NAMES[$location->governorate] ?? $location->governorate,
-                'locality' => $location->locality,
-                'address' => $location->address,
-            ])->all(),
-            'funding' => [
-                'type' => $application->funding_type,
-                'funder_name' => $application->funder_name,
-                // Exact decimal text, e.g. "1500.50"; null when not applicable.
-                'amount_usd' => $application->funding_amount_usd,
-            ],
-            'partnerships' => [
-                'has_partnerships' => $application->has_partnerships,
-                'items' => $application->partnerships->map(fn ($partner): array => [
-                    'name' => $partner->partner_name,
-                    'contribution' => $partner->contribution,
-                ])->all(),
-            ],
         ];
     }
 }

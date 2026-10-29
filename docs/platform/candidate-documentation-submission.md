@@ -1,4 +1,4 @@
-# Stage 3 and final submission («ملفات العمل وتوثيقه», «إرسال للجنة الحكام»)
+# Stage 3 and final submission («ملفات العمل وتوثيقه», «إرسال ملف الترشح»)
 
 For the people who deploy, operate and review the platform. Related: [candidate-nomination-details.md](candidate-nomination-details.md) (Stage 2, the cycle and its stage), [candidate-onboarding.md](candidate-onboarding.md) (Stage 1, account binding), [database-schema.md](database-schema.md) §M.
 
@@ -11,9 +11,13 @@ For the people who deploy, operate and review the platform. Related: [candidate-
    - **Links** «روابط توثيق إضافية»: optional, up to 20 rows of title and HTTPS address. Addresses are kept as written; their content is never fetched or embedded.
    - «حفظ المرحلة والمتابعة إلى المراجعة» confirms Stage 3. It needs the explanatory document, no file still uploading and no unsaved link change.
 2. **Review** (`/dashboard/review`): Stage 1, Stage 2 and Stage 3 as stored, as read-only summaries. «العودة إلى ملفات العمل» goes back to Stage 3 only; Stages 1 and 2 stay read-only.
-3. **Submission:** «إرسال للجنة الحكام», then the confirmation dialog («تأكيد الإرسال»). The receipt «تم إرسال المشاركة» shows the reference number and the time in Damascus. From then on the whole participation is view-only, and the owner can still download every file.
+3. **Submission:** «إرسال ملف الترشح», then the confirmation dialog («تأكيد الإرسال»), which says the file goes to award administration for initial review. The receipt «تم إرسال المشاركة» shows the reference number, the time in Damascus and the processing status. From then on the whole participation is view-only, and the owner can still download every file.
 
-Submitting records the application for the committee workflow that follows. It creates **no** judging assignments, evaluations or committee records, and sends no email.
+**Submitting sends the application to award administration first**, with the administrative classification `pending` («لم يُصنّف بعد»). It creates **no** judging assignments, evaluations or committee records, and sends no email. Only an administrator's referral («إرسال إلى اللجنة», [administration.md](administration.md) §10) sends it to judging.
+
+**Processing status for the owner** (receipt `processing`, the review page and the dashboard): pending, «ملف الترشح لدى إدارة الجائزة للمراجعة الأولية»; referred, «أحالت إدارة الجائزة ملف الترشح إلى لجنة التحكيم»; excluded, «لم يُحل ملف الترشح إلى التحكيم بعد المراجعة الأولية…، وحُفظ في الأرشيف». The candidate never sees the administrator's name or the exclusion reason. An excluded submission stays complete and locked, and the owner can still open it.
+
+**Snapshot schema.** New submitted versions are `candidate-submission/2`: `nomination_details` holds the domain, subcategory and the four work texts only. Versions written as `candidate-submission/1` keep that marker, but the retired keys were removed from them and their hash recomputed (`2026_10_29_900003`).
 
 ## 2. Availability
 

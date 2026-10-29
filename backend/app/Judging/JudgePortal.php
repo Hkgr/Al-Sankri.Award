@@ -3,6 +3,7 @@
 namespace App\Judging;
 
 use App\Admin\SubmittedApplications;
+use App\Models\Application;
 use App\Models\FileLink;
 use App\Models\User;
 use App\Support\AuditLog;
@@ -183,6 +184,11 @@ class JudgePortal
             ->where('judging_assignments.round_number', 1)
             ->whereNotNull('applications.current_version_id')
             ->whereColumn('judging_assignments.application_version_id', 'applications.current_version_id')
+            // The administrative referral gate: only an application referred
+            // to this very committee, for the list, the detail, the files and
+            // the evaluation alike (a guessed id finds nothing).
+            ->where('applications.review_status', Application::REVIEW_REFERRED)
+            ->whereColumn('applications.review_committee_id', 'judging_assignments.committee_id')
             ->orderBy('applications.id');
 
         return $query;

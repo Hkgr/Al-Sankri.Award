@@ -514,6 +514,43 @@ a.admin-nav__link[aria-current='page']:hover {
   color: var(--sa-color-text-accent);
 }
 
+/* The administrative classification: the text names the state; the colour supports it. */
+.admin-review {
+  display: inline-block;
+  padding: 0 var(--sa-space-2);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-text-accent);
+  border-radius: var(--sa-radius-sm);
+  background: var(--sa-ext-gold-tint);
+  color: var(--sa-color-text-accent);
+  font-size: var(--sa-font-size-caption);
+  white-space: nowrap;
+}
+
+.admin-review[data-review='referred'] {
+  border-color: var(--sa-color-success);
+  background: var(--sa-color-success-surface);
+  color: var(--sa-color-success);
+}
+
+.admin-review[data-review='excluded'] {
+  border-color: var(--sa-color-border-control);
+  background: var(--sa-color-surface-raised);
+  color: var(--sa-color-text-muted);
+}
+
+/* In a table the label (and its heading) may wrap, so the row's actions stay in view. */
+.admin-table .admin-review,
+.admin-table thead th.admin-table__wrap {
+  white-space: normal;
+}
+
+.admin-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sa-space-3);
+  margin-block-start: var(--sa-space-3);
+}
+
 .admin-pager {
   display: flex;
   flex-wrap: wrap;

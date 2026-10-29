@@ -3,18 +3,14 @@ import type { FormEvent, ReactNode } from 'react'
 import { FormAlert, StatusIcon, TextField } from '../../../components/forms/FormControls'
 import { ApiError, api, errorMessage, NetworkError } from '../../../lib/api'
 import { useLeaveWarning, useRouter } from '../../../lib/useRouter'
-import { CheckboxField, ErrorSummary, SelectField, TextAreaField } from '../basic/fields'
+import { ErrorSummary, TextAreaField } from '../basic/fields'
 import type { Errors } from '../basic/formModel'
 import { ProfileSummary } from '../basic/ProfileSummary'
 import { useAccountFailure } from '../useCandidateRequests'
-import { FUNDING_LABELS } from './nominationApi'
-import type { DomainOption, FundingType, Governorate, JourneyOutcome, NominationDetails } from './nominationApi'
-import { DatePartsField, DiscardWarning, DomainChooser, LocationRows, PartnerRows } from './nominationFields'
+import type { DomainOption, JourneyOutcome, NominationDetails } from './nominationApi'
+import { DiscardWarning, DomainChooser } from './nominationFields'
 import {
   buildNominationPayload,
-  emptyLocation,
-  emptyPartner,
-  FUNDED_BY_OTHERS,
   initialNomination,
   LIMITS,
   NOMINATION_STEPS,
@@ -36,13 +32,11 @@ export const STAGE_2_LOCK_WARNING =
 
 type Alert = { tone: 'error' | 'info'; content: ReactNode }
 
-type Pending =
-  | { kind: 'domain'; code: string }
-  | { kind: 'funding'; value: FundingType | '' }
-  | { kind: 'partnerships' }
+type Pending = { kind: 'domain'; code: string }
 
 /**
- * Stage 2 as five sections inside one form. Values live in memory only and
+ * Stage 2 as three sections inside one form: the domain and subcategory,
+ * the work, and the review. Values live in memory only and
  * survive moving between sections and failed requests. Each section is
  * checked by the server before moving on; «حفظ المرحلة والمتابعة» is the
  * only write. A lost answer to that save is never reported as a failure:
@@ -52,15 +46,11 @@ export function NominationForm({
   accountContext,
   journeyKey,
   domains,
-  governorates,
-  countryName,
   onConfirmed,
 }: {
   accountContext: string
   journeyKey: string
   domains: DomainOption[]
-  governorates: Governorate[]
-  countryName: string
   onConfirmed: (details: NominationDetails, alreadyStored: boolean) => void
 }) {
   const { setLeaveWarning } = useRouter()
@@ -108,50 +98,9 @@ export function NominationForm({
     setForm((current) => ({ ...current, domain: code, subcategory: '' }))
   }
 
-  /** Funding values that a change of declaration would discard. */
-  const fundingLoss = (next: FundingType | ''): string[] => {
-    const current = form.funding_type
-    const lost: string[] = []
-    const keepsFunder = next !== '' && FUNDED_BY_OTHERS.includes(next) && current !== '' && FUNDED_BY_OTHERS.includes(current)
-    const keepsAmount = keepsFunder || (next === 'self_funded' && current === 'self_funded')
-    if (!keepsFunder && form.funder_name.trim()) lost.push('اسم الجهة الممولة')
-    if (!keepsAmount && form.funding_amount.trim()) lost.push('المبلغ')
-    return lost
-  }
-
-  const applyFunding = (next: FundingType | '') =>
-    setForm((current) => {
-      const keepsFunder = next !== '' && FUNDED_BY_OTHERS.includes(next) && current.funding_type !== '' && FUNDED_BY_OTHERS.includes(current.funding_type)
-      const keepsAmount = keepsFunder || (next === 'self_funded' && current.funding_type === 'self_funded')
-      return { ...current, funding_type: next, funder_name: keepsFunder ? current.funder_name : '', funding_amount: keepsAmount ? current.funding_amount : '' }
-    })
-
-  const chooseFunding = (next: string) => {
-    const value = next as FundingType | ''
-    if (fundingLoss(value).length > 0) {
-      setPending({ kind: 'funding', value })
-      return
-    }
-    applyFunding(value)
-  }
-
-  const choosePartnerships = (answer: 'yes' | 'no') => {
-    if (answer === 'no' && form.partners.some((row) => row.name.trim() || row.contribution.trim())) {
-      setPending({ kind: 'partnerships' })
-      return
-    }
-    setForm((current) => ({
-      ...current,
-      has_partnerships: answer,
-      partners: answer === 'yes' ? (current.partners.length ? current.partners : [emptyPartner()]) : [],
-    }))
-  }
-
   const confirmPending = () => {
     if (!pending) return
-    if (pending.kind === 'domain') setForm((current) => ({ ...current, domain: pending.code, subcategory: '' }))
-    if (pending.kind === 'funding') applyFunding(pending.value)
-    if (pending.kind === 'partnerships') setForm((current) => ({ ...current, has_partnerships: 'no', partners: [] }))
+    setForm((current) => ({ ...current, domain: pending.code, subcategory: '' }))
     setPending(null)
   }
 
@@ -214,7 +163,7 @@ export function NominationForm({
       handleAccountFailure(error)
       return
     }
-    if (error instanceof ApiError && error.code === 'journey_changed') {
+    if (error instanceof ApiError && (error.code === 'journey_changed' || error.code === 'nomination_form_outdated')) {
       setAlert({
         tone: 'error',
         content: (
@@ -396,9 +345,6 @@ export function NominationForm({
     void (step.id === 'review' ? submit() : goNext())
   }
 
-  const fundingNeedsFunder = form.funding_type !== '' && FUNDED_BY_OTHERS.includes(form.funding_type)
-  const fundingNeedsAmount = form.funding_type !== '' && form.funding_type !== 'not_needed'
-
   return (
     <form className="wizard" onSubmit={onSubmit} noValidate>
       <ol className="stepper" aria-label="أقسام فئة الترشح وبيانات العمل">
@@ -498,101 +444,6 @@ export function NominationForm({
           </div>
         )}
 
-        {step.id === 'dates_locations' && (
-          <div className="form-grid">
-            <div className="form-grid__full">
-              <DatePartsField idBase="started_on" label="تاريخ بدء العمل" hint="بالتقويم الميلادي." value={form.start} onChange={(value) => update('start', value)} error={errors.started_on} />
-            </div>
-            <div className="form-grid__full">
-              <CheckboxField
-                id="ongoing"
-                checked={form.ongoing}
-                onChange={(checked) => setForm((current) => ({ ...current, ongoing: checked, end: checked ? { day: '', month: '', year: '' } : current.end }))}
-                error={errors.implementation_state}
-              >
-                العمل مستمر (لا يوجد تاريخ انتهاء)
-              </CheckboxField>
-            </div>
-            {!form.ongoing && (
-              <div className="form-grid__full">
-                <DatePartsField idBase="ended_on" label="تاريخ انتهاء العمل" hint="للعمل المنتهي. لا يسبق تاريخ البدء." value={form.end} onChange={(value) => update('end', value)} error={errors.ended_on} />
-              </div>
-            )}
-            <LocationRows rows={form.locations} onChange={(rows) => update('locations', rows)} governorates={governorates} countryName={countryName} errors={errors} newRow={emptyLocation} />
-          </div>
-        )}
-
-        {step.id === 'funding' && (
-          <div className="form-grid">
-            <div className="form-grid__full">
-              <SelectField
-                id="funding_type"
-                label="الإقرار المالي"
-                value={form.funding_type}
-                onChange={chooseFunding}
-                options={(Object.keys(FUNDING_LABELS) as FundingType[]).map((value) => ({ value, label: FUNDING_LABELS[value] }))}
-                placeholder="اختر الإقرار المالي"
-                error={errors.funding_type}
-                hint="المبالغ بالدولار الأمريكي فقط. لا تُعرض البيانات المالية علناً."
-              />
-            </div>
-            {pendingWarning(
-              'funding',
-              <>
-                تغيير الإقرار المالي يحذف ما لم يعد ينطبق: {pending?.kind === 'funding' ? fundingLoss(pending.value).join(' و') : ''}.
-              </>,
-              'تغيير الإقرار وحذف ذلك',
-              'الإبقاء على الإقرار الحالي',
-            )}
-            {fundingNeedsFunder && (
-              <TextField id="funder_name" label="اسم الجهة الممولة" value={form.funder_name} onChange={(value) => update('funder_name', value)} error={errors.funder_name} autoComplete="off" dir="auto" required />
-            )}
-            {fundingNeedsAmount && (
-              <TextField
-                id="funding_amount"
-                label={form.funding_type === 'self_funded' ? 'المبلغ المموَّل ذاتياً بالدولار الأمريكي (USD)' : 'مبلغ التمويل من الجهة الممولة بالدولار الأمريكي (USD)'}
-                value={form.funding_amount}
-                onChange={(value) => update('funding_amount', value)}
-                error={errors.funding_amount}
-                hint="بالأرقام، مع نقطة للكسور العشرية عند الحاجة، مثل 1500 أو 1500.50، ودون فواصل للآلاف."
-                autoComplete="off"
-                dir="ltr"
-                inputMode="decimal"
-                required
-              />
-            )}
-
-            <fieldset className="field field-group field-group--full" aria-describedby={errors.has_partnerships ? 'has_partnerships-error' : undefined}>
-              <legend className="field__label">
-                هل توجد شراكات مرتبطة بالعمل؟<span className="field__required"> (مطلوب)</span>
-              </legend>
-              <div className="radio-row">
-                {(['yes', 'no'] as const).map((answer) => (
-                  <label key={answer} className="choice">
-                    <input
-                      id={`has_partnerships-${answer}`}
-                      type="radio"
-                      name="has_partnerships"
-                      checked={form.has_partnerships === answer}
-                      onChange={() => choosePartnerships(answer)}
-                      aria-invalid={errors.has_partnerships ? true : undefined}
-                    />
-                    <span>{answer === 'yes' ? 'نعم' : 'لا'}</span>
-                  </label>
-                ))}
-              </div>
-              {errors.has_partnerships && (
-                <p id="has_partnerships-error" className="field__error">
-                  <StatusIcon tone="error" />
-                  <span>خطأ: {errors.has_partnerships}</span>
-                </p>
-              )}
-            </fieldset>
-            {pendingWarning('partnerships', 'اختيار «لا» يحذف بيانات الشركاء التي أدخلتها.', 'اختيار «لا» وحذف الشركاء', 'الإبقاء على الشركاء')}
-            {form.has_partnerships === 'yes' && <PartnerRows rows={form.partners} onChange={(rows) => update('partners', rows)} errors={errors} newRow={emptyPartner} />}
-          </div>
-        )}
-
         {step.id === 'review' && (
           <>
             <div className="lock-warning" role="note">
@@ -602,7 +453,7 @@ export function NominationForm({
               </svg>
               <p>{STAGE_2_LOCK_WARNING}</p>
             </div>
-            <ProfileSummary groups={nominationSummaryFromForm(form, domains, governorates)} onEdit={goTo} headingLevel={3} />
+            <ProfileSummary groups={nominationSummaryFromForm(form, domains)} onEdit={goTo} headingLevel={3} />
           </>
         )}
 

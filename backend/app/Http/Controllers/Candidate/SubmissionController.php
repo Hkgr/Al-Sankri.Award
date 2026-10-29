@@ -16,8 +16,9 @@ use Illuminate\Http\Request;
 
 /**
  * The read-only review of the whole participation and its final submission
- * («إرسال للجنة الحكام»). Submitting records the application for the
- * committee workflow that follows; it starts no judging.
+ * («إرسال ملف الترشح»). Submitting sends the application to award
+ * administration for initial review (classification `pending`); it starts
+ * no judging.
  */
 class SubmissionController extends Controller
 {
@@ -75,7 +76,7 @@ class SubmissionController extends Controller
         [$outcome, $receipt] = $this->submissions->submit($request->user(), $journey, (int) $validated['reviewed_revision']);
 
         return match ($outcome) {
-            Submissions::SUBMITTED => response()->json(['code' => $outcome, 'data' => $receipt, 'message' => 'تم إرسال المشاركة.'], 201),
+            Submissions::SUBMITTED => response()->json(['code' => $outcome, 'data' => $receipt, 'message' => 'تم إرسال ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.'], 201),
             Submissions::ALREADY_SUBMITTED => response()->json(['code' => $outcome, 'data' => $receipt, 'message' => 'أُرسلت هذه المشاركة من قبل، ولم يُرسل شيء مرة ثانية.']),
             Submissions::REVIEW_OUTDATED => response()->json([
                 'code' => $outcome,

@@ -5,6 +5,7 @@ use App\Http\Controllers\Account\GoogleLinkController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountPolicyController;
 use App\Http\Controllers\Admin\AdminContextController;
+use App\Http\Controllers\Admin\ApplicationReviewsController;
 use App\Http\Controllers\Admin\ApplicationsController;
 use App\Http\Controllers\Admin\CommitteesController;
 use App\Http\Controllers\Admin\ExportsController;
@@ -156,6 +157,12 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admi
             ->middleware(['account.context', 'throttle:admin-exports']);
         Route::get('applications/{application}/files/{attachment}', [ApplicationsController::class, 'file'])
             ->whereNumber(['application', 'attachment']);
+
+        // The administrative review gate: refer to the committee, or exclude and archive.
+        Route::middleware(['admin:'.AdminAccess::REVIEW_APPLICATIONS, 'account.context', 'throttle:admin-writes'])->group(function () {
+            Route::post('applications/{application}/review/refer', [ApplicationReviewsController::class, 'refer'])->whereNumber('application');
+            Route::post('applications/{application}/review/exclude', [ApplicationReviewsController::class, 'exclude'])->whereNumber('application');
+        });
     });
 
     Route::middleware('admin:'.AdminAccess::MANAGE_COMMITTEES)->prefix('cycles/{cycle}')->whereNumber('cycle')->group(function () {

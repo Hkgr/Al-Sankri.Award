@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Candidate\NominationDetailsRequest;
 use App\Http\Requests\Candidate\NominationDetailsSectionRequest;
 use App\Http\Resources\NominationDetailsResource;
-use App\Support\SyrianGovernorates;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -68,8 +67,6 @@ class NominationDetailsController extends Controller
                         'subcategories' => array_map(fn (array $subcategory): array => ['code' => $subcategory['code'], 'name' => $subcategory['name']], $domain['subcategories']),
                     ])
                     ->all(),
-                'country' => ['code' => $this->cycles->country($cycle), 'name' => 'سوريا'],
-                'governorates' => collect(SyrianGovernorates::NAMES)->map(fn (string $name, string $code): array => ['code' => $code, 'name' => $name])->values()->all(),
             ],
         ]);
     }

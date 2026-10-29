@@ -188,7 +188,7 @@ class DocumentationSubmissionTest extends TestCase
 
         $review = $this->read('/api/candidate/review')->assertOk();
         $this->assertSame($revision, $review->json('data.documentation.revision'));
-        $this->assertSame('1500.50', $review->json('data.nomination_details.funding.amount_usd'));
+        $this->assertSame('مبادرة ذاكرة الحيّ', $review->json('data.nomination_details.title'));
         $this->assertNotNull($review->json('data.basic_information'));
 
         $receipt = $this->submit($revision)->assertCreated()->json('data');
@@ -205,7 +205,11 @@ class DocumentationSubmissionTest extends TestCase
         $this->assertSame(CanonicalJson::hash($snapshot), $version->content_hash);
         $this->assertSame(['https://example.org/gallery'], array_column($snapshot['documentation']['links'], 'url'));
         $this->assertSame(['explanatory', 'video'], array_column($snapshot['documentation']['files'], 'kind'));
-        $this->assertSame('1500.50', $snapshot['nomination_details']['funding']['amount_usd']);
+        $this->assertSame('candidate-submission/2', $snapshot['schema']);
+        $this->assertSame(['confirmed_at', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($snapshot['nomination_details']));
+        // It reaches the administration first: pending, nothing for judging.
+        $this->assertSame(['pending', null, null], [$application->review_status, $application->review_decided_by, $application->review_committee_id]);
+        $this->assertSame('pending', $receipt['processing']);
         $this->assertSame(['candidate_profile_id', 'applicant_id', 'profile_type', 'applicant_name', 'confirmed_at', 'data_accuracy_declared_at'], array_keys($snapshot['basic_information']));
         $this->assertSame(2, DB::table('file_links')->where('application_version_id', $version->id)->count(), 'the same files are linked to the version');
         $this->assertSame(1, DB::table('audit_logs')->where('action', 'application.submitted')->count());

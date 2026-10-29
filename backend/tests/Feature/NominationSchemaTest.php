@@ -13,7 +13,7 @@ use Tests\UsesDisposableSchemaDatabase;
  * database: applying them on a deployed schema without touching existing
  * applications, refusing a rollback that would lose Stage 2 data, and the
  * constraints that keep subcategories inside their domain and cycle and
- * funding declarations consistent.
+ * retired work columns empty.
  */
 class NominationSchemaTest extends TestCase
 {
@@ -167,36 +167,28 @@ class NominationSchemaTest extends TestCase
         $this->assertDatabaseRejects('parent_in_use', fn () => $this->db('cycle_domain_subcategories')->where('id', $arts)->delete(), 'subcategory in use');
     }
 
-    public function test_funding_declarations_and_journeys_are_consistent(): void
+    public function test_retired_work_columns_refuse_values_and_journeys_are_consistent(): void
     {
         $this->ensurePlatformSchema();
         $this->schemaDb()->beginTransaction();
         $cycle = $this->cycle();
         $domain = $this->cycleDomain($cycle);
 
-        $valid = [
-            ['fully_funded', 'جهة', '1500.50'], ['partially_funded', 'جهة', '0.01'], ['self_funded', null, '999999999999.99'], ['not_needed', null, null], [null, null, null],
+        // The funding, partnership and implementation-schedule columns are
+        // retired (2026_10_29_900003): only NULL is accepted, whatever the
+        // earlier funding checks allowed.
+        $this->application($cycle, $domain, ['funding_type' => null, 'funder_name' => null, 'funding_amount_usd' => null]);
+        $retired = [
+            'funding type' => ['funding_type' => 'not_needed'],
+            'funded declaration' => ['funding_type' => 'fully_funded', 'funder_name' => 'جهة', 'funding_amount_usd' => '1500.50'],
+            'self-funded declaration' => ['funding_type' => 'self_funded', 'funding_amount_usd' => '10.00'],
+            'partnership answer' => ['has_partnerships' => false],
+            'start date' => ['implementation_started_on' => '2021-09-15'],
+            'end date' => ['implementation_ended_on' => '2022-01-01'],
+            'implementation state' => ['implementation_status' => 'ongoing'],
         ];
-        foreach ($valid as [$type, $funder, $amount]) {
-            $id = $this->application($cycle, $domain, ['funding_type' => $type, 'funder_name' => $funder, 'funding_amount_usd' => $amount]);
-            $this->assertSame($amount, $this->db('applications')->where('id', $id)->value('funding_amount_usd'), "exact amount for {$type}");
-        }
-
-        $invalid = [
-            'unknown type' => ['grant', null, null],
-            'funded without funder' => ['fully_funded', null, '10.00'],
-            'funded without amount' => ['partially_funded', 'جهة', null],
-            'self-funded with funder' => ['self_funded', 'جهة', '10.00'],
-            'self-funded without amount' => ['self_funded', null, null],
-            'no funding with amount' => ['not_needed', null, '10.00'],
-            'no funding with funder' => ['not_needed', 'جهة', null],
-            'values without a type' => [null, 'جهة', '10.00'],
-            'zero amount' => ['self_funded', null, '0.00'],
-            'negative amount' => ['self_funded', null, '-5.00'],
-            'empty funder' => ['fully_funded', '', '10.00'],
-        ];
-        foreach ($invalid as $label => [$type, $funder, $amount]) {
-            $this->assertDatabaseRejects('check_failed', fn () => $this->application($cycle, $domain, ['funding_type' => $type, 'funder_name' => $funder, 'funding_amount_usd' => $amount]), $label);
+        foreach ($retired as $label => $values) {
+            $this->assertDatabaseRejects('check_failed', fn () => $this->application($cycle, $domain, $values), $label);
         }
 
         // Partnerships: positions 1–10, unique per application.
@@ -222,6 +214,59 @@ class NominationSchemaTest extends TestCase
         $this->migrateOnly($this->platformMigrations());
         $this->migrateOnly(self::ACCOUNT_MIGRATIONS);
         $this->migrateOnly(self::CANDIDATE_MIGRATIONS);
+    }
+
+    public function test_the_review_classification_check_accepts_only_complete_states(): void
+    {
+        $this->ensurePlatformSchema();
+        $this->schemaDb()->beginTransaction();
+        $cycle = $this->cycle();
+        $domain = $this->cycleDomain($cycle);
+        $admin = $this->user();
+        $committee = $this->db('committees')->insertGetId(['cycle_id' => $cycle, 'cycle_domain_id' => $domain, 'type' => 'judging', 'name_ar' => 'لجنة', 'status' => 'approved', 'approved_by' => $admin, 'approved_at' => now()]);
+
+        $draft = $this->application($cycle, $domain);
+        $this->assertNull($this->db('applications')->where('id', $draft)->value('review_status'), 'a draft stays unclassified');
+        $submitted = $this->application($cycle, $domain);
+        $version = $this->db('application_versions')->insertGetId([
+            'application_id' => $submitted, 'version_number' => 1, 'submission_type' => 'initial', 'submitted_by' => $admin,
+            'submitted_at' => now(), 'data_snapshot' => '{}', 'form_snapshot' => '{}', 'content_hash' => hash('sha256', 'snapshot'),
+        ]);
+        $this->db('applications')->where('id', $submitted)->update(['status' => 'submitted', 'first_submitted_at' => now(), 'current_version_id' => $version]);
+        $set = fn (array $review) => $this->db('applications')->where('id', $submitted)->update($review + [
+            'review_status' => null, 'review_source' => null, 'review_decided_by' => null, 'review_decided_at' => null, 'review_reason' => null, 'review_committee_id' => null,
+        ]);
+
+        // Every complete state is accepted.
+        $valid = [
+            'pending' => ['review_status' => 'pending'],
+            'admin referral' => ['review_status' => 'referred', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'legacy referral' => ['review_status' => 'referred', 'review_source' => 'legacy', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'exclusion' => ['review_status' => 'excluded', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_reason' => 'سبب'],
+        ];
+        foreach ($valid as $label => $review) {
+            $this->assertSame(1, $set($review), $label);
+        }
+
+        // Missing sources and incomplete decisions are refused, never let through as UNKNOWN.
+        $invalid = [
+            'referral without a source' => ['review_status' => 'referred', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'referral without a source but with a decider' => ['review_status' => 'referred', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'admin referral without a decider' => ['review_status' => 'referred', 'review_source' => 'admin', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'referral without a time' => ['review_status' => 'referred', 'review_source' => 'legacy', 'review_committee_id' => $committee],
+            'referral without a committee' => ['review_status' => 'referred', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now()],
+            'referral with an unknown source' => ['review_status' => 'referred', 'review_source' => 'other', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'exclusion without a source' => ['review_status' => 'excluded', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_reason' => 'سبب'],
+            'exclusion without a reason' => ['review_status' => 'excluded', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now()],
+            'exclusion with an empty reason' => ['review_status' => 'excluded', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_reason' => ''],
+            'pending with a decider' => ['review_status' => 'pending', 'review_decided_by' => $admin],
+            'source without a status' => ['review_source' => 'admin'],
+        ];
+        foreach ($invalid as $label => $review) {
+            $this->assertDatabaseRejects('check_failed', fn () => $set($review), $label);
+        }
+        $this->assertSame('excluded', $this->db('applications')->where('id', $submitted)->value('review_status'), 'refused updates changed nothing');
+        $this->assertDatabaseRejects('check_failed', fn () => $this->db('applications')->where('id', $draft)->update(['review_status' => 'pending']), 'a draft cannot be classified');
     }
 
     private function db(string $table): Builder

@@ -5,6 +5,7 @@ namespace App\Admin;
 use App\Candidates\Documentation;
 use App\Candidates\NominationTaxonomy;
 use App\Http\Resources\BasicProfileResource;
+use App\Http\Resources\NominationDetailsResource;
 use App\Judging\CommitteeDecision;
 use App\Models\Application;
 use App\Models\ApplicationVersion;
@@ -26,6 +27,10 @@ use Illuminate\Validation\Rule;
  * policies) and the files linked to that version. Stage 1 is resolved
  * through the profile the snapshot references (Stage 1 is confirmed once
  * and never edited). Nothing here changes an application.
+ *
+ * Every submitted application is listed whatever its administrative
+ * classification (pending, referred or excluded): an exclusion archives,
+ * it neither deletes nor hides. The classification can be filtered.
  */
 class SubmittedApplications
 {
@@ -68,6 +73,7 @@ class SubmittedApplications
             'subcategory' => ['nullable', 'string', 'max:64'],
             'applicant_type' => ['nullable', Rule::in(array_keys(self::APPLICANT_TYPES))],
             'status' => ['nullable', Rule::in(self::STATUSES)],
+            'review' => ['nullable', Rule::in(Application::REVIEW_STATUSES)],
             'q' => ['nullable', 'string', 'max:150'],
             'sort' => ['nullable', Rule::in(array_keys(self::SORTS))],
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
@@ -79,7 +85,7 @@ class SubmittedApplications
     /**
      * One page of the table.
      *
-     * @param  array{cycle?: int|null, domain?: string|null, subcategory?: string|null, applicant_type?: string|null, status?: string|null, q?: string|null, sort?: string|null, direction?: string|null, page?: int|null, per_page?: int|null}  $filters
+     * @param  array{cycle?: int|null, domain?: string|null, subcategory?: string|null, applicant_type?: string|null, status?: string|null, review?: string|null, q?: string|null, sort?: string|null, direction?: string|null, page?: int|null, per_page?: int|null}  $filters
      * @return array{data: list<array<string, mixed>>, meta: array<string, int>}
      */
     public function page(array $filters): array
@@ -128,7 +134,7 @@ class SubmittedApplications
 
         $rows = $this->filtered($filters)
             ->select([
-                'applications.id', 'applications.reference_number', 'applications.title', 'applications.status', 'applications.first_submitted_at',
+                'applications.id', 'applications.reference_number', 'applications.title', 'applications.status', 'applications.review_status', 'applications.first_submitted_at',
                 'applicants.name_ar as applicant_name', 'applicants.type as applicant_type',
                 'award_domains.code as domain_code', 'cycle_domains.name_ar as domain_name',
                 'cycle_domain_subcategories.code as subcategory_code', 'cycle_domain_subcategories.name_ar as subcategory_name',
@@ -152,6 +158,7 @@ class SubmittedApplications
             'subcategory' => $row->subcategory_code === null ? null : ['code' => $row->subcategory_code, 'name' => $row->subcategory_name],
             'submitted_at' => Carbon::parse($row->first_submitted_at, 'UTC')->toIso8601ZuluString(),
             'status' => $row->status,
+            'review' => $row->review_status ?? Application::REVIEW_PENDING,
             'attachment_count' => (int) $row->attachment_count,
         ])->all();
     }
@@ -189,7 +196,7 @@ class SubmittedApplications
                 'content_hash' => $version->content_hash,
             ],
             'basic_information' => $profile === null ? null : (new BasicProfileResource($profile))->resolve(),
-            'nomination_details' => $snapshot['nomination_details'] ?? null,
+            'nomination_details' => NominationDetailsResource::withoutRetired($snapshot['nomination_details'] ?? null),
             'documentation' => [
                 'confirmed_at' => $snapshot['documentation']['confirmed_at'] ?? null,
                 'attachments' => $this->versionFiles((int) $version->getKey())->map(fn (FileLink $link): array => [
@@ -205,6 +212,8 @@ class SubmittedApplications
                 'links' => $snapshot['documentation']['links'] ?? [],
             ],
             'judging' => app(CommitteeDecision::class)->forApplication($application),
+            // Administration only: judges receive the summary, Stage 2 and the files.
+            'review' => app(ApplicationReviews::class)->state((int) $application->getKey()),
             'declarations' => [
                 'data_accuracy_declared_at' => $snapshot['basic_information']['data_accuracy_declared_at'] ?? null,
                 'accepted_policies' => array_map(fn (array $policy): array => [
@@ -282,6 +291,9 @@ class SubmittedApplications
         }
         if (! empty($filters['status'])) {
             $query->where('applications.status', $filters['status']);
+        }
+        if (! empty($filters['review'])) {
+            $query->where('applications.review_status', $filters['review']);
         }
         if (isset($filters['q']) && trim((string) $filters['q']) !== '') {
             $like = '%'.addcslashes(trim((string) $filters['q']), '\\%_').'%';

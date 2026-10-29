@@ -197,12 +197,13 @@ class PlatformDatabaseMigrationTest extends TestCase
     }
 
     /**
-     * Every CHECK, foreign key and unique key named in the platform migrations
-     * must exist on this engine, so none can be skipped silently.
+     * Every CHECK, foreign key and unique key named in the migrations (the
+     * platform ones and the later ones that add constraints) must exist on
+     * this engine, so none can be skipped silently.
      */
     private function assertEveryNamedConstraintExists(): void
     {
-        $source = implode("\n", array_map('file_get_contents', glob(database_path('migrations/2026_10_27_*.php'))));
+        $source = implode("\n", array_map('file_get_contents', glob(database_path('migrations/2026_*.php'))));
         preg_match_all("/'((?:chk|fk|uq)_[a-z0-9_]+)'/", $source, $matches);
         $declared = array_values(array_unique($matches[1]));
 

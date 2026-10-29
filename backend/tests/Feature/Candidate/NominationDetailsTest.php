@@ -3,7 +3,8 @@
 namespace Tests\Feature\Candidate;
 
 use App\Candidates\AccountContext;
-use App\Models\ApplicationPartnership;
+use App\Http\Requests\Candidate\NominationDetailsRequest;
+use App\Models\CandidateNomination;
 use App\Models\User;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\QueryException;
@@ -96,7 +97,8 @@ class NominationDetailsTest extends TestCase
                 $this->check('domain', ['domain' => $domain, 'subcategory' => $subcategory])->assertNoContent();
             }
         }
-        $this->assertCount(14, $this->read('/api/candidate/nomination-details')->json('options.governorates'));
+        $options = $this->read('/api/candidate/nomination-details')->json('options');
+        $this->assertSame(['domains'], array_keys($options), 'no places, dates or funding are asked any more');
     }
 
     public function test_invalid_domain_and_subcategory_choices_are_refused(): void
@@ -143,179 +145,42 @@ class NominationDetailsTest extends TestCase
         $this->assertSame(1, DB::table('applications')->count());
     }
 
-    public function test_dates_follow_the_work_state(): void
+    public function test_an_outdated_form_with_retired_questions_is_refused_and_nothing_is_saved(): void
     {
         $this->readyCandidate();
-        $cases = [
-            [['implementation_state' => 'ongoing', 'ended_on' => '2024-01-01'], 'ended_on', 'لا يُقبل تاريخ انتهاء لعمل مستمر.'],
-            [['implementation_state' => 'completed', 'ended_on' => null], 'ended_on', 'أدخل تاريخ انتهاء العمل، أو اختر «العمل مستمر».'],
-            [['implementation_state' => 'completed', 'started_on' => '2024-05-02', 'ended_on' => '2024-05-01'], 'ended_on', 'لا يمكن أن يسبق تاريخ الانتهاء تاريخ البدء.'],
-            [['started_on' => now('Asia/Damascus')->addDay()->toDateString()], 'started_on', 'لا يمكن أن يكون تاريخ بدء العمل في المستقبل.'],
-            [['started_on' => '2023-02-30'], 'started_on', 'أدخل تاريخ بدء حقيقياً بالتقويم الميلادي.'],
-            [['implementation_state' => 'completed', 'ended_on' => now('Asia/Damascus')->addDay()->toDateString()], 'ended_on', 'لا يمكن أن يكون تاريخ انتهاء العمل في المستقبل.'],
-            [['implementation_state' => 'paused'], 'implementation_state', 'حدّد إن كان العمل مستمراً أو منتهياً.'],
+        $journeyKey = $this->journeyKey();
+        $retired = [
+            'implementation_state' => 'ongoing', 'started_on' => '2021-09-15',
+            'locations' => [['governorate' => 'SY-DI', 'locality' => 'دمشق القديمة', 'address' => null]],
+            'funding_type' => 'fully_funded', 'funder_name' => 'مؤسسة الروّاد', 'funding_amount' => '1500.50',
+            'has_partnerships' => true, 'partnerships' => [['name' => 'جهة', 'contribution' => null]],
         ];
-        foreach ($cases as [$override, $field, $message]) {
-            $this->assertSame($message, $this->check('dates_locations', $override + $this->payload())->assertUnprocessable()->json("errors.{$field}.0"), $field);
+
+        // The confirmation: refused as a whole, with a plain message, nothing stored.
+        $refused = $this->confirm($retired + $this->payload(), $journeyKey)->assertConflict()
+            ->assertJsonPath('code', NominationDetailsRequest::FORM_OUTDATED)
+            ->assertJsonPath('retired_fields', array_keys($retired));
+        $this->assertStringContainsString('ما كتبته ما زال في هذه الصفحة', (string) $refused->json('message'));
+        $this->assertNothingStored();
+        foreach ($retired as $field => $value) {
+            $this->confirm([$field => $value] + $this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', NominationDetailsRequest::FORM_OUTDATED);
+            $this->assertNothingStored();
         }
 
-        // Completed today (Damascus) with Arabic digits; stored as calendar dates.
-        $today = now('Asia/Damascus')->toDateString();
-        $this->confirm(['implementation_state' => 'completed', 'started_on' => '٢٠١٩-٠٣-٠١', 'ended_on' => $today] + $this->payload())
-            ->assertCreated()
-            ->assertJsonPath('data.implementation', ['state' => 'completed', 'started_on' => '2019-03-01', 'ended_on' => $today]);
+        // A section check of the earlier form, or with a retired field.
+        $this->check('dates_locations', $this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', NominationDetailsRequest::FORM_OUTDATED);
+        $this->check('funding', $this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', NominationDetailsRequest::FORM_OUTDATED);
+        $this->check('work', ['funding_type' => 'not_needed'] + $this->payload(), $journeyKey)->assertConflict();
+
+        // The current form saves the work without any retired value.
+        $saved = $this->confirm($this->payload(), $journeyKey)->assertCreated()->json('data');
+        $this->assertSame(['confirmed_at', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($saved));
         $application = DB::table('applications')->sole();
-        $this->assertSame(['2019-03-01', $today, 'completed'], [substr($application->implementation_started_on, 0, 10), substr($application->implementation_ended_on, 0, 10), $application->implementation_status]);
-    }
-
-    public function test_ongoing_work_has_no_end_date(): void
-    {
-        $this->readyCandidate();
-
-        $this->confirm(['implementation_state' => 'ongoing', 'ended_on' => null] + $this->payload())
-            ->assertCreated()->assertJsonPath('data.implementation', ['state' => 'ongoing', 'started_on' => '2021-09-15', 'ended_on' => null]);
-        $this->assertNull(DB::table('applications')->value('implementation_ended_on'));
-    }
-
-    public function test_several_places_are_kept_and_duplicates_refused(): void
-    {
-        $this->readyCandidate();
-
-        $duplicate = ['locations' => [
-            ['governorate' => 'SY-DI', 'locality' => 'دمشق القديمة', 'address' => null],
-            ['governorate' => 'SY-DI', 'locality' => '  دمشق   القديمة ', 'address' => ''],
-        ]] + $this->payload();
-        $this->assertSame('مكان التنفيذ هذا مكرّر. احذفه أو غيّر بياناته.', $this->check('dates_locations', $duplicate)->assertUnprocessable()->json('errors')['locations.1.locality'][0]);
-        $this->check('dates_locations', ['locations' => []] + $this->payload())->assertUnprocessable()->assertJsonValidationErrors(['locations']);
-        $this->check('dates_locations', ['locations' => [['governorate' => 'IQ-BG', 'locality' => 'بغداد']]] + $this->payload())
-            ->assertUnprocessable()->assertJsonValidationErrors(['locations.0.governorate']);
-        $this->check('dates_locations', ['locations' => array_fill(0, 21, ['governorate' => 'SY-HL', 'locality' => 'x'])] + $this->payload())
-            ->assertUnprocessable()->assertJsonValidationErrors(['locations']);
-
-        $this->confirm(['locations' => [
-            ['governorate' => 'SY-HL', 'locality' => 'حلب', 'address' => 'حي الجديدة'],
-            ['governorate' => 'SY-HL', 'locality' => 'منبج', 'address' => null],
-            ['governorate' => 'SY-SU', 'locality' => 'شهبا', 'address' => null],
-        ]] + $this->payload())->assertCreated()->assertJsonCount(3, 'data.locations')
-            ->assertJsonPath('data.locations.0.governorate_name', 'حلب');
-        $this->assertSame(
-            [['SY', 'SY-HL', 'حلب', 'حي الجديدة'], ['SY', 'SY-HL', 'منبج', null], ['SY', 'SY-SU', 'شهبا', null]],
-            DB::table('application_locations')->orderBy('id')->get()->map(fn ($row): array => [$row->country_code, $row->governorate, $row->locality, $row->address])->all(),
-        );
-    }
-
-    public function test_a_section_check_is_not_blocked_by_unfinished_places_further_on(): void
-    {
-        $this->readyCandidate();
-
-        // Two blank place rows added, then back to an earlier section.
-        $blank = ['governorate' => '', 'locality' => '', 'address' => ''];
-        $unfinished = ['locations' => [$blank, $blank]] + $this->payload();
-        foreach (['domain', 'work', 'funding'] as $section) {
-            $this->check($section, $unfinished)->assertNoContent();
+        foreach (['funding_type', 'funder_name', 'funding_amount_usd', 'has_partnerships', 'implementation_started_on', 'implementation_ended_on', 'implementation_status'] as $column) {
+            $this->assertNull($application->{$column}, $column);
         }
-
-        // The places' own section still reports them, where they can be fixed.
-        $this->check('dates_locations', $unfinished)->assertUnprocessable()
-            ->assertJsonValidationErrors(['locations.0.governorate', 'locations.0.locality', 'locations.1.governorate', 'locations.1.locality']);
-        $this->assertNothingStored();
-    }
-
-    public function test_duplicate_places_are_still_refused_by_their_section_and_the_confirmation(): void
-    {
-        $this->readyCandidate();
-        $duplicate = ['locations' => [
-            ['governorate' => 'SY-HM', 'locality' => 'حماة', 'address' => null],
-            ['governorate' => 'SY-HM', 'locality' => 'حماة', 'address' => null],
-        ]] + $this->payload();
-
-        $this->check('work', $duplicate)->assertNoContent();
-        $this->check('dates_locations', $duplicate)->assertUnprocessable()->assertJsonValidationErrors(['locations.1.locality']);
-        $this->confirm($duplicate)->assertUnprocessable()->assertJsonValidationErrors(['locations.1.locality']);
-        $this->assertNothingStored();
-    }
-
-    public function test_each_funding_declaration_keeps_only_its_own_fields(): void
-    {
-        $this->configureCycle();
-        $branches = [
-            'fully_funded' => [['funding_type' => 'fully_funded', 'funder_name' => 'مؤسسة الروّاد', 'funding_amount' => '1500.50'], ['مؤسسة الروّاد', '1500.50']],
-            'partially_funded' => [['funding_type' => 'partially_funded', 'funder_name' => 'جهة داعمة', 'funding_amount' => '١٢٠٠٫٥'], ['جهة داعمة', '1200.50']],
-            'self_funded' => [['funding_type' => 'self_funded', 'funding_amount' => '250'], [null, '250.00']],
-            'not_needed' => [['funding_type' => 'not_needed'], [null, null]],
-        ];
-
-        foreach ($branches as $type => [$fields, [$funder, $amount]]) {
-            $user = User::factory()->candidate()->create(['email' => "{$type}@example.org"]);
-            $this->completeStage1($user);
-            $this->signIn($user->email);
-            $payload = $fields + array_diff_key($this->payload(), array_flip(['funding_type', 'funder_name', 'funding_amount']));
-            $this->confirm($payload)->assertCreated()
-                ->assertJsonPath('data.funding', ['type' => $type, 'funder_name' => $funder, 'amount_usd' => $amount]);
-            $stored = DB::table('applications')->where('created_by', $user->id)->sole();
-            $this->assertSame([$type, $funder], [$stored->funding_type, $stored->funder_name]);
-            $this->assertSame($amount, $stored->funding_amount_usd === null ? null : $this->decimal($stored->funding_amount_usd));
-        }
-    }
-
-    public function test_funding_fields_that_do_not_apply_and_ambiguous_amounts_are_refused(): void
-    {
-        $this->readyCandidate();
-        $base = array_diff_key($this->payload(), array_flip(['funding_type', 'funder_name', 'funding_amount']));
-        $refused = [
-            [['funding_type' => 'self_funded', 'funder_name' => 'جهة', 'funding_amount' => '10'], 'funder_name'],
-            [['funding_type' => 'not_needed', 'funding_amount' => '10'], 'funding_amount'],
-            [['funding_type' => 'not_needed', 'funder_name' => 'جهة'], 'funder_name'],
-            [['funding_type' => 'fully_funded', 'funding_amount' => '10'], 'funder_name'],
-            [['funding_type' => 'partially_funded', 'funder_name' => 'جهة'], 'funding_amount'],
-            [['funding_type' => 'self_funded'], 'funding_amount'],
-            [['funding_type' => 'grant'], 'funding_type'],
-            [['funding_type' => null], 'funding_type'],
-        ];
-        foreach ($refused as [$fields, $field]) {
-            $this->check('funding', $fields + $base)->assertUnprocessable()->assertJsonValidationErrors([$field]);
-        }
-
-        foreach (['1,500', '1٬500', '0', '0.00', '10.001', '-5', '1e3', ' ', 'abc', '1234567890123'] as $amount) {
-            $this->check('funding', ['funding_type' => 'self_funded', 'funding_amount' => $amount] + $base)
-                ->assertUnprocessable()->assertJsonValidationErrors(['funding_amount']);
-        }
-        $this->check('funding', ['funding_type' => 'self_funded', 'funding_amount' => 1500.5] + $base)
-            ->assertUnprocessable()->assertJsonValidationErrors(['funding_amount']);
-        $this->check('funding', ['funding_type' => 'self_funded', 'funding_amount' => '999999999999.99'] + $base)->assertNoContent();
-    }
-
-    public function test_partnerships_follow_the_yes_or_no_answer(): void
-    {
-        $this->readyCandidate();
-        $base = array_diff_key($this->payload(), array_flip(['has_partnerships', 'partnerships']));
-
-        $this->check('funding', ['has_partnerships' => true, 'partnerships' => []] + $base)->assertUnprocessable()->assertJsonValidationErrors(['partnerships']);
-        $this->check('funding', ['has_partnerships' => true] + $base)->assertUnprocessable()->assertJsonValidationErrors(['partnerships']);
-        $this->check('funding', ['has_partnerships' => true, 'partnerships' => [['name' => '', 'contribution' => 'دعم']]] + $base)
-            ->assertUnprocessable()->assertJsonValidationErrors(['partnerships.0.name']);
-        $this->check('funding', ['has_partnerships' => false, 'partnerships' => [['name' => 'جهة']]] + $base)->assertUnprocessable()->assertJsonValidationErrors(['partnerships']);
-        $this->check('funding', ['has_partnerships' => null] + $base)->assertUnprocessable()->assertJsonValidationErrors(['has_partnerships']);
-        $this->check('funding', ['has_partnerships' => true, 'partnerships' => array_fill(0, 11, ['name' => 'جهة'])] + $base)
-            ->assertUnprocessable()->assertJsonValidationErrors(['partnerships']);
-
-        $this->confirm(['has_partnerships' => true, 'partnerships' => [
-            ['name' => 'جمعية أصدقاء دمشق', 'contribution' => "تدريب المتطوعين\nوتأمين القاعة"],
-            ['name' => 'Heritage Lab', 'contribution' => null],
-        ]] + $base)->assertCreated()
-            ->assertJsonPath('data.partnerships.has_partnerships', true)
-            ->assertJsonPath('data.partnerships.items.0.contribution', "تدريب المتطوعين\nوتأمين القاعة")
-            ->assertJsonCount(2, 'data.partnerships.items');
-        $this->assertSame([1, 2], DB::table('application_partnerships')->orderBy('position')->pluck('position')->map(fn ($p): int => (int) $p)->all());
-    }
-
-    public function test_without_partners_no_rows_are_stored(): void
-    {
-        $this->readyCandidate();
-
-        $this->confirm(['has_partnerships' => false] + array_diff_key($this->payload(), array_flip(['partnerships'])))
-            ->assertCreated()->assertJsonPath('data.partnerships', ['has_partnerships' => false, 'items' => []]);
-        $this->assertSame(0, DB::table('application_partnerships')->count());
+        $this->assertSame([0, 0], [DB::table('application_locations')->count(), DB::table('application_partnerships')->count()]);
+        $this->assertStringNotContainsString('funding', (string) DB::table('audit_logs')->where('action', 'nomination_details.confirmed')->value('after_data'));
     }
 
     public function test_text_is_plain_unicode_and_never_truncated(): void
@@ -354,7 +219,7 @@ class NominationDetailsTest extends TestCase
 
         // The audit entry holds codes and identifiers, never content or money.
         $audit = (string) DB::table('audit_logs')->where('action', 'nomination_details.confirmed')->sole()->after_data;
-        foreach (['ذاكرة', 'دمشق', '1500', 'مؤسسة'] as $content) {
+        foreach (['ذاكرة', 'الشباب', 'معرضاً'] as $content) {
             $this->assertStringNotContainsString($content, $audit);
         }
 
@@ -372,9 +237,9 @@ class NominationDetailsTest extends TestCase
         // Persisted across sign-out and sign-in; the dashboard sees only statuses.
         $this->browser('POST', '/api/auth/logout')->assertNoContent();
         $this->signIn();
-        $this->assertPrivate($this->read('/api/candidate/nomination-details')->assertOk()->assertJsonPath('availability.status', 'confirmed')->assertJsonPath('data.funding.amount_usd', '1500.50'));
+        $this->assertPrivate($this->read('/api/candidate/nomination-details')->assertOk()->assertJsonPath('availability.status', 'confirmed')->assertJsonPath('data.title', 'مبادرة ذاكرة الحيّ'));
         $overview = $this->read('/api/candidate/overview')->assertOk()->assertJsonPath('data.nomination_details.status', 'completed')->getContent();
-        foreach (['1500', 'مؤسسة الروّاد', 'دمشق القديمة', 'ذاكرة'] as $detail) {
+        foreach (['ذاكرة', 'الشباب', 'معرضاً'] as $detail) {
             $this->assertStringNotContainsString($detail, $overview);
             $this->assertStringNotContainsString($detail, $this->browser('GET', '/api/user')->getContent());
         }
@@ -384,14 +249,14 @@ class NominationDetailsTest extends TestCase
     public function test_a_failed_confirmation_leaves_nothing_behind(): void
     {
         $this->readyCandidate();
-        ApplicationPartnership::creating(fn () => throw new RuntimeException('Simulated failure while saving a partner.'));
+        CandidateNomination::creating(fn () => throw new RuntimeException('Simulated failure while saving the journey.'));
         $this->withoutExceptionHandling();
 
         try {
-            $this->confirm(['has_partnerships' => true, 'partnerships' => [['name' => 'جهة', 'contribution' => null]]] + $this->payload());
+            $this->confirm($this->payload());
             $this->fail('The simulated failure should surface.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('Simulated failure while saving a partner.', $exception->getMessage());
+            $this->assertSame('Simulated failure while saving the journey.', $exception->getMessage());
         }
 
         $this->assertNothingStored();
@@ -439,7 +304,7 @@ class NominationDetailsTest extends TestCase
         $this->read('/api/candidate/nomination-details')->assertJsonPath('data', null);
         $this->confirm($this->payload(), $journeyKey)->assertCreated();
         $this->confirm($this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', 'nomination_details_already_confirmed');
-        $this->assertSame([1, 1, 1], [DB::table('applications')->count(), DB::table('candidate_nominations')->count(), DB::table('application_locations')->count()]);
+        $this->assertSame([1, 1], [DB::table('applications')->count(), DB::table('candidate_nominations')->count()]);
     }
 
     public function test_reconciling_a_lost_save_never_takes_another_cycles_stage_for_it(): void

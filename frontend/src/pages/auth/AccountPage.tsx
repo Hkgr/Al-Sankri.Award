@@ -97,9 +97,9 @@ function AccountDetails({ user }: { user: User }) {
           <Link href="/judge">الانتقال إلى التحكيم</Link>
         </p>
       )}
-      {user.is_candidate && (
+      {user.is_candidate && !user.is_judge && (
         <p className="auth-panel__text">
-          <Link href="/dashboard">{user.is_judge ? 'لوحة المترشح' : 'العودة إلى لوحة المترشح'}</Link>
+          <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
         </p>
       )}
       {welcome && (

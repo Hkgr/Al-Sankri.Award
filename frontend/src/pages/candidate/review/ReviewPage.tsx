@@ -11,7 +11,7 @@ import type { BasicProfile } from '../candidateApi'
 import { contextHeader, formatDamascusDateTime } from '../candidateApi'
 import { AttachmentList, LinkList } from '../documentation/AttachmentList'
 import type { AttachmentKind, Documentation, Receipt } from '../documentation/documentationApi'
-import { journeyStateUrl, SECTION_TITLES, SUBMIT_CONFIRMATION } from '../documentation/documentationApi'
+import { journeyStateUrl, PROCESSING_TEXT, SECTION_TITLES, SUBMIT_CONFIRMATION } from '../documentation/documentationApi'
 import type { NominationDetails } from '../nomination/nominationApi'
 import { DomainArtwork } from '../nomination/nominationFields'
 import { nominationSummaryFromDetails } from '../nomination/nominationSummaries'
@@ -123,7 +123,7 @@ export function ReviewPage({ user }: { user: User }) {
         <p className="eyebrow">المراجعة والإرسال</p>
         <h1 className="candidate-page__title">مراجعة المشاركة</h1>
         <p className="candidate-page__intro">
-          {review?.submission ? 'هذه المشاركة كما أُرسلت. هي متاحة للعرض فقط.' : 'راجع بيانات المشاركة كلها كما حُفظت، ثم أرسلها للجنة الحكام.'}
+          {review?.submission ? 'هذه المشاركة كما أُرسلت. هي متاحة للعرض فقط.' : 'راجع بيانات المشاركة كلها كما حُفظت، ثم أرسل ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.'}
         </p>
       </header>
 
@@ -158,7 +158,8 @@ export function ReviewPage({ user }: { user: User }) {
                   الرقم المرجعي: <bdi dir="ltr">{review.submission.reference_number}</bdi>
                 </p>
                 <p>وقت الإرسال: {formatDamascusDateTime(review.submission.submitted_at)} بتوقيت دمشق.</p>
-                <p>سُجّلت المشاركة لتنتقل إلى لجنة الحكام وفق مراحل الجائزة. لا يمكن تعديلها أو إضافة ملفات إليها بعد الإرسال.</p>
+                <p>{PROCESSING_TEXT[review.submission.processing] ?? PROCESSING_TEXT.pending}</p>
+                <p>لا يمكن تعديل المشاركة أو إضافة ملفات إليها بعد الإرسال.</p>
               </div>
             </div>
           ) : !review.documentation.confirmed ? (
@@ -220,7 +221,7 @@ export function ReviewPage({ user }: { user: User }) {
               </Link>
               {review.documentation.confirmed && (
                 <button type="button" className="button button--primary" onClick={() => dialogRef.current?.showModal()} disabled={sending}>
-                  {sending ? 'جارٍ الإرسال…' : 'إرسال للجنة الحكام'}
+                  {sending ? 'جارٍ الإرسال…' : 'إرسال ملف الترشح'}
                 </button>
               )}
             </div>

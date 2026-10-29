@@ -8,8 +8,9 @@ import { useRouter } from '../../../lib/useRouter'
 import { usePageTitle } from '../../auth/usePageTitle'
 import { formatDamascusDateTime } from '../../candidate/candidateApi'
 import type { AdminCycle, ApplicationsPage as Page, ApplicationStatus, SortKey } from '../adminApi'
-import { APPLICANT_TYPE_LABELS, cycleLabel, SORT_LABELS, STATUS_LABELS } from '../adminApi'
+import { APPLICANT_TYPE_LABELS, cycleLabel, REVIEW_LABELS, SORT_LABELS, STATUS_LABELS } from '../adminApi'
 import { ExportMenu } from '../ExportMenu'
+import { ReviewBadge } from './ReviewBadge'
 import { StatusBadge } from './StatusBadge'
 import { ALL_CYCLES, tableQuery } from './tableState'
 
@@ -52,7 +53,7 @@ export function ApplicationsPage({
   }
   const [retry, setRetry] = useState(0)
   const latest = useRef(0)
-  const ids = { search: useId(), cycle: useId(), domain: useId(), subcategory: useId(), type: useId(), status: useId(), perPage: useId(), caption: useId() }
+  const ids = { search: useId(), cycle: useId(), domain: useId(), subcategory: useId(), type: useId(), status: useId(), review: useId(), perPage: useId(), caption: useId() }
 
   const queryString = tableQuery(location.search, scope)
 
@@ -105,7 +106,7 @@ export function ApplicationsPage({
       ),
     )
   const subcategories = domains.find((item) => item.code === domain)?.subcategories ?? []
-  const filtered = ['domain', 'subcategory', 'applicant_type', 'status', 'q'].some((name) => params.get(name))
+  const filtered = ['domain', 'subcategory', 'applicant_type', 'status', 'review', 'q'].some((name) => params.get(name))
   const meta = result?.meta
   const back = new URLSearchParams(queryString)
   back.set('cycle', scope)
@@ -213,13 +214,24 @@ export function ApplicationsPage({
               ))}
             </select>
           </div>
+          <div className="admin-filter">
+            <label htmlFor={ids.review}>التصنيف الإداري</label>
+            <select id={ids.review} value={params.get('review') ?? ''} onChange={(event) => update({ review: event.target.value || null })}>
+              <option value="">كل التصنيفات</option>
+              {Object.entries(REVIEW_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
           {filtered && (
             <button
               type="button"
               className="button button--quiet button--small admin-toolbar__reset"
               onClick={() => {
                 setSearch('')
-                update({ domain: null, subcategory: null, applicant_type: null, status: null, q: null })
+                update({ domain: null, subcategory: null, applicant_type: null, status: null, review: null, q: null })
               }}
             >
               مسح المرشّحات
@@ -265,6 +277,9 @@ export function ApplicationsPage({
                 <th scope="col">الفئة الفرعية</th>
                 {sortHeader('submitted_at', 'وقت الإرسال')}
                 {sortHeader('status', 'الحالة')}
+                <th scope="col" className="admin-table__wrap">
+                  التصنيف الإداري
+                </th>
                 <th scope="col">المرفقات</th>
                 <th scope="col">
                   <span className="visually-hidden">الإجراء</span>
@@ -291,6 +306,9 @@ export function ApplicationsPage({
                   <td className="admin-table__time">{formatDamascusDateTime(row.submitted_at)}</td>
                   <td>
                     <StatusBadge status={row.status as ApplicationStatus} />
+                  </td>
+                  <td>
+                    <ReviewBadge status={row.review} />
                   </td>
                   <td className="admin-table__count">{row.attachment_count}</td>
                   <td>

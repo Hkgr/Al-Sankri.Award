@@ -32,6 +32,7 @@ export type RefreshResult = 'updated' | 'account_changed'
 
 export type AdminPermission =
   | 'applications.view_submitted'
+  | 'applications.review'
   | 'committees.manage_judging'
   | 'users.view_registered'
   | 'reports.export'

@@ -13,7 +13,9 @@ import { ReviewPage } from './review/ReviewPage'
 /**
  * /dashboard and its stage pages (basic-information, nomination-details,
  * documentation) and the review page. Signed-out visitors go to the
- * sign-in page and come back here afterwards; accounts without the
+ * sign-in page and come back here afterwards. A judge is told that the
+ * candidate pages are not for them and pointed to the judge portal; roles
+ * change only through award administration. Accounts without the
  * candidate classification are pointed to their account page.
  */
 export function CandidateApp() {
@@ -30,6 +32,19 @@ export function CandidateApp() {
         <p className="auth-loading" role="status">
           جارٍ التحقق من الجلسة…
         </p>
+      </main>
+    )
+  }
+
+  if (user.is_judge) {
+    return (
+      <main id="main" tabIndex={-1}>
+        <AuthLayout title="لوحة المترشح">
+          <p className="auth-panel__text">حسابك مُعيَّن حكَماً في الجائزة، فلا يمكنه استخدام لوحة المترشح أو تقديم ملف ترشح. تغيير الأدوار يتم عبر إدارة الجائزة فقط.</p>
+          <p className="auth-panel__switch">
+            <Link href="/judge">الانتقال إلى بوابة الحكام</Link>
+          </p>
+        </AuthLayout>
       </main>
     )
   }

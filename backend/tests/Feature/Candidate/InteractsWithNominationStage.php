@@ -14,7 +14,7 @@ use Illuminate\Testing\TestResponse;
  */
 trait InteractsWithNominationStage
 {
-    private const STAGE_TABLES = ['applications', 'application_locations', 'application_partnerships', 'candidate_nominations'];
+    private const STAGE_TABLES = ['applications', 'candidate_nominations'];
 
     private User $candidate;
 
@@ -135,14 +135,6 @@ trait InteractsWithNominationStage
             'purpose_and_mission' => 'صون ذاكرة الأحياء القديمة ونقلها إلى الأجيال الجديدة.',
             'objectives' => "توثيق الحِرف التقليدية\nتدريب الشباب على التوثيق",
             'impact' => 'وثّقنا ثلاثين حرفة، ودرّبنا أربعين شاباً، وأقمنا معرضاً زاره أهل الحي.',
-            'implementation_state' => 'ongoing',
-            'started_on' => '2021-09-15',
-            'ended_on' => null,
-            'locations' => [['governorate' => 'SY-DI', 'locality' => 'دمشق القديمة', 'address' => 'حي القيمرية']],
-            'funding_type' => 'fully_funded',
-            'funder_name' => 'مؤسسة الروّاد',
-            'funding_amount' => '1500.50',
-            'has_partnerships' => false,
             // Never accepted from the browser:
             'status' => 'submitted',
             'first_submitted_at' => '2026-01-01 00:00:00',

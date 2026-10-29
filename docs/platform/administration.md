@@ -38,7 +38,13 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
   - administrators go to `/admin`;
   - judges go to `/judge` (never to the candidate dashboard just because they are judges);
   - candidates go to `/dashboard` as before.
-- **Registration:** public registration still grants only the candidate classification. Existing roles and their history are kept.
+- **One classification, changed only by administration:** a person is not a judge and a participant at the same time.
+  - Every public registration starts as a candidate («مترشح»).
+  - Appointing the account as a judge revokes «مترشح» in the appointment's transaction, after the conflict-of-interest checks. The account, profile, unsubmitted drafts and role history are kept.
+  - A judge cannot cancel the judgeship: there is no self-service conversion. Candidate pages explain the role and link to the judge portal, and candidate APIs answer `403 is_judge`.
+  - Ending the last judgeship (only through «لجان الحكام», under the existing rules: a draft committee and no judging history) restores «مترشح» when an appointment had revoked it.
+  - `award_admin` is unchanged and may still sit beside «مترشح»; administrators are still granted only through the CLI command.
+- **Registration:** public registration still grants only the candidate classification to a new account.
 
 ### Granting administration access (the only way)
 
@@ -57,7 +63,8 @@ php artisan admin:grant-access --email="existing-account@example.com"
 
 - **Who appears:** applications with a submitted version (`current_version_id`), whatever workflow status they have moved to. Drafts never appear.
 - **The table:**
-  - **filters:** cycle, main domain, subcategory (depends on the domain), applicant type and status;
+  - **filters:** cycle, main domain, subcategory (depends on the domain), applicant type, workflow status and administrative classification («التصنيف الإداري», §10);
+  - **classification column:** a text badge for each state; by default every submitted application is listed, pending, referred and excluded alike (an exclusion archives, it never hides);
   - **search:** reference number, work title or candidate/institution name;
   - **sorting:** whitelisted columns only;
   - **pages:** 10, 25 or 50 rows;
@@ -83,7 +90,7 @@ php artisan admin:grant-access --email="existing-account@example.com"
 | Create committee | Only when asked; as a draft; one current per cycle and domain (`uq_committees_current`). No members or sample data are created. |
 | Add judge | Only while the committee is a draft. The person must have an active account, no current judging membership in the cycle (also guarded by `uq_cycle_user_roles_current` on the judge grant) and **no submitted application in the cycle**. Adds the membership and a `judge` grant for the cycle. |
 | End membership | Only while the committee is a draft. Sets `left_at` (the row stays as history) and revokes the cycle's judge grant. Refused if judging assignments exist for that member. |
-| Approve | Exactly **3 or 5** current members, all with active accounts. |
+| Approve | Exactly **3 or 5** current members, all with active accounts. Approval assigns only applications an administrator already **referred** to this committee (§10); pending and excluded ones are never picked up. |
 | Return to draft | From approved, so the membership can change; refused once judging assignments exist for the committee. |
 
 **Judge accounts** (the «إضافة حكَم» dialog):
@@ -104,7 +111,7 @@ php artisan admin:grant-access --email="existing-account@example.com"
 - a current `judge` of the application's cycle;
 - a current member of the cycle's judging, integrity or trustees committee (unchanged).
 
-The bar works both ways: a person who already submitted in the cycle is not appointed as one of its judges. Candidate history and the candidate classification are never removed.
+The bar works both ways: a person who already submitted in the cycle is not appointed as one of its judges. Appointing someone who has not submitted revokes their current «مترشح» classification (the profile and any unsubmitted draft stay stored). They cannot open the candidate dashboard while they are a judge; only the administration ends a judgeship (and then only under the membership rules above).
 
 **Lock order:** account rows first (the administrator's shared and the judge's for update, in ascending id order; a new account's row is always the newest), then the committee row. The submission locks the candidate's own row first, so an appointment and a submission of the same person run one after the other, and each sees the other's committed result.
 
@@ -257,3 +264,126 @@ A read-only view of Laravel's own log files. Nothing is installed or streamed.
 5. `storage/` must stay writable (already required). The `storage/app/private/exports/` and `storage/framework/cache/mpdf/` folders are created on first use.
 
 No `.env`, Plesk, Document Root, `deploy.sh`, queue or scheduler change is needed.
+
+## 10. «المراجعة الأولية»: the administrative review gate
+
+A final submission reaches award administration **first**. Judging starts only when an administrator refers it.
+
+### The classification
+
+It is stored in `applications.review_*` (migration `2026_10_29_900001`). It is separate from:
+- the workflow status (`status`: submitted, in_judging…);
+- a judge's own exclusion recommendation;
+- the candidate's stages.
+
+| `review_status` | Label | Meaning |
+| --- | --- | --- |
+| `pending` | «لم يُصنّف بعد» | Submitted, not yet classified. Set by the submission itself. |
+| `referred` | «مرسل للتحكيم» | Sent to the judging committee of the application's cycle and main domain (`review_committee_id`). |
+| `excluded` | «مستبعد — مؤرشف» | Not sent to judging; archived with a reason (`review_reason`, administration only). |
+
+**What is recorded with a decision:**
+- `review_decided_by` and `review_decided_at`: the real deciding administrator and the time;
+- `review_source`: `admin`, or `legacy` (see the backfill).
+
+**Database guarantees (MariaDB/MySQL CHECKs):**
+- only submitted applications are classified;
+- a referral has a committee;
+- an exclusion has a reason, an administrator and a time;
+- a legacy referral names no administrator;
+- `fk_applications_review_committee` ties the committee to the application's own main domain, and through it to its cycle.
+
+### Actions on a pending application
+
+They appear in «التصنيف الإداري» on `/admin/applications/<id>`, and need `applications.view_submitted` **and** `applications.review`.
+
+- **«إرسال إلى اللجنة»:**
+  - **Confirmation:** the dialog names the main domain and the destination committee.
+  - **Eligibility:** the application must be one provisioning can judge (`Assignments::judgeable`: not withdrawn or closed), rechecked on the locked row. A withdrawn or closed file answers `409 not_eligible`, keeps its state and stays visible; the page explains why before anyone tries.
+  - **Server checks:** the current judging committee of the same cycle and main domain must exist and be approved, and must still be the one confirmed (otherwise `409 committee_missing`, `committee_not_approved` or `committee_changed`, and the application stays pending).
+  - **One transaction:** records the referral and provisions the assignments through `App\Judging\Assignments`, then checks that every current member has an assignment for the current version. If not, everything rolls back (classification and event) and the answer is `409 referral_not_delivered`.
+  - **No subcategory routing:** judges are never classified by subcategory.
+- **«استبعاد وأرشفة»:**
+  - **Input:** a reason (up to 500 characters) and an explicit confirmation.
+  - **What happens:** one transaction records the exclusion and its audit event, and no assignment is created.
+  - **What stays available:** the application, its submitted version and files remain available to administration and to their owner.
+  - **What the candidate sees:** a truthful status, never the reason.
+- **Retries and conflicts:**
+  - repeating the same decision returns the stored result (`200 unchanged`), with no second event or assignment;
+  - the opposite decision is refused (`409 already_decided`).
+- **Locking:** the administrator's row (shared), then the committee row, then the application row, the same order as committee approval. Two competing decisions can't both succeed.
+- **No recall or reopening in this phase.**
+- **Request rules:** the account context, CSRF, `throttle:admin-writes` and `no-store` apply as for other admin writes. The actions do not depend on the candidate nomination window.
+- **Audit:**
+  - `application.referred` (committee id and domain code) and `application.excluded` (reference number; never the reason), both attributed to the administrator and the cycle;
+  - the Arabic labels are in «سجل الحركات».
+
+### The judging gate
+
+The gate is enforced on the server in two places:
+- **Assignment provisioning:** every path (committee approval, referral) ends in `Assignments::assign()`, which takes only applications with `review_status = referred` and `review_committee_id` = that committee. The submission no longer provisions anything.
+- **The judge portal:** list, detail, file and evaluation all use one query that additionally requires the application to be referred to the assignment's own committee. Pending and excluded applications, and guessed application or file URLs, answer `404`. The existing ownership and main-domain checks remain.
+
+### Backfill of existing applications (`900001`, in batches)
+
+| Existing state | Classification |
+| --- | --- |
+| Draft (no submitted version) | none (`NULL`) |
+| Submitted, with judging assignments | `referred`, `review_source = legacy`, no administrator, `review_decided_at` = the first real `assigned_at`, committee = the committee of the current version's assignments |
+| Submitted, without assignments | `pending` |
+
+**What the backfill never does:**
+- read a judge's exclusion as an administrative one;
+- change a score, recommendation, assignment or workflow status.
+
+**Inconsistent legacy states** are counted, not fixed, in the `review_classification.backfilled` audit row:
+- `in_judging_without_assignments`: status `in_judging` but no assignment. It becomes `pending`, and its status stays as it was. Review these by hand.
+- `assignments_in_several_committees`.
+
+The legacy referral is shown on the page as «إحالة سابقة من سجل التحكيم».
+
+### Removal of the retired Stage 2 values (`900003`, in batches)
+
+The owner authorized removing the retired work fields together with their stored values. The removal covers every cycle, drafts and submitted applications.
+
+**What is removed:**
+- the seven retired `applications` columns are set to `NULL`: `funding_type`, `funder_name`, `funding_amount_usd`, `has_partnerships`, `implementation_started_on`, `implementation_ended_on`, `implementation_status`;
+- every `application_locations` and `application_partnerships` row is deleted;
+- exactly `data_snapshot.nomination_details.{implementation, locations, funding, partnerships}` is removed from every submitted version, and `content_hash` is recomputed with `CanonicalJson`. `form_snapshot` never held these keys, and the same path is cleared there only if present;
+- only `funding_type` is removed from the payload of `nomination_details.confirmed` events; the events stay.
+
+**What is kept:**
+- ids, version numbers, the submitter and submission times;
+- the rest of each snapshot, linked files, evidence, evaluations, recommendations and assignments;
+- Stage 1 data;
+- every other audit row and the migration ownership markers.
+
+**Record (interruption-safe):**
+- **Evidence per batch:** every destructive batch writes its own `nomination_fields.purged` evidence row (`kind`, rows `removed`, and for versions their ids with the old and new hash and whether the old hash matched) in the same transaction as the change. A committed batch therefore always has its evidence, and an interrupted run that is repeated keeps the evidence of both runs.
+- **Summary row:** a final `summary` row (that run's counts) is informational only.
+- **No values:** the evidence never holds a removed value.
+
+**Retired columns and tables:**
+- **Kept, empty:** the columns and the two tables stay, to avoid schema disruption.
+- **No writes:** no code writes them; on MariaDB/MySQL, `chk_applications_retired_work` refuses any non-NULL value in the retired columns.
+- **No dropped tables:** `application_locations` belongs to the base schema, so it is kept.
+
+**Rollback:**
+- **Refused once values were removed:** `down()` decodes every evidence row as JSON, whatever its formatting, and refuses when any batch of any run removed something. The values cannot be recreated, so the database must be restored from the pre-deployment backup instead.
+- **Fresh installation:** nothing was removed, so the rollback stays possible.
+
+### Deployment and operator notes
+
+1. **Back up the database first** (for example `mariadb-dump --single-transaction --routines --triggers`). The removal in step 2 is permanent: a rollback cannot recreate the values, and is refused.
+   - **Maintenance mode:** run `php artisan down` before migrating and `php artisan up` after the frontend is published, so no request from the previous release (an old page saving Stage 2, for example) can write a retired value while the batches run.
+   - **If the migration is interrupted:** run `php artisan migrate --force` again. The removal resumes where it stopped, and the evidence of the earlier run is kept.
+2. `php artisan migrate --force` runs three migrations:
+   - `900001`: classification columns and backfill;
+   - `900002`: `applications.review` «المراجعة الأولية لملفات الترشح», linked to `award_admin` with per-row ownership markers;
+   - `900003`: removal of the retired values.
+
+   Existing administrators receive the permission through their grant. Nothing creates administrators.
+3. Build and publish the frontend as today. There is no new activation workflow, and no `.env`, Plesk, Document Root or `deploy.sh` change.
+4. **After deployment:**
+   - **Pending submissions:** open «ملفات الترشح» filtered by «لم يُصنّف بعد». Refer each application or exclude it once its main domain's committee is approved in «لجان الحكام».
+   - **Backfill counts:** check the `review_classification.backfilled` row in «سجل الحركات» for inconsistent legacy states.

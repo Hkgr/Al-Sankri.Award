@@ -80,6 +80,9 @@ class JudgePortalTest extends TestCase
             $this->appoint('creativity', $judge->email)->assertCreated();
         }
         $this->approve('creativity')->assertOk();
+        // Approval never picks up a submission the administration has not referred.
+        $this->assertSame(0, DB::table('judging_assignments')->count());
+        $this->refer($submitted['id'])->assertOk()->assertJsonPath('code', 'referred');
 
         $this->assertSame(3, DB::table('judging_assignments')->count());
         $this->assertSame(1, DB::table('evaluation_criteria')->where('code', 'overall_score')->where('max_score', 100)->count());
@@ -172,7 +175,7 @@ class JudgePortalTest extends TestCase
         unlink($path);
         $heading = array_key_first(array_filter($rows, fn (array $row): bool => ($row[2] ?? null) === 'الاستبعاد'));
         $this->assertNotNull($heading);
-        $this->assertSame(['هدى الخالد', '80 من 100', 'استُبعد المشارك', 'توثيق دقيق', 'يُستكمل التوثيق'], array_slice($rows[$heading + 1], 0, 5));
+        $this->assertSame(['هدى الخالد', '80 من 100', 'لا', 'توثيق دقيق', 'يُستكمل التوثيق'], array_slice($rows[$heading + 1], 0, 5));
         $this->assertSame(['لا', 'لا'], [$rows[$heading + 2][2], $rows[$heading + 3][2]]);
 
         $this->signIn($this->candidate->email);
@@ -198,6 +201,10 @@ class JudgePortalTest extends TestCase
         $this->signInAdmin();
         $this->approve('heritage')->assertOk();
         $submitted = $this->submitApplication(['domain' => 'heritage', 'subcategory' => 'tangible_heritage', 'title' => 'بيت دمشقي']);
+        // The submission reaches the administration first: no assignment yet.
+        $this->assertSame(0, DB::table('judging_assignments')->where('application_id', $submitted['id'])->count());
+        $this->signInAdmin();
+        $this->refer($submitted['id'])->assertOk();
         $this->assertSame(3, DB::table('judging_assignments')->where('application_id', $submitted['id'])->count());
 
         $this->signIn($judges[0]->email);
@@ -233,6 +240,18 @@ class JudgePortalTest extends TestCase
             ->assertJsonPath('data.judging.scores.0.excluded', true)
             ->assertJsonPath('data.judging.scores.1.score', '90')
             ->assertJsonPath('data.judging.scores.1.excluded', false);
+    }
+
+    /**
+     * «إرسال إلى اللجنة», as the page confirms it: to the committee it shows.
+     */
+    private function refer(int $applicationId): TestResponse
+    {
+        $committee = (int) $this->read('/api/admin/applications/'.$applicationId)->assertOk()->json('data.review.target.committee.id');
+
+        return $this->browser('POST', '/api/admin/applications/'.$applicationId.'/review/refer', [
+            'account_context' => AccountContext::for($this->admin), 'committee_id' => $committee,
+        ]);
     }
 
     /**
