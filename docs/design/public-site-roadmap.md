@@ -1,6 +1,12 @@
 # Public website roadmap
 
-This roadmap covers the **public, informational website** of جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية, phase by phase.
+This roadmap covers the **public, informational website** of جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع, phase by phase.
+
+## Current implementation (2026-10-29)
+
+The public site now has `/`, `/about`, `/journey`, `/eligibility` and three eligibility detail pages. It uses the approved three main domains and seven subcategories; Quality belongs to Creativity, whose symbol is the original Volunteer Work artwork. Public voting, field verification and the old six-domain presentation are retired.
+
+The homepage has a portrait-led hero and a server-configured countdown. The public schedule reads the same cycle-stage records as submission and the administration schedule; it performs no workflow or permission changes. See [implementation, verification and operator commands](homepage-implementation.md). Earlier phase sections below record the original plan and are superseded wherever they conflict with these owner decisions.
 
 Each phase is one focused, reviewable pull request (or a short series), merged into `develop` before the next phase starts.
 
@@ -10,8 +16,7 @@ The following are separate products with their own security, data-protection and
 
 - the nomination/application portal
 - eligibility screening
-- judging and field verification
-- public voting (جائزة الجمهور)
+- judging (field verification is retired)
 - administrative dashboards
 - launch controls (for example, the live "launch" button described in the launch-event plan)
 - any CMS or back-office tooling
@@ -22,7 +27,7 @@ The public site may **link** to such a portal once it exists. It does not implem
 
 The roadmap does not decide these questions:
 
-- **Quality domain.** Whether الجودة is an independent nomination category or a cross-cutting method. The award plan calls it "منهج أساسي متقاطع في كافة المحاور". Pages will present the six domains as the guide does, and leave the copy for this point to the award owner.
+- **Quality domain — resolved.** الجودة is one of the three Creativity subcategories, alongside social responsibility and entrepreneurship. The public site presents three main domains and seven subcategories.
 - **Content.** All award rules, dates, criteria, prizes and partner names come from the award owner. None are invented.
 
 ---

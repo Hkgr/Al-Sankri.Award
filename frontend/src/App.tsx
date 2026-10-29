@@ -19,8 +19,10 @@ import { JudgeApp } from './pages/judge/JudgeApp'
 import { isJudgePath } from './pages/judge/judgePaths'
 import { HomePage } from './pages/home/HomePage'
 import { PolicyPage } from './pages/policies/PolicyPage'
-
-const HOME_TITLE = document.title
+import { AboutPage } from './pages/public/AboutPage'
+import { EligibilityDomainPage, EligibilityPage } from './pages/public/EligibilityPage'
+import { JourneyPage } from './pages/public/JourneyPage'
+import { domainBySlug } from './content/site'
 
 /** Sign-in and sign-up pages send visitors who are already signed in to their dashboard or account. */
 function GuestOnly({ children }: { children: ReactNode }) {
@@ -48,13 +50,21 @@ function NotFoundPage() {
 function CurrentPage() {
   const { location } = useRouter()
 
-  useEffect(() => {
-    if (location.pathname === '/') document.title = HOME_TITLE
-  }, [location.pathname])
+  const domainPage = /^\/eligibility\/([a-z-]+)$/.exec(location.pathname)
+  if (domainPage) {
+    const domain = domainBySlug(domainPage[1])
+    return domain ? <EligibilityDomainPage key={domain.slug} domain={domain} /> : <NotFoundPage />
+  }
 
   switch (location.pathname) {
     case '/':
       return <HomePage />
+    case '/about':
+      return <AboutPage />
+    case '/journey':
+      return <JourneyPage />
+    case '/eligibility':
+      return <EligibilityPage />
     case '/login':
       return (
         <GuestOnly>

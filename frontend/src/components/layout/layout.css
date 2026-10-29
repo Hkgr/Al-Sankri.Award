@@ -192,6 +192,22 @@
   text-decoration-thickness: 2px;
 }
 
+/* The current page (or its section): a gold underline bar, not colour alone. */
+.site-nav__link[aria-current] {
+  position: relative;
+  font-weight: var(--sa-font-weight-bold);
+}
+
+.site-nav__link[aria-current]::after {
+  content: '';
+  position: absolute;
+  inset-inline: var(--sa-space-3);
+  inset-block-end: 0.35rem;
+  block-size: 3px;
+  border-radius: 2px;
+  background: var(--sa-brand-gold);
+}
+
 @media (min-width: 64rem) {
   .site-header__inner {
     flex-wrap: nowrap;
@@ -219,9 +235,31 @@
   }
 }
 
+/* ---------- External organisation links ---------- */
+
+.org-link {
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.org-link__icon {
+  display: inline-block;
+  inline-size: 0.8em;
+  block-size: 0.8em;
+  margin-inline-start: 0.2em;
+  vertical-align: -0.05em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The arrow points out of the page; mirrored for RTL (identity-guidelines.md §6.4). */
+  transform: scaleX(-1);
+}
+
 /* ---------- Footer (deep green: the only surface for the dark logo) ---------- */
 
 .site-footer {
+  position: relative;
   background: var(--sa-color-surface-dark);
   color: var(--sa-color-text-on-dark);
 }
@@ -238,41 +276,79 @@
   outline-color: var(--sa-color-focus-ring-on-dark);
 }
 
-.site-footer__inner {
-  display: grid;
-  gap: var(--sa-space-6);
-  padding-block: var(--sa-space-7) var(--sa-space-6);
-  border-block-start: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.2);
+/* A gold rule above the footer (identity-guidelines.md §8.3). */
+.site-footer__rule {
+  block-size: 0.25rem;
+  background: var(--sa-brand-gold);
 }
 
-.site-footer__identity img {
-  inline-size: clamp(var(--sa-logo-horizontal-min-width), 14rem + 2vw, 16rem);
+.site-footer__inner {
+  display: grid;
+  gap: var(--sa-space-7);
+  padding-block: var(--sa-space-8) var(--sa-space-7);
+}
+
+.site-footer__identity {
+  display: grid;
+  gap: var(--sa-space-4);
+  justify-items: start;
+  max-inline-size: 30rem;
+}
+
+.site-footer__logo {
+  inline-size: clamp(var(--sa-logo-horizontal-min-width), 14rem + 3vw, 17rem);
+}
+
+.site-footer__statement {
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-medium);
+  line-height: 1.7;
+}
+
+/* Gold on deep green: large text only. */
+.site-footer__slogan {
+  color: var(--sa-color-text-on-dark-accent-large);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-bold);
 }
 
 .site-footer__org {
-  margin-block-start: var(--sa-space-4);
+  color: var(--sa-color-text-on-dark-muted);
 }
 
-.site-footer__nav ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sa-space-1) var(--sa-space-2);
+.site-footer__heading {
+  margin-block-end: var(--sa-space-3);
+  padding-block-end: var(--sa-space-2);
+  border-block-end: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.2);
+  color: var(--sa-color-text-on-dark-muted);
+  font-size: var(--sa-font-size-small);
+  font-weight: var(--sa-font-weight-medium);
+}
+
+.site-footer__links {
+  display: grid;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.site-footer__nav a {
+.site-footer__links a {
   display: inline-flex;
   align-items: center;
   min-block-size: var(--sa-target-min);
-  padding-inline: var(--sa-space-2);
+  text-decoration: none;
 }
 
-.site-footer__credit {
+.site-footer__links a:hover {
+  text-decoration: underline;
+}
+
+.site-footer__base {
+  padding-block: var(--sa-space-4) var(--sa-space-5);
+  border-block-start: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.2);
   color: var(--sa-color-text-on-dark-muted);
   font-size: var(--sa-font-size-small);
-  line-height: 1.7;
 }
 
 /* Echoes the guide's gold band on dark pages (Observed, page 5). */
@@ -281,13 +357,23 @@
   background: var(--sa-brand-gold);
 }
 
-@media (min-width: 64rem) {
+@media (min-width: 40rem) {
   .site-footer__inner {
-    grid-template-columns: 1fr auto;
-    align-items: start;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .site-footer__credit {
+  .site-footer__identity {
     grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 64rem) {
+  .site-footer__inner {
+    grid-template-columns: minmax(0, 1.8fr) repeat(3, minmax(0, 1fr));
+    gap: var(--sa-space-7);
+  }
+
+  .site-footer__identity {
+    grid-column: auto;
   }
 }

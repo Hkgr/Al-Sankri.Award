@@ -1,452 +1,459 @@
 /*
- * Homepage composition. Colour pairings follow the measured table in
- * identity-guidelines.md §4.4: brand gold is used for rules, markers and
- * large text on deep green only, never for text on light surfaces.
+ * Homepage. Values come from brand-tokens.css; rules follow
+ * docs/design/identity-guidelines.md: the line pattern on light surfaces
+ * only, domain artwork on light surfaces only, gold text on deep green only
+ * at large sizes, no animated brand artwork.
  */
 
-/* ---------- Opening ---------- */
+/* ---------- Hero ---------- */
 
 .hero {
-  background: var(--sa-color-surface) url('../../assets/brand/background-line-pattern.svg') center / cover no-repeat;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--sa-color-surface);
+  /* The guide's page-sized line pattern, at its supplied colour and opacity (§8.2). */
+  background-image: url('../../assets/brand/background-line-pattern.svg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border-block-end: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
 }
 
 .hero__inner {
   display: grid;
-  grid-template-areas:
-    'figure'
-    'text';
-  gap: var(--sa-space-6);
-  padding-block: var(--sa-space-5) var(--sa-space-8);
+  gap: var(--sa-space-7);
+  align-items: center;
+  padding-block: var(--sa-space-7) var(--sa-space-8);
 }
 
 .hero__text {
-  grid-area: text;
+  display: grid;
+  gap: var(--sa-space-5);
+  justify-items: start;
 }
 
 .hero__name {
-  max-inline-size: 34rem;
+  position: relative;
+  padding-inline-start: var(--sa-space-4);
+  color: var(--sa-color-text-accent);
   font-size: var(--sa-font-size-lead);
   font-weight: var(--sa-font-weight-medium);
   line-height: 1.6;
 }
 
+/* The guide's gold vertical rule beside key text (pp. 10–15). */
+.hero__name::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.2em;
+  inset-inline-start: 0;
+  inline-size: var(--sa-border-width-accent);
+  background: var(--sa-color-rule-accent);
+}
+
 .hero__title {
-  margin-block: var(--sa-space-4) var(--sa-space-5);
-  font-size: clamp(2.25rem, 1.5rem + 3.2vw, 4rem);
+  display: grid;
+  gap: 0.1em;
+  color: var(--sa-color-text);
+  font-size: clamp(2.6rem, 1.4rem + 4.6vw, 5.25rem);
   font-weight: var(--sa-font-weight-black);
-  line-height: var(--sa-line-height-tight);
+  line-height: 1.18;
+  letter-spacing: 0;
 }
 
 .hero__title-line {
   display: block;
 }
 
-.hero__lead {
-  max-inline-size: var(--sa-measure-narrow);
-  color: var(--sa-color-text-muted);
-  font-size: var(--sa-font-size-lead);
+.hero__title-line + .hero__title-line {
+  color: var(--sa-ext-green-900);
 }
 
-.hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sa-space-3);
-  margin-block-start: var(--sa-space-6);
+.hero__lead {
+  max-inline-size: 36rem;
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-lead);
+  line-height: 1.85;
+}
+
+/* The deep-green stage: the portrait and the countdown. */
+.hero__stage {
+  position: relative;
+  display: grid;
+  gap: var(--sa-space-6);
+  justify-items: center;
+  padding: var(--sa-space-6) var(--sa-space-5) var(--sa-space-6);
+  border-radius: var(--sa-radius-lg);
+  background: var(--sa-color-surface-dark);
+  color: var(--sa-color-text-on-dark);
+  box-shadow: var(--sa-shadow-overlay);
+}
+
+.hero__stage::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--sa-space-6);
+  block-size: 0.3rem;
+  border-radius: 0 0 var(--sa-radius-sm) var(--sa-radius-sm);
+  background: var(--sa-brand-gold);
 }
 
 .hero__figure {
-  grid-area: figure;
-  position: relative;
+  display: grid;
+  gap: var(--sa-space-3);
+  justify-items: center;
+  inline-size: min(100%, 25rem);
+}
+
+.hero__photo {
+  display: block;
+  inline-size: 100%;
+  overflow: hidden;
+  border: 0.25rem solid var(--sa-brand-gold);
+  border-radius: var(--sa-radius-lg);
+  background: var(--sa-observed-white);
 }
 
 .hero__photo img {
   inline-size: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
   object-fit: cover;
-  /* Face sits at about 52% × 40% of the source; keep it clear on narrow crops. */
-  object-position: 55% 30%;
-  border-radius: var(--sa-radius-md);
-  background: var(--sa-color-surface-raised);
+  /* The face stays in view in every frame (photo-provenance.md). */
+  object-position: 58% 40%;
 }
 
 .hero__caption {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--sa-space-1) var(--sa-space-4);
-  margin-block-start: var(--sa-space-3);
-  font-size: var(--sa-font-size-small);
-  line-height: 1.6;
-}
-
-.hero__caption-name {
-  font-weight: var(--sa-font-weight-medium);
-}
-
-.photo-credit {
-  color: var(--sa-color-text-muted);
-}
-
-@media (min-width: 48rem) {
-  .hero__inner {
-    grid-template-areas: 'text figure';
-    grid-template-columns: 1.15fr 0.85fr;
-    align-items: center;
-    gap: var(--sa-space-8);
-    padding-block: var(--sa-space-8);
-  }
-
-  .hero__photo img {
-    aspect-ratio: 4 / 5;
-    object-position: 62% 50%;
-  }
-
-  /* Gold vertical rule beside the portrait, as on guide pages 10–15. */
-  .hero__figure::before {
-    content: '';
-    position: absolute;
-    inset-block: 18% 30%;
-    inset-inline-start: calc(-1 * var(--sa-space-6));
-    inline-size: var(--sa-border-width-accent);
-    background: var(--sa-color-rule-accent);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .hero__photo img,
-  .hero__text {
-    animation: home-reveal 640ms var(--sa-easing-standard) both;
-  }
-
-  .hero__text {
-    animation-delay: 120ms;
-  }
-}
-
-@keyframes home-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(0.75rem);
-  }
-}
-
-/* ---------- Why this award ---------- */
-
-.purpose {
-  background: var(--sa-color-surface-raised);
-}
-
-.purpose__statement {
-  max-inline-size: 46rem;
-  margin-block-start: var(--sa-space-6);
-  padding-inline-start: var(--sa-space-5);
-  border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
-  font-size: var(--sa-font-size-h4);
-  font-weight: var(--sa-font-weight-medium);
-  line-height: 1.7;
-}
-
-.purpose__aims {
-  display: grid;
-  gap: var(--sa-space-6);
-  margin-block-start: var(--sa-space-7);
-  padding: 0;
-  list-style: none;
-  counter-reset: aim;
-}
-
-.purpose__aim {
-  padding-block-start: var(--sa-space-4);
-  border-block-start: var(--sa-border-width-strong) solid var(--sa-color-border-strong);
-  counter-increment: aim;
-}
-
-.purpose__aim::before {
-  content: counter(aim, decimal-leading-zero);
-  display: block;
-  margin-block-end: var(--sa-space-2);
-  color: var(--sa-color-text-accent);
-  font-size: var(--sa-font-size-h3);
-  font-weight: var(--sa-font-weight-light);
-  line-height: 1;
-}
-
-.purpose__aim-title {
-  margin-block-end: var(--sa-space-2);
-  font-size: var(--sa-font-size-h4);
-}
-
-@media (min-width: 48rem) {
-  .purpose__aims {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ---------- The human legacy ---------- */
-
-.legacy__inner {
-  display: grid;
-  gap: var(--sa-space-7);
-}
-
-.legacy__text .section__title {
-  margin-block-end: var(--sa-space-5);
-}
-
-.legacy__paragraph {
-  max-inline-size: var(--sa-measure-prose);
-}
-
-.legacy__paragraph + .legacy__paragraph {
-  margin-block-start: var(--sa-space-4);
-}
-
-.legacy__bridge {
-  max-inline-size: var(--sa-measure-prose);
-  margin-block-start: var(--sa-space-6);
-  padding-inline-start: var(--sa-space-5);
-  border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
-  font-size: var(--sa-font-size-lead);
-  font-weight: var(--sa-font-weight-medium);
-}
-
-.legacy__photo img {
-  inline-size: 100%;
-  border-radius: var(--sa-radius-md);
-}
-
-.legacy__caption {
-  margin-block-start: var(--sa-space-3);
-  color: var(--sa-color-text-muted);
-  font-size: var(--sa-font-size-small);
-  line-height: 1.7;
-}
-
-@media (min-width: 64rem) {
-  .legacy__inner {
-    grid-template-columns: 5fr 7fr;
-    align-items: center;
-    gap: var(--sa-space-8);
-  }
-}
-
-/* ---------- Domains ---------- */
-
-.domains {
-  background: var(--sa-color-surface-raised);
-}
-
-.domains__list {
-  display: grid;
-  gap: var(--sa-space-6) var(--sa-space-5);
-  margin-block-start: var(--sa-space-7);
-  padding: 0;
-  list-style: none;
-}
-
-.domain {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sa-space-2);
-  padding-block-start: var(--sa-space-5);
-  border-block-start: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
-}
-
-.domain__symbol {
-  inline-size: 4rem;
-  block-size: auto;
-  margin-block-end: var(--sa-space-2);
-}
-
-.domain__label {
-  font-size: var(--sa-font-size-h4);
-}
-
-.domain__role {
-  font-weight: var(--sa-font-weight-medium);
-}
-
-.domain__text {
-  color: var(--sa-color-text-muted);
-}
-
-.domain__meaning summary {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sa-space-2);
-  min-block-size: var(--sa-target-min);
-  color: var(--sa-color-link);
-  font-weight: var(--sa-font-weight-medium);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.3em;
-  cursor: pointer;
-  list-style: none;
-}
-
-.domain__meaning summary::-webkit-details-marker {
-  display: none;
-}
-
-/* Plus/minus marker drawn in CSS, so it never mirrors or depends on a font glyph. */
-.domain__meaning summary::before {
-  content: '';
-  inline-size: 0.75rem;
-  block-size: 0.75rem;
-  background:
-    linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat,
-    linear-gradient(currentColor, currentColor) center / 2px 100% no-repeat;
-}
-
-.domain__meaning[open] summary::before {
-  background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
-}
-
-.domain__meaning summary:hover {
-  text-decoration-thickness: 2px;
-}
-
-.domain__meaning p {
-  padding-block-end: var(--sa-space-2);
-  color: var(--sa-color-text-muted);
-  font-size: var(--sa-font-size-small);
-  line-height: 1.7;
-}
-
-.domain--quality {
-  margin-block-start: var(--sa-space-7);
-  padding: var(--sa-space-5);
-  border: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
-  border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
-  border-radius: var(--sa-radius-md);
-  background: var(--sa-color-surface);
-}
-
-@media (min-width: 48rem) {
-  .domains__list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .domain--quality {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: var(--sa-space-6);
-    align-items: start;
-  }
-
-  .domain--quality .domain__symbol {
-    grid-row: span 4;
-  }
-
-  .domain--quality > :not(.domain__symbol) {
-    grid-column: 2;
-  }
-}
-
-@media (min-width: 64rem) {
-  /* Three then two across the full width. */
-  .domains__list {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
-  .domain {
-    grid-column: span 2;
-  }
-
-  .domains__list .domain:nth-child(n + 4) {
-    grid-column: span 3;
-  }
-
-  .domain--quality {
-    padding: var(--sa-space-6);
-  }
-}
-
-/* ---------- Journey ---------- */
-
-.journey {
-  background: var(--sa-color-surface);
-}
-
-.journey__stages {
-  display: grid;
-  gap: var(--sa-space-7);
-  margin-block-start: var(--sa-space-7);
-  padding: 0;
-  list-style: none;
-}
-
-.stage {
-  padding-block-start: var(--sa-space-5);
-  border-block-start: var(--sa-border-width-strong) solid var(--sa-color-border-strong);
-}
-
-.stage__number {
-  display: block;
-  margin-block-end: var(--sa-space-3);
-  color: var(--sa-color-text-accent);
-  font-size: clamp(2.5rem, 2rem + 2vw, 3.5rem);
-  font-weight: var(--sa-font-weight-light);
-  line-height: 1;
-}
-
-.stage__title {
-  font-size: var(--sa-font-size-h3);
-}
-
-.stage__summary {
-  margin-block-start: var(--sa-space-2);
-  font-weight: var(--sa-font-weight-medium);
-}
-
-.stage__points {
-  display: grid;
-  gap: var(--sa-space-2);
-  margin-block-start: var(--sa-space-4);
-  padding-inline-start: 1.25em;
-  color: var(--sa-color-text-muted);
-  list-style-type: disc;
-}
-
-.stage__points li::marker {
-  color: var(--sa-color-rule-accent);
-}
-
-@media (min-width: 64rem) {
-  .journey__stages {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--sa-space-6);
-  }
-}
-
-/* ---------- Closing ---------- */
-
-.closing {
-  padding-block: var(--sa-space-section);
-  background: var(--sa-color-surface-dark);
   color: var(--sa-color-text-on-dark);
+  font-size: var(--sa-font-size-small);
+  font-weight: var(--sa-font-weight-medium);
+}
+
+/* ---------- Countdown (on the deep-green stage) ---------- */
+
+.countdown {
+  display: grid;
+  gap: var(--sa-space-4);
+  justify-items: center;
+  inline-size: 100%;
   text-align: center;
 }
 
-.closing__label {
+.countdown__title {
+  color: var(--sa-color-text-on-dark);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-bold);
+}
+
+.countdown__units {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sa-space-2);
+  inline-size: min(100%, 26rem);
+}
+
+.countdown__unit {
+  display: grid;
+  gap: var(--sa-space-1);
+  padding-block: var(--sa-space-3);
+  border: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.22);
+  border-radius: var(--sa-radius-md);
+  background: rgb(244 247 252 / 0.06);
+}
+
+/* Gold on deep green: large text only (4.41:1). */
+.countdown__value {
+  color: var(--sa-color-text-on-dark-accent-large);
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
+  font-weight: var(--sa-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.countdown__label {
   color: var(--sa-color-text-on-dark-muted);
+  font-size: var(--sa-font-size-small);
+}
+
+.countdown__dates {
+  display: grid;
+  gap: var(--sa-space-2);
+  margin: 0;
+}
+
+.countdown__date dd {
+  margin: 0;
+  color: var(--sa-color-text-on-dark);
+  font-size: var(--sa-font-size-small);
+  line-height: 1.7;
+}
+
+.countdown:not([data-phase='open']):not([data-phase='upcoming']) .countdown__title {
+  font-size: var(--sa-font-size-h3);
+}
+
+@media (min-width: 40rem) {
+  .hero__stage {
+    padding-inline: var(--sa-space-7);
+  }
+}
+
+@media (min-width: 64rem) {
+  .hero__inner {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: var(--sa-space-8);
+    padding-block: var(--sa-space-7);
+  }
+
+  .hero__stage {
+    gap: var(--sa-space-5);
+    padding-block: var(--sa-space-6) var(--sa-space-5);
+  }
+
+  /* Square, so the portrait and the countdown both fit the first screen. */
+  .hero__figure {
+    inline-size: min(100%, 19rem);
+  }
+}
+
+@media (min-width: 80rem) {
+  .hero__figure {
+    inline-size: min(100%, 21rem);
+  }
+}
+
+/* Restrained entrance: only the stage and the photo; the text and actions are there at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__stage {
+    animation: hero-stage-in var(--sa-duration-slow) var(--sa-easing-standard) both;
+    animation-duration: 640ms;
+  }
+
+  .hero__photo {
+    animation: hero-photo-in 900ms var(--sa-easing-standard) both;
+  }
+}
+
+@keyframes hero-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+}
+
+@keyframes hero-photo-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- Introduction ---------- */
+
+.intro__inner {
+  display: grid;
+  gap: var(--sa-space-5);
+}
+
+.intro__body {
+  display: grid;
+  gap: var(--sa-space-4);
+  max-inline-size: var(--sa-measure-prose);
+  font-size: var(--sa-font-size-lead);
+  line-height: 1.9;
+}
+
+.intro__statement {
+  padding-inline-start: var(--sa-space-5);
+  border-inline-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-medium);
+  line-height: 1.7;
+}
+
+@media (min-width: 64rem) {
+  .intro__inner {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--sa-space-8);
+  }
+}
+
+/* ---------- Domain previews (light surfaces: the artwork's only approved background) ---------- */
+
+.domains-preview {
+  background: var(--sa-color-surface-subtle);
+}
+
+.domain-cards {
+  display: grid;
+  gap: var(--sa-space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.domain-card {
+  display: grid;
+  align-content: start;
+  gap: var(--sa-space-4);
+  padding: var(--sa-space-6);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
+  border-block-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
+  border-radius: var(--sa-radius-lg);
+  background: var(--sa-color-surface-raised);
+}
+
+.domain-card__symbol {
+  inline-size: 5.5rem;
+  block-size: auto;
+}
+
+.domain-card__title {
+  font-size: var(--sa-font-size-h3);
+}
+
+.domain-card__intro {
+  color: var(--sa-color-text-muted);
+  line-height: 1.85;
+}
+
+.domain-card__subcategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sa-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.domain-card__subcategories li {
+  padding: var(--sa-space-1) var(--sa-space-3);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
+  border-radius: 999px;
   font-size: var(--sa-font-size-small);
   font-weight: var(--sa-font-weight-medium);
 }
 
-/* Brand gold on deep green is 4.41:1: allowed for large text only. */
-.closing__statement {
-  max-inline-size: 44rem;
-  margin: var(--sa-space-4) auto 0;
-  color: var(--sa-color-text-on-dark-accent-large);
-  font-size: var(--sa-font-size-h2);
+.domain-card__link {
+  justify-self: start;
   font-weight: var(--sa-font-weight-bold);
-  line-height: 1.5;
 }
 
-.closing__text {
+@media (min-width: 64rem) {
+  .domain-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Journey preview ---------- */
+
+.journey-strip {
+  display: grid;
+  gap: var(--sa-space-5);
+  margin: 0 0 var(--sa-space-6);
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.journey-strip__step {
+  position: relative;
+  display: grid;
+  gap: var(--sa-space-2);
+  padding-inline-start: calc(2.75rem + var(--sa-space-4));
+}
+
+.journey-strip__number {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: 50%;
+  background: var(--sa-color-surface-dark);
+  color: var(--sa-brand-gold);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-bold);
+}
+
+.journey-strip__title {
+  font-size: var(--sa-font-size-h4);
+}
+
+.journey-strip__step p {
+  color: var(--sa-color-text-muted);
+  line-height: 1.8;
+}
+
+@media (min-width: 64rem) {
+  .journey-strip {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--sa-space-4);
+  }
+
+  .journey-strip__step {
+    padding-inline-start: 0;
+    padding-block-start: calc(2.75rem + var(--sa-space-4));
+  }
+
+  /* The connecting line between the steps. */
+  .journey-strip__step::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 1.375rem;
+    inset-inline: 2.75rem calc(-1 * var(--sa-space-4));
+    block-size: var(--sa-border-width-control);
+    background: var(--sa-color-rule-accent);
+  }
+
+  .journey-strip__step:last-child::before {
+    display: none;
+  }
+}
+
+/* ---------- Platform band ---------- */
+
+.platform-band {
+  background: var(--sa-color-surface-dark);
+  color: var(--sa-color-text-on-dark);
+}
+
+.platform-band__inner {
+  display: grid;
+  gap: var(--sa-space-5);
+  align-items: center;
+  padding-block: var(--sa-space-8);
+}
+
+.platform-band__title {
+  font-size: var(--sa-font-size-h2);
+}
+
+.platform-band__text {
   max-inline-size: var(--sa-measure-prose);
-  margin: var(--sa-space-5) auto 0;
+  margin-block-start: var(--sa-space-3);
   color: var(--sa-color-text-on-dark-muted);
+  line-height: 1.85;
+}
+
+.platform-band :focus-visible,
+.hero__stage :focus-visible {
+  outline-color: var(--sa-color-focus-ring-on-dark);
+}
+
+.platform-band .button--ghost {
+  border-color: var(--sa-color-text-on-dark);
+  color: var(--sa-color-text-on-dark);
+}
+
+.platform-band .button--ghost:hover {
+  background: rgb(244 247 252 / 0.1);
+}
+
+@media (min-width: 64rem) {
+  .platform-band__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sa-space-8);
+  }
 }

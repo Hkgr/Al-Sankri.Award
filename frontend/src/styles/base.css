@@ -170,3 +170,47 @@ main:focus {
   color: var(--sa-color-text-muted);
   font-size: var(--sa-font-size-lead);
 }
+
+/* Public-site primitives shared by the public pages. */
+
+.section__head {
+  margin-block-end: var(--sa-space-6);
+}
+
+.platform-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sa-space-3);
+}
+
+.button--accent {
+  background: var(--sa-color-control-accent-bg);
+  color: var(--sa-color-control-accent-fg);
+  font-weight: var(--sa-font-weight-bold);
+}
+
+.button--accent:hover {
+  background: #d9a948;
+  color: var(--sa-color-control-accent-fg);
+}
+
+.button--ghost {
+  border-color: var(--sa-color-control-secondary-border);
+  background: transparent;
+  color: var(--sa-color-control-secondary-fg);
+}
+
+.button--ghost:hover {
+  background: var(--sa-color-surface-subtle);
+  color: var(--sa-color-control-secondary-fg);
+}
+
+.text-link {
+  justify-self: start;
+  font-weight: var(--sa-font-weight-bold);
+}
+
+.text-link::after {
+  content: ' ←';
+}
+
