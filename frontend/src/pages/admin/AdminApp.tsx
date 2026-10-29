@@ -14,6 +14,7 @@ import { ApplicationsPage } from './applications/ApplicationsPage'
 import { ALL_CYCLES, tableScope, withScope } from './applications/tableState'
 import { CommitteesPage } from './committees/CommitteesPage'
 import { LogPage } from './log/LogPage'
+import { SchedulePage } from './schedule/SchedulePage'
 import { UsersPage } from './users/UsersPage'
 import { usersScope, withUsersCycle } from './users/usersState'
 
@@ -148,6 +149,8 @@ export function AdminApp() {
     page = <ApplicationPage applicationId={Number(detail[1])} />
   } else if (location.pathname === '/admin/committees' && can('committees.manage_judging')) {
     page = <CommitteesPage key={`${user.account_context}-${cycle?.id ?? 0}`} user={user} cycle={cycle} />
+  } else if (location.pathname === '/admin/schedule' && can('schedules.manage')) {
+    page = <SchedulePage key={`${user.account_context}-${cycle?.id ?? 0}`} user={user} cycle={cycle} />
   } else if (location.pathname === '/admin') {
     page = <AdminHomePage user={user} cycle={cycle} />
   } else {

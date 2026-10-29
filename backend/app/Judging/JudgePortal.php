@@ -2,6 +2,7 @@
 
 namespace App\Judging;
 
+use App\Admin\CycleSchedule;
 use App\Admin\SubmittedApplications;
 use App\Models\Application;
 use App\Models\FileLink;
@@ -23,9 +24,14 @@ class JudgePortal
 
     public const ALREADY_SENT = 'already_sent';
 
+    public const STAGE_CLOSED = 'stage_closed';
+
     public const SENT = 'sent';
 
-    public function __construct(private readonly SubmittedApplications $applications) {}
+    public function __construct(
+        private readonly SubmittedApplications $applications,
+        private readonly CycleSchedule $schedule,
+    ) {}
 
     /**
      * @return list<array<string, mixed>>
@@ -33,7 +39,7 @@ class JudgePortal
     public function list(User $judge): array
     {
         $rows = $this->assignments($judge)->get([
-            'applications.id', 'applications.reference_number', 'applications.title',
+            'applications.id', 'applications.cycle_id', 'applications.reference_number', 'applications.title',
             'award_domains.code as domain_code', 'cycle_domains.name_ar as domain_name',
             'cycle_domain_subcategories.code as subcategory_code', 'cycle_domain_subcategories.name_ar as subcategory_name',
             'evaluations.status as evaluation_status', 'evaluations.recommendation', 'evaluation_scores.score',
@@ -45,6 +51,7 @@ class JudgePortal
             'title' => $row->title,
             'domain' => ['code' => $row->domain_code, 'name' => $row->domain_name],
             'subcategory' => $row->subcategory_code === null ? null : ['code' => $row->subcategory_code, 'name' => $row->subcategory_name],
+            'judging_open' => $this->schedule->judgingOpen((int) $row->cycle_id),
             'evaluation' => [
                 'status' => $row->evaluation_status === 'finalized' ? 'sent' : 'pending',
                 'score' => $row->evaluation_status === 'finalized' && $row->score !== null ? Scores::present((string) $row->score) : null,
@@ -62,7 +69,7 @@ class JudgePortal
     public function show(User $judge, int $applicationId): ?array
     {
         $assignment = $this->assignments($judge)->where('applications.id', $applicationId)->first([
-            'judging_assignments.id as assignment_id',
+            'judging_assignments.id as assignment_id', 'applications.cycle_id',
             'evaluations.status as evaluation_status', 'evaluations.overall_comment', 'evaluations.recommendation', 'evaluations.finalized_at',
             'evaluation_scores.score', 'evaluation_scores.comment as recommendations',
         ]);
@@ -81,6 +88,7 @@ class JudgePortal
             'summary' => $detail['summary'],
             'nomination_details' => $detail['nomination_details'],
             'documentation' => $detail['documentation'],
+            'judging_open' => $this->schedule->judgingOpen((int) $assignment->cycle_id),
             'evaluation' => [
                 'status' => $sent ? 'sent' : 'pending',
                 'score' => $sent && $assignment->score !== null ? Scores::present((string) $assignment->score) : null,
@@ -115,10 +123,13 @@ class JudgePortal
             User::query()->whereKey($judge->getKey())->lockForUpdate()->firstOrFail();
 
             $found = $this->assignments($judge)->where('applications.id', $applicationId)->first([
-                'judging_assignments.id', 'evaluation_criteria.id as criterion_id', 'evaluation_criteria.max_score',
+                'judging_assignments.id', 'applications.cycle_id', 'evaluation_criteria.id as criterion_id', 'evaluation_criteria.max_score',
             ]);
             if ($found === null) {
                 return self::NOT_ASSIGNED;
+            }
+            if (! $this->schedule->judgingOpen((int) $found->cycle_id, lock: true)) {
+                return self::STAGE_CLOSED;
             }
 
             $assignment = DB::table('judging_assignments')->where('id', $found->id)->lockForUpdate()->first();

@@ -40,6 +40,7 @@ Route::middleware('admin.page')->group(function () {
     Route::get('/admin/applications', SpaController::class);
     Route::get('/admin/applications/{application}', SpaController::class)->whereNumber('application');
     Route::get('/admin/committees', SpaController::class);
+    Route::get('/admin/schedule', SpaController::class);
     Route::get('/admin/log', SpaController::class);
 });
 

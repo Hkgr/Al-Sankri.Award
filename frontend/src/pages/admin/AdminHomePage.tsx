@@ -27,6 +27,12 @@ export function AdminHomePage({ user, cycle }: { user: User; cycle: AdminCycle |
       allowed: user.admin_permissions.includes('committees.manage_judging'),
     },
     {
+      href: '/admin/schedule',
+      title: 'المواعيد',
+      text: 'فترة الترشح والتسجيل وفترة التحكيم للدورة المختارة، مع إمكانية تغيير تواريخها.',
+      allowed: user.admin_permissions.includes('schedules.manage'),
+    },
+    {
       href: '/admin/log',
       title: 'السجل',
       text: 'سجل الحركات المسجّلة في المنصة، وملخّصات منقّحة للأخطاء التقنية في سجلات التطبيق.',
@@ -62,7 +68,6 @@ export function AdminHomePage({ user, cycle }: { user: User; cycle: AdminCycle |
             </li>
           ))}
       </ul>
-      <p className="admin-page__note">«المواعيد» قيد الإعداد، وستُتاح في مرحلة لاحقة.</p>
     </div>
   )
 }
