@@ -24,6 +24,7 @@ use App\Http\Controllers\Candidate\NominationDetailsController;
 use App\Http\Controllers\Candidate\ReferenceDataController;
 use App\Http\Controllers\Candidate\SubmissionController;
 use App\Http\Controllers\Judge\ProjectsController;
+use App\Http\Controllers\PublicScheduleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,6 +52,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('account/google/link', [GoogleLinkController::class, 'store'])
         ->middleware('throttle:password-confirmation');
 });
+
+// The public schedule (homepage countdown): display only, never cached.
+Route::get('public/schedule', PublicScheduleController::class)->middleware(['no-store', 'throttle:120,1']);
 
 // Published account policies (privacy policy, terms of use) are public.
 Route::get('policies/{policy}', AccountPolicyController::class)

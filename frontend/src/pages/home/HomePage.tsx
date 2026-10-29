@@ -1,236 +1,134 @@
+import { Countdown } from '../../components/Countdown'
 import { Photo } from '../../components/Photo'
-import {
-  award,
-  closing,
-  domains,
-  hero,
-  journey,
-  legacy,
-  photoCredit,
-  purpose,
-  quality,
-} from '../../content/home'
-import type { Domain } from '../../content/home'
+import { PlatformActions } from '../../components/PlatformActions'
+import { about, award, domains, hero, journey, pages } from '../../content/site'
+import { Link } from '../../lib/router'
+import { phaseAt } from '../../lib/schedule'
+import { usePageMeta } from '../../lib/usePageMeta'
+import { useSchedule, useServerNow } from '../../lib/useSchedule'
 import './home.css'
 
 export function HomePage() {
+  usePageMeta(null, pages[0].description)
+  const { schedule, offset } = useSchedule()
+  // The phase decides which way into the platform is offered; it changes at the closing instant.
+  const now = useServerNow(offset, Boolean(schedule))
+  const phase = schedule ? phaseAt(now, schedule) : 'unknown'
+
   return (
     <>
-      <HeroSection />
-      <PurposeSection />
-      <LegacySection />
-      <DomainsSection />
-      <JourneySection />
-      <ClosingSection />
-    </>
-  )
-}
+      <section className="hero" aria-labelledby="hero-title">
+        <div className="hero__inner container">
+          <div className="hero__text">
+            <p className="hero__name">{award.name}</p>
+            <h1 id="hero-title" className="hero__title">
+              {/* Break after the ellipsis so each half of the slogan stays whole. */}
+              {award.slogan.split('... ').map((line, index, lines) => (
+                <span key={line} className="hero__title-line">
+                  {index < lines.length - 1 ? `${line}...` : line}
+                </span>
+              ))}
+            </h1>
+            <p className="hero__lead">{hero.lead}</p>
+            <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: 'اقرأ شروط التقدم' }} />
+          </div>
 
-function PhotoCredit({ href }: { href: string }) {
-  return (
-    <span className="photo-credit">
-      الصورة:{' '}
-      <a href={href} hrefLang="en">
-        منظمة{' '}
-        <bdi lang="en" dir="ltr">
-          HAND
-        </bdi>
-      </a>
-    </span>
-  )
-}
-
-function HeroSection() {
-  return (
-    <section className="hero" aria-labelledby="hero-title">
-      <div className="hero__inner container">
-        <div className="hero__text">
-          <p className="hero__name">{award.name}</p>
-          <h1 id="hero-title" className="hero__title">
-            {/* Break after the ellipsis so each half of the slogan stays whole. */}
-            {award.slogan.split('... ').map((line, index, lines) => (
-              <span key={line} className="hero__title-line">
-                {index < lines.length - 1 ? `${line}... ` : line}
-              </span>
-            ))}
-          </h1>
-          <p className="hero__lead">{hero.lead}</p>
-          <div className="hero__actions">
-            <a className="button button--primary" href="#domains">
-              اكتشف محاور الجائزة
-            </a>
-            <a className="button button--secondary" href="#about">
-              تعرّف على الجائزة
-            </a>
+          <div className="hero__stage">
+            <figure className="hero__figure">
+              <Photo className="hero__photo" {...hero.portrait} sizes="(min-width: 64rem) 25rem, (min-width: 40rem) 22rem, 82vw" loading="eager" fetchPriority="high" />
+              <figcaption className="hero__caption">{hero.portrait.caption}</figcaption>
+            </figure>
+            <Countdown schedule={schedule} offset={offset} />
           </div>
         </div>
+      </section>
 
-        <figure className="hero__figure">
-          <Photo
-            className="hero__photo"
-            {...hero.portrait}
-            sizes="(min-width: 64rem) 34rem, (min-width: 48rem) 40vw, 100vw"
-            loading="eager"
-            fetchPriority="high"
-          />
-          <figcaption className="hero__caption">
-            <span className="hero__caption-name">{hero.portrait.caption}</span>
-            <PhotoCredit href={photoCredit.aboutUrl} />
-          </figcaption>
-        </figure>
-      </div>
-    </section>
-  )
-}
-
-function PurposeSection() {
-  return (
-    <section id="about" className="section purpose" aria-labelledby="about-title">
-      <div className="container">
-        <div className="purpose__head">
-          <p className="eyebrow">عن الجائزة</p>
-          <h2 id="about-title" className="section__title">
-            لماذا هذه الجائزة؟
-          </h2>
+      <section className="section intro" aria-labelledby="intro-title">
+        <div className="container intro__inner">
+          <div>
+            <p className="eyebrow">عن الجائزة</p>
+            <h2 id="intro-title" className="section__title">
+              أثرٌ يُرى، وأصحابه يُكرَّمون
+            </h2>
+          </div>
+          <div className="intro__body">
+            <p className="intro__statement">{about.statement}</p>
+            <p>{about.philosophy}</p>
+            <Link className="text-link" href="/about">
+              المزيد عن الجائزة
+            </Link>
+          </div>
         </div>
-        <p className="purpose__statement">{purpose.statement}</p>
-        <ol className="purpose__aims">
-          {purpose.aims.map((aim) => (
-            <li key={aim.title} className="purpose__aim">
-              <h3 className="purpose__aim-title">{aim.title}</h3>
-              <p>{aim.text}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  )
-}
+      </section>
 
-function LegacySection() {
-  return (
-    <section id="legacy" className="section legacy" aria-labelledby="legacy-title">
-      <div className="legacy__inner container">
-        <div className="legacy__text">
-          <p className="eyebrow">سيرة العطاء</p>
-          <h2 id="legacy-title" className="section__title">
-            الدكتور عبد القادر سنكري
-          </h2>
-          {legacy.paragraphs.map((paragraph) => (
-            <p key={paragraph.slice(0, 24)} className="legacy__paragraph">
-              {paragraph}
+      <section className="section domains-preview" aria-labelledby="domains-title">
+        <div className="container">
+          <div className="section__head">
+            <p className="eyebrow">محاور الجائزة</p>
+            <h2 id="domains-title" className="section__title">
+              ثلاثة محاور رئيسية، وسبع فئات
+            </h2>
+          </div>
+          <ul className="domain-cards">
+            {domains.map((domain) => (
+              <li key={domain.slug} className="domain-card">
+                {/* The visible label names the artwork, so it is decorative. */}
+                <img className="domain-card__symbol" src={domain.symbol} alt="" width={88} height={99} />
+                <h3 className="domain-card__title">{domain.label}</h3>
+                <p className="domain-card__intro">{domain.intro}</p>
+                <ul className="domain-card__subcategories" aria-label={`فئات محور ${domain.label}`}>
+                  {domain.subcategories.map((subcategory) => (
+                    <li key={subcategory.label}>{subcategory.label}</li>
+                  ))}
+                </ul>
+                <Link className="domain-card__link" href={`/eligibility/${domain.slug}`}>
+                  شروط المحور وفئاته<span className="visually-hidden">: {domain.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="section journey-preview" aria-labelledby="journey-title">
+        <div className="container">
+          <div className="section__head">
+            <p className="eyebrow">مسيرة الجائزة</p>
+            <h2 id="journey-title" className="section__title">
+              من الإعداد إلى أسبوع الجائزة
+            </h2>
+          </div>
+          <ol className="journey-strip">
+            {journey.map((phaseItem, index) => (
+              <li key={phaseItem.key} className="journey-strip__step">
+                <span className="journey-strip__number" aria-hidden="true">
+                  {index + 1}
+                </span>
+                <h3 className="journey-strip__title">{phaseItem.title}</h3>
+                <p>{phaseItem.summary}</p>
+              </li>
+            ))}
+          </ol>
+          <Link className="text-link" href="/journey">
+            تفاصيل مسيرة الجائزة ومواعيدها
+          </Link>
+        </div>
+      </section>
+
+      <section className="platform-band" aria-labelledby="platform-title">
+        <div className="container platform-band__inner">
+          <div>
+            <h2 id="platform-title" className="platform-band__title">
+              منصة الترشح الإلكترونية
+            </h2>
+            <p className="platform-band__text">
+              يُقدَّم ملف الترشح عبر المنصة: البيانات الأساسية، ثم فئة الترشح وبيانات العمل، ثم ملفات العمل وأدلة أثره. يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق
+              قبل إحالته إلى لجنة التحكيم المختصة.
             </p>
-          ))}
-          <p className="legacy__bridge">{legacy.bridge}</p>
+          </div>
+          <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: 'شروط التقدم' }} />
         </div>
-
-        <figure className="legacy__figure">
-          <Photo
-            className="legacy__photo"
-            {...legacy.photo}
-            sizes="(min-width: 64rem) 44rem, 100vw"
-          />
-          <figcaption className="legacy__caption">
-            {legacy.photo.caption} <PhotoCredit href={photoCredit.visitUrl} />
-          </figcaption>
-        </figure>
-      </div>
-    </section>
-  )
-}
-
-function DomainItem({ domain, role }: { domain: Domain; role?: string }) {
-  return (
-    <>
-      {/* The visible label names the symbol, so the image is decorative. */}
-      <img className="domain__symbol" src={domain.symbol} alt="" width={64} height={72} />
-      <h3 className="domain__label">{domain.label}</h3>
-      {role && <p className="domain__role">{role}</p>}
-      <p className="domain__text">{domain.text}</p>
-      <details className="domain__meaning">
-        <summary>معنى الرمز</summary>
-        <p>{domain.symbolMeaning}</p>
-      </details>
+      </section>
     </>
-  )
-}
-
-function DomainsSection() {
-  return (
-    <section id="domains" className="section domains" aria-labelledby="domains-title">
-      <div className="container">
-        <div className="domains__head">
-          <p className="eyebrow">محاور الجائزة</p>
-          <h2 id="domains-title" className="section__title">
-            المحاور الستة
-          </h2>
-          <p className="section__intro">
-            يقوم نظام الجائزة على رمز موحّد يتغيّر عنصره الداخلي بما يناسب كل محور، وتأتي
-            الجودة منهجاً أساسياً متقاطعاً في كافة المحاور.
-          </p>
-        </div>
-
-        <ul className="domains__list">
-          {domains.map((domain) => (
-            <li key={domain.key} className="domain">
-              <DomainItem domain={domain} />
-            </li>
-          ))}
-        </ul>
-
-        <div className="domain domain--quality">
-          <DomainItem domain={quality} role={quality.role} />
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function JourneySection() {
-  return (
-    <section id="journey" className="section journey" aria-labelledby="journey-title">
-      <div className="container">
-        <div className="journey__head">
-          <p className="eyebrow">مسار الجائزة</p>
-          <h2 id="journey-title" className="section__title">
-            من التمهيد إلى أسبوع الجائزة
-          </h2>
-          <p className="section__intro">{journey.intro}</p>
-        </div>
-        <ol className="journey__stages">
-          {journey.stages.map((stage, index) => (
-            <li key={stage.title} className="stage">
-              <span className="stage__number" aria-hidden="true">
-                {index + 1}
-              </span>
-              <h3 className="stage__title">
-                <span className="visually-hidden">المرحلة {index + 1}: </span>
-                {stage.title}
-              </h3>
-              <p className="stage__summary">{stage.summary}</p>
-              <ul className="stage__points">
-                {stage.points.map((point) => (
-                  <li key={point}>{point}</li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  )
-}
-
-function ClosingSection() {
-  return (
-    <section className="closing" aria-labelledby="closing-title">
-      <div className="closing__inner container">
-        <h2 id="closing-title" className="closing__label">
-          ختاماً
-        </h2>
-        <p className="closing__statement">{closing.statement}</p>
-        <p className="closing__text">{closing.text}</p>
-      </div>
-    </section>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
 import { homeFor, useAuth } from '../../auth/useAuth'
-import { award, sectionLinks } from '../../content/home'
+import { award, pages } from '../../content/site'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 
@@ -38,10 +38,13 @@ function AccountLink({ placement }: { placement: 'compact' | 'wide' }) {
  * Site header with a disclosure-style mobile menu. The menu is not modal:
  * it pushes content down, so focus is not trapped. Escape closes it and
  * returns focus to the toggle; following a link or clicking outside closes it.
- * Section links point at the homepage (/#…), so they work from every page.
+ * The four main pages; the current one (or the section an inner page belongs
+ * to, such as a domain under شروط التقدم) is marked aria-current.
  */
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { location } = useRouter()
+  const current = (href: string) => (href === '/' ? location.pathname === '/' : location.pathname === href || location.pathname.startsWith(`${href}/`))
   const headerRef = useRef<HTMLElement>(null)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
@@ -105,14 +108,19 @@ export function SiteHeader() {
         <nav
           id="site-nav"
           className="site-nav"
-          aria-label="أقسام الصفحة الرئيسية"
+          aria-label="التنقل الرئيسي"
           data-open={menuOpen}
         >
           <ul className="site-nav__list">
-            {sectionLinks.map((link) => (
-              <li key={link.href}>
-                <Link className="site-nav__link" href={`/${link.href}`} onClick={() => setMenuOpen(false)}>
-                  {link.label}
+            {pages.map((page) => (
+              <li key={page.href}>
+                <Link
+                  className="site-nav__link"
+                  href={page.href}
+                  aria-current={current(page.href) ? (location.pathname === page.href ? 'page' : 'true') : undefined}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {page.label}
                 </Link>
               </li>
             ))}

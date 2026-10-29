@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Route;
  * catch-all: anything else keeps Laravel's normal routing and 404s.
  */
 Route::get('/', SpaController::class);
+Route::get('/about', SpaController::class);
+Route::get('/journey', SpaController::class);
+Route::get('/eligibility', SpaController::class);
+Route::get('/eligibility/{domain}', SpaController::class)->whereIn('domain', ['culture-and-arts', 'heritage', 'creativity']);
 Route::get('/login', SpaController::class)->name('login');
 Route::get('/register', SpaController::class);
 Route::get('/forgot-password', SpaController::class);

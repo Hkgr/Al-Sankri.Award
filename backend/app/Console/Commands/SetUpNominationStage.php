@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Candidates\NominationCycles;
 use App\Candidates\NominationTaxonomy;
+use App\Candidates\PublicSchedule;
 use App\Models\User;
 use App\Support\AuditLog;
 use DateTimeZone;
@@ -30,7 +31,11 @@ use Throwable;
  * - the stage `nomination_details`: created as planned, with an optional
  *   window; --enable / --close change its status;
  * - --open-domains opens the approved domains for applications;
- * - --publish-cycle publishes a draft cycle.
+ * - --publish-cycle publishes a draft cycle;
+ * - --judging-opens-at / --judging-closes-at record the announced judging
+ *   period as the cycle's `judging` stage, for the public schedule only. It
+ *   stays `planned`: nothing reads it to refer files, approve committees or
+ *   grant any judging permission.
  *
  * Changes are attributed to --actor (an existing account) in audit_logs.
  * --dry-run performs everything inside a transaction and rolls it back.
@@ -47,6 +52,8 @@ use Throwable;
     {--country= : Implementation country of the cycle (ISO code; only SY is supported)}
     {--opens-at= : Stage opening, "Y-m-d H:i" in the cycle timezone}
     {--closes-at= : Stage closing, "Y-m-d H:i" in the cycle timezone}
+    {--judging-opens-at= : Start of the announced judging period (display only), "Y-m-d H:i" in the cycle timezone}
+    {--judging-closes-at= : Exclusive end of the announced judging period (display only), "Y-m-d H:i" in the cycle timezone}
     {--open-domains : Open the approved domains of this cycle for applications}
     {--enable : Enable the nomination_details stage}
     {--close : Close the nomination_details stage}
@@ -105,6 +112,7 @@ class SetUpNominationStage extends Command
             $this->domains($cycle, $actor);
             $this->country($cycle, $actor);
             $this->stage($cycle, $actor);
+            $this->judgingPeriod($cycle, $actor);
             if ($this->option('publish-cycle')) {
                 $this->publish($cycle, $actor);
             }
@@ -283,6 +291,35 @@ class SetUpNominationStage extends Command
         $this->record($actor, 'award_cycle.published', 'award_cycle', (int) $cycle->id, [], 'Published the cycle.');
     }
 
+    /**
+     * The announced judging period (public schedule only), created or
+     * changed when either option is given; never enabled.
+     */
+    private function judgingPeriod(object $cycle, User $actor): void
+    {
+        $window = array_filter([
+            'opens_at' => $this->time('judging-opens-at', $cycle->timezone),
+            'closes_at' => $this->time('judging-closes-at', $cycle->timezone),
+        ]);
+        if ($window === []) {
+            return;
+        }
+
+        $stage = DB::table('cycle_stages')->where('cycle_id', $cycle->id)->where('code', PublicSchedule::JUDGING_STAGE)->lockForUpdate()->first();
+        if ($stage === null) {
+            $id = DB::table('cycle_stages')->insertGetId($window + [
+                'cycle_id' => $cycle->id, 'code' => PublicSchedule::JUDGING_STAGE, 'name_ar' => 'التحكيم',
+                'status' => 'planned', 'display_order' => 3, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            $this->record($actor, 'cycle_stage.created', 'cycle_stage', $id, ['code' => PublicSchedule::JUDGING_STAGE], 'Created the judging period (display only).');
+
+            return;
+        }
+
+        DB::table('cycle_stages')->where('id', $stage->id)->update($window + ['last_change_reason' => 'nomination:setup judging period', 'updated_at' => now()]);
+        $this->record($actor, 'cycle_stage.window_changed', 'cycle_stage', (int) $stage->id, ['code' => PublicSchedule::JUDGING_STAGE], 'Changed the judging period.');
+    }
+
     private function time(string $option, string $timezone): ?Carbon
     {
         $value = $this->option($option);
@@ -291,7 +328,7 @@ class SetUpNominationStage extends Command
             return null;
         }
 
-        $time = Carbon::createFromFormat('Y-m-d H:i', (string) $value, $timezone);
+        $time = Carbon::createFromFormat('!Y-m-d H:i', (string) $value, $timezone);
         if ($time === false || $time->format('Y-m-d H:i') !== $value) {
             throw new RuntimeException("--{$option} must be \"Y-m-d H:i\" in the cycle timezone ({$timezone}).");
         }
