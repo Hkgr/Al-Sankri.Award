@@ -28,6 +28,7 @@ class AuditTrail
         'user.registered' => 'تسجيل حساب جديد',
         'user.created' => 'إنشاء حساب من الإدارة',
         'user_role.granted' => 'منح دور على مستوى المنصة',
+        'user_role.revoked' => 'سحب دور على مستوى المنصة',
         'auth.login' => 'تسجيل الدخول',
         'auth.login_failed' => 'محاولة دخول غير ناجحة',
         'auth.login_refused' => 'رفض دخول حساب معطّل',
