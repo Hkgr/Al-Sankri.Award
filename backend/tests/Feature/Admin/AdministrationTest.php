@@ -142,9 +142,45 @@ class AdministrationTest extends TestCase
         $this->signedIn = $this->candidate;
         $this->navigate('/judge')->assertOk();
         $this->navigate('/judge/projects/1')->assertOk();
-        $this->read('/api/user')->assertJsonPath('data.is_judge', true)->assertJsonPath('data.is_candidate', true)->assertJsonPath('data.admin_permissions', []);
+        $this->read('/api/user')->assertJsonPath('data.is_judge', true)->assertJsonPath('data.is_candidate', false)->assertJsonPath('data.admin_permissions', []);
+        $this->read('/api/candidate/overview')->assertForbidden()->assertJsonPath('code', 'not_candidate');
         $this->read('/api/admin/applications')->assertForbidden();
         $this->navigate('/admin')->assertForbidden();
+    }
+
+    public function test_a_judge_who_registers_as_a_participant_loses_the_judge_role(): void
+    {
+        $legacy = User::factory()->candidate()->create(['email' => 'legacy@example.org']);
+        DB::table('cycle_user_roles')->insert([
+            'cycle_id' => $this->cycleId, 'user_id' => $legacy->id, 'role_id' => app(AdminAccess::class)->roleId('judge'),
+            'assigned_by' => $this->admin->id, 'starts_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $migration = require database_path('migrations/2026_10_29_900004_separate_judge_and_candidate_roles.php');
+        $migration->up();
+        $this->assertFalse(app(CandidateRole::class)->isHeldBy($legacy));
+        $this->assertTrue(app(AdminAccess::class)->isJudge((int) $legacy->id));
+        $migration->down();
+        $this->assertTrue(app(CandidateRole::class)->isHeldBy($legacy));
+        $this->assertSame(0, DB::table('audit_logs')->where('action', 'user_role.separated')->count());
+
+        $this->signInAdmin();
+        $this->createCommittee('creativity')->assertCreated();
+        $this->appoint('creativity', $this->candidate->email, existing: true)->assertCreated();
+        $this->signIn($this->candidate->email);
+        $this->browser('POST', '/api/account/participate', ['account_context' => 'stale'])->assertConflict()->assertJsonPath('code', 'account_mismatch');
+        $this->assertTrue(app(AdminAccess::class)->isJudge((int) $this->candidate->id), 'a stale page changes nothing');
+        $this->browser('POST', '/api/account/participate', ['account_context' => AccountContext::for($this->candidate)])->assertOk()
+            ->assertJsonPath('data.is_judge', false)
+            ->assertJsonPath('data.is_candidate', true)
+            ->assertJsonPath('redirect', '/dashboard');
+        $this->assertNotNull(DB::table('committee_members')->where('user_id', $this->candidate->id)->value('left_at'));
+        $this->assertNotNull(DB::table('cycle_user_roles')->where('user_id', $this->candidate->id)->value('revoked_at'));
+        $this->read('/api/judge/projects')->assertForbidden()->assertJsonPath('code', 'not_judge');
+
+        $only = $this->person('only.candidate@example.org');
+        $this->signIn($only->email);
+        $this->browser('POST', '/api/account/participate', ['account_context' => AccountContext::for($only)])->assertConflict()->assertJsonPath('code', 'not_judge');
+        $this->assertTrue(app(CandidateRole::class)->isHeldBy($only));
     }
 
     public function test_submitted_applications_are_listed_filtered_searched_sorted_and_paged(): void
@@ -273,7 +309,7 @@ class AdministrationTest extends TestCase
             ->assertJsonPath('appointment.account_created', false)->assertJsonPath('appointment.setup_link', null);
         $this->assertEquals($before, DB::table('users')->where('id', $this->candidate->id)->first(), 'password, verification, name and phone untouched');
         $this->assertSame(1, DB::table('oauth_identities')->where('user_id', $this->candidate->id)->count());
-        $this->assertTrue(app(CandidateRole::class)->isHeldBy($this->candidate), 'the candidate classification is kept');
+        $this->assertFalse(app(CandidateRole::class)->isHeldBy($this->candidate), 'appointing a judge revokes the candidate classification');
         Notification::assertNotSentTo($this->candidate, ResetPassword::class);
 
         // One current main-domain membership per cycle; a disabled account is refused, not reactivated.
@@ -418,10 +454,13 @@ class AdministrationTest extends TestCase
         $this->signInAdmin();
         $member = (int) $this->appoint('creativity', $judge->email, existing: true)->assertCreated()->json('data.2.committee.members.0.id');
         $this->signIn($judge->email);
-        $this->send('/api/candidate/submission', ['reviewed_revision' => 1], $ready)->assertForbidden()->assertJsonPath('code', 'committee_member');
+        $this->read('/api/user')->assertJsonPath('data.is_judge', true)->assertJsonPath('data.is_candidate', false);
+        $this->send('/api/candidate/submission', ['reviewed_revision' => 1], $ready)->assertForbidden()->assertJsonPath('code', 'not_candidate');
         $this->assertSame(1, DB::table('application_versions')->count());
         $this->signInAdmin();
         $this->adminPost("/committees/creativity/members/{$member}/end", [])->assertOk();
+        $this->assertTrue(app(CandidateRole::class)->isHeldBy($judge), 'ending the last judgeship restores the candidate classification');
+        $this->assertFalse(app(AdminAccess::class)->isJudge((int) $judge->id));
         $this->signIn($judge->email);
         $this->send('/api/candidate/submission', ['reviewed_revision' => 1], $ready)->assertCreated();
 

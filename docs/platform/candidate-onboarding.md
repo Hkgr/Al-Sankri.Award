@@ -28,7 +28,9 @@ Related: [authentication.md](authentication.md) (accounts and sign-in), [databas
 
 If the role is missing (migrations not run), account creation fails and nothing is written, rather than creating an unclassified account.
 
-**Never changed by:** linking Google to an existing account, a returning sign-in, or any request payload. `role`, `roles`, `is_candidate`, status and verification fields sent by a browser are ignored.
+**Never changed by:** linking Google to an existing account, a returning sign-in, or a request field such as `role` or `is_candidate`. Those fields are ignored.
+
+**Not held together with «حكَم».** Appointing the account as a judge revokes this classification. The account's own «التسجيل كمشارك» (`POST /api/account/participate`) revokes the judge role and grants this classification again. See [administration.md](administration.md) §2.
 
 **Default destination.** After sign-in or registration, a candidate goes to `/dashboard`; an account without the role goes to `/account`. A legitimate intended destination still wins: a signed email-verification link opened while signed out returns there after sign-in. `App\Auth\SafeRedirect` keeps its explicit allowlist: `/dashboard`, `/dashboard/basic-information`, `/account` and `/email/verify/…`.
 

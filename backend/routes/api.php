@@ -2,6 +2,7 @@
 
 use App\Admin\AdminAccess;
 use App\Http\Controllers\Account\GoogleLinkController;
+use App\Http\Controllers\Account\ParticipantRegistrationController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountPolicyController;
 use App\Http\Controllers\Admin\AdminContextController;
@@ -50,6 +51,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         ->middleware('throttle:verification');
     Route::post('account/google/link', [GoogleLinkController::class, 'store'])
         ->middleware('throttle:password-confirmation');
+    // A current judge becomes a participant. The judgeship is cancelled here;
+    // the account does not keep both classifications.
+    Route::post('account/participate', [ParticipantRegistrationController::class, 'store'])
+        ->middleware(['account.context', 'throttle:candidate-confirm']);
 });
 
 // Published account policies (privacy policy, terms of use) are public.
