@@ -30,7 +30,7 @@ If the role is missing (migrations not run), account creation fails and nothing 
 
 **Never changed by:** linking Google to an existing account, a returning sign-in, or a request field such as `role` or `is_candidate`. Those fields are ignored.
 
-**Not held together with «حكَم».** Appointing the account as a judge revokes this classification. The account's own «التسجيل كمشارك» (`POST /api/account/participate`) revokes the judge role and grants this classification again. See [administration.md](administration.md) §2.
+**Not held together with «حكَم».** Every public registration starts with this classification. Appointing the account as a judge (administration only) revokes it in the appointment's transaction; the account, its profile, any unsubmitted draft and the role history stay stored. A judge cannot undo this: there is no self-service conversion, candidate pages explain that the account is a judge and link to the judge portal, and candidate APIs answer `403 is_judge`. Roles change only through award administration. See [administration.md](administration.md) §2.
 
 **Default destination.** After sign-in or registration, a candidate goes to `/dashboard`; an account without the role goes to `/account`. A legitimate intended destination still wins: a signed email-verification link opened while signed out returns there after sign-in. `App\Auth\SafeRedirect` keeps its explicit allowlist: `/dashboard`, `/dashboard/basic-information`, `/account` and `/email/verify/…`.
 

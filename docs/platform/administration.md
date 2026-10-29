@@ -38,7 +38,12 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
   - administrators go to `/admin`;
   - judges go to `/judge` (never to the candidate dashboard just because they are judges);
   - candidates go to `/dashboard` as before.
-- **One classification:** a person is not a judge and a participant at the same time. Appointing a candidate as a judge revokes «مترشح». A current judge who chooses «التسجيل كمشارك» loses every current judge grant and current judging membership, including on an approved committee, and becomes a participant. Ending the last judgeship restores «مترشح» when an appointment had revoked it. `award_admin` is unchanged and may still sit beside «مترشح».
+- **One classification, changed only by administration:** a person is not a judge and a participant at the same time.
+  - Every public registration starts as a candidate («مترشح»).
+  - Appointing the account as a judge revokes «مترشح» in the appointment's transaction, after the conflict-of-interest checks. The account, profile, unsubmitted drafts and role history are kept.
+  - A judge cannot cancel the judgeship: there is no self-service conversion. Candidate pages explain the role and link to the judge portal, and candidate APIs answer `403 is_judge`.
+  - Ending the last judgeship (only through «لجان الحكام», under the existing rules: a draft committee and no judging history) restores «مترشح» when an appointment had revoked it.
+  - `award_admin` is unchanged and may still sit beside «مترشح»; administrators are still granted only through the CLI command.
 - **Registration:** public registration still grants only the candidate classification to a new account.
 
 ### Granting administration access (the only way)
@@ -106,7 +111,7 @@ php artisan admin:grant-access --email="existing-account@example.com"
 - a current `judge` of the application's cycle;
 - a current member of the cycle's judging, integrity or trustees committee (unchanged).
 
-The bar works both ways: a person who already submitted in the cycle is not appointed as one of its judges. Appointing someone who has not submitted revokes their current «مترشح» classification (the profile and any unsubmitted draft stay stored). They cannot open the candidate dashboard until that judgeship ends, or until they register as a participant, which cancels the judgeship.
+The bar works both ways: a person who already submitted in the cycle is not appointed as one of its judges. Appointing someone who has not submitted revokes their current «مترشح» classification (the profile and any unsubmitted draft stay stored). They cannot open the candidate dashboard while they are a judge; only the administration ends a judgeship (and then only under the membership rules above).
 
 **Lock order:** account rows first (the administrator's shared and the judge's for update, in ascending id order; a new account's row is always the newest), then the committee row. The submission locks the candidate's own row first, so an appointment and a submission of the same person run one after the other, and each sees the other's committed result.
 

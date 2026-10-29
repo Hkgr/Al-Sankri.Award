@@ -19,7 +19,6 @@ export function JudgeLayout({ user, children }: { user: User; children: ReactNod
   const { location } = useRouter()
   const links = [
     { href: '/judge', label: 'التحكيم' },
-    { href: '/dashboard', label: 'التسجيل كمشارك' },
     { href: '/account', label: 'إعدادات الحساب' },
     { href: '/', label: 'العودة إلى الموقع العام' },
   ]

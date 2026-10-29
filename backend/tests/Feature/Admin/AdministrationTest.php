@@ -144,44 +144,73 @@ class AdministrationTest extends TestCase
         $this->navigate('/judge')->assertOk();
         $this->navigate('/judge/projects/1')->assertOk();
         $this->read('/api/user')->assertJsonPath('data.is_judge', true)->assertJsonPath('data.is_candidate', false)->assertJsonPath('data.admin_permissions', []);
-        $this->read('/api/candidate/overview')->assertForbidden()->assertJsonPath('code', 'not_candidate');
+        $this->read('/api/candidate/overview')->assertForbidden()->assertJsonPath('code', 'is_judge');
         $this->read('/api/admin/applications')->assertForbidden();
         $this->navigate('/admin')->assertForbidden();
     }
 
-    public function test_a_judge_who_registers_as_a_participant_loses_the_judge_role(): void
+    public function test_registration_makes_a_candidate_and_only_an_appointment_makes_them_a_judge(): void
+    {
+        // A public registration starts as a candidate.
+        $this->startCsrfSession();
+        $this->browser('POST', '/api/auth/register', [
+            'name' => 'سلمى الحكيم', 'email' => 'salma@example.org', 'password' => 'a-strong-password-1', 'password_confirmation' => 'a-strong-password-1',
+        ])->assertCreated();
+        $salma = User::query()->where('email', 'salma@example.org')->sole();
+        $this->assertTrue(app(CandidateRole::class)->isHeldBy($salma));
+        $this->assertFalse(app(AdminAccess::class)->isJudge((int) $salma->id));
+        // The test helpers sign in with the factory password.
+        DB::table('users')->where('id', $salma->id)->update(['password' => bcrypt('password')]);
+
+        // Her account data, Stage 1 and a Stage 2 draft exist before the appointment.
+        $this->completeStage1($salma);
+        $this->signIn($salma->email);
+        $this->confirm(['title' => 'مسودة سلمى'] + $this->payload(), $this->journeyKey())->assertCreated();
+        $kept = [DB::table('users')->where('id', $salma->id)->first(['name', 'email', 'password']), DB::table('candidate_profiles')->where('user_id', $salma->id)->first(),
+            DB::table('applications')->where('created_by', $salma->id)->first(), DB::table('candidate_nominations')->where('user_id', $salma->id)->first()];
+
+        // The administration's appointment replaces the candidate classification with the judge grant.
+        $this->signInAdmin();
+        $this->createCommittee('creativity')->assertCreated();
+        $this->appoint('creativity', $salma->email, existing: true)->assertCreated();
+        $this->assertFalse(app(CandidateRole::class)->isHeldBy($salma));
+        $this->assertTrue(app(AdminAccess::class)->isJudge((int) $salma->id));
+        $history = DB::table('user_roles')->where('user_id', $salma->id)->where('role_id', app(CandidateRole::class)->roleId())->sole();
+        $this->assertSame([$this->admin->id, true], [(int) $history->revoked_by, $history->revoked_at !== null], 'the candidate grant is revoked by the administrator and kept as history');
+        $event = DB::table('audit_logs')->where('action', 'user_role.revoked')->sole();
+        $this->assertSame([$this->admin->id, $salma->id, $this->cycleId], [(int) $event->actor_user_id, (int) $event->subject_id, (int) $event->cycle_id]);
+        $this->assertEquals($kept, [DB::table('users')->where('id', $salma->id)->first(['name', 'email', 'password']), DB::table('candidate_profiles')->where('user_id', $salma->id)->first(),
+            DB::table('applications')->where('created_by', $salma->id)->first(), DB::table('candidate_nominations')->where('user_id', $salma->id)->first()], 'account data, profile and draft are kept');
+
+        // The judge cannot undo it: no self-conversion, and candidate APIs are refused with a reason.
+        $this->signIn($salma->email);
+        $this->read('/api/user')->assertJsonPath('data.is_judge', true)->assertJsonPath('data.is_candidate', false);
+        $this->browser('POST', '/api/account/participate', ['account_context' => AccountContext::for($salma)])->assertNotFound();
+        $refusal = $this->read('/api/candidate/overview')->assertForbidden()->assertJsonPath('code', 'is_judge');
+        $this->assertStringContainsString('بوابة الحكام', (string) $refusal->json('message'));
+        $this->read('/api/candidate/nomination-details')->assertForbidden()->assertJsonPath('code', 'is_judge');
+        $this->assertTrue(app(AdminAccess::class)->isJudge((int) $salma->id), 'still a judge');
+        $this->assertFalse(app(CandidateRole::class)->isHeldBy($salma));
+        $this->read('/api/judge/projects')->assertOk();
+    }
+
+    public function test_the_separation_migration_revokes_the_candidate_classification_of_current_judges(): void
     {
         $legacy = User::factory()->candidate()->create(['email' => 'legacy@example.org']);
         DB::table('cycle_user_roles')->insert([
             'cycle_id' => $this->cycleId, 'user_id' => $legacy->id, 'role_id' => app(AdminAccess::class)->roleId('judge'),
             'assigned_by' => $this->admin->id, 'starts_at' => now(), 'created_at' => now(), 'updated_at' => now(),
         ]);
+        $candidateOnly = $this->person('only.candidate@example.org');
         $migration = require database_path('migrations/2026_10_29_900004_separate_judge_and_candidate_roles.php');
+
         $migration->up();
         $this->assertFalse(app(CandidateRole::class)->isHeldBy($legacy));
         $this->assertTrue(app(AdminAccess::class)->isJudge((int) $legacy->id));
+        $this->assertTrue(app(CandidateRole::class)->isHeldBy($candidateOnly), 'a candidate who is not a judge keeps the classification');
         $migration->down();
         $this->assertTrue(app(CandidateRole::class)->isHeldBy($legacy));
         $this->assertSame(0, DB::table('audit_logs')->where('action', 'user_role.separated')->count());
-
-        $this->signInAdmin();
-        $this->createCommittee('creativity')->assertCreated();
-        $this->appoint('creativity', $this->candidate->email, existing: true)->assertCreated();
-        $this->signIn($this->candidate->email);
-        $this->browser('POST', '/api/account/participate', ['account_context' => 'stale'])->assertConflict()->assertJsonPath('code', 'account_mismatch');
-        $this->assertTrue(app(AdminAccess::class)->isJudge((int) $this->candidate->id), 'a stale page changes nothing');
-        $this->browser('POST', '/api/account/participate', ['account_context' => AccountContext::for($this->candidate)])->assertOk()
-            ->assertJsonPath('data.is_judge', false)
-            ->assertJsonPath('data.is_candidate', true)
-            ->assertJsonPath('redirect', '/dashboard');
-        $this->assertNotNull(DB::table('committee_members')->where('user_id', $this->candidate->id)->value('left_at'));
-        $this->assertNotNull(DB::table('cycle_user_roles')->where('user_id', $this->candidate->id)->value('revoked_at'));
-        $this->read('/api/judge/projects')->assertForbidden()->assertJsonPath('code', 'not_judge');
-
-        $only = $this->person('only.candidate@example.org');
-        $this->signIn($only->email);
-        $this->browser('POST', '/api/account/participate', ['account_context' => AccountContext::for($only)])->assertConflict()->assertJsonPath('code', 'not_judge');
-        $this->assertTrue(app(CandidateRole::class)->isHeldBy($only));
     }
 
     public function test_submitted_applications_are_listed_filtered_searched_sorted_and_paged(): void
@@ -456,7 +485,7 @@ class AdministrationTest extends TestCase
         $member = (int) $this->appoint('creativity', $judge->email, existing: true)->assertCreated()->json('data.2.committee.members.0.id');
         $this->signIn($judge->email);
         $this->read('/api/user')->assertJsonPath('data.is_judge', true)->assertJsonPath('data.is_candidate', false);
-        $this->send('/api/candidate/submission', ['reviewed_revision' => 1], $ready)->assertForbidden()->assertJsonPath('code', 'not_candidate');
+        $this->send('/api/candidate/submission', ['reviewed_revision' => 1], $ready)->assertForbidden()->assertJsonPath('code', 'is_judge');
         $this->assertSame(1, DB::table('application_versions')->count());
         $this->signInAdmin();
         $this->adminPost("/committees/creativity/members/{$member}/end", [])->assertOk();
