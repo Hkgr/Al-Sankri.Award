@@ -293,8 +293,9 @@ They appear in «التصنيف الإداري» on `/admin/applications/<id>`, 
 
 - **«إرسال إلى اللجنة»:**
   - **Confirmation:** the dialog names the main domain and the destination committee.
+  - **Eligibility:** the application must be one provisioning can judge (`Assignments::judgeable`: not withdrawn or closed), rechecked on the locked row. A withdrawn or closed file answers `409 not_eligible`, keeps its state and stays visible; the page explains why before anyone tries.
   - **Server checks:** the current judging committee of the same cycle and main domain must exist and be approved, and must still be the one confirmed (otherwise `409 committee_missing`, `committee_not_approved` or `committee_changed`, and the application stays pending).
-  - **One transaction:** records the referral and provisions the assignments through `App\Judging\Assignments` (one per current member).
+  - **One transaction:** records the referral and provisions the assignments through `App\Judging\Assignments`, then checks that every current member has an assignment for the current version. If not, everything rolls back (classification and event) and the answer is `409 referral_not_delivered`.
   - **No subcategory routing:** judges are never classified by subcategory.
 - **«استبعاد وأرشفة»:**
   - **Input:** a reason (up to 500 characters) and an explicit confirmation.
@@ -351,18 +352,25 @@ The owner authorized removing the retired work fields together with their stored
 - Stage 1 data;
 - every other audit row and the migration ownership markers.
 
-**Record:** `nomination_fields.purged` rows hold counts and, per version, its id with the old and new hash and whether the old hash matched before the change. They never hold a removed value.
+**Record (interruption-safe):**
+- **Evidence per batch:** every destructive batch writes its own `nomination_fields.purged` evidence row (`kind`, rows `removed`, and for versions their ids with the old and new hash and whether the old hash matched) in the same transaction as the change. A committed batch therefore always has its evidence, and an interrupted run that is repeated keeps the evidence of both runs.
+- **Summary row:** a final `summary` row (that run's counts) is informational only.
+- **No values:** the evidence never holds a removed value.
 
 **Retired columns and tables:**
 - **Kept, empty:** the columns and the two tables stay, to avoid schema disruption.
 - **No writes:** no code writes them; on MariaDB/MySQL, `chk_applications_retired_work` refuses any non-NULL value in the retired columns.
 - **No dropped tables:** `application_locations` belongs to the base schema, so it is kept.
 
-**Rollback:** refused once values were removed. They cannot be recreated, so the database must be restored from the pre-deployment backup instead.
+**Rollback:**
+- **Refused once values were removed:** `down()` decodes every evidence row as JSON, whatever its formatting, and refuses when any batch of any run removed something. The values cannot be recreated, so the database must be restored from the pre-deployment backup instead.
+- **Fresh installation:** nothing was removed, so the rollback stays possible.
 
 ### Deployment and operator notes
 
 1. **Back up the database first** (for example `mariadb-dump --single-transaction --routines --triggers`). The removal in step 2 is permanent: a rollback cannot recreate the values, and is refused.
+   - **Maintenance mode:** run `php artisan down` before migrating and `php artisan up` after the frontend is published, so no request from the previous release (an old page saving Stage 2, for example) can write a retired value while the batches run.
+   - **If the migration is interrupted:** run `php artisan migrate --force` again. The removal resumes where it stopped, and the evidence of the earlier run is kept.
 2. `php artisan migrate --force` runs three migrations:
    - `900001`: classification columns and backfill;
    - `900002`: `applications.review` «المراجعة الأولية لملفات الترشح», linked to `award_admin` with per-row ownership markers;

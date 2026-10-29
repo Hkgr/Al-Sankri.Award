@@ -216,6 +216,59 @@ class NominationSchemaTest extends TestCase
         $this->migrateOnly(self::CANDIDATE_MIGRATIONS);
     }
 
+    public function test_the_review_classification_check_accepts_only_complete_states(): void
+    {
+        $this->ensurePlatformSchema();
+        $this->schemaDb()->beginTransaction();
+        $cycle = $this->cycle();
+        $domain = $this->cycleDomain($cycle);
+        $admin = $this->user();
+        $committee = $this->db('committees')->insertGetId(['cycle_id' => $cycle, 'cycle_domain_id' => $domain, 'type' => 'judging', 'name_ar' => 'لجنة', 'status' => 'approved', 'approved_by' => $admin, 'approved_at' => now()]);
+
+        $draft = $this->application($cycle, $domain);
+        $this->assertNull($this->db('applications')->where('id', $draft)->value('review_status'), 'a draft stays unclassified');
+        $submitted = $this->application($cycle, $domain);
+        $version = $this->db('application_versions')->insertGetId([
+            'application_id' => $submitted, 'version_number' => 1, 'submission_type' => 'initial', 'submitted_by' => $admin,
+            'submitted_at' => now(), 'data_snapshot' => '{}', 'form_snapshot' => '{}', 'content_hash' => hash('sha256', 'snapshot'),
+        ]);
+        $this->db('applications')->where('id', $submitted)->update(['status' => 'submitted', 'first_submitted_at' => now(), 'current_version_id' => $version]);
+        $set = fn (array $review) => $this->db('applications')->where('id', $submitted)->update($review + [
+            'review_status' => null, 'review_source' => null, 'review_decided_by' => null, 'review_decided_at' => null, 'review_reason' => null, 'review_committee_id' => null,
+        ]);
+
+        // Every complete state is accepted.
+        $valid = [
+            'pending' => ['review_status' => 'pending'],
+            'admin referral' => ['review_status' => 'referred', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'legacy referral' => ['review_status' => 'referred', 'review_source' => 'legacy', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'exclusion' => ['review_status' => 'excluded', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_reason' => 'سبب'],
+        ];
+        foreach ($valid as $label => $review) {
+            $this->assertSame(1, $set($review), $label);
+        }
+
+        // Missing sources and incomplete decisions are refused, never let through as UNKNOWN.
+        $invalid = [
+            'referral without a source' => ['review_status' => 'referred', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'referral without a source but with a decider' => ['review_status' => 'referred', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'admin referral without a decider' => ['review_status' => 'referred', 'review_source' => 'admin', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'referral without a time' => ['review_status' => 'referred', 'review_source' => 'legacy', 'review_committee_id' => $committee],
+            'referral without a committee' => ['review_status' => 'referred', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now()],
+            'referral with an unknown source' => ['review_status' => 'referred', 'review_source' => 'other', 'review_decided_at' => now(), 'review_committee_id' => $committee],
+            'exclusion without a source' => ['review_status' => 'excluded', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_reason' => 'سبب'],
+            'exclusion without a reason' => ['review_status' => 'excluded', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now()],
+            'exclusion with an empty reason' => ['review_status' => 'excluded', 'review_source' => 'admin', 'review_decided_by' => $admin, 'review_decided_at' => now(), 'review_reason' => ''],
+            'pending with a decider' => ['review_status' => 'pending', 'review_decided_by' => $admin],
+            'source without a status' => ['review_source' => 'admin'],
+        ];
+        foreach ($invalid as $label => $review) {
+            $this->assertDatabaseRejects('check_failed', fn () => $set($review), $label);
+        }
+        $this->assertSame('excluded', $this->db('applications')->where('id', $submitted)->value('review_status'), 'refused updates changed nothing');
+        $this->assertDatabaseRejects('check_failed', fn () => $this->db('applications')->where('id', $draft)->update(['review_status' => 'pending']), 'a draft cannot be classified');
+    }
+
     private function db(string $table): Builder
     {
         return $this->schemaDb()->table($table);

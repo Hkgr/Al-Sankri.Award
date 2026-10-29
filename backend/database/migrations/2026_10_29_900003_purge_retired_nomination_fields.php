@@ -26,12 +26,22 @@ use Illuminate\Support\Facades\DB;
  *    `nomination_details.confirmed` events about an application; the events
  *    stay.
  *
- * What changed is recorded in audit_logs (nomination_fields.purged): counts,
- * and for each version its id with the old and new hashes, never a removed
- * value. No copy of the removed values is kept anywhere.
+ * Evidence is durable and interruption-safe: every destructive batch writes
+ * its own nomination_fields.purged row (kind, rows removed, and for
+ * versions their ids with the old and new hashes) IN THE SAME TRANSACTION
+ * as the change, so a batch that committed always left its evidence, and an
+ * interrupted run resumed later keeps the evidence of both runs. A final
+ * `summary` row (this run's counts) is informational only. No removed value
+ * is ever recorded, and no copy of one is kept anywhere.
  *
- * The values cannot be recreated: a rollback that would need them is
- * refused. Restore the pre-deployment backup instead.
+ * The values cannot be recreated: down() decodes every evidence row
+ * (structurally, whatever its JSON formatting) and refuses as soon as any
+ * batch removed something. Restore the pre-deployment backup instead. A
+ * fresh installation (nothing removed) can still roll back.
+ *
+ * Run it with the application in maintenance mode (administration.md §10),
+ * so no request from an earlier release can write a retired value while
+ * the batches run.
  */
 return new class extends Migration
 {
@@ -43,6 +53,9 @@ return new class extends Migration
     private const GUARD = 'chk_applications_retired_work';
 
     private const COLUMNS = ['funding_type', 'funder_name', 'funding_amount_usd', 'has_partnerships', 'implementation_started_on', 'implementation_ended_on', 'implementation_status'];
+
+    /** What a destructive batch records (its evidence kinds). */
+    private const KINDS = ['applications', 'locations', 'partnerships', 'versions', 'form_snapshots', 'audit_rows'];
 
     /** The retired keys of a snapshot's nomination_details, exactly. */
     private const SNAPSHOT_KEYS = ['implementation', 'locations', 'funding', 'partnerships'];
@@ -62,39 +75,51 @@ return new class extends Migration
 
     /**
      * Reverse the migrations: only the guard can go. Refused, before any
-     * change, when this migration removed stored values, which no rollback
-     * can recreate; restore the pre-deployment backup instead.
+     * change, when any run of this migration (completed or interrupted)
+     * removed stored values, which no rollback can recreate; restore the
+     * pre-deployment backup instead.
      */
     public function down(): void
     {
-        // Every run of the removal counts (each records a summary).
-        $removed = DB::table('audit_logs')->where('action', 'nomination_fields.purged')
-            ->where('after_data', 'like', '%'.self::MIGRATION.'%')->where('after_data', 'like', '%"summary":true%')
-            ->pluck('after_data')
-            ->sum(fn (string $summary): int => array_sum(array_map('intval', array_intersect_key(
-                (array) json_decode($summary, true),
-                array_flip(['applications', 'locations', 'partnerships', 'versions', 'form_snapshots', 'audit_rows']),
-            ))));
-        if ($removed > 0) {
+        if (array_sum($this->evidence()) > 0) {
             throw new RuntimeException('Cannot roll back: this migration permanently removed retired nomination values, which a rollback cannot recreate. Restore the backup taken before deployment instead. Nothing was changed.');
         }
 
         if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
             DB::statement('ALTER TABLE `applications` DROP CONSTRAINT `'.self::GUARD.'`');
         }
-        DB::table('audit_logs')->where('action', 'nomination_fields.purged')->where('after_data', 'like', '%'.self::MIGRATION.'%')->delete();
+        DB::table('audit_logs')->whereIn('id', array_keys($this->records()))->delete();
+    }
+
+    /**
+     * Rows removed or redacted so far, per kind, over every run: the sum of
+     * the evidence each destructive batch committed with its change.
+     *
+     * @return array<string, int>
+     */
+    public function evidence(): array
+    {
+        $totals = array_fill_keys(self::KINDS, 0);
+        foreach ($this->records() as $record) {
+            if (in_array($record['kind'] ?? null, self::KINDS, true)) {
+                $totals[$record['kind']] += (int) ($record['removed'] ?? 0);
+            }
+        }
+
+        return $totals;
     }
 
     /**
      * Removes the stored values, in batches, and records what changed.
-     * Idempotent: what is already removed is not touched again. Public so
-     * the removal can be exercised on its own.
+     * Idempotent: what is already removed is not touched again, so an
+     * interrupted run can simply be repeated. Public so the removal can be
+     * exercised on its own. Returns this run's counts.
      *
      * @return array<string, int>
      */
     public function purge(): array
     {
-        $counts = ['applications' => 0, 'locations' => 0, 'partnerships' => 0, 'versions' => 0, 'form_snapshots' => 0, 'audit_rows' => 0, 'unverified_old_hashes' => 0];
+        $counts = array_fill_keys(self::KINDS, 0) + ['unverified_old_hashes' => 0];
 
         do {
             $ids = DB::table('applications')
@@ -105,24 +130,31 @@ return new class extends Migration
                 })
                 ->orderBy('id')->limit(self::BATCH)->pluck('id')->all();
             if ($ids !== []) {
-                DB::transaction(fn () => DB::table('applications')->whereIn('id', $ids)->update(array_fill_keys(self::COLUMNS, null)));
+                DB::transaction(function () use ($ids): void {
+                    DB::table('applications')->whereIn('id', $ids)->update(array_fill_keys(self::COLUMNS, null));
+                    $this->record(['kind' => 'applications', 'removed' => count($ids)]);
+                });
                 $counts['applications'] += count($ids);
             }
         } while ($ids !== []);
 
-        foreach (['application_locations' => 'locations', 'application_partnerships' => 'partnerships'] as $table => $key) {
+        foreach (['application_locations' => 'locations', 'application_partnerships' => 'partnerships'] as $table => $kind) {
             do {
                 $ids = DB::table($table)->orderBy('id')->limit(self::BATCH)->pluck('id')->all();
                 if ($ids !== []) {
-                    DB::transaction(fn () => DB::table($table)->whereIn('id', $ids)->delete());
-                    $counts[$key] += count($ids);
+                    DB::transaction(function () use ($table, $kind, $ids): void {
+                        DB::table($table)->whereIn('id', $ids)->delete();
+                        $this->record(['kind' => $kind, 'removed' => count($ids)]);
+                    });
+                    $counts[$kind] += count($ids);
                 }
             } while ($ids !== []);
         }
 
         DB::table('application_versions')->orderBy('id')->chunkById(self::BATCH, function ($versions) use (&$counts): void {
-            $changed = [];
-            DB::transaction(function () use ($versions, &$changed, &$counts): void {
+            DB::transaction(function () use ($versions, &$counts): void {
+                $changed = [];
+                $forms = 0;
                 foreach ($versions as $version) {
                     $data = json_decode((string) $version->data_snapshot, true);
                     $form = json_decode((string) $version->form_snapshot, true);
@@ -140,26 +172,31 @@ return new class extends Migration
                         $new = CanonicalJson::hash($data);
                         $update += ['data_snapshot' => json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'content_hash' => $new];
                         $changed[] = ['application_version_id' => (int) $version->id, 'old_hash' => $old, 'new_hash' => $new, 'old_hash_verified' => $verified];
-                        $counts['versions']++;
                         $counts['unverified_old_hashes'] += $verified ? 0 : 1;
                     }
                     if ($formChanged) {
                         $update['form_snapshot'] = json_encode($form, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-                        $counts['form_snapshots']++;
+                        $forms++;
                     }
                     DB::table('application_versions')->where('id', $version->id)->update($update);
                 }
 
                 if ($changed !== []) {
-                    $this->record(['versions' => $changed]);
+                    $this->record(['kind' => 'versions', 'removed' => count($changed), 'versions' => $changed]);
+                    $counts['versions'] += count($changed);
+                }
+                if ($forms > 0) {
+                    $this->record(['kind' => 'form_snapshots', 'removed' => $forms]);
+                    $counts['form_snapshots'] += $forms;
                 }
             });
         });
 
         DB::table('audit_logs')->where('action', 'nomination_details.confirmed')->where('subject_type', 'application')
-            ->where('after_data', 'like', '%"funding_type"%')->orderBy('id')
+            ->where('after_data', 'like', '%funding_type%')->orderBy('id')
             ->chunkById(self::BATCH, function ($rows) use (&$counts): void {
                 DB::transaction(function () use ($rows, &$counts): void {
+                    $redacted = 0;
                     foreach ($rows as $row) {
                         $payload = json_decode((string) $row->after_data, true);
                         if (! is_array($payload) || ! array_key_exists('funding_type', $payload)) {
@@ -167,12 +204,16 @@ return new class extends Migration
                         }
                         unset($payload['funding_type']);
                         DB::table('audit_logs')->where('id', $row->id)->update(['after_data' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]);
-                        $counts['audit_rows']++;
+                        $redacted++;
+                    }
+                    if ($redacted > 0) {
+                        $this->record(['kind' => 'audit_rows', 'removed' => $redacted]);
+                        $counts['audit_rows'] += $redacted;
                     }
                 });
             });
 
-        $this->record($counts + ['summary' => true]);
+        $this->record(['kind' => 'summary'] + $counts);
 
         return $counts;
     }
@@ -194,6 +235,24 @@ return new class extends Migration
         }
 
         return [$snapshot, $present !== []];
+    }
+
+    /**
+     * This migration's evidence rows, decoded: id => data.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function records(): array
+    {
+        $records = [];
+        foreach (DB::table('audit_logs')->where('action', 'nomination_fields.purged')->orderBy('id')->get(['id', 'after_data']) as $row) {
+            $data = json_decode((string) $row->after_data, true);
+            if (is_array($data) && ($data['migration'] ?? null) === self::MIGRATION) {
+                $records[(int) $row->id] = $data;
+            }
+        }
+
+        return $records;
     }
 
     /**

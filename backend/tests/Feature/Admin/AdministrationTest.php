@@ -7,6 +7,7 @@ use App\Admin\AuditTrail;
 use App\Admin\SubmittedApplications;
 use App\Auth\CandidateRole;
 use App\Candidates\AccountContext;
+use App\Judging\Assignments;
 use App\Models\ApplicantIndividualDetail;
 use App\Models\User;
 use App\Reports\ApplicationCard;
@@ -956,6 +957,118 @@ class AdministrationTest extends TestCase
             ->assertJsonPath('data.summary.content_hash', $after->content_hash);
 
         // A rollback that would need the removed values is refused.
+        try {
+            $migration->down();
+            $this->fail('the rollback should be refused');
+        } catch (RuntimeException $refusal) {
+            $this->assertStringContainsString('cannot recreate', $refusal->getMessage());
+        }
+    }
+
+    public function test_an_interrupted_purge_keeps_its_evidence_and_still_refuses_rollback_after_resuming(): void
+    {
+        $submitted = $this->submitApplication($this->candidate);
+        DB::table('application_locations')->insert(['application_id' => $submitted['id'], 'country_code' => 'SY', 'governorate' => 'SY-DI', 'locality' => 'دمشق القديمة']);
+        foreach ([1, 2] as $position) {
+            DB::table('application_partnerships')->insert(['application_id' => $submitted['id'], 'position' => $position, 'partner_name' => "جهة {$position}"]);
+        }
+        $version = DB::table('application_versions')->sole();
+        $legacy = json_decode((string) $version->data_snapshot, true);
+        $legacy['nomination_details']['funding'] = ['type' => 'self_funded', 'funder_name' => null, 'amount_usd' => '10.00'];
+        DB::table('application_versions')->where('id', $version->id)->update(['data_snapshot' => json_encode($legacy, JSON_UNESCAPED_UNICODE), 'content_hash' => CanonicalJson::hash($legacy)]);
+        $migration = require database_path('migrations/2026_10_29_900003_purge_retired_nomination_fields.php');
+
+        // The run stops while deleting partnerships, after the places batch committed.
+        $interrupt = true;
+        DB::listen(function ($query) use (&$interrupt): void {
+            if ($interrupt && str_starts_with(strtolower(ltrim($query->sql)), 'delete from') && str_contains($query->sql, 'application_partnerships')) {
+                throw new RuntimeException('simulated interruption');
+            }
+        });
+        try {
+            $migration->purge();
+            $this->fail('the simulated interruption should surface');
+        } catch (RuntimeException $interruption) {
+            $this->assertSame('simulated interruption', $interruption->getMessage());
+        }
+
+        // The committed batch left its evidence; the interrupted one left neither change nor evidence.
+        $this->assertSame([0, 2], [DB::table('application_locations')->count(), DB::table('application_partnerships')->count()]);
+        $this->assertSame(['locations' => 1, 'partnerships' => 0, 'versions' => 0], array_intersect_key($migration->evidence(), array_flip(['locations', 'partnerships', 'versions'])));
+        $this->assertRollbackRefused($migration);
+
+        // Resumed: the rest is removed, the first run's evidence stays, nothing is counted twice.
+        $interrupt = false;
+        $resumed = $migration->purge();
+        $this->assertSame([0, 2, 1], [$resumed['locations'], $resumed['partnerships'], $resumed['versions']], 'this run removed only what was left');
+        $this->assertSame(['locations' => 1, 'partnerships' => 2, 'versions' => 1], array_intersect_key($migration->evidence(), array_flip(['locations', 'partnerships', 'versions'])));
+        $this->assertSame([0, 0], [DB::table('application_locations')->count(), DB::table('application_partnerships')->count()]);
+        $this->assertSame(0, array_sum(array_intersect_key($migration->purge(), array_flip(['locations', 'partnerships', 'versions', 'audit_rows']))), 'a third run finds nothing');
+        $this->assertSame(['locations' => 1, 'partnerships' => 2, 'versions' => 1], array_intersect_key($migration->evidence(), array_flip(['locations', 'partnerships', 'versions'])));
+        $this->assertRollbackRefused($migration);
+        foreach (DB::table('audit_logs')->where('action', 'nomination_fields.purged')->pluck('after_data') as $data) {
+            $this->assertStringNotContainsString('جهة', (string) $data, 'evidence never holds a removed value');
+        }
+    }
+
+    public function test_rollback_refusal_reads_the_evidence_structurally_whatever_its_json_formatting(): void
+    {
+        $migration = require database_path('migrations/2026_10_29_900003_purge_retired_nomination_fields.php');
+        $this->assertSame(0, array_sum($migration->evidence()), 'a fresh installation removed nothing, so it may roll back');
+        $evidence = ['kind' => 'partnerships', 'removed' => 3, 'migration' => '2026_10_29_900003_purge_retired_nomination_fields'];
+
+        foreach (['compact' => json_encode($evidence), 'formatted' => json_encode($evidence, JSON_PRETTY_PRINT), 'spaced' => '{"kind": "partnerships" , "removed" : 3, "migration": "2026_10_29_900003_purge_retired_nomination_fields"}'] as $label => $json) {
+            $row = DB::table('audit_logs')->insertGetId(['action' => 'nomination_fields.purged', 'after_data' => $json, 'occurred_at' => now()->format('Y-m-d H:i:s.u')]);
+            $this->assertSame(3, $migration->evidence()['partnerships'], $label);
+            $this->assertRollbackRefused($migration);
+            DB::table('audit_logs')->where('id', $row)->delete();
+        }
+
+        // Another migration's rows and a summary are not removal evidence.
+        DB::table('audit_logs')->insert(['action' => 'nomination_fields.purged', 'after_data' => json_encode(['kind' => 'partnerships', 'removed' => 5, 'migration' => 'other']), 'occurred_at' => now()]);
+        DB::table('audit_logs')->insert(['action' => 'nomination_fields.purged', 'after_data' => json_encode(['kind' => 'summary', 'partnerships' => 9, 'migration' => '2026_10_29_900003_purge_retired_nomination_fields']), 'occurred_at' => now()]);
+        $this->assertSame(0, array_sum($migration->evidence()));
+    }
+
+    public function test_withdrawn_or_closed_applications_are_not_referred_and_an_undelivered_referral_records_nothing(): void
+    {
+        [, $committee] = $this->approvedCommittee('creativity', ['w1', 'w2', 'w3']);
+        $withdrawn = $this->submitApplication($this->candidate);
+        $closed = $this->submitApplication($this->person('omar@example.org'), ['title' => 'مغلق']);
+        $ordinary = $this->submitApplication($this->person('rana@example.org'), ['title' => 'عادي']);
+        DB::table('applications')->where('id', $withdrawn['id'])->update(['status' => 'withdrawn', 'withdrawn_at' => now(), 'withdrawal_reason' => 'طلب المترشح']);
+        DB::table('applications')->where('id', $closed['id'])->update(['status' => 'closed']);
+        $this->signInAdmin();
+
+        foreach ([$withdrawn, $closed] as $application) {
+            $before = DB::table('applications')->where('id', $application['id'])->first();
+            $this->read("/api/admin/applications/{$application['id']}")->assertOk()
+                ->assertJsonPath('data.review.status', 'pending')->assertJsonPath('data.review.target.refusal', 'not_eligible');
+            $this->review($application['id'], 'refer', ['committee_id' => $committee])->assertConflict()
+                ->assertJsonPath('code', 'not_eligible')->assertJsonPath('data.status', 'pending');
+            $this->assertEquals($before, DB::table('applications')->where('id', $application['id'])->first(), 'state kept as it was');
+        }
+        $this->assertSame(3, $this->read("/api/admin/applications?cycle={$this->cycleId}")->json('meta.total'), 'still visible');
+
+        // Provisioning that delivers nothing: the referral rolls back with its event.
+        $this->app->instance(Assignments::class, new class extends Assignments
+        {
+            public function provisionReferral(int $applicationId, int $assignedBy): void {}
+        });
+        $this->review($ordinary['id'], 'refer', ['committee_id' => $committee])->assertConflict()->assertJsonPath('code', 'referral_not_delivered')->assertJsonPath('data.status', 'pending');
+        $this->assertSame([0, 0], [DB::table('judging_assignments')->count(), DB::table('audit_logs')->where('action', 'application.referred')->count()]);
+        $this->assertSame(['pending', 'pending', 'pending'], DB::table('applications')->orderBy('id')->pluck('review_status')->all());
+
+        // The ordinary referral, once provisioning works again: delivered, then idempotent.
+        $this->app->forgetInstance(Assignments::class);
+        $this->review($ordinary['id'], 'refer', ['committee_id' => $committee])->assertOk()->assertJsonPath('code', 'referred');
+        $this->review($ordinary['id'], 'refer', ['committee_id' => $committee])->assertOk()->assertJsonPath('code', 'unchanged');
+        $this->assertSame(3, DB::table('judging_assignments')->where('application_id', $ordinary['id'])->where('committee_id', $committee)->count());
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'application.referred')->count());
+    }
+
+    private function assertRollbackRefused(object $migration): void
+    {
         try {
             $migration->down();
             $this->fail('the rollback should be refused');

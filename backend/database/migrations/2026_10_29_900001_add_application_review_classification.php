@@ -65,13 +65,16 @@ return new class extends Migration
 
         $this->addCheck('chk_applications_review_status', "review_status IS NULL OR review_status IN ('pending', 'referred', 'excluded')");
         $this->addCheck('chk_applications_review_submitted', 'review_status IS NULL OR current_version_id IS NOT NULL');
+        // Wrapped in IS TRUE: a comparison with a NULL column (for example a
+        // referral without review_source) makes a branch UNKNOWN, and a CHECK
+        // accepts UNKNOWN; only an explicitly true combination passes.
         $this->addCheck('chk_applications_review_consistent',
-            '(review_status IS NULL AND review_source IS NULL AND review_decided_by IS NULL AND review_decided_at IS NULL AND review_reason IS NULL AND review_committee_id IS NULL)'
+            '((review_status IS NULL AND review_source IS NULL AND review_decided_by IS NULL AND review_decided_at IS NULL AND review_reason IS NULL AND review_committee_id IS NULL)'
             ." OR (review_status = 'pending' AND review_source IS NULL AND review_decided_by IS NULL AND review_decided_at IS NULL AND review_reason IS NULL AND review_committee_id IS NULL)"
             ." OR (review_status = 'referred' AND review_committee_id IS NOT NULL AND review_decided_at IS NOT NULL AND review_reason IS NULL"
             ." AND ((review_source = 'admin' AND review_decided_by IS NOT NULL) OR (review_source = 'legacy' AND review_decided_by IS NULL)))"
             ." OR (review_status = 'excluded' AND review_source = 'admin' AND review_decided_by IS NOT NULL AND review_decided_at IS NOT NULL"
-            ." AND review_reason IS NOT NULL AND review_reason <> '' AND review_committee_id IS NULL)");
+            ." AND review_reason IS NOT NULL AND review_reason <> '' AND review_committee_id IS NULL)) IS TRUE");
     }
 
     /**

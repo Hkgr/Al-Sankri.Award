@@ -61,6 +61,16 @@ class ApplicationReviewsController extends Controller
                 'code' => $outcome,
                 'message' => 'لجنة تحكيم هذا المجال لم تُعتمد بعد. اعتمدها بثلاثة حكام أو خمسة في «لجان الحكام» أولاً؛ بقي الملف «لم يُصنّف بعد».',
             ], 409),
+            ApplicationReviews::NOT_ELIGIBLE => response()->json([
+                'code' => $outcome,
+                'message' => 'هذا الملف مسحوب أو مغلق، فلا يُرسل إلى التحكيم. بقي كما هو، ويبقى ظاهراً للإدارة ولصاحبه.',
+                'data' => $state(),
+            ], 409),
+            ApplicationReviews::NOT_DELIVERED => response()->json([
+                'code' => $outcome,
+                'message' => 'تعذّر إنشاء إسنادات التحكيم لكل أعضاء اللجنة، فلم يُرسل الملف ولم يُسجَّل شيء. بقي «لم يُصنّف بعد»؛ تحقق من أعضاء اللجنة ثم أعد المحاولة.',
+                'data' => $state(),
+            ], 409),
             ApplicationReviews::COMMITTEE_CHANGED => response()->json([
                 'code' => $outcome,
                 'message' => 'تغيّرت لجنة التحكيم منذ فتحت الصفحة، ولم يُرسل الملف. أعد تحميل الصفحة وتحقق من اللجنة قبل التأكيد.',

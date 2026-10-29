@@ -36,11 +36,12 @@ export const REVIEW_LABELS: Record<ReviewStatus, string> = {
   excluded: 'مستبعد — مؤرشف',
 }
 
-export type ReviewRefusal = 'committee_missing' | 'committee_not_approved'
+export type ReviewRefusal = 'committee_missing' | 'committee_not_approved' | 'not_eligible'
 
 export const REVIEW_REFUSALS: Record<ReviewRefusal, string> = {
   committee_missing: 'لا توجد لجنة تحكيم لهذا المجال الرئيسي في دورة الملف. أنشئها واعتمدها في «لجان الحكام» أولاً.',
   committee_not_approved: 'لجنة تحكيم هذا المجال لم تُعتمد بعد. اعتمدها بثلاثة حكام أو خمسة في «لجان الحكام» أولاً.',
+  not_eligible: 'هذا الملف مسحوب أو مغلق، فلا يُرسل إلى التحكيم. يبقى ظاهراً للإدارة ولصاحبه كما هو.',
 }
 
 export type ApplicationReview = {

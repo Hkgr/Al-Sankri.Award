@@ -24,6 +24,35 @@ class Assignments
 {
     public const CRITERION = 'overall_score';
 
+    /** Workflow statuses that are never judged, whatever the classification. */
+    public const UNJUDGED_STATUSES = [Application::STATUS_DRAFT, 'withdrawn', 'closed'];
+
+    /**
+     * Whether an application can be judged at all: it has a submitted
+     * version and is not a draft, withdrawn or closed. The one rule shared
+     * by provisioning and by the referral that precedes it.
+     */
+    public static function judgeable(object $application): bool
+    {
+        return $application->current_version_id !== null && ! in_array($application->status, self::UNJUDGED_STATUSES, true);
+    }
+
+    /**
+     * Whether every current member of the committee has an assignment for
+     * the application's current version (round 1).
+     */
+    public function delivered(int $applicationId, int $committeeId): bool
+    {
+        $version = DB::table('applications')->where('id', $applicationId)->value('current_version_id');
+        $members = DB::table('committee_members')->where('committee_id', $committeeId)->whereNull('left_at')->pluck('id');
+        if ($version === null || $members->isEmpty()) {
+            return false;
+        }
+
+        return DB::table('judging_assignments')->where('application_version_id', $version)->where('committee_id', $committeeId)
+            ->where('round_number', 1)->whereIn('committee_member_id', $members)->distinct()->count('committee_member_id') === $members->count();
+    }
+
     /**
      * The committee was just approved (its row is already locked).
      */
@@ -68,7 +97,7 @@ class Assignments
         $applications = DB::table('applications')
             ->where('cycle_domain_id', $committee->cycle_domain_id)
             ->whereNotNull('current_version_id')
-            ->whereNotIn('status', [Application::STATUS_DRAFT, 'withdrawn', 'closed'])
+            ->whereNotIn('status', self::UNJUDGED_STATUSES)
             // The administrative referral gate: referred to this committee only.
             ->where('review_status', Application::REVIEW_REFERRED)
             ->where('review_committee_id', $committee->id)
