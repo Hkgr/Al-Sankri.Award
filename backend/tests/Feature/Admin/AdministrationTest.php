@@ -121,10 +121,11 @@ class AdministrationTest extends TestCase
         $this->signedIn = $this->admin;
         $this->read('/api/user')->assertJsonPath('data.admin_permissions', [
             AdminAccess::REVIEW_APPLICATIONS, AdminAccess::VIEW_APPLICATIONS, AdminAccess::VIEW_AUDIT, AdminAccess::MANAGE_COMMITTEES,
-            AdminAccess::VIEW_SYSTEM_LOGS, AdminAccess::EXPORT_REPORTS, AdminAccess::VIEW_USERS,
+            AdminAccess::VIEW_SYSTEM_LOGS, AdminAccess::EXPORT_REPORTS, AdminAccess::MANAGE_SCHEDULE, AdminAccess::VIEW_USERS,
         ]);
         $this->navigate('/admin/applications')->assertOk();
         $this->navigate('/admin/applications/12')->assertOk();
+        $this->navigate('/admin/schedule')->assertOk();
         $this->navigate('/admin/settings')->assertNotFound();
         $this->navigate('/admin/applications/abc')->assertNotFound();
         $this->read('/api/admin/context')->assertOk()->assertJsonPath('data.default_cycle_id', $this->cycleId)
@@ -147,6 +148,40 @@ class AdministrationTest extends TestCase
         $this->read('/api/candidate/overview')->assertForbidden()->assertJsonPath('code', 'is_judge');
         $this->read('/api/admin/applications')->assertForbidden();
         $this->navigate('/admin')->assertForbidden();
+    }
+
+    public function test_schedule_windows_are_edited_for_the_selected_cycle(): void
+    {
+        $this->signInAdmin();
+        $this->navigate('/admin/schedule')->assertOk();
+        $this->read("/api/admin/cycles/{$this->cycleId}/schedule")->assertOk()
+            ->assertJsonPath('data.cycle.id', $this->cycleId)
+            ->assertJsonPath('data.nomination.code', 'nomination_details')
+            ->assertJsonPath('data.judging.code', 'judging')
+            ->assertJsonPath('data.judging.open', true);
+
+        $this->browser('POST', "/api/admin/cycles/{$this->cycleId}/schedule", [
+            'account_context' => AccountContext::for($this->admin),
+            'nomination_opens_on' => '2026-10-29',
+            'nomination_closes_on' => '2026-11-15',
+            'judging_opens_on' => '2026-11-16',
+            'judging_closes_on' => '2026-11-25',
+        ])->assertOk()
+            ->assertJsonPath('data.nomination.opens_on', '2026-10-29')
+            ->assertJsonPath('data.nomination.closes_on', '2026-11-15')
+            ->assertJsonPath('data.judging.opens_on', '2026-11-16')
+            ->assertJsonPath('data.judging.closes_on', '2026-11-25');
+
+        $this->browser('POST', "/api/admin/cycles/{$this->cycleId}/schedule", [
+            'account_context' => AccountContext::for($this->admin),
+            'nomination_opens_on' => '2026-10-29',
+            'nomination_closes_on' => '2026-11-15',
+            'judging_opens_on' => '2026-11-10',
+            'judging_closes_on' => '2026-11-25',
+        ])->assertUnprocessable()->assertJsonPath('code', 'judging_before_nomination');
+
+        $this->signIn($this->candidate->email);
+        $this->read("/api/admin/cycles/{$this->cycleId}/schedule")->assertForbidden();
     }
 
     public function test_registration_makes_a_candidate_and_only_an_appointment_makes_them_a_judge(): void

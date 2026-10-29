@@ -15,13 +15,13 @@ import './admin.css'
 
 const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري'
 
-/** In this exact order; «المواعيد» is not available yet. */
+/** In this exact order. */
 const NAV_ITEMS: { href: string; label: string; soon?: boolean }[] = [
   { href: '/admin', label: 'الرئيسية' },
   { href: '/admin/users', label: 'المستخدمون' },
   { href: '/admin/applications', label: 'ملفات الترشح' },
   { href: '/admin/committees', label: 'لجان الحكام' },
-  { href: '/admin/schedule', label: 'المواعيد', soon: true },
+  { href: '/admin/schedule', label: 'المواعيد' },
   { href: '/admin/log', label: 'السجل' },
 ]
 

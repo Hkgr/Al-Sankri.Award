@@ -33,9 +33,10 @@ use Throwable;
  * - --open-domains opens the approved domains for applications;
  * - --publish-cycle publishes a draft cycle;
  * - --judging-opens-at / --judging-closes-at record the announced judging
- *   period as the cycle's `judging` stage, for the public schedule only. It
- *   stays `planned`: nothing reads it to refer files, approve committees or
- *   grant any judging permission.
+ *   period on the cycle's shared `judging` stage. New stages are `planned`;
+ *   existing status and activation metadata are preserved. The public
+ *   schedule only reads it; the administration's existing judging gate
+ *   continues to enforce enabled stages and their configured windows.
  *
  * Changes are attributed to --actor (an existing account) in audit_logs.
  * --dry-run performs everything inside a transaction and rolls it back.
@@ -52,8 +53,8 @@ use Throwable;
     {--country= : Implementation country of the cycle (ISO code; only SY is supported)}
     {--opens-at= : Stage opening, "Y-m-d H:i" in the cycle timezone}
     {--closes-at= : Stage closing, "Y-m-d H:i" in the cycle timezone}
-    {--judging-opens-at= : Start of the announced judging period (display only), "Y-m-d H:i" in the cycle timezone}
-    {--judging-closes-at= : Exclusive end of the announced judging period (display only), "Y-m-d H:i" in the cycle timezone}
+    {--judging-opens-at= : Start of the judging period (preserves stage status), "Y-m-d H:i" in the cycle timezone}
+    {--judging-closes-at= : Exclusive end of the judging period (preserves stage status), "Y-m-d H:i" in the cycle timezone}
     {--open-domains : Open the approved domains of this cycle for applications}
     {--enable : Enable the nomination_details stage}
     {--close : Close the nomination_details stage}
@@ -292,8 +293,8 @@ class SetUpNominationStage extends Command
     }
 
     /**
-     * The announced judging period (public schedule only), created or
-     * changed when either option is given; never enabled.
+     * The shared judging window, changed when either option is given.
+     * New stages are planned; existing stage status is never changed here.
      */
     private function judgingPeriod(object $cycle, User $actor): void
     {

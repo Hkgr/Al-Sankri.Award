@@ -13,6 +13,23 @@ export type AdminDomain = { code: DomainCode; name: string; subcategories: Admin
 export type AdminCycle = { id: number; code: string; name: string; year: number; status: string; domains: AdminDomain[] }
 export type AdminContext = { cycles: AdminCycle[]; default_cycle_id: number | null }
 
+export type ScheduleWindow = {
+  code: string
+  name: string
+  status: string | null
+  open: boolean
+  opens_at: string | null
+  closes_at: string | null
+  opens_on: string | null
+  closes_on: string | null
+}
+
+export type CycleSchedule = {
+  cycle: { id: number; code: string; name: string; timezone: string }
+  nomination: ScheduleWindow
+  judging: ScheduleWindow
+}
+
 export type DomainCode = 'culture_and_arts' | 'heritage' | 'creativity'
 
 export type ApplicationStatus = 'submitted' | 'completion_requested' | 'eligible' | 'ineligible' | 'in_judging' | 'withdrawn' | 'closed'

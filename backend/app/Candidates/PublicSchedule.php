@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\DB;
  *   and cutoff that Stage 2, Stage 3 and final submission enforce. Open
  *   applications also require NominationCycles::current(), including the
  *   configured geography, domain options and unambiguous cycle selection.
- * - The judging period is the cycle's optional `judging` stage, an
- *   informational window (always `planned`; the judge portal never reads it).
+ * - The judging period is the cycle's optional `judging` stage, shared with
+ *   the administration schedule. This reader never changes its status or
+ *   the judge portal's existing calendar gate.
  *
  * The cycle shown is the published one available for nomination now;
  * otherwise the published cycle with the latest configured nomination stage
@@ -53,6 +54,9 @@ class PublicSchedule
         }
         $available = $availability['cycle'];
         $cycle = $available === null ? $candidates->first() : $candidates->firstWhere('id', $available->id);
+        if ($cycle === null) {
+            return $empty;
+        }
 
         $judging = DB::table('cycle_stages')->where('cycle_id', $cycle->id)->where('code', self::JUDGING_STAGE)
             ->whereNotIn('status', ['cancelled'])->first(['opens_at', 'closes_at']);

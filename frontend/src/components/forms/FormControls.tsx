@@ -19,7 +19,7 @@ type FieldProps = {
   required?: boolean
   /** Marks the field «(اختياري)»; required fields show «(مطلوب)». */
   optional?: boolean
-  type?: 'text' | 'email' | 'password' | 'url' | 'tel'
+  type?: 'text' | 'email' | 'password' | 'url' | 'tel' | 'date'
   autoComplete: string
   inputRef?: Ref<HTMLInputElement>
   readOnly?: boolean

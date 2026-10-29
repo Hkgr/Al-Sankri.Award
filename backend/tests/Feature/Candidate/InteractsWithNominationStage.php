@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Candidate;
 
+use App\Admin\CycleSchedule;
 use App\Candidates\AccountContext;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,9 @@ trait InteractsWithNominationStage
             '--create-cycle' => true, '--name' => "الدورة {$code}", '--award-name' => 'جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع',
             '--year' => '2026', '--timezone' => 'Asia/Damascus', '--country' => 'SY', '--open-domains' => true, '--enable' => true, '--publish-cycle' => true,
         ]);
+        $cycleId = (int) DB::table('award_cycles')->where('code', $code)->value('id');
+        // Tests score without a calendar window: an enabled judging stage with no dates stays open.
+        app(CycleSchedule::class)->ensureJudgingStage($cycleId, $this->operator);
     }
 
     /**

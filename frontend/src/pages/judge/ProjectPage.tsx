@@ -190,6 +190,10 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
             {project.evaluation.notes && <p>الملاحظات: {project.evaluation.notes}</p>}
             {project.evaluation.recommendations && <p>التوصيات: {project.evaluation.recommendations}</p>}
           </FormAlert>
+        ) : !project.judging_open ? (
+          <FormAlert tone="info">
+            <p>فترة التحكيم غير مفتوحة الآن، فلا تُرسل العلامة في هذا الوقت.</p>
+          </FormAlert>
         ) : (
           <form onSubmit={(event) => void onSubmit(event)} noValidate>
             {formError && (

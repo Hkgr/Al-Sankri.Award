@@ -38,6 +38,7 @@ export type AdminPermission =
   | 'reports.export'
   | 'audit.view'
   | 'logs.view_system'
+  | 'schedules.manage'
 
 /**
  * Where a signed-in account belongs: the administration dashboard, the

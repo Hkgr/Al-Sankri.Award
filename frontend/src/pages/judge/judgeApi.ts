@@ -20,6 +20,7 @@ export type JudgeProjectRow = {
   title: string
   domain: { code: DomainCode; name: string }
   subcategory: { code: string; name: string } | null
+  judging_open: boolean
   evaluation: Pick<JudgeEvaluation, 'status' | 'score' | 'excluded'>
 }
 
@@ -37,6 +38,7 @@ export type JudgeProject = {
   }
   nomination_details: NominationDetails | null
   documentation: { confirmed_at: string | null; attachments: Attachment[]; links: DocumentationLink[] }
+  judging_open: boolean
   evaluation: JudgeEvaluation
 }
 

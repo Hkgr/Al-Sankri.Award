@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ApplicationsController;
 use App\Http\Controllers\Admin\CommitteesController;
 use App\Http\Controllers\Admin\ExportsController;
 use App\Http\Controllers\Admin\LogController;
+use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\AuthOptionsController;
@@ -180,5 +181,11 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admi
             Route::post('committees/{domain}/members/{member}/end', [CommitteesController::class, 'end'])->whereNumber('member');
             Route::post('committees/{domain}/members/{member}/setup-link', [CommitteesController::class, 'setupLink'])->whereNumber('member');
         });
+    });
+
+    // «المواعيد»: registration and judging windows of one cycle.
+    Route::middleware('admin:'.AdminAccess::MANAGE_SCHEDULE)->prefix('cycles/{cycle}')->whereNumber('cycle')->group(function () {
+        Route::get('schedule', [ScheduleController::class, 'show']);
+        Route::post('schedule', [ScheduleController::class, 'update'])->middleware(['account.context', 'throttle:admin-writes']);
     });
 });

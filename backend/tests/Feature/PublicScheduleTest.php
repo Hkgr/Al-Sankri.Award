@@ -2,23 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Admin\CycleSchedule;
 use App\Candidates\NominationCycles;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Tests\Feature\Candidate\InteractsWithNominationStage;
 use Tests\TestCase;
 
 /**
  * The public schedule behind the homepage countdown: read from the cycle's
  * `nomination_details` stage (the submission cutoff) and its display-only
- * `judging` period, configured with nomination:setup.
+ * `judging` period, configured with nomination:setup or administration.
  */
 class PublicScheduleTest extends TestCase
 {
-    use InteractsWithNominationStage;
     use RefreshDatabase;
+
+    private User $operator;
 
     protected function setUp(): void
     {
@@ -109,5 +110,50 @@ class PublicScheduleTest extends TestCase
         ]);
         $this->assertEquals($stages, DB::table('cycle_stages')->get()->toArray());
         $this->assertSame($audits, DB::table('audit_logs')->count());
+    }
+
+    public function test_admin_schedule_is_read_without_changes_and_setup_preserves_enabled_judging(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-01T09:00:37Z'));
+        $this->configureCycle();
+        $cycleId = (int) DB::table('award_cycles')->where('code', 'cycle-2026')->value('id');
+        [$result] = app(CycleSchedule::class)->update($this->operator, $cycleId, [
+            'nomination_opens_on' => '2026-10-29', 'nomination_closes_on' => '2026-11-15',
+            'judging_opens_on' => '2026-11-16', 'judging_closes_on' => '2026-11-25',
+        ]);
+        $this->assertSame(CycleSchedule::UPDATED, $result);
+        $before = DB::table('cycle_stages')->get()->toArray();
+        $audits = DB::table('audit_logs')->count();
+        $this->getJson('/api/public/schedule')->assertOk()
+            ->assertJsonPath('data.application.open', true)
+            ->assertJsonPath('data.application.closes_at', '2026-11-15T21:00:00Z')
+            ->assertJsonPath('data.judging.closes_at', '2026-11-25T21:00:00Z');
+        $this->assertEquals($before, DB::table('cycle_stages')->get()->toArray());
+        $this->assertSame($audits, DB::table('audit_logs')->count());
+        $this->runSetup('cycle-2026', ['--judging-closes-at' => '2026-11-26 00:00']);
+        $judging = DB::table('cycle_stages')->where('cycle_id', $cycleId)->where('code', 'judging')->first();
+        $this->assertSame('enabled', $judging->status);
+        $this->assertEquals($this->operator->id, $judging->enabled_by);
+        $this->assertFalse(app(CycleSchedule::class)->judgingOpen($cycleId));
+        $this->travelTo(Carbon::parse('2026-11-15T21:00:00Z'));
+        $this->assertTrue(app(CycleSchedule::class)->judgingOpen($cycleId));
+        $this->travelTo(Carbon::parse('2026-11-25T21:00:00Z'));
+        $this->assertFalse(app(CycleSchedule::class)->judgingOpen($cycleId));
+    }
+
+    private function configureCycle(string $code = 'cycle-2026'): void
+    {
+        $this->runSetup($code, [
+            '--create-cycle' => true, '--name' => "الدورة {$code}", '--award-name' => 'جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع',
+            '--year' => '2026', '--timezone' => 'Asia/Damascus', '--country' => 'SY', '--open-domains' => true, '--enable' => true, '--publish-cycle' => true,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     */
+    private function runSetup(string $cycle, array $options): void
+    {
+        $this->artisan('nomination:setup', ['cycle' => $cycle, '--actor' => $this->operator->email] + $options)->assertSuccessful();
     }
 }

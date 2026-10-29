@@ -12,7 +12,7 @@ For the people who deploy, operate and review the platform. Related: [candidate-
 | «المستخدمون» | Complete: every registered account, read-only, with roles and candidate progress (§6) |
 | «ملفات الترشح» | Complete: the submitted participations, read-only |
 | «لجان الحكام» | Complete: the three main-domain judging committees |
-| «المواعيد» | Shown as «قريباً», not a link: **deferred** |
+| «المواعيد» | Complete: registration and judging windows of the selected cycle (§11) |
 | «السجل» | Complete: «سجل الحركات» (the audit trail) and «الأخطاء التقنية» (sanitized application-log summaries) (§8) |
 
 Also deferred, deliberately:
@@ -20,7 +20,7 @@ Also deferred, deliberately:
 - eligibility decisions and bulk actions;
 - editing a submitted application.
 
-Real pages: `/admin`, `/admin/users`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees`, `/admin/log` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal. Judges use `/judge` and `/judge/projects/<id>`.
+Real pages: `/admin`, `/admin/users`, `/admin/applications`, `/admin/applications/<id>`, `/admin/committees`, `/admin/schedule`, `/admin/log` (`routes/web.php`). Any other `/admin/…` path is a 404. Signed-out visitors are sent to sign in and brought back. A signed-in account without administration access gets the page with status 403, which shows a refusal. Judges use `/judge` and `/judge/projects/<id>`.
 
 ## 2. Access and roles
 
@@ -30,6 +30,7 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
 | --- | --- | --- | --- |
 | `award_admin` «مدير الجائزة» | platform (`user_roles`) | the command below only | `applications.view_submitted`, `committees.manage_judging`, `users.view_registered` (added by `2026_10_28_700001_add_registered_users_permission`; existing administrators receive it through their existing grant. The migration records the permission and the `award_admin` link it creates separately in `audit_logs`, and its rollback removes only those. A rollback is refused, with nothing changed, while another role is linked to a permission it created) |
 | `award_admin`, continued | | | `reports.export` «تصدير التقارير», `audit.view` «عرض سجل الحركات», `logs.view_system` «عرض الأخطاء التقنية» (added by `2026_10_29_800001_add_reports_and_audit_permissions`, with the same per-row ownership markers and the same refusing rollback) |
+| `award_admin`, continued | | | `schedules.manage` «إدارة المواعيد» (added by `2026_10_29_900005_add_schedule_permission_and_cycle_windows`; the same migration seeds the first registration and judging windows) |
 | `judge` «حكَم» | cycle (`cycle_user_roles`) | appointing a judge in «لجان الحكام» | none. The portal checks this grant, not a permission |
 
 - **Server-side checks:** every admin API checks the permission of the account's current, unrevoked grants on the server (`App\Admin\AdminAccess`, middleware `admin:<permission>`). Candidates and judges are refused (`403 not_admin`). No role, permission or actor is read from a request.
@@ -387,3 +388,16 @@ The owner authorized removing the retired work fields together with their stored
 4. **After deployment:**
    - **Pending submissions:** open «ملفات الترشح» filtered by «لم يُصنّف بعد». Refer each application or exclude it once its main domain's committee is approved in «لجان الحكام».
    - **Backfill counts:** check the `review_classification.backfilled` row in «سجل الحركات» for inconsistent legacy states.
+
+## 11. �????????�
+
+/admin/schedule (permission `schedules.manage`) edits two windows of the cycle selected in the header:
+
+| Window | Stage code | Gates |
+| --- | --- | --- |
+| ???? ?????? ???????? | `nomination_details` | Stage 2, Stage 3 and the final submission (existing `NominationCycles` checks) |
+| ???? ??????? | `judging` | Sending a judge's mark (`JudgePortal`); reading projects stays available)
+
+Dates are calendar days in the cycle timezone. The closing day is included in full (stored as the next day's midnight UTC). Judging may not open before registration closes. Changing the windows is recorded as `cycle_stage.window_changed` (and `cycle_stage.created` / `cycle_stage.enabled` when the judging stage is created).
+
+The migration `2026_10_29_900005_add_schedule_permission_and_cycle_windows` adds the permission to `award_admin` and, for each published cycle that already has a nomination stage, sets registration through **15 November 2026** and judging from the end of that day through **25 November 2026** (Asia/Damascus).
