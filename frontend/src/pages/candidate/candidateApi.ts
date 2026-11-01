@@ -4,6 +4,7 @@
  */
 
 import type { User } from '../../auth/useAuth'
+import { getLocale, labels } from '../../i18n/messages'
 import type { Processing } from './documentation/documentationApi'
 
 export type ProfileType = 'individual' | 'institution'
@@ -90,14 +91,24 @@ export const POLICY_SLUGS: Record<PolicyCode, string> = {
   terms_of_use: 'terms-of-use',
 }
 
-export const POLICY_NAMES: Record<PolicyCode, string> = {
-  privacy_policy: 'سياسة الخصوصية',
-  terms_of_use: 'شروط الاستخدام',
+/** Message keys (see i18n/catalogs) of the policies' names. */
+export const POLICY_NAME_KEYS: Record<PolicyCode, string> = {
+  privacy_policy: 'policy.privacy',
+  terms_of_use: 'policy.terms',
 }
 
-export const GENDER_LABELS = { male: 'ذكر', female: 'أنثى' } as const
+/*
+ * Arabic labels. Where they are shown they go through t(), whose English
+ * catalog is keyed by this very Arabic text.
+ */
+export const POLICY_NAMES: Record<PolicyCode, string> = labels({
+  privacy_policy: 'سياسة الخصوصية',
+  terms_of_use: 'شروط الاستخدام',
+})
 
-export const PROFILE_TYPE_LABELS: Record<ProfileType, string> = { individual: 'فرد', institution: 'مؤسسة' }
+export const GENDER_LABELS = labels({ male: 'ذكر', female: 'أنثى' } as const)
+
+export const PROFILE_TYPE_LABELS: Record<ProfileType, string> = labels({ individual: 'فرد', institution: 'مؤسسة' })
 
 /**
  * The header candidate reads carry: the account the page shows. The server
@@ -110,10 +121,10 @@ export function contextHeader(user: Pick<User, 'account_context'>): Record<strin
 /** Dates and times are stored in UTC and shown in Damascus time. */
 export const DAMASCUS_TIME_ZONE = 'Asia/Damascus'
 
-const LOCALE = 'ar-SY-u-nu-latn-ca-gregory'
+const LOCALES = { ar: 'ar-SY-u-nu-latn-ca-gregory', en: 'en-GB-u-ca-gregory' } as const
 
-export function formatDamascusDateTime(iso: string): string {
-  return new Intl.DateTimeFormat(LOCALE, {
+export function formatDamascusDateTime(iso: string, locale: keyof typeof LOCALES = getLocale()): string {
+  return new Intl.DateTimeFormat(LOCALES[locale], {
     timeZone: DAMASCUS_TIME_ZONE,
     day: 'numeric',
     month: 'long',
@@ -124,9 +135,9 @@ export function formatDamascusDateTime(iso: string): string {
 }
 
 /** A calendar date (YYYY-MM-DD), shown without any time-zone shift. */
-export function formatCalendarDate(date: string): string {
+export function formatCalendarDate(date: string, locale: keyof typeof LOCALES = getLocale()): string {
   const [year, month, day] = date.split('-').map(Number)
-  return new Intl.DateTimeFormat(LOCALE, { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' }).format(
+  return new Intl.DateTimeFormat(LOCALES[locale], { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' }).format(
     new Date(Date.UTC(year, month - 1, day)),
   )
 }

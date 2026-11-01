@@ -6,6 +6,7 @@ import { ApiError, api, errorMessage } from '../../../lib/api'
 import type { AccountSummary, AppointmentResult, CommitteesResponse, DomainCode, DomainCommittee } from '../adminApi'
 import { AdminDialog } from './AdminDialog'
 import { existingAppointment, isCurrentLookup, normalizeEmail } from './judgeLookup'
+import { useLocale } from '../../../i18n/useLocale'
 
 type Step = { kind: 'email' } | { kind: 'new' } | { kind: 'existing'; account: AccountSummary }
 
@@ -42,6 +43,7 @@ export function AddJudgeDialog({
   onDone: (response: CommitteesResponse & { appointment: AppointmentResult }) => void
   onCreateCommittee: (domain: DomainCode) => void
 }) {
+  const { t } = useLocale()
   const [domain, setDomain] = useState<DomainCode>(initialDomain)
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
@@ -62,7 +64,7 @@ export function AddJudgeDialog({
   const fail = (error: unknown) => {
     if (error instanceof ApiError && error.status === 422) {
       setErrors(Object.fromEntries(Object.entries(error.errors).map(([field, list]) => [field, list[0]])))
-      setAlert('صحّح الحقول المشار إليها.')
+      setAlert(t('صحّح الحقول المشار إليها.'))
     } else {
       setAlert(errorMessage(error))
     }
@@ -135,13 +137,13 @@ export function AddJudgeDialog({
   }
 
   return (
-    <AdminDialog open={open} title="إضافة حكَم" titleId="add-judge-title" onClose={onClose} wide>
+    <AdminDialog open={open} title={t('إضافة حكَم')} titleId="add-judge-title" onClose={onClose} wide>
       <form className="admin-dialog__body admin-form" onSubmit={step.kind === 'email' ? lookup : appoint} noValidate>
         {alert && <FormAlert tone="error">{<p>{alert}</p>}</FormAlert>}
 
         <div className="field">
           <label className="field__label" htmlFor={domainId}>
-            المجال الرئيسي <span className="field__required">(مطلوب)</span>
+            {t('المجال الرئيسي')} <span className="field__required">{t('(مطلوب)')}</span>
           </label>
           <select id={domainId} className="field__input field__select" value={domain} onChange={(event) => setDomain(event.target.value as DomainCode)} required>
             {committees.map((item) => (
@@ -150,26 +152,26 @@ export function AddJudgeDialog({
               </option>
             ))}
           </select>
-          <p className="field__hint">يُصنَّف الحكَم بالمجال الرئيسي فقط، ويعمل في لجنة هذا المجال لكل فئاته الفرعية.</p>
+          <p className="field__hint">{t('يُصنَّف الحكَم بالمجال الرئيسي فقط، ويعمل في لجنة هذا المجال لكل فئاته الفرعية.')}</p>
         </div>
 
         {blocked === 'missing' && (
           <div className="admin-inline-notice">
-            <p>لا توجد لجنة تحكيم لمجال «{target?.domain.name}» في هذه الدورة بعد. أنشئها أولاً، ثم أضف إليها الحكام.</p>
+            <p>{t('لا توجد لجنة تحكيم لمجال «{domain}» في هذه الدورة بعد. أنشئها أولاً، ثم أضف إليها الحكام.', { domain: target?.domain.name ?? '' })}</p>
             <button type="button" className="button button--secondary button--small" onClick={() => onCreateCommittee(domain)}>
-              إنشاء اللجنة
+              {t('إنشاء اللجنة')}
             </button>
           </div>
         )}
         {blocked === 'approved' && (
           <div className="admin-inline-notice">
-            <p>لجنة هذا المجال معتمدة. أعدها إلى المسودة أولاً لتغيير أعضائها.</p>
+            <p>{t('لجنة هذا المجال معتمدة. أعدها إلى المسودة أولاً لتغيير أعضائها.')}</p>
           </div>
         )}
 
         <TextField
           id="judge-email"
-          label="البريد الإلكتروني"
+          label={t('البريد الإلكتروني')}
           type="email"
           value={email}
           onChange={changeEmail}
@@ -180,78 +182,78 @@ export function AddJudgeDialog({
 
         {step.kind === 'existing' && (
           <div className="admin-account" aria-live="polite">
-            <p className="admin-account__title">يوجد حساب مسجّل بهذا البريد</p>
+            <p className="admin-account__title">{t('يوجد حساب مسجّل بهذا البريد')}</p>
             <dl className="admin-facts admin-facts--compact">
               <div>
-                <dt>الاسم</dt>
+                <dt>{t('الاسم')}</dt>
                 <dd>
                   <bdi>{step.account.name}</bdi>
                 </dd>
               </div>
               <div>
-                <dt>البريد</dt>
+                <dt>{t('البريد')}</dt>
                 <dd>
                   <bdi dir="ltr">{step.account.email}</bdi>
                 </dd>
               </div>
               <div>
-                <dt>حالة الحساب</dt>
+                <dt>{t('حالة الحساب')}</dt>
                 <dd>
-                  {step.account.active ? 'نشط' : 'معطّل'}
+                  {step.account.active ? t('نشط') : t('معطّل')}
                   {' · '}
-                  {step.account.email_verified ? 'البريد مؤكَّد' : 'البريد غير مؤكَّد'}
+                  {step.account.email_verified ? t('البريد مؤكَّد') : t('البريد غير مؤكَّد')}
                 </dd>
               </div>
               {step.account.judging_domain && (
                 <div>
-                  <dt>عضوية حالية</dt>
-                  <dd>حكَم في لجنة «{step.account.judging_domain}» في هذه الدورة</dd>
+                  <dt>{t('عضوية حالية')}</dt>
+                  <dd>{t('حكَم في لجنة «{domain}» في هذه الدورة', { domain: step.account.judging_domain ?? '' })}</dd>
                 </div>
               )}
               {step.account.submitted_in_cycle && (
                 <div>
-                  <dt>تعارض مصالح</dt>
-                  <dd>له مشاركة مرسلة في هذه الدورة</dd>
+                  <dt>{t('تعارض مصالح')}</dt>
+                  <dd>{t('له مشاركة مرسلة في هذه الدورة')}</dd>
                 </div>
               )}
             </dl>
             {!step.account.active ? (
-              <p className="admin-account__warning">هذا الحساب معطّل، فلا يُعيَّن حكَماً.</p>
+              <p className="admin-account__warning">{t('هذا الحساب معطّل، فلا يُعيَّن حكَماً.')}</p>
             ) : (
-              <p className="admin-muted">سيُعيَّن الحساب كما هو: لا يتغيّر اسمه ولا كلمة مروره ولا تأكيد بريده ولا طرق دخوله.</p>
+              <p className="admin-muted">{t('سيُعيَّن الحساب كما هو: لا يتغيّر اسمه ولا كلمة مروره ولا تأكيد بريده ولا طرق دخوله.')}</p>
             )}
           </div>
         )}
 
         {step.kind === 'new' && (
           <>
-            <p className="admin-muted">لا يوجد حساب بهذا البريد. سيُنشأ حساب جديد بلا كلمة مرور، ويصل إلى البريد رابط لتعيين كلمة المرور.</p>
-            <TextField id="judge-name" label="الاسم الكامل" value={name} onChange={setName} error={errors.name} required autoComplete="off" maxLength={255} />
+            <p className="admin-muted">{t('لا يوجد حساب بهذا البريد. سيُنشأ حساب جديد بلا كلمة مرور، ويصل إلى البريد رابط لتعيين كلمة المرور.')}</p>
+            <TextField id="judge-name" label={t('الاسم الكامل')} value={name} onChange={setName} error={errors.name} required autoComplete="off" maxLength={255} />
             <TextField
               id="judge-phone"
-              label="رقم الهاتف"
+              label={t('رقم الهاتف')}
               type="tel"
               value={phone}
               onChange={setPhone}
               error={errors.phone}
               optional
-              hint="بصيغته الدولية، مثل ‎+963 944 123 456"
+              hint={t('بصيغته الدولية، مثل ‎+963 944 123 456')}
               autoComplete="off"
             />
           </>
         )}
 
         {step.kind !== 'email' && (
-          <TextField id="judge-specialty" label="التخصص" value={specialty} onChange={setSpecialty} error={errors.specialty} optional autoComplete="off" maxLength={150} />
+          <TextField id="judge-specialty" label={t('التخصص')} value={specialty} onChange={setSpecialty} error={errors.specialty} optional autoComplete="off" maxLength={150} />
         )}
 
         <div className="admin-dialog__actions">
           <button type="button" className="button button--secondary" onClick={onClose}>
-            إلغاء
+            {t('إلغاء')}
           </button>
           {step.kind === 'email' ? (
             <button type="submit" className="button button--primary" disabled={lookingUp || !email.trim()} aria-busy={lookingUp || undefined}>
-              {lookingUp ? 'جارٍ التحقق…' : 'متابعة'}
+              {lookingUp ? t('جارٍ التحقق…') : t('متابعة')}
             </button>
           ) : (
             <button
@@ -260,7 +262,7 @@ export function AddJudgeDialog({
               disabled={busy || lookingUp || blocked !== null || (step.kind === 'existing' && !step.account.active)}
               aria-busy={busy || undefined}
             >
-              {busy ? 'جارٍ الحفظ…' : step.kind === 'existing' ? 'تعيين هذا الحساب حكَماً' : 'إنشاء الحساب وتعيينه حكَماً'}
+              {busy ? t('جارٍ الحفظ…') : step.kind === 'existing' ? t('تعيين هذا الحساب حكَماً') : t('إنشاء الحساب وتعيينه حكَماً')}
             </button>
           )}
         </div>

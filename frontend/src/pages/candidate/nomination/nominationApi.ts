@@ -1,6 +1,7 @@
 import cultureAndArts from '../../../assets/brand/domain-culture-and-arts.svg'
 import heritage from '../../../assets/brand/domain-tangible-and-intangible-heritage.svg'
 import volunteerWork from '../../../assets/brand/domain-volunteer-work.svg'
+import { tr } from '../../../i18n/messages'
 
 /**
  * Types, labels and artwork for Stage 2 («فئة الترشح وبيانات العمل»)
@@ -63,5 +64,5 @@ export function artworkFor(key: string): string | null {
 }
 
 export function artworkLabel(domainName: string): string {
-  return `جائزة محور ${domainName}`
+  return tr('جائزة محور {domainName}', { domainName })
 }

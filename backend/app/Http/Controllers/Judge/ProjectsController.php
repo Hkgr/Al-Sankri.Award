@@ -25,12 +25,16 @@ class ProjectsController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        return response()->json(['data' => $this->portal->list($request->user())]);
+        return response()->json($this->portal->list($request->user()));
     }
 
     public function show(Request $request, int $application): JsonResponse
     {
         $data = $this->portal->show($request->user(), $application);
+
+        if ($data === JudgePortal::STAGE_CLOSED) {
+            return $this->stageClosed($application);
+        }
 
         return $data === null
             ? response()->json(['code' => 'not_assigned', 'message' => self::NOT_FOUND], 404)
@@ -40,6 +44,9 @@ class ProjectsController extends Controller
     public function file(Request $request, int $application, int $attachment): BinaryFileResponse|JsonResponse
     {
         $link = $this->portal->file($request->user(), $application, $attachment);
+        if ($link === JudgePortal::STAGE_CLOSED) {
+            return $this->stageClosed($application);
+        }
         if ($link === null) {
             return response()->json(['code' => 'not_found', 'message' => 'لم يُعثر على هذا الملف في المشروع المسند إليك.'], 404);
         }
@@ -107,11 +114,22 @@ class ProjectsController extends Controller
         return match ($result) {
             JudgePortal::NOT_ASSIGNED => response()->json(['code' => 'not_assigned', 'message' => self::NOT_FOUND], 404),
             JudgePortal::ALREADY_SENT => response()->json(['code' => 'already_sent', 'message' => 'أُرسلت علامتك إلى الإدارة، ولا تُعدَّل من هنا.'], 409),
-            JudgePortal::STAGE_CLOSED => response()->json([
-                'code' => 'stage_closed',
-                'message' => 'فترة التحكيم غير مفتوحة الآن، فلا تُرسل العلامة.',
-            ], 403),
+            JudgePortal::STAGE_CLOSED => $this->stageClosed($application),
             default => response()->json(['data' => $this->portal->show($request->user(), $application)]),
         };
+    }
+
+    /**
+     * The judging window is not open (not started yet, or over): the project
+     * stays listed, but its detail, files and marking are refused, with the
+     * window so the page can say when judging starts.
+     */
+    private function stageClosed(int $application): JsonResponse
+    {
+        return response()->json([
+            'code' => 'stage_closed',
+            'message' => 'فترة التحكيم غير مفتوحة الآن. يمكنك رؤية المشاريع، ويُفتح المشروع عند بدء الفترة.',
+            'window' => $this->portal->windowForApplication($application),
+        ], 403);
     }
 }

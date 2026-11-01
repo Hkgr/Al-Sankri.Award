@@ -5,6 +5,7 @@ import { asciiDigits, birthDate, MONTHS } from './formModel'
 import type { FormState, PhoneValue, SocialLink } from './formModel'
 import { SummaryLinks as LinkList } from './ProfileSummary'
 import type { SummaryGroup } from './ProfileSummary'
+import { getLocale, tr } from '../../../i18n/messages'
 
 /*
  * The groups shown by ProfileSummary: from the form in the review step, and
@@ -34,9 +35,9 @@ function text(value: string): string | null {
 
 export function summaryFromForm(state: FormState, countries: Country[]): SummaryGroup[] {
   const typeGroup: SummaryGroup = {
-    title: 'نوع المتقدم',
+    title: tr('نوع المتقدم'),
     step: 'type',
-    rows: [{ label: 'نوع المتقدم', value: state.profileType ? PROFILE_TYPE_LABELS[state.profileType] : null }],
+    rows: [{ label: tr('نوع المتقدم'), value: state.profileType ? tr(PROFILE_TYPE_LABELS[state.profileType]) : null }],
   }
 
   if (state.profileType === 'individual') {
@@ -45,28 +46,28 @@ export function summaryFromForm(state: FormState, countries: Country[]): Summary
     return [
       typeGroup,
       {
-        title: 'البيانات الشخصية',
+        title: tr('البيانات الشخصية'),
         step: 'individual_identity',
         rows: [
-          { label: 'الاسم الأول', value: text(person.first_name) },
-          { label: 'الاسم الأوسط', value: text(person.middle_name) },
-          { label: 'الاسم الأخير', value: text(person.last_name) },
-          { label: 'تاريخ الميلاد', value: date ? `${Number(date.slice(8))} ${MONTHS[Number(date.slice(5, 7)) - 1]} ${date.slice(0, 4)}` : null },
-          { label: 'الجنسية', value: countryName(countries, person.nationality) },
-          { label: 'الجنس', value: person.gender ? GENDER_LABELS[person.gender] : null },
-          { label: 'رقم الهوية الشخصية', value: text(asciiDigits(person.national_id_number)), ltr: true },
+          { label: tr('الاسم الأول'), value: text(person.first_name) },
+          { label: tr('الاسم الأوسط'), value: text(person.middle_name) },
+          { label: tr('الاسم الأخير'), value: text(person.last_name) },
+          { label: tr('تاريخ الميلاد'), value: date ? `${Number(date.slice(8))} ${tr(MONTHS[Number(date.slice(5, 7)) - 1])} ${date.slice(0, 4)}` : null },
+          { label: tr('الجنسية'), value: countryName(countries, person.nationality) },
+          { label: tr('الجنس'), value: person.gender ? tr(GENDER_LABELS[person.gender]) : null },
+          { label: tr('رقم الهوية الشخصية'), value: text(asciiDigits(person.national_id_number)), ltr: true },
         ],
       },
       {
-        title: 'الإقامة والتواصل',
+        title: tr('الإقامة والتواصل'),
         step: 'individual_contact',
         rows: [
-          { label: 'دولة الإقامة', value: countryName(countries, person.residence_country) },
-          { label: 'العنوان', value: text(person.address) },
-          { label: 'رقم التواصل الأساسي', value: phoneText(countries, person.primary_phone), ltr: true },
-          { label: 'رقم التواصل الاحتياطي', value: phoneText(countries, person.secondary_phone), ltr: true },
-          { label: 'البريد الإلكتروني للتواصل', value: text(person.contact_email), ltr: true },
-          { label: 'روابط مواقع التواصل الاجتماعي', value: formLinks(person.social_links) },
+          { label: tr('دولة الإقامة'), value: countryName(countries, person.residence_country) },
+          { label: tr('العنوان'), value: text(person.address) },
+          { label: tr('رقم التواصل الأساسي'), value: phoneText(countries, person.primary_phone), ltr: true },
+          { label: tr('رقم التواصل الاحتياطي'), value: phoneText(countries, person.secondary_phone), ltr: true },
+          { label: tr('البريد الإلكتروني للتواصل'), value: text(person.contact_email), ltr: true },
+          { label: tr('روابط مواقع التواصل الاجتماعي'), value: formLinks(person.social_links) },
         ],
       },
     ]
@@ -76,25 +77,25 @@ export function summaryFromForm(state: FormState, countries: Country[]): Summary
   return [
     typeGroup,
     {
-      title: 'بيانات المؤسسة',
+      title: tr('بيانات المؤسسة'),
       step: 'institution_details',
       rows: [
-        { label: 'اسم المؤسسة', value: text(institution.name) },
-        { label: 'الدولة', value: countryName(countries, institution.country) },
-        { label: 'نوع النشاط المؤسسي', value: text(institution.activity_type) },
-        { label: 'رقم الترخيص', value: text(asciiDigits(institution.license_number)), ltr: true },
+        { label: tr('اسم المؤسسة'), value: text(institution.name) },
+        { label: tr('الدولة'), value: countryName(countries, institution.country) },
+        { label: tr('نوع النشاط المؤسسي'), value: text(institution.activity_type) },
+        { label: tr('رقم الترخيص'), value: text(asciiDigits(institution.license_number)), ltr: true },
       ],
     },
     {
-      title: 'الممثل والتواصل',
+      title: tr('الممثل والتواصل'),
       step: 'institution_contact',
       rows: [
-        { label: 'اسم الشخص المتقدم بالنيابة عن المؤسسة', value: text(institution.representative_name) },
-        { label: 'الصفة الوظيفية', value: text(institution.representative_title) },
-        { label: 'رقم تواصل المؤسسة', value: phoneText(countries, institution.phone), ltr: true },
-        { label: 'البريد الإلكتروني للمؤسسة', value: text(institution.email), ltr: true },
-        { label: 'الموقع الإلكتروني', value: text(institution.website), ltr: true },
-        { label: 'روابط مواقع التواصل الاجتماعي', value: formLinks(institution.social_links) },
+        { label: tr('اسم الشخص المتقدم بالنيابة عن المؤسسة'), value: text(institution.representative_name) },
+        { label: tr('الصفة الوظيفية'), value: text(institution.representative_title) },
+        { label: tr('رقم تواصل المؤسسة'), value: phoneText(countries, institution.phone), ltr: true },
+        { label: tr('البريد الإلكتروني للمؤسسة'), value: text(institution.email), ltr: true },
+        { label: tr('الموقع الإلكتروني'), value: text(institution.website), ltr: true },
+        { label: tr('روابط مواقع التواصل الاجتماعي'), value: formLinks(institution.social_links) },
       ],
     },
   ]
@@ -104,32 +105,32 @@ export function summaryFromForm(state: FormState, countries: Country[]): Summary
 
 export function summaryFromProfile(profile: BasicProfile): SummaryGroup[] {
   const links = profile.social_links.length ? <LinkList links={profile.social_links} /> : null
-  const groups: SummaryGroup[] = [{ title: 'نوع المتقدم', rows: [{ label: 'نوع المتقدم', value: PROFILE_TYPE_LABELS[profile.profile_type] }] }]
+  const groups: SummaryGroup[] = [{ title: tr('نوع المتقدم'), rows: [{ label: tr('نوع المتقدم'), value: tr(PROFILE_TYPE_LABELS[profile.profile_type]) }] }]
 
   if (profile.individual) {
     const person = profile.individual
     groups.push(
       {
-        title: 'البيانات الشخصية',
+        title: tr('البيانات الشخصية'),
         rows: [
-          { label: 'الاسم الأول', value: person.first_name },
-          { label: 'الاسم الأوسط', value: person.middle_name },
-          { label: 'الاسم الأخير', value: person.last_name },
-          { label: 'تاريخ الميلاد', value: formatCalendarDate(person.birth_date) },
-          { label: 'الجنسية', value: person.nationality?.name ?? null },
-          { label: 'الجنس', value: GENDER_LABELS[person.gender] },
-          { label: 'رقم الهوية الشخصية', value: person.national_id_number, ltr: true },
+          { label: tr('الاسم الأول'), value: person.first_name },
+          { label: tr('الاسم الأوسط'), value: person.middle_name },
+          { label: tr('الاسم الأخير'), value: person.last_name },
+          { label: tr('تاريخ الميلاد'), value: formatCalendarDate(person.birth_date) },
+          { label: tr('الجنسية'), value: person.nationality?.name ?? null },
+          { label: tr('الجنس'), value: tr(GENDER_LABELS[person.gender]) },
+          { label: tr('رقم الهوية الشخصية'), value: person.national_id_number, ltr: true },
         ],
       },
       {
-        title: 'الإقامة والتواصل',
+        title: tr('الإقامة والتواصل'),
         rows: [
-          { label: 'دولة الإقامة', value: person.residence_country?.name ?? null },
-          { label: 'العنوان', value: person.address },
-          { label: 'رقم التواصل الأساسي', value: person.primary_phone, ltr: true },
-          { label: 'رقم التواصل الاحتياطي', value: person.secondary_phone, ltr: true },
-          { label: 'البريد الإلكتروني للتواصل', value: person.contact_email, ltr: true },
-          { label: 'روابط مواقع التواصل الاجتماعي', value: links },
+          { label: tr('دولة الإقامة'), value: person.residence_country?.name ?? null },
+          { label: tr('العنوان'), value: person.address },
+          { label: tr('رقم التواصل الأساسي'), value: person.primary_phone, ltr: true },
+          { label: tr('رقم التواصل الاحتياطي'), value: person.secondary_phone, ltr: true },
+          { label: tr('البريد الإلكتروني للتواصل'), value: person.contact_email, ltr: true },
+          { label: tr('روابط مواقع التواصل الاجتماعي'), value: links },
         ],
       },
     )
@@ -139,46 +140,46 @@ export function summaryFromProfile(profile: BasicProfile): SummaryGroup[] {
     const institution = profile.institution
     groups.push(
       {
-        title: 'بيانات المؤسسة',
+        title: tr('بيانات المؤسسة'),
         rows: [
-          { label: 'اسم المؤسسة', value: institution.name },
-          { label: 'الدولة', value: institution.country?.name ?? null },
-          { label: 'نوع النشاط المؤسسي', value: institution.activity_type },
-          { label: 'رقم الترخيص', value: institution.license_number, ltr: true },
+          { label: tr('اسم المؤسسة'), value: institution.name },
+          { label: tr('الدولة'), value: institution.country?.name ?? null },
+          { label: tr('نوع النشاط المؤسسي'), value: institution.activity_type },
+          { label: tr('رقم الترخيص'), value: institution.license_number, ltr: true },
         ],
       },
       {
-        title: 'الممثل والتواصل',
+        title: tr('الممثل والتواصل'),
         rows: [
-          { label: 'اسم الشخص المتقدم بالنيابة عن المؤسسة', value: institution.representative_name },
-          { label: 'الصفة الوظيفية', value: institution.representative_title },
-          { label: 'رقم تواصل المؤسسة', value: institution.phone, ltr: true },
-          { label: 'البريد الإلكتروني للمؤسسة', value: institution.email, ltr: true },
-          { label: 'الموقع الإلكتروني', value: institution.website, ltr: true },
-          { label: 'روابط مواقع التواصل الاجتماعي', value: links },
+          { label: tr('اسم الشخص المتقدم بالنيابة عن المؤسسة'), value: institution.representative_name },
+          { label: tr('الصفة الوظيفية'), value: institution.representative_title },
+          { label: tr('رقم تواصل المؤسسة'), value: institution.phone, ltr: true },
+          { label: tr('البريد الإلكتروني للمؤسسة'), value: institution.email, ltr: true },
+          { label: tr('الموقع الإلكتروني'), value: institution.website, ltr: true },
+          { label: tr('روابط مواقع التواصل الاجتماعي'), value: links },
         ],
       },
     )
   }
 
   groups.push({
-    title: 'الموافقات والإقرارات',
+    title: tr('الموافقات والإقرارات'),
     rows: [
       ...profile.accepted_policies.map((policy) => ({
-        label: POLICY_NAMES[policy.code],
+        label: tr(POLICY_NAMES[policy.code]),
         value: (
           <>
-            تمت الموافقة على{' '}
+            {tr('تمت الموافقة على')}{' '}
             <a href={`/policies/${POLICY_SLUGS[policy.code]}?version=${policy.version_number}`} target="_blank" rel="noopener">
-              الإصدار {policy.version_number}
+              {tr('الإصدار {n}', { n: policy.version_number })}
             </a>{' '}
-            في {formatDamascusDateTime(policy.accepted_at)}
+            {tr('في {when}', { when: formatDamascusDateTime(policy.accepted_at, getLocale()) })}
           </>
         ),
       })),
-      { label: 'صحة البيانات المقدمة', value: `تم الإقرار بها في ${formatDamascusDateTime(profile.declarations.data_accuracy_declared_at)}` },
+      { label: tr('صحة البيانات المقدمة'), value: tr('تم الإقرار بها في {data_accuracy_declared_at}', { data_accuracy_declared_at: formatDamascusDateTime(profile.declarations.data_accuracy_declared_at) }) },
       ...(profile.declarations.representation_declared_at
-        ? [{ label: 'تمثيل المؤسسة', value: `تم الإقرار بالتخويل بتمثيلها في ${formatDamascusDateTime(profile.declarations.representation_declared_at)}` }]
+        ? [{ label: tr('تمثيل المؤسسة'), value: tr('تم الإقرار بالتخويل بتمثيلها في {representation_declared_at}', { representation_declared_at: formatDamascusDateTime(profile.declarations.representation_declared_at) }) }]
         : []),
     ],
   })

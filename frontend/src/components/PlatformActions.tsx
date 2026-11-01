@@ -1,4 +1,5 @@
 import { homeFor, useAuth } from '../auth/useAuth'
+import { useLocale } from '../i18n/useLocale'
 import { Link } from '../lib/router'
 import type { SchedulePhase } from '../lib/schedule'
 
@@ -10,7 +11,12 @@ import type { SchedulePhase } from '../lib/schedule'
  */
 export function PlatformActions({ phase, secondary }: { phase: SchedulePhase; secondary?: { href: string; label: string } }) {
   const { user } = useAuth()
-  const primary = user ? { href: homeFor(user), label: 'الانتقال إلى المنصة' } : phase === 'open' ? { href: '/register', label: 'قدّم ملف ترشحك' } : { href: '/login', label: 'الدخول إلى المنصة' }
+  const { t } = useLocale()
+  const primary = user
+    ? { href: homeFor(user), label: t('actions.goPlatform') }
+    : phase === 'open'
+      ? { href: '/register', label: t('actions.apply') }
+      : { href: '/login', label: t('actions.enterPlatform') }
 
   return (
     <div className="platform-actions">

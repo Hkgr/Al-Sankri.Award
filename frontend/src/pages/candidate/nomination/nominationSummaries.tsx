@@ -3,6 +3,7 @@ import type { SummaryGroup } from '../basic/ProfileSummary'
 import type { DomainOption, NominationDetails } from './nominationApi'
 import { DomainArtwork } from './nominationFields'
 import type { NominationForm, NominationStepId } from './nominationModel'
+import { tr } from '../../../i18n/messages'
 
 /*
  * The groups shown by ProfileSummary for Stage 2: from the form in the
@@ -28,11 +29,11 @@ function groups(view: View, editable: boolean): Group[] {
 
   return [
     {
-      title: 'المحور والفئة',
+      title: tr('المحور والفئة'),
       step: step('domain'),
       rows: [
         {
-          label: 'المحور',
+          label: tr('المحور'),
           value: view.domain ? (
             <span className="summary-domain">
               <DomainArtwork artwork={view.domain.artwork} domainName={view.domain.name} size="card" />
@@ -40,17 +41,17 @@ function groups(view: View, editable: boolean): Group[] {
             </span>
           ) : null,
         },
-        { label: 'الفئة', value: view.subcategory },
+        { label: tr('الفئة'), value: view.subcategory },
       ],
     },
     {
-      title: 'تعريف العمل وأثره',
+      title: tr('تعريف العمل وأثره'),
       step: step('work'),
       rows: [
-        { label: 'عنوان العمل', value: view.title.trim() || null },
-        { label: 'الغاية والرسالة', value: multiline(view.purpose) },
-        { label: 'الأهداف', value: multiline(view.objectives) },
-        { label: 'الأثر', value: multiline(view.impact) },
+        { label: tr('عنوان العمل'), value: view.title.trim() || null },
+        { label: tr('الغاية والرسالة'), value: multiline(view.purpose) },
+        { label: tr('الأهداف'), value: multiline(view.objectives) },
+        { label: tr('الأثر'), value: multiline(view.impact) },
       ],
     },
   ]

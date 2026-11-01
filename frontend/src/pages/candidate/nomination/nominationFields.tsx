@@ -3,6 +3,7 @@ import { FieldMessages, StatusIcon } from '../../../components/forms/FormControl
 import type { Errors } from '../basic/formModel'
 import { artworkFor, artworkLabel } from './nominationApi'
 import type { DomainOption } from './nominationApi'
+import { useLocale } from '../../../i18n/useLocale'
 
 /*
  * Stage 2 controls, built on the Stage 1 field styles: visible labels,
@@ -61,6 +62,7 @@ export function DomainChooser({
   errors: Errors
   warning: ReactNode
 }) {
+  const { t } = useLocale()
   const selected = domains.find((option) => option.code === domain)
   const chosenSubcategory = selected?.subcategories.find((option) => option.code === subcategory)
 
@@ -68,7 +70,7 @@ export function DomainChooser({
     <div className="domain-step">
       <fieldset className="choice-cards" aria-describedby={errors.domain ? 'domain-error' : undefined}>
         <legend className="field__label">
-          محور الترشح<span className="field__required"> (مطلوب)</span>
+          {t('محور الترشح')}<span className="field__required">{t('(مطلوب)')}</span>
         </legend>
         <div className="choice-cards__grid domain-cards">
           {domains.map((option, index) => (
@@ -100,12 +102,12 @@ export function DomainChooser({
             <DomainArtwork artwork={selected.artwork} domainName={selected.name} size="preview" />
             <div className="domain-preview__text">
               <p className="domain-preview__name">{selected.name}</p>
-              <p className="domain-preview__sub">{chosenSubcategory ? chosenSubcategory.name : 'اختر فئة الترشح ضمن هذا المحور.'}</p>
+              <p className="domain-preview__sub">{chosenSubcategory ? chosenSubcategory.name : t('اختر فئة الترشح ضمن هذا المحور.')}</p>
             </div>
           </div>
           <fieldset className="field field-group" aria-describedby={errors.subcategory ? 'subcategory-error' : undefined}>
             <legend className="field__label">
-              فئة الترشح ضمن «{selected.name}»<span className="field__required"> (مطلوب)</span>
+              {t('فئة الترشح ضمن «{name}»', { name: selected.name })}<span className="field__required">{t('(مطلوب)')}</span>
             </legend>
             <div className="radio-row">
               {selected.subcategories.map((option, index) => (

@@ -1,13 +1,11 @@
 import type { ReactNode } from 'react'
+import { useLocale } from '../../../i18n/useLocale'
 import type { StepId } from './formModel'
 
 type Row = { label: string; value: ReactNode | null; ltr?: boolean }
 
 /** Built by summaryFromForm / summaryFromProfile (summaries.tsx). */
 export type SummaryGroup<S extends string = StepId> = { title: string; step?: S; rows: Row[] }
-
-/** Shown for an optional field left empty. */
-const NOT_ADDED = 'لم يُضف'
 
 function Ltr({ children }: { children: ReactNode }) {
   return <bdi dir="ltr">{children}</bdi>
@@ -31,6 +29,7 @@ export function SummaryLinks({ links }: { links: { platform: string; url: string
  * button leading back to its section; the read-only view has none.
  */
 export function ProfileSummary<S extends string = StepId>({ groups, onEdit, headingLevel = 2 }: { groups: SummaryGroup<S>[]; onEdit?: (step: S) => void; headingLevel?: 2 | 3 }) {
+  const { t } = useLocale()
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
 
   return (
@@ -41,7 +40,8 @@ export function ProfileSummary<S extends string = StepId>({ groups, onEdit, head
             <Heading className="summary-group__title">{group.title}</Heading>
             {onEdit && group.step && (
               <button type="button" className="button button--secondary summary-group__edit" onClick={() => onEdit(group.step!)}>
-                تعديل<span className="visually-hidden"> {group.title}</span>
+                {t('تعديل')}
+                <span className="visually-hidden"> {group.title}</span>
               </button>
             )}
           </div>
@@ -51,7 +51,8 @@ export function ProfileSummary<S extends string = StepId>({ groups, onEdit, head
                 <dt>{row.label}</dt>
                 <dd>
                   {row.value === null || row.value === '' ? (
-                    <span className="summary-list__empty">{NOT_ADDED}</span>
+                    // Shown for an optional field left empty.
+                    <span className="summary-list__empty">{t('لم يُضف')}</span>
                   ) : row.ltr ? (
                     <Ltr>{row.value}</Ltr>
                   ) : (

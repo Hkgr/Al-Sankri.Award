@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
+import { useLocale } from '../../../i18n/useLocale'
 
 /**
  * A modal built on the native <dialog>: focus stays inside while it is
@@ -20,6 +21,7 @@ export function AdminDialog({
   children: ReactNode
   wide?: boolean
 }) {
+  const { t } = useLocale()
   const ref = useRef<HTMLDialogElement>(null)
   const opener = useRef<Element | null>(null)
 
@@ -51,7 +53,7 @@ export function AdminDialog({
         </h2>
         <button type="button" className="admin-dialog__close" onClick={onClose}>
           <span aria-hidden="true">×</span>
-          <span className="visually-hidden">إغلاق</span>
+          <span className="visually-hidden">{t('إغلاق')}</span>
         </button>
       </div>
       {open && children}
@@ -77,15 +79,16 @@ export function ConfirmDialog({
   onConfirm: () => void
   onClose: () => void
 }) {
+  const { t } = useLocale()
   return (
     <AdminDialog open={open} title={title} titleId="admin-confirm-title" onClose={onClose}>
       <div className="admin-dialog__body">{text}</div>
       <div className="admin-dialog__actions">
         <button type="button" className="button button--secondary" onClick={onClose} autoFocus>
-          تراجع
+          {t('تراجع')}
         </button>
         <button type="button" className="button button--primary" onClick={onConfirm} disabled={busy} aria-busy={busy || undefined}>
-          {busy ? 'جارٍ التنفيذ…' : confirmLabel}
+          {busy ? t('جارٍ التنفيذ…') : confirmLabel}
         </button>
       </div>
     </AdminDialog>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useAuth } from '../../auth/useAuth'
+import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 import { AuthLayout } from '../auth/AuthLayout'
@@ -13,6 +14,7 @@ import { ProjectsPage } from './ProjectsPage'
  */
 export function JudgeApp() {
   const { user } = useAuth()
+  const { t } = useLocale()
   const { location, navigate } = useRouter()
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export function JudgeApp() {
     return (
       <main id="main" tabIndex={-1}>
         <p className="auth-loading" role="status">
-          جارٍ التحقق من الجلسة…
+          {t('judge.checkingSession')}
         </p>
       </main>
     )
@@ -32,10 +34,10 @@ export function JudgeApp() {
   if (!user.is_judge) {
     return (
       <main id="main" tabIndex={-1}>
-        <AuthLayout title="التحكيم">
-          <p className="auth-panel__text">هذه الصفحة مخصّصة لحكّام الجائزة، وحسابك ليس حكماً في دورة حالية.</p>
+        <AuthLayout title={t('judge.title')}>
+          <p className="auth-panel__text">{t('judge.refused')}</p>
           <p className="auth-panel__switch">
-            <Link href="/account">الانتقال إلى حسابي</Link>
+            <Link href="/account">{t('judge.goAccount')}</Link>
           </p>
         </AuthLayout>
       </main>

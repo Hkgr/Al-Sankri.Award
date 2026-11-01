@@ -11,6 +11,7 @@ import { useAccountFailure } from '../useCandidateRequests'
 import { AttachmentList, LinkList } from './AttachmentList'
 import type { Attachment, AttachmentKind, Documentation, DocumentationLink, DocumentationState } from './documentationApi'
 import { formatBytes, journeyStateUrl, KIND_RULES, precheck, SECTION_TITLES } from './documentationApi'
+import { useLocale } from '../../../i18n/useLocale'
 
 const STATE_URL = '/api/candidate/documentation'
 
@@ -23,7 +24,8 @@ type Loaded = { kind: 'state'; state: DocumentationState } | { kind: 'stage_1_re
  * replaced or removed. Afterwards everything is shown read-only.
  */
 export function DocumentationPage({ user }: { user: User }) {
-  usePageTitle('ملفات العمل وتوثيقه')
+  const { t } = useLocale()
+  usePageTitle(t('ملفات العمل وتوثيقه'))
   const handleAccountFailure = useAccountFailure()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -53,12 +55,12 @@ export function DocumentationPage({ user }: { user: User }) {
   return (
     <div className="candidate-page">
       <header className="candidate-page__header">
-        <p className="eyebrow">المرحلة 3 من ملف الترشح</p>
-        <h1 className="candidate-page__title">ملفات العمل وتوثيقه</h1>
+        <p className="eyebrow">{t('المرحلة 3 من ملف الترشح')}</p>
+        <h1 className="candidate-page__title">{t('ملفات العمل وتوثيقه')}</h1>
         <p className="candidate-page__intro">
           {doc?.submission
-            ? 'أُرسلت المشاركة، وهذه ملفاتها وروابطها كما أُرسلت. هي متاحة للعرض فقط.'
-            : 'ارفع وثيقة تشرح العمل المرشّح، وأضف إن شئت وثائق وفيديوهات وروابط توثّقه.'}
+            ? t('أُرسلت المشاركة، وهذه ملفاتها وروابطها كما أُرسلت. هي متاحة للعرض فقط.')
+            : t('ارفع وثيقة تشرح العمل المرشّح، وأضف إن شئت وثائق وفيديوهات وروابط توثّقه.')}
         </p>
       </header>
 
@@ -67,26 +69,26 @@ export function DocumentationPage({ user }: { user: User }) {
           <p>{loadError}</p>
           <p>
             <button type="button" className="button button--secondary" onClick={() => void load()}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
       ) : !loaded ? (
         <p className="candidate-loading" role="status">
-          جارٍ تحميل الملفات…
+          {t('جارٍ تحميل الملفات…')}
         </p>
       ) : loaded.kind === 'stage_1_required' ? (
         <FormAlert tone="info">
-          <p>تُتاح هذه المرحلة بعد تأكيد حفظ البيانات الأساسية (المرحلة 1) وفئة الترشح وبيانات العمل (المرحلة 2).</p>
+          <p>{t('تُتاح هذه المرحلة بعد تأكيد حفظ البيانات الأساسية (المرحلة 1) وفئة الترشح وبيانات العمل (المرحلة 2).')}</p>
           <p>
-            <Link href="/dashboard/basic-information">الانتقال إلى البيانات الأساسية</Link>
+            <Link href="/dashboard/basic-information">{t('الانتقال إلى البيانات الأساسية')}</Link>
           </p>
         </FormAlert>
       ) : !doc || !state?.journey_key ? (
         <FormAlert tone="info">
-          <p>تُتاح هذه المرحلة بعد تأكيد حفظ فئة الترشح وبيانات العمل (المرحلة 2).</p>
+          <p>{t('تُتاح هذه المرحلة بعد تأكيد حفظ فئة الترشح وبيانات العمل (المرحلة 2).')}</p>
           <p>
-            <Link href="/dashboard/nomination-details">الانتقال إلى فئة الترشح وبيانات العمل</Link>
+            <Link href="/dashboard/nomination-details">{t('الانتقال إلى فئة الترشح وبيانات العمل')}</Link>
           </p>
         </FormAlert>
       ) : doc.editable ? (
@@ -105,40 +107,41 @@ export function DocumentationPage({ user }: { user: User }) {
 }
 
 function ReadOnlyDocumentation({ user, journeyKey, doc }: { user: User; journeyKey: string; doc: Documentation }) {
+  const { t, locale } = useLocale()
   return (
     <>
       {doc.submission ? (
         <div className="locked-banner">
           <StatusIcon tone="success" />
           <div>
-            <p className="locked-banner__title">تم إرسال المشاركة</p>
+            <p className="locked-banner__title">{t('تم إرسال المشاركة')}</p>
             <p>
-              الرقم المرجعي <bdi dir="ltr">{doc.submission.reference_number}</bdi>، أُرسلت في {formatDamascusDateTime(doc.submission.submitted_at)} بتوقيت دمشق. لا يمكن
-              إضافة ملفات أو تعديلها بعد الإرسال.
+              {t('الرقم المرجعي')} <bdi dir="ltr">{doc.submission.reference_number}</bdi>،{' '}
+              {t('أُرسلت في {when} بتوقيت دمشق. لا يمكن إضافة ملفات أو تعديلها بعد الإرسال.', { when: formatDamascusDateTime(doc.submission.submitted_at, locale) })}
             </p>
           </div>
         </div>
       ) : (
         <FormAlert tone="info">
-          <p>هذه المرحلة غير متاحة للتعديل حالياً: باب الترشح لهذه الدورة غير مفتوح. ما حُفظ من ملفات وروابط ظاهر أدناه.</p>
+          <p>{t('هذه المرحلة غير متاحة للتعديل حالياً: باب الترشح لهذه الدورة غير مفتوح. ما حُفظ من ملفات وروابط ظاهر أدناه.')}</p>
         </FormAlert>
       )}
       {(['explanatory', 'supporting', 'video'] as AttachmentKind[]).map((kind) => (
         <section key={kind} className="doc-section" aria-labelledby={`doc-${kind}-title`}>
           <h2 id={`doc-${kind}-title`} className="doc-section__title">
-            {SECTION_TITLES[kind]}
+            {t(SECTION_TITLES[kind])}
           </h2>
-          <AttachmentList attachments={doc.attachments.filter((item) => item.kind === kind)} user={user} journeyKey={journeyKey} emptyText="لم يُضف شيء." />
+          <AttachmentList attachments={doc.attachments.filter((item) => item.kind === kind)} user={user} journeyKey={journeyKey} emptyText={t('لم يُضف شيء.')} />
         </section>
       ))}
       <section className="doc-section" aria-labelledby="doc-links-title">
         <h2 id="doc-links-title" className="doc-section__title">
-          روابط توثيق إضافية
+          {t('روابط توثيق إضافية')}
         </h2>
-        <LinkList links={doc.links} emptyText="لم تُضف روابط." />
+        <LinkList links={doc.links} emptyText={t('لم تُضف روابط.')} />
       </section>
       <p className="candidate-page__back">
-        <Link href={doc.submission ? '/dashboard/review' : '/dashboard'}>{doc.submission ? 'عرض المشاركة المرسلة' : 'العودة إلى لوحة المترشح'}</Link>
+        <Link href={doc.submission ? '/dashboard/review' : '/dashboard'}>{doc.submission ? t('عرض المشاركة المرسلة') : t('العودة إلى لوحة المترشح')}</Link>
       </p>
     </>
   )
@@ -169,6 +172,7 @@ function DocumentationEditor({
   onState: (state: DocumentationState) => void
   onReload: () => void
 }) {
+  const { t } = useLocale()
   const { navigate } = useRouter()
   const [pending, setPending] = useState<Pending[]>([])
   const [links, setLinks] = useState<DocumentationLink[]>(doc.links)
@@ -185,9 +189,9 @@ function DocumentationEditor({
 
   useLeaveWarning(
     pending.some((row) => row.status === 'uploading' || row.status === 'unconfirmed')
-      ? 'لم يكتمل رفع بعض الملفات أو لم تتأكد نتيجته بعد. إذا غادرت الآن فقد لا تُحفظ. هل تريد المغادرة؟'
+      ? t('لم يكتمل رفع بعض الملفات أو لم تتأكد نتيجته بعد. إذا غادرت الآن فقد لا تُحفظ. هل تريد المغادرة؟')
       : unsettled || linksDirty
-        ? 'في هذه الصفحة ملفات لم تُرفع أو روابط لم تُحفظ بعد. إذا غادرتها فسيُحذف ذلك. هل تريد المغادرة؟'
+        ? t('في هذه الصفحة ملفات لم تُرفع أو روابط لم تُحفظ بعد. إذا غادرتها فسيُحذف ذلك. هل تريد المغادرة؟')
         : null,
   )
 
@@ -246,7 +250,7 @@ function DocumentationEditor({
         return
       }
       if (error instanceof ApiError && error.status === 401) {
-        setRow(row.key, { status: 'failed', error: 'انتهت جلستك، ولم يُرفع الملف. سجّل الدخول بالحساب نفسه في نافذة جديدة ثم أعد المحاولة.' })
+        setRow(row.key, { status: 'failed', error: t('انتهت جلستك، ولم يُرفع الملف. سجّل الدخول بالحساب نفسه في نافذة جديدة ثم أعد المحاولة.') })
         return
       }
       if (error instanceof NetworkError || (error instanceof ApiError && error.status >= 500)) {
@@ -276,7 +280,7 @@ function DocumentationEditor({
     }
     setRow(row.key, {
       status: 'unconfirmed',
-      error: 'لم تصل نتيجة الرفع، ولا يظهر الملف بين الملفات المحفوظة حتى الآن. أعد المحاولة: إن كان قد حُفظ فلن يُضاف مرة ثانية.',
+      error: t('لم تصل نتيجة الرفع، ولا يظهر الملف بين الملفات المحفوظة حتى الآن. أعد المحاولة: إن كان قد حُفظ فلن يُضاف مرة ثانية.'),
     })
   }
 
@@ -305,9 +309,9 @@ function DocumentationEditor({
     } catch (error) {
       if (error instanceof ApiError && error.status === 422) {
         setLinkErrors(Object.fromEntries(Object.entries(error.errors).map(([field, list]) => [field, list[0]])))
-        setAlert({ tone: 'error', content: <p>لم تُحفظ الروابط: صحّح الحقول المشار إليها ثم احفظها من جديد.</p> })
+        setAlert({ tone: 'error', content: <p>{t('لم تُحفظ الروابط: صحّح الحقول المشار إليها ثم احفظها من جديد.')}</p> })
       } else {
-        setAlert({ tone: 'error', content: <p>{errorMessage(error)} لم تُحفظ الروابط، وما زالت في الصفحة.</p> })
+        setAlert({ tone: 'error', content: <p>{errorMessage(error)} {t('لم تُحفظ الروابط، وما زالت في الصفحة.')}</p> })
       }
     } finally {
       setSavingLinks(false)
@@ -331,11 +335,11 @@ function DocumentationEditor({
   }
 
   const blocker = !hasExplanatory
-    ? 'ارفع وثيقة شرح العمل أولاً.'
+    ? t('ارفع وثيقة شرح العمل أولاً.')
     : unsettled
-      ? 'أكمل رفع الملفات المختارة أو أزلها أولاً.'
+      ? t('أكمل رفع الملفات المختارة أو أزلها أولاً.')
       : linksDirty
-        ? 'احفظ تغييرات الروابط أولاً.'
+        ? t('احفظ تغييرات الروابط أولاً.')
         : null
 
   return (
@@ -344,23 +348,23 @@ function DocumentationEditor({
 
       <section className="doc-section" aria-labelledby="doc-explanatory-title">
         <h2 id="doc-explanatory-title" className="doc-section__title">
-          وثيقة شرح العمل <span className="doc-section__required">(مطلوبة)</span>
+          {t('وثيقة شرح العمل')} <span className="doc-section__required">{t('(مطلوبة)')}</span>
         </h2>
-        <p className="doc-section__text">وثيقة واحدة تشرح العمل المرشّح: فكرته، وما أُنجز، وأثره. يمكنك استبدالها حتى إرسال المشاركة.</p>
-        <AttachmentList attachments={doc.attachments.filter((item) => item.kind === 'explanatory')} user={user} journeyKey={journeyKey} emptyText="لم تُرفع وثيقة شرح العمل بعد." />
-        <FilePicker kind="explanatory" label={hasExplanatory ? 'استبدال الوثيقة' : 'اختيار الوثيقة'} multiple={false} onFiles={(files) => addFiles('explanatory', files)} />
+        <p className="doc-section__text">{t('وثيقة واحدة تشرح العمل المرشّح: فكرته، وما أُنجز، وأثره. يمكنك استبدالها حتى إرسال المشاركة.')}</p>
+        <AttachmentList attachments={doc.attachments.filter((item) => item.kind === 'explanatory')} user={user} journeyKey={journeyKey} emptyText={t('لم تُرفع وثيقة شرح العمل بعد.')} />
+        <FilePicker kind="explanatory" label={hasExplanatory ? t('استبدال الوثيقة') : t('اختيار الوثيقة')} multiple={false} onFiles={(files) => addFiles('explanatory', files)} />
         <PendingRows rows={pending.filter((row) => row.kind === 'explanatory')} onUpload={upload} onDrop={dropRow} onTitle={(key, title) => setRow(key, { title })} />
       </section>
 
       {(['supporting', 'video'] as const).map((kind) => (
         <section key={kind} className="doc-section" aria-labelledby={`doc-${kind}-title`}>
           <h2 id={`doc-${kind}-title`} className="doc-section__title">
-            {SECTION_TITLES[kind]} <span className="doc-section__optional">(اختيارية)</span>
+            {t(SECTION_TITLES[kind])} <span className="doc-section__optional">{t('(اختيارية)')}</span>
           </h2>
           <p className="doc-section__text">
             {kind === 'supporting'
-              ? 'تقارير أو شهادات أو وثائق أخرى تدعم ما ورد في وثيقة الشرح. لكل وثيقة عنوان أو وصف قصير اختياري.'
-              : 'مقاطع فيديو تُظهر العمل وأثره. تُعرض كما رُفعت، دون تعديل أو تحويل.'}
+              ? t('تقارير أو شهادات أو وثائق أخرى تدعم ما ورد في وثيقة الشرح. لكل وثيقة عنوان أو وصف قصير اختياري.')
+              : t('مقاطع فيديو تُظهر العمل وأثره. تُعرض كما رُفعت، دون تعديل أو تحويل.')}
           </p>
           <AttachmentList
             attachments={doc.attachments.filter((item) => item.kind === kind)}
@@ -368,27 +372,27 @@ function DocumentationEditor({
             journeyKey={journeyKey}
             onRemove={(attachment) => void remove(attachment)}
             busyId={removing}
-            emptyText={kind === 'supporting' ? 'لم تُضف وثائق داعمة.' : 'لم تُضف فيديوهات.'}
+            emptyText={kind === 'supporting' ? t('لم تُضف وثائق داعمة.') : t('لم تُضف فيديوهات.')}
           />
-          <FilePicker kind={kind} label={kind === 'supporting' ? 'إضافة وثائق' : 'إضافة فيديوهات'} multiple onFiles={(files) => addFiles(kind, files)} />
+          <FilePicker kind={kind} label={kind === 'supporting' ? t('إضافة وثائق') : t('إضافة فيديوهات')} multiple onFiles={(files) => addFiles(kind, files)} />
           <PendingRows rows={pending.filter((row) => row.kind === kind)} onUpload={upload} onDrop={dropRow} onTitle={(key, title) => setRow(key, { title })} />
         </section>
       ))}
 
       <section className="doc-section" aria-labelledby="doc-links-title">
         <h2 id="doc-links-title" className="doc-section__title">
-          روابط توثيق إضافية <span className="doc-section__optional">(اختيارية)</span>
+          {t('روابط توثيق إضافية')} <span className="doc-section__optional">{t('(اختيارية)')}</span>
         </h2>
         <p className="doc-section__text">
-          روابط إلى فيديوهات أو مواقع أو مواد أخرى تخص العمل، تبدأ بـ <bdi dir="ltr">https://</bdi>. تُحفظ كما كُتبت؛ لا نجلب محتواها، وقد يتغيّر ذلك المحتوى أو يُحذف
-          لاحقاً.
+          {t('روابط إلى فيديوهات أو مواقع أو مواد أخرى تخص العمل، تبدأ بـ')} <bdi dir="ltr">https://</bdi>.{' '}
+          {t('تُحفظ كما كُتبت؛ لا نجلب محتواها، وقد يتغيّر ذلك المحتوى أو يُحذف لاحقاً.')}
         </p>
         <div className="link-rows">
           {links.map((link, index) => (
             <div key={index} className="link-row">
               <TextField
                 id={`doc-link-${index}-title`}
-                label={`عنوان الرابط ${index + 1}`}
+                label={t('عنوان الرابط {v}', { v: index + 1 })}
                 value={link.title}
                 onChange={(title) => setLinks((rows) => rows.map((row, at) => (at === index ? { ...row, title } : row)))}
                 error={linkErrors[`links.${index}.title`]}
@@ -398,18 +402,18 @@ function DocumentationEditor({
               />
               <TextField
                 id={`doc-link-${index}-url`}
-                label={`الرابط ${index + 1}`}
+                label={t('الرابط {v}', { v: index + 1 })}
                 type="url"
                 value={link.url}
                 onChange={(url) => setLinks((rows) => rows.map((row, at) => (at === index ? { ...row, url } : row)))}
                 error={linkErrors[`links.${index}.url`]}
-                hint="مثل https://example.org/video"
+                hint={t('مثل https://example.org/video')}
                 autoComplete="url"
                 required
               />
               <p>
                 <button type="button" className="button button--quiet button--small" onClick={() => setLinks((rows) => rows.filter((_, at) => at !== index))}>
-                  حذف الرابط {index + 1}
+                  {t('حذف الرابط {n}', { n: index + 1 })}
                 </button>
               </p>
             </div>
@@ -418,23 +422,23 @@ function DocumentationEditor({
         <div className="doc-section__actions">
           {links.length < 20 && (
             <button type="button" className="button button--secondary" onClick={() => setLinks((rows) => [...rows, { title: '', url: '' }])}>
-              إضافة رابط
+              {t('إضافة رابط')}
             </button>
           )}
           {linksDirty && (
             <button type="button" className="button button--primary" onClick={() => void saveLinks()} disabled={savingLinks}>
-              {savingLinks ? 'جارٍ حفظ الروابط…' : 'حفظ الروابط'}
+              {savingLinks ? t('جارٍ حفظ الروابط…') : t('حفظ الروابط')}
             </button>
           )}
         </div>
-        {linksDirty && <p className="doc-section__note">في الروابط تغييرات لم تُحفظ بعد.</p>}
+        {linksDirty && <p className="doc-section__note">{t('في الروابط تغييرات لم تُحفظ بعد.')}</p>}
       </section>
 
       <div className="doc-complete">
-        {doc.confirmed && !unsettled && !linksDirty && <p className="doc-section__note">حُفظت هذه المرحلة. يمكنك متابعة المراجعة، أو تعديل الملفات ثم حفظها من جديد.</p>}
+        {doc.confirmed && !unsettled && !linksDirty && <p className="doc-section__note">{t('حُفظت هذه المرحلة. يمكنك متابعة المراجعة، أو تعديل الملفات ثم حفظها من جديد.')}</p>}
         {blocker && <p className="doc-section__note">{blocker}</p>}
         <button type="button" className="button button--primary" onClick={() => void complete()} disabled={blocker !== null || completing}>
-          {completing ? 'جارٍ الحفظ…' : 'حفظ المرحلة والمتابعة إلى المراجعة'}
+          {completing ? t('جارٍ الحفظ…') : t('حفظ المرحلة والمتابعة إلى المراجعة')}
         </button>
       </div>
     </>
@@ -443,6 +447,7 @@ function DocumentationEditor({
 
 /** An accessible file picker with an optional drop area. */
 function FilePicker({ kind, label, multiple, onFiles }: { kind: AttachmentKind; label: string; multiple: boolean; onFiles: (files: File[]) => void }) {
+  const { t } = useLocale()
   const id = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
@@ -483,7 +488,10 @@ function FilePicker({ kind, label, multiple, onFiles }: { kind: AttachmentKind; 
         {label}
       </label>
       <p id={`${id}-hint`} className="drop-zone__hint">
-        {rules.formats}، حتى {formatBytes(rules.maxBytes)}{multiple ? ' لكل ملف' : ''}. يمكنك أيضاً سحب {multiple ? 'الملفات' : 'الملف'} وإفلاته هنا.
+        {t(multiple ? '{formats}، حتى {size} لكل ملف. يمكنك أيضاً سحب الملفات وإفلاتها هنا.' : '{formats}، حتى {size}. يمكنك أيضاً سحب الملف وإفلاته هنا.', {
+          formats: t(rules.formats),
+          size: formatBytes(rules.maxBytes),
+        })}
       </p>
     </div>
   )
@@ -501,6 +509,7 @@ function PendingRows({
   onDrop: (key: string) => void
   onTitle: (key: string, title: string) => void
 }) {
+  const { t } = useLocale()
   if (rows.length === 0) return null
 
   return (
@@ -517,33 +526,33 @@ function PendingRows({
             <p className="attachment__status" role="status">
               <StatusIcon tone={row.status === 'failed' ? 'error' : 'info'} />
               <span>
-                {row.status === 'staged' ? 'لم يُرفع بعد' : row.status === 'uploading' ? 'جارٍ الرفع…' : row.status === 'unconfirmed' ? 'نتيجة الرفع غير مؤكدة' : 'لم يُرفع'}
+                {row.status === 'staged' ? t('لم يُرفع بعد') : row.status === 'uploading' ? t('جارٍ الرفع…') : row.status === 'unconfirmed' ? t('نتيجة الرفع غير مؤكدة') : t('لم يُرفع')}
               </span>
             </p>
             {row.error && <p className="attachment__error">{row.error}</p>}
             {row.kind !== 'explanatory' && row.status === 'staged' && (
-              <TextField id={`title-${row.key}`} label="عنوان أو وصف قصير" optional value={row.title} onChange={(title) => onTitle(row.key, title)} maxLength={150} autoComplete="off" />
+              <TextField id={`title-${row.key}`} label={t('عنوان أو وصف قصير')} optional value={row.title} onChange={(title) => onTitle(row.key, title)} maxLength={150} autoComplete="off" />
             )}
           </div>
           <div className="attachment__actions">
             {row.status === 'staged' && (
               <button type="button" className="button button--primary button--small" onClick={() => void onUpload(row)}>
-                رفع الملف
+                {t('رفع الملف')}
               </button>
             )}
             {row.status === 'unconfirmed' && (
               <button type="button" className="button button--primary button--small" onClick={() => void onUpload(row)}>
-                إعادة المحاولة
+                {t('إعادة المحاولة')}
               </button>
             )}
             {row.status === 'failed' && row.retryable !== false && (
               <button type="button" className="button button--secondary button--small" onClick={() => void onUpload(row)}>
-                إعادة المحاولة
+                {t('إعادة المحاولة')}
               </button>
             )}
             {row.status !== 'uploading' && (
               <button type="button" className="button button--quiet button--small" onClick={() => onDrop(row.key)}>
-                {row.status === 'unconfirmed' ? 'إخفاء' : 'إزالة'}
+                {row.status === 'unconfirmed' ? t('إخفاء') : t('إزالة')}
                 <span className="visually-hidden"> {row.file.name}</span>
               </button>
             )}

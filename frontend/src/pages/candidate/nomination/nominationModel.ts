@@ -1,5 +1,6 @@
 import type { Errors } from '../basic/formModel'
 import type { DomainOption } from './nominationApi'
+import { tr } from '../../../i18n/messages'
 
 /*
  * The Stage 2 form, held in memory only (never in localStorage or
@@ -84,11 +85,11 @@ function length(value: string): number {
 
 function checkText(errors: Errors, key: string, value: string, label: string, max: number) {
   if (!value.trim()) {
-    errors[key] = `أدخل ${label}.`
+    errors[key] = tr('أدخل {label}.', { label })
   } else if (length(value) > max) {
-    errors[key] = `يجب ألا يزيد ${label} على ${max} حرفاً.`
+    errors[key] = tr('يجب ألا يزيد {label} على {max} حرفاً.', { label, max })
   } else if (hasControlCharacters(value)) {
-    errors[key] = `يحتوي ${label} على رموز تحكّم غير مسموح بها. اكتب نصاً عادياً.`
+    errors[key] = tr('يحتوي {label} على رموز تحكّم غير مسموح بها. اكتب نصاً عادياً.', { label })
   }
 }
 
@@ -98,15 +99,15 @@ export function validateNominationStep(step: NominationStepId, form: NominationF
   switch (step) {
     case 'domain': {
       const domain = domains.find((option) => option.code === form.domain)
-      if (!domain) errors.domain = 'اختر محور الترشح.'
-      else if (!domain.subcategories.some((option) => option.code === form.subcategory)) errors.subcategory = 'اختر فئة الترشح ضمن المحور.'
+      if (!domain) errors.domain = tr('اختر محور الترشح.')
+      else if (!domain.subcategories.some((option) => option.code === form.subcategory)) errors.subcategory = tr('اختر فئة الترشح ضمن المحور.')
       break
     }
     case 'work':
-      checkText(errors, 'title', form.title, 'عنوان العمل', LIMITS.title)
-      checkText(errors, 'purpose_and_mission', form.purpose_and_mission, 'الغاية والرسالة', LIMITS.purpose)
-      checkText(errors, 'objectives', form.objectives, 'الأهداف', LIMITS.objectives)
-      checkText(errors, 'impact', form.impact, 'الأثر', LIMITS.impact)
+      checkText(errors, 'title', form.title, tr('عنوان العمل'), LIMITS.title)
+      checkText(errors, 'purpose_and_mission', form.purpose_and_mission, tr('الغاية والرسالة'), LIMITS.purpose)
+      checkText(errors, 'objectives', form.objectives, tr('الأهداف'), LIMITS.objectives)
+      checkText(errors, 'impact', form.impact, tr('الأثر'), LIMITS.impact)
       break
     case 'review':
       break

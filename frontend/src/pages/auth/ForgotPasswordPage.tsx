@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { FormAlert, SubmitButton, TextField } from '../../components/forms/FormControls'
+import { useLocale } from '../../i18n/useLocale'
 import { api } from '../../lib/api'
 import { Link } from '../../lib/router'
 import { AuthLayout } from './AuthLayout'
 import { ALERT_ID, useSubmission } from './useSubmission'
 
 export function ForgotPasswordPage() {
+  const { t } = useLocale()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState<string | null>(null)
   const { busy, alert, fieldError, submit } = useSubmission()
@@ -19,10 +21,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout
-      title="استعادة كلمة المرور"
-      intro={<p>أدخل البريد الإلكتروني لحسابك، وسنرسل إليه رابطاً لتعيين كلمة مرور جديدة.</p>}
-    >
+    <AuthLayout title={t('auth.forgotTitle')} intro={<p>{t('auth.forgotIntro')}</p>}>
       {alert && (
         <FormAlert tone="error" id={ALERT_ID}>
           <p>{alert}</p>
@@ -31,14 +30,14 @@ export function ForgotPasswordPage() {
       {sent && (
         <FormAlert tone="success">
           <p>{sent}</p>
-          <p>لم تصلك الرسالة؟ تحقّق من مجلد الرسائل غير المرغوب فيها، أو أعد الطلب بعد دقيقة.</p>
+          <p>{t('auth.forgotNotArrived')}</p>
         </FormAlert>
       )}
 
       <form className="auth-form" onSubmit={onSubmit} noValidate>
         <TextField
           id="email"
-          label="البريد الإلكتروني"
+          label={t('auth.email')}
           type="email"
           autoComplete="email"
           value={email}
@@ -46,13 +45,13 @@ export function ForgotPasswordPage() {
           error={fieldError('email')}
           required
         />
-        <SubmitButton busy={busy} busyLabel="جارٍ الإرسال…">
-          إرسال رابط الاستعادة
+        <SubmitButton busy={busy} busyLabel={t('auth.sending')}>
+          {t('auth.sendReset')}
         </SubmitButton>
       </form>
 
       <p className="auth-panel__switch">
-        <Link href="/login">العودة إلى تسجيل الدخول</Link>
+        <Link href="/login">{t('auth.backToLogin')}</Link>
       </p>
     </AuthLayout>
   )

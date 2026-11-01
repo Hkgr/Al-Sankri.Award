@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { FormAlert } from '../../components/forms/FormControls'
+import { useLocale } from '../../i18n/useLocale'
 import { ApiError, api, errorMessage } from '../../lib/api'
 import { useSearchParam } from '../../lib/useRouter'
 import { AuthLayout } from '../auth/AuthLayout'
-import { formatDamascusDateTime, POLICY_NAMES } from '../candidate/candidateApi'
+import { formatDamascusDateTime, POLICY_NAME_KEYS } from '../candidate/candidateApi'
 import type { PolicyCode } from '../candidate/candidateApi'
 
 type Policy = {
@@ -21,6 +22,7 @@ type Policy = {
  * says so plainly; no placeholder text is ever shown as the policy.
  */
 export function PolicyPage({ code, slug }: { code: PolicyCode; slug: string }) {
+  const { t, locale } = useLocale()
   const version = useSearchParam('version')
   const [policy, setPolicy] = useState<Policy | null>(null)
   const [problem, setProblem] = useState<{ tone: 'info' | 'error'; text: string } | null>(null)
@@ -40,17 +42,17 @@ export function PolicyPage({ code, slug }: { code: PolicyCode; slug: string }) {
         setPolicy(null)
         setProblem(
           error instanceof ApiError && error.code === 'policy_not_configured'
-            ? { tone: 'info', text: `لم تُنشر ${POLICY_NAMES[code]} المعتمدة بعد${query ? ' بهذا الإصدار' : ''}.` }
+            ? { tone: 'info', text: t(query ? 'policy.notPublishedVersion' : 'policy.notPublished', { name: t(POLICY_NAME_KEYS[code]) }) }
             : { tone: 'error', text: errorMessage(error) },
         )
       })
     return () => {
       active = false
     }
-  }, [code, slug, version])
+  }, [code, slug, version, t])
 
   return (
-    <AuthLayout title={policy?.title ?? POLICY_NAMES[code]} wide>
+    <AuthLayout title={policy?.title ?? t(POLICY_NAME_KEYS[code])} wide>
       {problem && (
         <FormAlert tone={problem.tone}>
           <p>{problem.text}</p>
@@ -58,18 +60,18 @@ export function PolicyPage({ code, slug }: { code: PolicyCode; slug: string }) {
       )}
       {!policy && !problem && (
         <p className="auth-loading" role="status">
-          جارٍ التحميل…
+          {t('policy.loading')}
         </p>
       )}
       {policy && (
         <>
           <p className="auth-panel__text">
-            الإصدار {policy.version_number}
-            {policy.published_at && ` · نُشر في ${formatDamascusDateTime(policy.published_at)} بتوقيت دمشق`}
+            {t('policy.version', { n: policy.version_number })}
+            {policy.published_at && ` · ${t('policy.publishedAt', { when: formatDamascusDateTime(policy.published_at, locale) })}`}
           </p>
           {policy.status === 'retired' && (
             <FormAlert tone="info">
-              <p>هذا إصدار سابق، وقد حلّ محله إصدار أحدث.</p>
+              <p>{t('policy.retired')}</p>
             </FormAlert>
           )}
           <div className="policy-text">{policy.body}</div>

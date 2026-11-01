@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/useAuth'
 import type { User } from '../../auth/useAuth'
 import { FormAlert, PasswordField, SubmitButton, TextField } from '../../components/forms/FormControls'
 import { GoogleButton } from '../../components/GoogleButton'
+import { useLocale } from '../../i18n/useLocale'
 import { api } from '../../lib/api'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
@@ -24,6 +25,7 @@ function useFollowRedirect() {
 export function LoginPage() {
   const { location } = useRouter()
   const { setUser, googleAvailable } = useAuth()
+  const { t } = useLocale()
   const followRedirect = useFollowRedirect()
   const params = new URLSearchParams(location.search)
   const requested = params.get('redirect') ?? undefined
@@ -47,7 +49,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="تسجيل الدخول" intro={<p>ادخل إلى حسابك في موقع الجائزة.</p>}>
+    <AuthLayout title={t('auth.login')} intro={<p>{t('auth.loginIntro')}</p>}>
       {alert ? (
         <FormAlert tone="error" id={ALERT_ID}>
           <p>{alert}</p>
@@ -55,7 +57,7 @@ export function LoginPage() {
       ) : (
         notice && (
           <FormAlert tone={notice.tone}>
-            <p>{notice.text}</p>
+            <p>{t(notice.key)}</p>
           </FormAlert>
         )
       )}
@@ -63,7 +65,7 @@ export function LoginPage() {
       <form className="auth-form" onSubmit={onSubmit} noValidate>
         <TextField
           id="email"
-          label="البريد الإلكتروني"
+          label={t('auth.email')}
           type="email"
           autoComplete="username"
           value={email}
@@ -73,7 +75,7 @@ export function LoginPage() {
         />
         <PasswordField
           id="password"
-          label="كلمة المرور"
+          label={t('auth.password')}
           autoComplete="current-password"
           value={password}
           onChange={setPassword}
@@ -81,18 +83,18 @@ export function LoginPage() {
           required
         />
         <p className="auth-form__aside">
-          <Link href="/forgot-password">نسيت كلمة المرور؟</Link>
+          <Link href="/forgot-password">{t('auth.forgot')}</Link>
         </p>
-        <SubmitButton busy={busy} busyLabel="جارٍ تسجيل الدخول…">
-          تسجيل الدخول
+        <SubmitButton busy={busy} busyLabel={t('auth.loggingIn')}>
+          {t('auth.login')}
         </SubmitButton>
       </form>
 
-      <Divider>أو</Divider>
+      <Divider>{t('auth.or')}</Divider>
       <GoogleButton available={googleAvailable} redirect={requested} />
 
       <p className="auth-panel__switch">
-        ليس لديك حساب؟ <Link href="/register">إنشاء حساب جديد</Link>
+        {t('auth.noAccount')} <Link href="/register">{t('auth.createNew')}</Link>
       </p>
     </AuthLayout>
   )

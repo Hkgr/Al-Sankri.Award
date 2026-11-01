@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ChangeEvent, ReactNode, Ref } from 'react'
+import { useLocale } from '../../i18n/useLocale'
 import { describedBy } from './describedBy'
 
 /*
@@ -30,16 +31,18 @@ type FieldProps = {
 }
 
 export function FieldLabel({ htmlFor, label, required, optional }: { htmlFor: string; label: string; required?: boolean; optional?: boolean }) {
+  const { t } = useLocale()
   return (
     <label className="field__label" htmlFor={htmlFor}>
       {label}
-      {required && <span className="field__required"> (مطلوب)</span>}
-      {optional && <span className="field__required"> (اختياري)</span>}
+      {required && <span className="field__required"> {t('form.required')}</span>}
+      {optional && <span className="field__required"> {t('form.optional')}</span>}
     </label>
   )
 }
 
 export function FieldMessages({ id, hint, error }: { id: string; hint?: string; error?: string }) {
+  const { t } = useLocale()
   return (
     <>
       {hint && (
@@ -50,7 +53,7 @@ export function FieldMessages({ id, hint, error }: { id: string; hint?: string; 
       {error && (
         <p id={`${id}-error`} className="field__error">
           <StatusIcon tone="error" />
-          <span>خطأ: {error}</span>
+          <span>{t('form.errorPrefix')} {error}</span>
         </p>
       )}
     </>
@@ -86,6 +89,7 @@ export function TextField({ id, label, value, onChange, error, hint, required, o
 }
 
 export function PasswordField({ id, label, value, onChange, error, hint, required, autoComplete, inputRef }: Omit<FieldProps, 'type'>) {
+  const { t } = useLocale()
   const [visible, setVisible] = useState(false)
   return (
     <div className="field">
@@ -119,8 +123,8 @@ export function PasswordField({ id, label, value, onChange, error, hint, require
             <circle cx="12" cy="12" r="3" />
             {visible && <path d="M4 4l16 16" />}
           </svg>
-          <span>{visible ? 'إخفاء' : 'إظهار'}</span>
-          <span className="visually-hidden"> كلمة المرور</span>
+          <span>{visible ? t('form.hide') : t('form.show')}</span>
+          <span className="visually-hidden"> {t('form.passwordWord')}</span>
         </button>
       </div>
       <FieldMessages id={id} hint={hint} error={error} />

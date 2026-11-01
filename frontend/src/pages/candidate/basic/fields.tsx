@@ -5,6 +5,7 @@ import { FieldLabel, FieldMessages, StatusIcon, TextField } from '../../../compo
 import type { Country } from '../candidateApi'
 import { fieldId, MAX_SOCIAL_LINKS, MONTHS } from './formModel'
 import type { Errors, PhoneValue, SocialLink } from './formModel'
+import { useLocale } from '../../../i18n/useLocale'
 
 /*
  * Form controls for stage 1, built on the same field styles as the account
@@ -17,11 +18,12 @@ import type { Errors, PhoneValue, SocialLink } from './formModel'
 const ltr = (value: string) => `\u2066${value}\u2069`
 
 function GroupLegend({ label, required, optional }: { label: string; required?: boolean; optional?: boolean }) {
+  const { t } = useLocale()
   return (
     <legend className="field__label">
       {label}
-      {required && <span className="field__required"> (مطلوب)</span>}
-      {optional && <span className="field__required"> (اختياري)</span>}
+      {required && <span className="field__required">{t('(مطلوب)')}</span>}
+      {optional && <span className="field__required">{t('(اختياري)')}</span>}
     </legend>
   )
 }
@@ -100,6 +102,7 @@ export function TextAreaField({
   /** Shown as a live character count; validation enforces it. */
   limit?: number
 }) {
+  const { t } = useLocale()
   const count = Array.from(value).length
   return (
     <div className="field">
@@ -120,7 +123,7 @@ export function TextAreaField({
       />
       {limit !== undefined && (
         <p id={`${id}-count`} className="field__hint field__count" data-over={count > limit || undefined}>
-          {count} / {limit} حرفاً
+          {t('{count} / {limit} حرفاً', { count, limit })}
         </p>
       )}
       <FieldMessages id={id} hint={hint} error={error} />
@@ -148,6 +151,7 @@ export function PhoneField({
   required?: boolean
   hint?: string
 }) {
+  const { t } = useLocale()
   const base = fieldId(name)
   const countryError = errors[`${name}.country`]
   const numberError = errors[`${name}.number`]
@@ -164,7 +168,7 @@ export function PhoneField({
       <div className="phone-field">
         <div className="field">
           <label className="field__sublabel" htmlFor={`${base}-country`}>
-            رمز الدولة
+            {t('رمز الدولة')}
           </label>
           <select
             id={`${base}-country`}
@@ -175,7 +179,7 @@ export function PhoneField({
             aria-invalid={countryError ? true : undefined}
             aria-describedby={describedBy(countryError && `${base}-country-error`)}
           >
-            {!value.country && <option value="">اختر</option>}
+            {!value.country && <option value="">{t('اختر')}</option>}
             {countries
               .filter((country) => country.calling_code !== null)
               .map((country) => (
@@ -188,7 +192,7 @@ export function PhoneField({
         </div>
         <div className="field">
           <label className="field__sublabel" htmlFor={`${base}-number`}>
-            الرقم
+            {t('الرقم')}
           </label>
           <input
             id={`${base}-number`}
@@ -228,20 +232,21 @@ export function BirthDateField({
   onChange: (part: 'birth_day' | 'birth_month' | 'birth_year', value: string) => void
   error?: string
 }) {
+  const { t } = useLocale()
   const hintId = 'individual-birth_date-hint'
   const errorId = 'individual-birth_date-error'
   const described = describedBy(hintId, error && errorId)
 
   return (
     <fieldset className="field field-group">
-      <GroupLegend label="تاريخ الميلاد" required />
+      <GroupLegend label={t('تاريخ الميلاد')} required />
       <p id={hintId} className="field__hint">
-        بالتقويم الميلادي، مثلاً: 15 آذار 1985.
+        {t('بالتقويم الميلادي، مثلاً: 15 آذار 1985.')}
       </p>
       <div className="date-field">
         <div className="field">
           <label className="field__sublabel" htmlFor="individual-birth_date-day">
-            اليوم
+            {t('اليوم')}
           </label>
           <input
             id="individual-birth_date-day"
@@ -258,7 +263,7 @@ export function BirthDateField({
         </div>
         <div className="field">
           <label className="field__sublabel" htmlFor="individual-birth_date-month">
-            الشهر
+            {t('الشهر')}
           </label>
           <select
             id="individual-birth_date-month"
@@ -269,17 +274,17 @@ export function BirthDateField({
             aria-invalid={error ? true : undefined}
             aria-describedby={described}
           >
-            <option value="">اختر الشهر</option>
+            <option value="">{t('اختر الشهر')}</option>
             {MONTHS.map((name, index) => (
               <option key={name} value={String(index + 1)}>
-                {`${name} (${index + 1})`}
+                {`${t(name)} (${index + 1})`}
               </option>
             ))}
           </select>
         </div>
         <div className="field">
           <label className="field__sublabel" htmlFor="individual-birth_date-year">
-            السنة
+            {t('السنة')}
           </label>
           <input
             id="individual-birth_date-year"
@@ -361,6 +366,7 @@ export function CheckboxField({ id, checked, onChange, error, children }: { id: 
 
 /** Up to five public links, each a platform name and an address. */
 export function SocialLinksField({ links, onChange, errors }: { links: SocialLink[]; onChange: (links: SocialLink[]) => void; errors: Errors }) {
+  const { t } = useLocale()
   const addRef = useRef<HTMLButtonElement>(null)
   const focusAfterChange = useRef<string | null>(null)
 
@@ -388,9 +394,9 @@ export function SocialLinksField({ links, onChange, errors }: { links: SocialLin
 
   return (
     <fieldset className="field field-group field-group--full">
-      <GroupLegend label="روابط مواقع التواصل الاجتماعي" optional />
+      <GroupLegend label={t('روابط مواقع التواصل الاجتماعي')} optional />
       <p className="field__hint" id="social-links-hint">
-        حتى {MAX_SOCIAL_LINKS} روابط. اكتب اسم المنصة والرابط الكامل، مثل <bdi dir="ltr">https://www.instagram.com/…</bdi>
+        {t('حتى {n} روابط. اكتب اسم المنصة والرابط الكامل، مثل', { n: MAX_SOCIAL_LINKS })} <bdi dir="ltr">https://www.instagram.com/…</bdi>
       </p>
       {links.length > 0 && (
         <ol className="link-rows">
@@ -398,7 +404,7 @@ export function SocialLinksField({ links, onChange, errors }: { links: SocialLin
             <li key={link.key} className="link-row">
               <TextField
                 id={`social_links-${index}-platform`}
-                label={`المنصة ${index + 1}`}
+                label={t('المنصة {v}', { v: index + 1 })}
                 value={link.platform}
                 onChange={(value) => update(index, 'platform', value)}
                 error={errors[`social_links.${index}.platform`]}
@@ -409,7 +415,7 @@ export function SocialLinksField({ links, onChange, errors }: { links: SocialLin
               />
               <TextField
                 id={`social_links-${index}-url`}
-                label={`الرابط ${index + 1}`}
+                label={t('الرابط {v}', { v: index + 1 })}
                 type="url"
                 value={link.url}
                 onChange={(value) => update(index, 'url', value)}
@@ -419,7 +425,7 @@ export function SocialLinksField({ links, onChange, errors }: { links: SocialLin
                 required
               />
               <button type="button" className="button button--secondary link-row__remove" onClick={() => remove(index)}>
-                حذف<span className="visually-hidden"> الرابط {index + 1}</span>
+                {t('حذف')}<span className="visually-hidden"> {t('الرابط {n}', { n: index + 1 })}</span>
               </button>
             </li>
           ))}
@@ -427,11 +433,11 @@ export function SocialLinksField({ links, onChange, errors }: { links: SocialLin
       )}
       {links.length < MAX_SOCIAL_LINKS ? (
         <button ref={addRef} type="button" className="button button--secondary link-rows__add" onClick={add}>
-          إضافة رابط
+          {t('إضافة رابط')}
         </button>
       ) : (
         <p className="field__hint">
-          <StatusIcon tone="info" /> وصلت إلى الحد الأقصى ({MAX_SOCIAL_LINKS} روابط).
+          <StatusIcon tone="info" /> {t('وصلت إلى الحد الأقصى ({n} روابط).', { n: MAX_SOCIAL_LINKS })}
         </p>
       )}
     </fieldset>
@@ -443,6 +449,7 @@ export function SocialLinksField({ links, onChange, errors }: { links: SocialLin
  * receives focus when it appears, so it is read out first.
  */
 export function ErrorSummary({ errors, attempt, idFor = fieldId }: { errors: Errors; attempt: number; idFor?: (key: string) => string }) {
+  const { t } = useLocale()
   const ref = useRef<HTMLDivElement>(null)
   const entries = Object.entries(errors)
 
@@ -459,7 +466,7 @@ export function ErrorSummary({ errors, attempt, idFor = fieldId }: { errors: Err
       <StatusIcon tone="error" />
       <div className="form-alert__body">
         <h2 id="error-summary-title" className="error-summary__title">
-          تحقّق من الحقول التالية:
+          {t('تحقّق من الحقول التالية:')}
         </h2>
         <ul className="error-summary__list">
           {entries.map(([key, message]) => (

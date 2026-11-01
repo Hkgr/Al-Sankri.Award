@@ -3,6 +3,7 @@ import type { User } from '../../auth/useAuth'
 import { api, errorMessage } from '../../lib/api'
 import { contextHeader } from '../candidate/candidateApi'
 import { saveFile } from './saveFile'
+import { useLocale } from '../../i18n/useLocale'
 
 export type ExportFormat = 'xlsx' | 'pdf'
 
@@ -13,7 +14,9 @@ export type ExportFormat = 'xlsx' | 'pdf'
  * above its limit with a message shown here. Only for accounts holding
  * reports.export; the server checks the table's own permission too.
  */
-export function ExportMenu({ user, url, label = 'تصدير' }: { user: User; url: (format: ExportFormat) => string; label?: string }) {
+export function ExportMenu({ user, url, label }: { user: User; url: (format: ExportFormat) => string; label?: string }) {
+  const { t } = useLocale()
+  const menuLabel = label ?? t('تصدير')
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState<ExportFormat | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -68,7 +71,7 @@ export function ExportMenu({ user, url, label = 'تصدير' }: { user: User; ur
         disabled={busy !== null}
         onClick={() => setOpen((shown) => !shown)}
       >
-        {busy ? 'جارٍ إعداد الملف…' : label}
+        {busy ? t('جارٍ إعداد الملف…') : menuLabel}
       </button>
       <ul id={menuId} className="admin-export__menu" hidden={!open}>
         <li>

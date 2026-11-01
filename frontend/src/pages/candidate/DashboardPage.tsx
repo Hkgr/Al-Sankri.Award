@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { User } from '../../auth/useAuth'
 import { FormAlert, StatusIcon } from '../../components/forms/FormControls'
+import { useLocale } from '../../i18n/useLocale'
 import { api, errorMessage } from '../../lib/api'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
@@ -18,7 +19,8 @@ import { VerifyEmailNotice } from './VerifyEmailNotice'
  * backend.
  */
 export function DashboardPage({ user }: { user: User }) {
-  usePageTitle('لوحة المترشح')
+  const { t } = useLocale()
+  usePageTitle(t('لوحة المترشح'))
   const { location } = useRouter()
   const handleAccountFailure = useAccountFailure()
   const [overview, setOverview] = useState<Overview | null>(null)
@@ -43,30 +45,30 @@ export function DashboardPage({ user }: { user: User }) {
   return (
     <div className="candidate-page">
       <header className="candidate-page__header">
-        <p className="eyebrow">لوحة المترشح</p>
+        <p className="eyebrow">{t('لوحة المترشح')}</p>
         <h1 className="candidate-page__title">
-          مرحباً، <bdi>{user.name}</bdi>
+          {t('مرحباً،')} <bdi>{user.name}</bdi>
         </h1>
-        <p className="candidate-page__intro">من هنا تستكمل ملف الترشح لجائزة الدكتور عبد القادر سنكري مرحلةً بعد مرحلة.</p>
+        <p className="candidate-page__intro">{t('من هنا تستكمل ملف الترشح لجائزة الدكتور عبد القادر سنكري مرحلةً بعد مرحلة.')}</p>
       </header>
 
       {params.get('welcome') === '1' && (
         <FormAlert tone={params.get('mail') === 'failed' ? 'info' : 'success'}>
           <p>
             {params.get('mail') === 'failed'
-              ? 'أُنشئ حسابك، لكن تعذّر إرسال رسالة تأكيد البريد الإلكتروني الآن. اطلب رابطاً جديداً من الأسفل بعد قليل.'
-              : 'أُنشئ حسابك، وأرسلنا رابط تأكيد إلى بريدك الإلكتروني.'}
+              ? t('أُنشئ حسابك، لكن تعذّر إرسال رسالة تأكيد البريد الإلكتروني الآن. اطلب رابطاً جديداً من الأسفل بعد قليل.')
+              : t('أُنشئ حسابك، وأرسلنا رابط تأكيد إلى بريدك الإلكتروني.')}
           </p>
         </FormAlert>
       )}
       {params.get('saved') === 'nomination-details' && (
         <FormAlert tone="success">
-          <p>حُفظت فئة الترشح وبيانات العمل، وأصبحت متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ تابع إلى ملفات العمل وتوثيقه (المرحلة 3).</p>
+          <p>{t('حُفظت فئة الترشح وبيانات العمل، وأصبحت متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ تابع إلى ملفات العمل وتوثيقه (المرحلة 3).')}</p>
         </FormAlert>
       )}
       {params.get('saved') === 'basic-information' && (
         <FormAlert tone="success">
-          <p>حُفظت بياناتك الأساسية، وأصبحت متاحة للعرض فقط. ستُتاح المراحل التالية من ملف الترشح لاحقاً.</p>
+          <p>{t('حُفظت بياناتك الأساسية، وأصبحت متاحة للعرض فقط. ستُتاح المراحل التالية من ملف الترشح لاحقاً.')}</p>
         </FormAlert>
       )}
 
@@ -74,7 +76,7 @@ export function DashboardPage({ user }: { user: User }) {
 
       <section className="candidate-section" aria-labelledby="stages-title">
         <h2 id="stages-title" className="candidate-section__title">
-          مراحل استكمال ملف الترشح
+          {t('مراحل استكمال ملف الترشح')}
         </h2>
 
         {loadError ? (
@@ -82,13 +84,13 @@ export function DashboardPage({ user }: { user: User }) {
             <p>{loadError}</p>
             <p>
               <button type="button" className="button button--secondary" onClick={() => void load()}>
-                إعادة المحاولة
+                {t('إعادة المحاولة')}
               </button>
             </p>
           </FormAlert>
         ) : !overview ? (
           <p className="candidate-loading" role="status">
-            جارٍ تحميل حالة المراحل…
+            {t('جارٍ تحميل حالة المراحل…')}
           </p>
         ) : (
           <ol className="stage-list">
@@ -101,8 +103,10 @@ export function DashboardPage({ user }: { user: User }) {
 
         <p className="candidate-section__note">
           {overview?.submission
-            ? `أُرسل ملف الترشح، وأصبح كله متاحاً للعرض فقط. ${PROCESSING_TEXT[overview.submission.processing] ?? PROCESSING_TEXT.pending}`
-            : 'استكمال المراحل لا يعني إرسال المشاركة: تُرسل المشاركة من صفحة المراجعة بعد استكمال المراحل الثلاث.'}
+            ? t('أُرسل ملف الترشح، وأصبح كله متاحاً للعرض فقط. {processing}', {
+                processing: t(PROCESSING_TEXT[overview.submission.processing] ?? PROCESSING_TEXT.pending),
+              })
+            : t('استكمال المراحل لا يعني إرسال المشاركة: تُرسل المشاركة من صفحة المراجعة بعد استكمال المراحل الثلاث.')}
         </p>
       </section>
     </div>
@@ -110,32 +114,35 @@ export function DashboardPage({ user }: { user: User }) {
 }
 
 function BasicInformationStage({ stage }: { stage: Overview['basic_information'] }) {
+  const { t, locale } = useLocale()
   const completed = stage.status === 'completed'
 
   return (
     <li className={`stage-card${completed ? ' stage-card--completed' : ''}`}>
-      <p className="stage-card__number">المرحلة 1</p>
-      <h3 className="stage-card__title">استكمال البيانات الأساسية</h3>
+      <p className="stage-card__number">{t('المرحلة 1')}</p>
+      <h3 className="stage-card__title">{t('استكمال البيانات الأساسية')}</h3>
       <p className="stage-card__status">
         <StatusIcon tone={completed ? 'success' : 'info'} />
         <span>
           {completed && stage.completed_at
-            ? `مكتملة، حُفظت في ${formatDamascusDateTime(stage.completed_at)} بتوقيت دمشق`
+            ? t('مكتملة، حُفظت في {when} بتوقيت دمشق', { when: formatDamascusDateTime(stage.completed_at, locale) })
             : stage.status === 'unavailable'
-              ? 'غير متاحة بعد'
-              : 'لم تبدأ بعد'}
+              ? t('غير متاحة بعد')
+              : t('لم تبدأ بعد')}
         </span>
       </p>
       <p className="stage-card__text">
         {completed
-          ? `بيانات ${stage.profile_type ? `المتقدم (${PROFILE_TYPE_LABELS[stage.profile_type]})` : 'المتقدم'} محفوظة ومتاحة للعرض فقط.`
+          ? stage.profile_type
+            ? t('بيانات المتقدم ({type}) محفوظة ومتاحة للعرض فقط.', { type: t(PROFILE_TYPE_LABELS[stage.profile_type]) })
+            : t('بيانات المتقدم محفوظة ومتاحة للعرض فقط.')
           : stage.status === 'unavailable'
-            ? 'يُتاح استكمال البيانات الأساسية بعد نشر سياسة الخصوصية وشروط الاستخدام المعتمدة للجائزة.'
-            : 'بيانات المتقدم، فرداً كان أو مؤسسة، ووسائل التواصل معه. تراجعها قبل تأكيد الحفظ.'}
+            ? t('يُتاح استكمال البيانات الأساسية بعد نشر سياسة الخصوصية وشروط الاستخدام المعتمدة للجائزة.')
+            : t('بيانات المتقدم، فرداً كان أو مؤسسة، ووسائل التواصل معه. تراجعها قبل تأكيد الحفظ.')}
       </p>
       {stage.status !== 'unavailable' && (
         <Link className={`button ${completed ? 'button--secondary' : 'button--primary'}`} href="/dashboard/basic-information">
-          {completed ? 'عرض البيانات' : 'ابدأ الاستكمال'}
+          {completed ? t('عرض البيانات') : t('ابدأ الاستكمال')}
         </Link>
       )}
     </li>
@@ -143,39 +150,40 @@ function BasicInformationStage({ stage }: { stage: Overview['basic_information']
 }
 
 function DocumentationStage({ stage }: { stage: Overview['documentation'] }) {
+  const { t, locale } = useLocale()
   const done = stage.status === 'completed' || stage.status === 'submitted'
   const open = stage.status !== 'locked' && stage.status !== 'unavailable'
 
   return (
     <li className={`stage-card${done ? ' stage-card--completed' : ''}${open ? '' : ' stage-card--waiting'}`}>
-      <p className="stage-card__number">المرحلة 3</p>
-      <h3 className="stage-card__title">ملفات العمل وتوثيقه</h3>
+      <p className="stage-card__number">{t('المرحلة 3')}</p>
+      <h3 className="stage-card__title">{t('ملفات العمل وتوثيقه')}</h3>
       <p className="stage-card__status">
         <StatusIcon tone={done ? 'success' : 'info'} />
         <span>
           {stage.status === 'submitted'
-            ? 'أُرسلت مع المشاركة'
+            ? t('أُرسلت مع المشاركة')
             : stage.status === 'completed' && stage.confirmed_at
-              ? `مكتملة، حُفظت في ${formatDamascusDateTime(stage.confirmed_at)} بتوقيت دمشق`
+              ? t('مكتملة، حُفظت في {when} بتوقيت دمشق', { when: formatDamascusDateTime(stage.confirmed_at, locale) })
               : stage.status === 'locked'
-                ? 'تُتاح بعد المرحلة 2'
+                ? t('تُتاح بعد المرحلة 2')
                 : stage.status === 'unavailable'
-                  ? 'غير متاحة حالياً'
+                  ? t('غير متاحة حالياً')
                   : stage.status === 'in_progress'
-                    ? 'قيد الاستكمال'
-                    : 'لم تبدأ بعد'}
+                    ? t('قيد الاستكمال')
+                    : t('لم تبدأ بعد')}
         </span>
       </p>
       <p className="stage-card__text">
         {stage.status === 'locked'
-          ? 'أكّد حفظ فئة الترشح وبيانات العمل أولاً، ثم تُتاح هذه المرحلة.'
+          ? t('أكّد حفظ فئة الترشح وبيانات العمل أولاً، ثم تُتاح هذه المرحلة.')
           : stage.status === 'unavailable'
-            ? 'باب الترشح لهذه الدورة غير مفتوح حالياً.'
-            : 'وثيقة شرح العمل (مطلوبة)، ووثائق داعمة وفيديوهات وروابط توثيق اختيارية.'}
+            ? t('باب الترشح لهذه الدورة غير مفتوح حالياً.')
+            : t('وثيقة شرح العمل (مطلوبة)، ووثائق داعمة وفيديوهات وروابط توثيق اختيارية.')}
       </p>
       {stage.status !== 'locked' && (
         <Link className={`button ${done || stage.status === 'unavailable' ? 'button--secondary' : 'button--primary'}`} href="/dashboard/documentation">
-          {done || stage.status === 'unavailable' ? 'عرض الملفات' : stage.status === 'in_progress' ? 'متابعة المرحلة' : 'ابدأ المرحلة'}
+          {done || stage.status === 'unavailable' ? t('عرض الملفات') : stage.status === 'in_progress' ? t('متابعة المرحلة') : t('ابدأ المرحلة')}
         </Link>
       )}
     </li>
@@ -183,35 +191,36 @@ function DocumentationStage({ stage }: { stage: Overview['documentation'] }) {
 }
 
 function SubmissionStage({ overview }: { overview: Overview }) {
+  const { t, locale } = useLocale()
   const receipt = overview.submission
   const ready = overview.documentation.status === 'completed'
 
   return (
     <li className={`stage-card${receipt ? ' stage-card--completed' : ''}${receipt || ready ? '' : ' stage-card--waiting'}`}>
-      <p className="stage-card__number">المراجعة والإرسال</p>
-      <h3 className="stage-card__title">{receipt ? 'تم إرسال المشاركة' : 'مراجعة المشاركة وإرسالها'}</h3>
+      <p className="stage-card__number">{t('المراجعة والإرسال')}</p>
+      <h3 className="stage-card__title">{receipt ? t('تم إرسال المشاركة') : t('مراجعة المشاركة وإرسالها')}</h3>
       <p className="stage-card__status">
         <StatusIcon tone={receipt ? 'success' : 'info'} />
         <span>
           {receipt
-            ? `أُرسلت في ${formatDamascusDateTime(receipt.submitted_at)} بتوقيت دمشق`
+            ? t('أُرسلت في {when} بتوقيت دمشق', { when: formatDamascusDateTime(receipt.submitted_at, locale) })
             : ready
-              ? 'جاهزة للمراجعة'
-              : 'تُتاح بعد المرحلة 3'}
+              ? t('جاهزة للمراجعة')
+              : t('تُتاح بعد المرحلة 3')}
         </span>
       </p>
       <p className="stage-card__text">
         {receipt ? (
           <>
-            الرقم المرجعي: <bdi dir="ltr">{receipt.reference_number}</bdi>. المشاركة متاحة للعرض فقط.
+            {t('الرقم المرجعي:')} <bdi dir="ltr">{receipt.reference_number}</bdi>. {t('المشاركة متاحة للعرض فقط.')}
           </>
         ) : (
-          'مراجعة المراحل الثلاث كما حُفظت، ثم إرسال ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.'
+          t('مراجعة المراحل الثلاث كما حُفظت، ثم إرسال ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.')
         )}
       </p>
       {(receipt || ready) && (
         <Link className={`button ${receipt ? 'button--secondary' : 'button--primary'}`} href="/dashboard/review">
-          {receipt ? 'عرض المشاركة' : 'مراجعة المشاركة'}
+          {receipt ? t('عرض المشاركة') : t('مراجعة المشاركة')}
         </Link>
       )}
     </li>
@@ -219,37 +228,38 @@ function SubmissionStage({ overview }: { overview: Overview }) {
 }
 
 function NominationDetailsStage({ stage }: { stage: Overview['nomination_details'] }) {
+  const { t, locale } = useLocale()
   const completed = stage.status === 'completed'
   const open = stage.status === 'not_started' || completed
 
   return (
     <li className={`stage-card${completed ? ' stage-card--completed' : ''}${open ? '' : ' stage-card--waiting'}`}>
-      <p className="stage-card__number">المرحلة 2</p>
-      <h3 className="stage-card__title">فئة الترشح وبيانات العمل</h3>
+      <p className="stage-card__number">{t('المرحلة 2')}</p>
+      <h3 className="stage-card__title">{t('فئة الترشح وبيانات العمل')}</h3>
       <p className="stage-card__status">
         <StatusIcon tone={completed ? 'success' : 'info'} />
         <span>
           {completed && stage.confirmed_at
-            ? `مكتملة، حُفظت في ${formatDamascusDateTime(stage.confirmed_at)} بتوقيت دمشق`
+            ? t('مكتملة، حُفظت في {when} بتوقيت دمشق', { when: formatDamascusDateTime(stage.confirmed_at, locale) })
             : stage.status === 'locked'
-              ? 'تُتاح بعد المرحلة 1'
+              ? t('تُتاح بعد المرحلة 1')
               : stage.status === 'unavailable'
-                ? 'غير متاحة حالياً'
-                : 'لم تبدأ بعد'}
+                ? t('غير متاحة حالياً')
+                : t('لم تبدأ بعد')}
         </span>
       </p>
       <p className="stage-card__text">
         {completed
-          ? 'المحور والفئة وبيانات العمل محفوظة ومتاحة للعرض فقط.'
+          ? t('المحور والفئة وبيانات العمل محفوظة ومتاحة للعرض فقط.')
           : stage.status === 'locked'
-            ? 'أكّد حفظ البيانات الأساسية أولاً، ثم تُتاح هذه المرحلة.'
+            ? t('أكّد حفظ البيانات الأساسية أولاً، ثم تُتاح هذه المرحلة.')
             : stage.status === 'unavailable'
-              ? 'لم تفتح إدارة الجائزة هذه المرحلة بعد لدورة الجائزة الحالية.'
-              : 'محور الترشح وفئته، وتعريف العمل: عنوانه وغايته ورسالته وأهدافه وأثره.'}
+              ? t('لم تفتح إدارة الجائزة هذه المرحلة بعد لدورة الجائزة الحالية.')
+              : t('محور الترشح وفئته، وتعريف العمل: عنوانه وغايته ورسالته وأهدافه وأثره.')}
       </p>
       {open && (
         <Link className={`button ${completed ? 'button--secondary' : 'button--primary'}`} href="/dashboard/nomination-details">
-          {completed ? 'عرض البيانات' : 'ابدأ المرحلة'}
+          {completed ? t('عرض البيانات') : t('ابدأ المرحلة')}
         </Link>
       )}
     </li>

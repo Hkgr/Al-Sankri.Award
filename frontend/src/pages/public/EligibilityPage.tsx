@@ -1,6 +1,7 @@
-import { domains, eligibility, pages } from '../../content/site'
 import { RichText } from '../../components/OrgLink'
 import type { MainDomain } from '../../content/site'
+import { useSite } from '../../content/useSite'
+import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
 import { usePageMeta } from '../../lib/usePageMeta'
 import { PageHeader } from './PageHeader'
@@ -8,6 +9,8 @@ import './public.css'
 
 /** The shared conditions, evidence, conflict-of-interest rule and evaluation criteria. */
 function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
+  const { eligibility } = useSite()
+  const { t } = useLocale()
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
   const Item = headingLevel === 2 ? 'h3' : 'h4'
 
@@ -15,7 +18,7 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
     <>
       <section className="rules-block" aria-labelledby="conditions-title">
         <Heading id="conditions-title" className="section__title">
-          الشروط المشتركة
+          {t('eligibility.conditions')}
         </Heading>
         <ol className="rules-list">
           {eligibility.conditions.map((condition) => (
@@ -30,12 +33,12 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
       <section className="rules-block split" aria-labelledby="applicants-title">
         <div>
           <Heading id="applicants-title" className="section__title">
-            من يحق له التقدم
+            {t('eligibility.who')}
           </Heading>
           <p className="prose">{eligibility.applicants}</p>
         </div>
         <div className="org-panel org-panel--warning">
-          <Heading className="org-panel__title">منع تضارب المصالح</Heading>
+          <Heading className="org-panel__title">{t('eligibility.conflict')}</Heading>
           <p>
             <RichText value={eligibility.conflict} />
           </p>
@@ -44,7 +47,7 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
 
       <section className="rules-block" aria-labelledby="evidence-title">
         <Heading id="evidence-title" className="section__title">
-          الوثائق وأدلة الأثر
+          {t('eligibility.evidence')}
         </Heading>
         <p className="prose">{eligibility.evidence.intro}</p>
         <ul className="check-list">
@@ -56,9 +59,9 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
 
       <section className="rules-block" aria-labelledby="criteria-title">
         <Heading id="criteria-title" className="section__title">
-          مبادئ التقييم
+          {t('eligibility.principles')}
         </Heading>
-        <p className="prose">تُقيَّم الملفات المحالة إلى لجان التحكيم وفق معايير الجودة والحوكمة التالية:</p>
+        <p className="prose">{t('eligibility.principlesIntro')}</p>
         <ul className="card-grid card-grid--criteria">
           {eligibility.criteria.map((criterion) => (
             <li key={criterion.title} className="info-card info-card--rule">
@@ -67,28 +70,28 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
             </li>
           ))}
         </ul>
-        <p className="note">
-          يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق، ثم تحيله إدارة الجائزة إلى لجنة تحكيم محوره الرئيسي، وتتألف كل لجنة من 3 أو 5 محكّمين.
-        </p>
+        <p className="note">{t('eligibility.flowNote')}</p>
       </section>
     </>
   )
 }
 
 export function EligibilityPage() {
+  const { domains, eligibility, pages } = useSite()
+  const { t } = useLocale()
   const page = pages[3]
   usePageMeta(page.label, page.description)
 
   return (
     <>
-      <PageHeader trail={[{ href: '/', label: 'الرئيسية' }, { href: page.href, label: page.label }]} eyebrow="الدورة الأولى" title="شروط التقدم">
+      <PageHeader trail={[{ href: '/', label: t('nav.home') }, { href: page.href, label: page.label }]} eyebrow={t('eligibility.eyebrow')} title={t('eligibility.title')}>
         <p>{eligibility.shared}</p>
       </PageHeader>
 
       <section className="section" aria-labelledby="domains-title">
         <div className="container">
           <h2 id="domains-title" className="section__title">
-            المحاور وفئاتها
+            {t('eligibility.domains')}
           </h2>
           <ul className="domain-links">
             {domains.map((domain) => (
@@ -110,31 +113,39 @@ export function EligibilityPage() {
 }
 
 function DomainLinkCard({ domain }: { domain: MainDomain }) {
+  const { t } = useLocale()
+
   return (
     <Link className="domain-link" href={`/eligibility/${domain.slug}`}>
       <img src={domain.symbol} alt="" width={64} height={72} />
       <span className="domain-link__text">
         <span className="domain-link__title">{domain.label}</span>
-        <span className="domain-link__subs">{domain.subcategories.map((subcategory) => subcategory.label).join('، ')}</span>
+        <span className="domain-link__subs">{domain.subcategories.map((subcategory) => subcategory.label).join(t('eligibility.listSeparator'))}</span>
       </span>
     </Link>
   )
 }
 
-export function EligibilityDomainPage({ domain }: { domain: MainDomain }) {
+export function EligibilityDomainPage({ domain: requested }: { domain: MainDomain }) {
+  const { domains, eligibility, pages } = useSite()
+  const { t } = useLocale()
+  const domain = domains.find((item) => item.slug === requested.slug) ?? requested
   const page = pages[3]
-  usePageMeta(`${domain.label} | ${page.label}`, `محور ${domain.label} في جائزة الدكتور عبد القادر سنكري: ${domain.subcategories.map((subcategory) => subcategory.label).join('، ')}، وشروط التقدم المشتركة.`)
+  usePageMeta(
+    `${domain.label} | ${page.label}`,
+    t('eligibility.domainMeta', { domain: domain.label, subs: domain.subcategories.map((subcategory) => subcategory.label).join(t('eligibility.listSeparator')) }),
+  )
   const others = domains.filter((other) => other.slug !== domain.slug)
 
   return (
     <>
       <PageHeader
         trail={[
-          { href: '/', label: 'الرئيسية' },
+          { href: '/', label: t('nav.home') },
           { href: page.href, label: page.label },
           { href: `/eligibility/${domain.slug}`, label: domain.label },
         ]}
-        eyebrow="محور رئيسي"
+        eyebrow={t('eligibility.domainEyebrow')}
         title={domain.label}
       >
         <div className="domain-hero">
@@ -146,11 +157,9 @@ export function EligibilityDomainPage({ domain }: { domain: MainDomain }) {
       <section className="section" aria-labelledby="subcategories-title">
         <div className="container">
           <h2 id="subcategories-title" className="section__title">
-            فئات المحور
+            {t('eligibility.subcategories')}
           </h2>
-          <p className="prose">
-            يُقدَّم الترشح في هذا المحور ضمن فئة واحدة من فئاته، وعدد جوائزه في هذه الدورة: {domain.awards}.
-          </p>
+          <p className="prose">{t('eligibility.subcategoriesIntro', { n: domain.awards })}</p>
           <ul className={`card-grid ${domain.subcategories.length === 3 ? 'card-grid--three' : 'card-grid--two'}`}>
             {domain.subcategories.map((subcategory) => (
               <li key={subcategory.label} className="info-card info-card--subcategory">
@@ -172,7 +181,7 @@ export function EligibilityDomainPage({ domain }: { domain: MainDomain }) {
       <nav className="section" aria-labelledby="other-domains-title">
         <div className="container">
           <h2 id="other-domains-title" className="section__title">
-            المحوران الآخران
+            {t('eligibility.others')}
           </h2>
           <ul className="domain-links domain-links--two">
             {others.map((other) => (

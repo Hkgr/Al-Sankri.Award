@@ -12,17 +12,20 @@ import { cycleLabel, PROGRESS_LABELS, USER_ROLE_FILTERS, USER_SORT_LABELS } from
 import { ReviewBadge } from '../applications/ReviewBadge'
 import { ExportMenu } from '../ExportMenu'
 import { usersQuery } from './usersState'
+import { labels } from '../../../i18n/messages'
+import { useLocale } from '../../../i18n/useLocale'
 
-const STAGE_LABELS: Record<StageState, string> = { complete: 'مكتملة', incomplete: 'غير مكتملة', none: 'لم تُحفظ بعد' }
+const STAGE_LABELS: Record<StageState, string> = labels({ complete: 'مكتملة', incomplete: 'غير مكتملة', none: 'لم تُحفظ بعد' })
 
 function Stages({ progress }: { progress: UserRow['progress'] }) {
+  const { t } = useLocale()
   return (
-    <ol className="admin-stages" aria-label="المراحل">
+    <ol className="admin-stages" aria-label={t('المراحل')}>
       {([progress.stage1, progress.stage2, progress.stage3] as StageState[]).map((stage, index) => (
-        <li key={index} data-state={stage} title={`المرحلة ${index + 1}: ${STAGE_LABELS[stage]}`}>
+        <li key={index} data-state={stage} title={t('المرحلة {v}: {stage}', { v: index + 1, stage: STAGE_LABELS[stage] })}>
           <span aria-hidden="true">{index + 1}</span>
           <span className="visually-hidden">
-            المرحلة {index + 1}: {STAGE_LABELS[stage]}
+            {t('المرحلة {v}: {stage}', { v: index + 1, stage: STAGE_LABELS[stage] })}
           </span>
         </li>
       ))}
@@ -31,7 +34,8 @@ function Stages({ progress }: { progress: UserRow['progress'] }) {
 }
 
 function Roles({ roles }: { roles: UserRow['roles'] }) {
-  if (roles.platform.length === 0 && roles.cycle.length === 0) return <span className="admin-muted">لا أدوار حالية</span>
+  const { t } = useLocale()
+  if (roles.platform.length === 0 && roles.cycle.length === 0) return <span className="admin-muted">{t('لا أدوار حالية')}</span>
   return (
     <ul className="admin-roles">
       {roles.platform.map((role) => (
@@ -60,7 +64,8 @@ function Roles({ roles }: { roles: UserRow['roles'] }) {
  * values.
  */
 export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCycle[]; scope: number | null }) {
-  usePageTitle('المستخدمون')
+  const { t } = useLocale()
+  usePageTitle(t('المستخدمون'))
   const { location, navigate } = useRouter()
   const params = new URLSearchParams(location.search)
   const sort = (params.get('sort') ?? 'registered_at') as UserSortKey
@@ -140,41 +145,41 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
   return (
     <div className="admin-page">
       <header className="admin-page__header">
-        <h1 className="admin-page__title">المستخدمون</h1>
+        <h1 className="admin-page__title">{t('المستخدمون')}</h1>
         <p className="admin-page__intro">
-          كل الحسابات المسجّلة، للعرض فقط: الأدوار الحالية، وحالة الحساب، وتقدّم الترشح في {cycle ? <strong>{cycleLabel(cycle)}</strong> : 'الدورة المختارة'}.
-          يُحسب التقدّم مما حُفظ فعلاً؛ ما يكتبه المترشح ولم يحفظه لا يُعرف.
+          {t('كل الحسابات المسجّلة، للعرض فقط: الأدوار الحالية، وحالة الحساب، وتقدّم الترشح في')} {cycle ? <strong>{cycleLabel(cycle)}</strong> : t('الدورة المختارة')}.{' '}
+          {t('يُحسب التقدّم مما حُفظ فعلاً؛ ما يكتبه المترشح ولم يحفظه لا يُعرف.')}
         </p>
       </header>
 
       {scope === null ? (
         <FormAlert tone="info">
-          <p>لا توجد دورة جائزة بعد، فتقدّم المرحلتين 2 و3 غير متاح. تُعرض الحسابات وحالة البيانات الأساسية فقط.</p>
+          <p>{t('لا توجد دورة جائزة بعد، فتقدّم المرحلتين 2 و3 غير متاح. تُعرض الحسابات وحالة البيانات الأساسية فقط.')}</p>
         </FormAlert>
       ) : (
         meta?.cycle &&
         !meta.cycle.stage_open && (
           <FormAlert tone="info">
-            <p>باب الترشح في هذه الدورة غير مفتوح الآن. تُعرض المراحل المكتملة كما حُفظت، ولا يستطيع المترشحون تغييرها حالياً.</p>
+            <p>{t('باب الترشح في هذه الدورة غير مفتوح الآن. تُعرض المراحل المكتملة كما حُفظت، ولا يستطيع المترشحون تغييرها حالياً.')}</p>
           </FormAlert>
         )
       )}
 
-      <div className="admin-toolbar" role="search" aria-label="البحث في الحسابات وتصفيتها">
+      <div className="admin-toolbar" role="search" aria-label={t('البحث في الحسابات وتصفيتها')}>
         <form className="admin-toolbar__search" onSubmit={onSearch}>
-          <label htmlFor={ids.search}>بحث</label>
+          <label htmlFor={ids.search}>{t('بحث')}</label>
           <div className="admin-toolbar__search-row">
-            <input id={ids.search} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="الاسم أو البريد الإلكتروني" maxLength={150} />
+            <input id={ids.search} type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('الاسم أو البريد الإلكتروني')} maxLength={150} />
             <button type="submit" className="button button--primary button--small">
-              بحث
+              {t('بحث')}
             </button>
           </div>
         </form>
         <div className="admin-toolbar__filters">
           <div className="admin-filter">
-            <label htmlFor={ids.role}>الدور</label>
+            <label htmlFor={ids.role}>{t('الدور')}</label>
             <select id={ids.role} value={params.get('role') ?? ''} onChange={(event) => update({ role: event.target.value || null })}>
-              <option value="">كل الأدوار</option>
+              <option value="">{t('كل الأدوار')}</option>
               {Object.entries(USER_ROLE_FILTERS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -183,25 +188,25 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
             </select>
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.state}>حالة الحساب</label>
+            <label htmlFor={ids.state}>{t('حالة الحساب')}</label>
             <select id={ids.state} value={params.get('state') ?? ''} onChange={(event) => update({ state: event.target.value || null })}>
-              <option value="">الكل</option>
-              <option value="active">نشط</option>
-              <option value="disabled">معطّل</option>
+              <option value="">{t('الكل')}</option>
+              <option value="active">{t('نشط')}</option>
+              <option value="disabled">{t('معطّل')}</option>
             </select>
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.verified}>تأكيد البريد</label>
+            <label htmlFor={ids.verified}>{t('تأكيد البريد')}</label>
             <select id={ids.verified} value={params.get('verified') ?? ''} onChange={(event) => update({ verified: event.target.value || null })}>
-              <option value="">الكل</option>
-              <option value="verified">مؤكَّد</option>
-              <option value="unverified">غير مؤكَّد</option>
+              <option value="">{t('الكل')}</option>
+              <option value="verified">{t('مؤكَّد')}</option>
+              <option value="unverified">{t('غير مؤكَّد')}</option>
             </select>
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.progress}>تقدّم الترشح</label>
+            <label htmlFor={ids.progress}>{t('تقدّم الترشح')}</label>
             <select id={ids.progress} value={params.get('progress') ?? ''} onChange={(event) => update({ progress: event.target.value || null })}>
-              <option value="">كل الحالات</option>
+              <option value="">{t('كل الحالات')}</option>
               {progressOptions.map((state) => (
                 <option key={state} value={state}>
                   {PROGRESS_LABELS[state]}
@@ -218,7 +223,7 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
                 update({ q: null, role: null, state: null, verified: null, progress: null })
               }}
             >
-              مسح المرشّحات
+              {t('مسح المرشّحات')}
             </button>
           )}
         </div>
@@ -226,41 +231,45 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
 
       <div className="admin-results-bar">
         <p className="admin-results" role="status" aria-live="polite">
-          {loading ? 'جارٍ التحميل…' : meta ? `${meta.total === 0 ? 'لا نتائج' : `${meta.total} حساب`} · التقدّم في: ${meta.cycle ? cycleLabel(meta.cycle) : 'لا دورة'}` : ''}
+          {loading
+            ? t('جارٍ التحميل…')
+            : meta
+              ? `${meta.total === 0 ? t('لا نتائج') : t('{total} حساب', { total: meta.total })} · ${t('التقدّم في: {scope}', { scope: meta.cycle ? cycleLabel(meta.cycle) : t('لا دورة') })}`
+              : ''}
         </p>
         <ExportMenu user={user} url={(format) => `/api/admin/exports/users?format=${format}&${queryString}`} />
       </div>
 
       {error ? (
         <FormAlert tone="error">
-          <p>تعذّر تحميل الحسابات. {error}</p>
+          <p>{t('تعذّر تحميل الحسابات.')} {error}</p>
           <p>
             <button type="button" className="button button--secondary button--small" onClick={() => setRetry((count) => count + 1)}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
       ) : result && result.data.length === 0 && !loading ? (
         <div className="admin-empty">
-          <p className="admin-empty__title">{filtered ? 'لا توجد حسابات تطابق هذا البحث أو هذه المرشّحات.' : 'لا توجد حسابات مسجّلة بعد.'}</p>
-          {filtered && <p>جرّب تغيير المرشّحات أو مسحها.</p>}
+          <p className="admin-empty__title">{filtered ? t('لا توجد حسابات تطابق هذا البحث أو هذه المرشّحات.') : t('لا توجد حسابات مسجّلة بعد.')}</p>
+          {filtered && <p>{t('جرّب تغيير المرشّحات أو مسحها.')}</p>}
         </div>
       ) : result ? (
         <div className="admin-table-wrap" tabIndex={0} role="region" aria-labelledby={ids.caption} aria-busy={loading || undefined}>
           <table className="admin-table">
             <caption id={ids.caption} className="visually-hidden">
-              الحسابات المسجّلة، الصفحة {meta?.page} من {meta?.last_page}، مرتّبة حسب {USER_SORT_LABELS[sort]}
+              {t('الحسابات المسجّلة، الصفحة {page} من {last}، مرتّبة حسب {sort}', { page: meta?.page ?? '', last: meta?.last_page ?? '', sort: USER_SORT_LABELS[sort] })}
             </caption>
             <thead>
               <tr>
-                {sortHeader('name', 'الاسم')}
-                <th scope="col">البريد الإلكتروني</th>
-                <th scope="col">الأدوار الحالية</th>
-                <th scope="col">الحساب</th>
-                {sortHeader('registered_at', 'تاريخ التسجيل')}
-                {sortHeader('last_login_at', 'آخر تسجيل دخول')}
-                <th scope="col">تقدّم الترشح</th>
-                <th scope="col">الإرسال النهائي</th>
+                {sortHeader('name', t('الاسم'))}
+                <th scope="col">{t('البريد الإلكتروني')}</th>
+                <th scope="col">{t('الأدوار الحالية')}</th>
+                <th scope="col">{t('الحساب')}</th>
+                {sortHeader('registered_at', t('تاريخ التسجيل'))}
+                {sortHeader('last_login_at', t('آخر تسجيل دخول'))}
+                <th scope="col">{t('تقدّم الترشح')}</th>
+                <th scope="col">{t('الإرسال النهائي')}</th>
               </tr>
             </thead>
             <tbody>
@@ -272,7 +281,7 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
                   <td>
                     <bdi dir="ltr">{row.email}</bdi>
                     <span className="admin-verified" data-verified={row.email_verified}>
-                      {row.email_verified ? 'مؤكَّد' : 'غير مؤكَّد'}
+                      {row.email_verified ? t('مؤكَّد') : t('غير مؤكَّد')}
                     </span>
                   </td>
                   <td>
@@ -280,11 +289,11 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
                   </td>
                   <td>
                     <span className="admin-state" data-state={row.active ? 'active' : 'disabled'}>
-                      {row.active ? 'نشط' : 'معطّل'}
+                      {row.active ? t('نشط') : t('معطّل')}
                     </span>
                   </td>
                   <td className="admin-table__time">{row.registered_at ? formatDamascusDateTime(row.registered_at) : '—'}</td>
-                  <td className="admin-table__time">{row.last_login_at ? formatDamascusDateTime(row.last_login_at) : 'لم يسجّل دخولاً'}</td>
+                  <td className="admin-table__time">{row.last_login_at ? formatDamascusDateTime(row.last_login_at) : t('لم يسجّل دخولاً')}</td>
                   <td className="admin-progress">
                     <span className="admin-progress__label" data-state={row.progress.state}>
                       {PROGRESS_LABELS[row.progress.state]}
@@ -295,13 +304,13 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
                     {row.submission ? (
                       <>
                         <span className="admin-submitted">
-                          أُرسل · <bdi dir="ltr">{row.submission.reference_number}</bdi>
+                          {t('أُرسل')} · <bdi dir="ltr">{row.submission.reference_number}</bdi>
                         </span>
                         {row.submission.submitted_at && <span className="admin-submission-time">{formatDamascusDateTime(row.submission.submitted_at)}</span>}
                         <ReviewBadge status={row.submission.review} />
                         {canOpenApplications && row.submission.application_id !== null && (
                           <Link className="admin-row-link" href={`/admin/applications/${row.submission.application_id}`}>
-                            عرض الملف
+                            {t('عرض الملف')}
                             <span className="visually-hidden"> {row.submission.reference_number}</span>
                           </Link>
                         )}
@@ -309,7 +318,7 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
                     ) : row.progress.state === 'not_required' ? (
                       '—'
                     ) : (
-                      'لم يُرسل'
+                      t('لم يُرسل')
                     )}
                   </td>
                 </tr>
@@ -320,12 +329,12 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
       ) : null}
 
       {meta && meta.total > 0 && (
-        <nav className="admin-pager" aria-label="صفحات الجدول">
+        <nav className="admin-pager" aria-label={t('صفحات الجدول')}>
           <button type="button" className="button button--secondary button--small" disabled={meta.page <= 1 || loading} onClick={() => update({ page: String(meta.page - 1) })}>
-            السابق
+            {t('السابق')}
           </button>
           <span className="admin-pager__status">
-            الصفحة {meta.page} من {meta.last_page}
+            {t('الصفحة {page} من {last}', { page: meta.page, last: meta.last_page })}
           </span>
           <button
             type="button"
@@ -333,10 +342,10 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
             disabled={meta.page >= meta.last_page || loading}
             onClick={() => update({ page: String(meta.page + 1) })}
           >
-            التالي
+            {t('التالي')}
           </button>
           <span className="admin-filter admin-filter--inline">
-            <label htmlFor={ids.perPage}>لكل صفحة</label>
+            <label htmlFor={ids.perPage}>{t('لكل صفحة')}</label>
             <select id={ids.perPage} value={String(meta.per_page)} onChange={(event) => update({ per_page: event.target.value })}>
               {[10, 25, 50].map((size) => (
                 <option key={size} value={size}>

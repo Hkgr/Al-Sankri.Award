@@ -14,6 +14,7 @@ import { branchHasInput, buildPayload, countryOptions, emptyIndividual, emptyIns
 import type { Errors, FormState, InstitutionForm, IndividualForm, StepId } from './formModel'
 import { ProfileSummary } from './ProfileSummary'
 import { summaryFromForm } from './summaries'
+import { useLocale } from '../../../i18n/useLocale'
 
 const LEAVE_WARNING = 'لم تُحفظ بياناتك الأساسية بعد. إذا غادرت هذه الصفحة فسيُحذف ما أدخلته. هل تريد المغادرة؟'
 
@@ -48,6 +49,7 @@ export function BasicInformationForm({
   onRequirementsChange: (requirements: Requirements) => void
   onConfirmed: (profile: BasicProfile, alreadyStored: boolean) => void
 }) {
+  const { t } = useLocale()
   const { refreshUser } = useAuth()
   const { setLeaveWarning } = useRouter()
   const handleAccountFailure = useAccountFailure()
@@ -68,7 +70,7 @@ export function BasicInformationForm({
   const steps = stepsFor(form.profileType)
   const step = steps[Math.min(stepIndex, steps.length - 1)]
   const dirty = !confirmed && (form.profileType !== '' || branchHasInput(form, 'individual', user.email) || branchHasInput(form, 'institution', user.email))
-  useLeaveWarning(dirty ? (unconfirmedSave ? LEAVE_WARNING_UNCONFIRMED : LEAVE_WARNING) : null)
+  useLeaveWarning(dirty ? t(unconfirmedSave ? LEAVE_WARNING_UNCONFIRMED : LEAVE_WARNING) : null)
 
   // Each new section starts at its heading, which is announced.
   useEffect(() => {
@@ -129,8 +131,7 @@ export function BasicInformationForm({
         <>
           <p>{message}</p>
           <p>
-            لحماية البيانات، لا يُرسَل هذا النموذج باسم حساب آخر. ما أدخلته ما زال في هذه الصفحة. للمتابعة، سجّل الخروج من الحساب الآخر وسجّل الدخول
-            بالحساب الذي فُتح به النموذج في نافذة أخرى، ثم أعد المحاولة هنا.
+            {t('لحماية البيانات، لا يُرسَل هذا النموذج باسم حساب آخر. ما أدخلته ما زال في هذه الصفحة. للمتابعة، سجّل الخروج من الحساب الآخر وسجّل الدخول بالحساب الذي فُتح به النموذج في نافذة أخرى، ثم أعد المحاولة هنا.')}
           </p>
           <p>
             <button
@@ -141,7 +142,7 @@ export function BasicInformationForm({
                 window.location.assign('/dashboard')
               }}
             >
-              تجاهل ما أدخلته والانتقال إلى الحساب المسجّل دخوله الآن
+              {t('تجاهل ما أدخلته والانتقال إلى الحساب المسجّل دخوله الآن')}
             </button>
           </p>
         </>
@@ -156,12 +157,12 @@ export function BasicInformationForm({
         tone: 'error',
         content: (
           <>
-            <p>انتهت جلستك، ولم يُحفظ شيء. ما أدخلته ما زال في هذه الصفحة.</p>
+            <p>{t('انتهت جلستك، ولم يُحفظ شيء. ما أدخلته ما زال في هذه الصفحة.')}</p>
             <p>
               <a href="/login" target="_blank" rel="noopener">
-                سجّل الدخول بالحساب نفسه في نافذة جديدة
+                {t('سجّل الدخول بالحساب نفسه في نافذة جديدة')}
               </a>{' '}
-              ثم ارجع إلى هنا وأعد المحاولة.
+              {t('ثم ارجع إلى هنا وأعد المحاولة.')}
             </p>
           </>
         ),
@@ -179,8 +180,8 @@ export function BasicInformationForm({
     const text =
       error instanceof NetworkError
         ? context === 'check'
-          ? `${error.message} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.`
-          : `${error.message} ما أدخلته ما زال هنا.`
+          ? t('{message} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.', { message: error.message })
+          : t('{message} ما أدخلته ما زال هنا.', { message: error.message })
         : errorMessage(error)
     setAlert({ tone: 'error', content: <p>{text}</p> })
   }
@@ -206,15 +207,15 @@ export function BasicInformationForm({
         tone: 'error',
         content: (
           <>
-            <p>انقطع الاتصال قبل وصول نتيجة الحفظ. لا يظهر لحسابك ملف محفوظ حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.</p>
-            <p>ما أدخلته ما زال هنا. أعد المحاولة بعد قليل: إن كان الطلب الأول قد نجح فستظهر بياناتك المحفوظة كما هي، ولن تُحفظ مرة ثانية.</p>
+            <p>{t('انقطع الاتصال قبل وصول نتيجة الحفظ. لا يظهر لحسابك ملف محفوظ حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.')}</p>
+            <p>{t('ما أدخلته ما زال هنا. أعد المحاولة بعد قليل: إن كان الطلب الأول قد نجح فستظهر بياناتك المحفوظة كما هي، ولن تُحفظ مرة ثانية.')}</p>
           </>
         ),
       })
     } catch (error) {
       if (error instanceof ApiError && error.code === 'account_mismatch') {
         setUnconfirmedSave(true)
-        showAccountMismatch('تعذّر تأكيد نتيجة الحفظ، والحساب المسجّل دخوله الآن في هذا المتصفح غير الحساب الذي فُتح به النموذج.')
+        showAccountMismatch(t('تعذّر تأكيد نتيجة الحفظ، والحساب المسجّل دخوله الآن في هذا المتصفح غير الحساب الذي فُتح به النموذج.'))
         return
       }
       setUnconfirmedSave(true)
@@ -224,21 +225,21 @@ export function BasicInformationForm({
         content: (
           <>
             <p>
-              تعذّر تأكيد نتيجة الحفظ: ربما حُفظت بياناتك وربما لم تُحفظ.
-              {sessionEnded ? ' انتهت جلستك أيضاً.' : ''} ما أدخلته ما زال هنا.
+              {t('تعذّر تأكيد نتيجة الحفظ: ربما حُفظت بياناتك وربما لم تُحفظ.')}
+              {sessionEnded ? ` ${t('انتهت جلستك أيضاً.')}` : ''} {t('ما أدخلته ما زال هنا.')}
             </p>
             <p>
               {sessionEnded ? (
                 <>
                   <a href="/login" target="_blank" rel="noopener">
-                    سجّل الدخول بالحساب نفسه في نافذة جديدة
+                    {t('سجّل الدخول بالحساب نفسه في نافذة جديدة')}
                   </a>{' '}
-                  ثم أعد المحاولة هنا.
+                  {t('ثم أعد المحاولة هنا.')}
                 </>
               ) : (
-                'أعد المحاولة عند عودة الاتصال.'
+                t('أعد المحاولة عند عودة الاتصال.')
               )}{' '}
-              إن كانت قد حُفظت فسنعرضها لك كما هي، ولن تُحفظ مرة ثانية.
+              {t('إن كانت قد حُفظت فسنعرضها لك كما هي، ولن تُحفظ مرة ثانية.')}
             </p>
           </>
         ),
@@ -363,7 +364,7 @@ export function BasicInformationForm({
 
   return (
     <form className="wizard" onSubmit={onSubmit} noValidate>
-      <ol className="stepper" aria-label="أقسام البيانات الأساسية">
+      <ol className="stepper" aria-label={t('أقسام البيانات الأساسية')}>
         {steps.map((item, index) => (
           <li key={item.id} className="stepper__item" data-state={index < stepIndex ? 'done' : index === stepIndex ? 'current' : 'next'} aria-current={index === stepIndex ? 'step' : undefined}>
             <span className="stepper__number" aria-hidden="true">
@@ -371,7 +372,7 @@ export function BasicInformationForm({
             </span>
             <span className="stepper__title">
               {item.title}
-              {index < stepIndex && <span className="visually-hidden"> (مكتمل)</span>}
+              {index < stepIndex && <span className="visually-hidden">{t('(مكتمل)')}</span>}
             </span>
           </li>
         ))}
@@ -379,7 +380,7 @@ export function BasicInformationForm({
 
       <div className="wizard__panel">
         <p className="wizard__progress">
-          {form.profileType ? `القسم ${stepIndex + 1} من ${steps.length}` : 'القسم الأول'}
+          {form.profileType ? t('القسم {v} من {length}', { v: stepIndex + 1, length: steps.length }) : t('القسم الأول')}
         </p>
         <h2 ref={headingRef} tabIndex={-1} className="wizard__title">
           {step.title}
@@ -415,21 +416,21 @@ export function BasicInformationForm({
           {step.id === 'review' ? (
             <button type="submit" className="button button--primary" aria-busy={busy || undefined} aria-disabled={busy || undefined}>
               <span className="button__label" data-hidden={busy}>
-                تأكيد وحفظ البيانات
+                {t('تأكيد وحفظ البيانات')}
               </span>
-              {busy && <span className="button__busy">جارٍ الحفظ…</span>}
+              {busy && <span className="button__busy">{t('جارٍ الحفظ…')}</span>}
             </button>
           ) : (
             <button type="submit" className="button button--primary" aria-busy={busy || undefined} aria-disabled={busy || pendingType !== null || undefined}>
               <span className="button__label" data-hidden={busy}>
-                متابعة
+                {t('متابعة')}
               </span>
-              {busy && <span className="button__busy">جارٍ التحقق…</span>}
+              {busy && <span className="button__busy">{t('جارٍ التحقق…')}</span>}
             </button>
           )}
           {stepIndex > 0 && (
             <button type="button" className="button button--secondary" onClick={goBack} disabled={busy}>
-              رجوع
+              {t('رجوع')}
             </button>
           )}
         </div>
@@ -462,18 +463,19 @@ function TypeStep({
   onCancelChange: () => void
   emailVerified: boolean
 }) {
+  const { t } = useLocale()
   const options: { value: ProfileType; title: string; text: string }[] = [
-    { value: 'individual', title: 'فرد', text: 'شخص يتقدّم باسمه.' },
-    { value: 'institution', title: 'مؤسسة', text: 'جهة يتقدّم باسمها صاحب هذا الحساب بصفته ممثلاً لها.' },
+    { value: 'individual', title: t('فرد'), text: t('شخص يتقدّم باسمه.') },
+    { value: 'institution', title: t('مؤسسة'), text: t('جهة يتقدّم باسمها صاحب هذا الحساب بصفته ممثلاً لها.') },
   ]
 
   return (
     <>
-      <p className="wizard__intro">ستُطلب بعد ذلك بيانات النوع الذي تختاره فقط. يمكنك تغيير النوع قبل تأكيد الحفظ.</p>
+      <p className="wizard__intro">{t('ستُطلب بعد ذلك بيانات النوع الذي تختاره فقط. يمكنك تغيير النوع قبل تأكيد الحفظ.')}</p>
       {!emailVerified && <VerifyEmailNotice context="form" />}
       <fieldset className="choice-cards" aria-describedby={error ? 'profile_type-error' : undefined}>
         <legend className="field__label">
-          من يتقدّم؟<span className="field__required"> (مطلوب)</span>
+          {t('من يتقدّم؟')}<span className="field__required">{t('(مطلوب)')}</span>
         </legend>
         <div className="choice-cards__grid">
           {options.map((option) => (
@@ -497,7 +499,7 @@ function TypeStep({
         {error && (
           <p id="profile_type-error" className="field__error">
             <StatusIcon tone="error" />
-            <span>خطأ: {error}</span>
+            <span>{t('form.errorPrefix')} {error}</span>
           </p>
         )}
       </fieldset>
@@ -507,14 +509,17 @@ function TypeStep({
           <StatusIcon tone="error" />
           <div className="form-alert__body">
             <p>
-              تغيير نوع المتقدم إلى «{PROFILE_TYPE_LABELS[pendingType]}» سيحذف كل ما أدخلته من بيانات «{PROFILE_TYPE_LABELS[value]}». هل تريد المتابعة؟
+              {t('تغيير نوع المتقدم إلى «{to}» سيحذف كل ما أدخلته من بيانات «{from}». هل تريد المتابعة؟', {
+                to: t(PROFILE_TYPE_LABELS[pendingType]),
+                from: t(PROFILE_TYPE_LABELS[value]),
+              })}
             </p>
             <div className="candidate-actions">
               <button type="button" className="button button--primary" onClick={onConfirmChange}>
-                تغيير النوع وحذف البيانات
+                {t('تغيير النوع وحذف البيانات')}
               </button>
               <button type="button" className="button button--secondary" onClick={onCancelChange}>
-                الإبقاء على «{PROFILE_TYPE_LABELS[value]}»
+                {t('الإبقاء على «{type}»', { type: t(PROFILE_TYPE_LABELS[value]) })}
               </button>
             </div>
           </div>
@@ -532,18 +537,19 @@ type SectionProps<T> = {
 }
 
 function IndividualIdentity({ form, update, errors, countries }: SectionProps<IndividualForm>) {
+  const { t } = useLocale()
   return (
     <div className="form-grid">
       <div className="form-grid__full name-fields">
-        <TextField id="individual-first_name" label="الاسم الأول" value={form.first_name} onChange={(value) => update('first_name', value)} error={errors['individual.first_name']} autoComplete="given-name" dir="auto" maxLength={80} required />
-        <TextField id="individual-middle_name" label="الاسم الأوسط" value={form.middle_name} onChange={(value) => update('middle_name', value)} error={errors['individual.middle_name']} autoComplete="additional-name" dir="auto" maxLength={80} optional />
+        <TextField id="individual-first_name" label={t('الاسم الأول')} value={form.first_name} onChange={(value) => update('first_name', value)} error={errors['individual.first_name']} autoComplete="given-name" dir="auto" maxLength={80} required />
+        <TextField id="individual-middle_name" label={t('الاسم الأوسط')} value={form.middle_name} onChange={(value) => update('middle_name', value)} error={errors['individual.middle_name']} autoComplete="additional-name" dir="auto" maxLength={80} optional />
         <TextField
           id="individual-last_name"
-          label="الاسم الأخير"
+          label={t('الاسم الأخير')}
           value={form.last_name}
           onChange={(value) => update('last_name', value)}
           error={errors['individual.last_name']}
-          hint="اكتب الاسم كما في وثيقتك الرسمية، بالعربية أو بغيرها."
+          hint={t('اكتب الاسم كما في وثيقتك الرسمية، بالعربية أو بغيرها.')}
           autoComplete="family-name"
           dir="auto"
           maxLength={80}
@@ -553,25 +559,25 @@ function IndividualIdentity({ form, update, errors, countries }: SectionProps<In
       <div className="form-grid__full">
         <BirthDateField day={form.birth_day} month={form.birth_month} year={form.birth_year} onChange={(part, value) => update(part, value)} error={errors['individual.birth_date']} />
       </div>
-      <SelectField id="individual-nationality" label="الجنسية" value={form.nationality} onChange={(value) => update('nationality', value)} options={countryOptions(countries)} placeholder="اختر الجنسية" error={errors['individual.nationality']} />
+      <SelectField id="individual-nationality" label={t('الجنسية')} value={form.nationality} onChange={(value) => update('nationality', value)} options={countryOptions(countries)} placeholder={t('اختر الجنسية')} error={errors['individual.nationality']} />
       <RadioGroup
         name="individual.gender"
-        label="الجنس"
+        label={t('الجنس')}
         value={form.gender}
         onChange={(value) => update('gender', value)}
         options={[
-          { value: 'male', label: 'ذكر' },
-          { value: 'female', label: 'أنثى' },
+          { value: 'male', label: t('ذكر') },
+          { value: 'female', label: t('أنثى') },
         ]}
         error={errors['individual.gender']}
       />
       <TextField
         id="individual-national_id_number"
-        label="رقم الهوية الشخصية"
+        label={t('رقم الهوية الشخصية')}
         value={form.national_id_number}
         onChange={(value) => update('national_id_number', value)}
         error={errors['individual.national_id_number']}
-        hint="كما هو في وثيقتك، مع الأصفار في أوله والحروف والفواصل إن وُجدت."
+        hint={t('كما هو في وثيقتك، مع الأصفار في أوله والحروف والفواصل إن وُجدت.')}
         autoComplete="off"
         dir="ltr"
         maxLength={50}
@@ -582,23 +588,24 @@ function IndividualIdentity({ form, update, errors, countries }: SectionProps<In
 }
 
 function IndividualContact({ form, update, errors, countries, loginEmail }: SectionProps<IndividualForm> & { loginEmail: string }) {
+  const { t } = useLocale()
   return (
     <div className="form-grid">
-      <SelectField id="individual-residence_country" label="دولة الإقامة" value={form.residence_country} onChange={(value) => update('residence_country', value)} options={countryOptions(countries)} placeholder="اختر دولة الإقامة" error={errors['individual.residence_country']} autoComplete="country" />
+      <SelectField id="individual-residence_country" label={t('دولة الإقامة')} value={form.residence_country} onChange={(value) => update('residence_country', value)} options={countryOptions(countries)} placeholder={t('اختر دولة الإقامة')} error={errors['individual.residence_country']} autoComplete="country" />
       <div className="form-grid__full">
-        <TextAreaField id="individual-address" label="العنوان" value={form.address} onChange={(value) => update('address', value)} error={errors['individual.address']} hint="المدينة والحي والشارع، أو أي عنوان يمكن الوصول إليك فيه." maxLength={500} autoComplete="street-address" />
+        <TextAreaField id="individual-address" label={t('العنوان')} value={form.address} onChange={(value) => update('address', value)} error={errors['individual.address']} hint={t('المدينة والحي والشارع، أو أي عنوان يمكن الوصول إليك فيه.')} maxLength={500} autoComplete="street-address" />
       </div>
-      <PhoneField name="individual.primary_phone" label="رقم التواصل الأساسي" value={form.primary_phone} onChange={(value) => update('primary_phone', value)} countries={countries} errors={errors} required />
-      <PhoneField name="individual.secondary_phone" label="رقم التواصل الاحتياطي" value={form.secondary_phone} onChange={(value) => update('secondary_phone', value)} countries={countries} errors={errors} />
+      <PhoneField name="individual.primary_phone" label={t('رقم التواصل الأساسي')} value={form.primary_phone} onChange={(value) => update('primary_phone', value)} countries={countries} errors={errors} required />
+      <PhoneField name="individual.secondary_phone" label={t('رقم التواصل الاحتياطي')} value={form.secondary_phone} onChange={(value) => update('secondary_phone', value)} countries={countries} errors={errors} />
       <div className="form-grid__full">
         <TextField
           id="individual-contact_email"
-          label="البريد الإلكتروني للتواصل"
+          label={t('البريد الإلكتروني للتواصل')}
           type="email"
           value={form.contact_email}
           onChange={(value) => update('contact_email', value)}
           error={errors['individual.contact_email']}
-          hint={form.contact_email.trim() === loginEmail ? 'اقترحنا بريد حسابك، ويمكنك تغييره. لا يغيّر ذلك بريد تسجيل الدخول.' : 'لا يغيّر هذا البريد بريد تسجيل الدخول إلى حسابك.'}
+          hint={form.contact_email.trim() === loginEmail ? t('اقترحنا بريد حسابك، ويمكنك تغييره. لا يغيّر ذلك بريد تسجيل الدخول.') : t('لا يغيّر هذا البريد بريد تسجيل الدخول إلى حسابك.')}
           autoComplete="email"
           maxLength={255}
           required
@@ -610,20 +617,21 @@ function IndividualContact({ form, update, errors, countries, loginEmail }: Sect
 }
 
 function InstitutionDetails({ form, update, errors, countries }: SectionProps<InstitutionForm>) {
+  const { t } = useLocale()
   return (
     <div className="form-grid">
       <div className="form-grid__full">
-        <TextField id="institution-name" label="اسم المؤسسة" value={form.name} onChange={(value) => update('name', value)} error={errors['institution.name']} hint="الاسم الرسمي كما في الترخيص." autoComplete="organization" dir="auto" maxLength={255} required />
+        <TextField id="institution-name" label={t('اسم المؤسسة')} value={form.name} onChange={(value) => update('name', value)} error={errors['institution.name']} hint={t('الاسم الرسمي كما في الترخيص.')} autoComplete="organization" dir="auto" maxLength={255} required />
       </div>
-      <SelectField id="institution-country" label="الدولة" value={form.country} onChange={(value) => update('country', value)} options={countryOptions(countries)} placeholder="اختر الدولة" error={errors['institution.country']} />
-      <TextField id="institution-activity_type" label="نوع النشاط المؤسسي" value={form.activity_type} onChange={(value) => update('activity_type', value)} error={errors['institution.activity_type']} hint="مثلاً: جمعية أهلية، مؤسسة ثقافية، شركة." autoComplete="off" maxLength={150} required />
+      <SelectField id="institution-country" label={t('الدولة')} value={form.country} onChange={(value) => update('country', value)} options={countryOptions(countries)} placeholder={t('اختر الدولة')} error={errors['institution.country']} />
+      <TextField id="institution-activity_type" label={t('نوع النشاط المؤسسي')} value={form.activity_type} onChange={(value) => update('activity_type', value)} error={errors['institution.activity_type']} hint={t('مثلاً: جمعية أهلية، مؤسسة ثقافية، شركة.')} autoComplete="off" maxLength={150} required />
       <TextField
         id="institution-license_number"
-        label="رقم الترخيص"
+        label={t('رقم الترخيص')}
         value={form.license_number}
         onChange={(value) => update('license_number', value)}
         error={errors['institution.license_number']}
-        hint="كما هو في وثيقة الترخيص، مع الأصفار والفواصل."
+        hint={t('كما هو في وثيقة الترخيص، مع الأصفار والفواصل.')}
         autoComplete="off"
         dir="ltr"
         maxLength={50}
@@ -634,15 +642,16 @@ function InstitutionDetails({ form, update, errors, countries }: SectionProps<In
 }
 
 function InstitutionContact({ form, update, errors, countries }: SectionProps<InstitutionForm>) {
+  const { t } = useLocale()
   return (
     <div className="form-grid">
-      <p className="form-grid__full wizard__intro">صاحب هذا الحساب هو الشخص المتقدم بالنيابة عن المؤسسة، ويبقى اسمه وبريد دخوله كما هما.</p>
-      <TextField id="institution-representative_name" label="اسم الشخص المتقدم بالنيابة عن المؤسسة" value={form.representative_name} onChange={(value) => update('representative_name', value)} error={errors['institution.representative_name']} autoComplete="name" dir="auto" maxLength={150} required />
-      <TextField id="institution-representative_title" label="الصفة الوظيفية" value={form.representative_title} onChange={(value) => update('representative_title', value)} error={errors['institution.representative_title']} hint="مثلاً: المدير التنفيذي، منسّق البرامج." autoComplete="organization-title" maxLength={150} required />
-      <PhoneField name="institution.phone" label="رقم تواصل المؤسسة" value={form.phone} onChange={(value) => update('phone', value)} countries={countries} errors={errors} required />
-      <TextField id="institution-email" label="البريد الإلكتروني للمؤسسة" type="email" value={form.email} onChange={(value) => update('email', value)} error={errors['institution.email']} autoComplete="off" maxLength={255} required />
+      <p className="form-grid__full wizard__intro">{t('صاحب هذا الحساب هو الشخص المتقدم بالنيابة عن المؤسسة، ويبقى اسمه وبريد دخوله كما هما.')}</p>
+      <TextField id="institution-representative_name" label={t('اسم الشخص المتقدم بالنيابة عن المؤسسة')} value={form.representative_name} onChange={(value) => update('representative_name', value)} error={errors['institution.representative_name']} autoComplete="name" dir="auto" maxLength={150} required />
+      <TextField id="institution-representative_title" label={t('الصفة الوظيفية')} value={form.representative_title} onChange={(value) => update('representative_title', value)} error={errors['institution.representative_title']} hint={t('مثلاً: المدير التنفيذي، منسّق البرامج.')} autoComplete="organization-title" maxLength={150} required />
+      <PhoneField name="institution.phone" label={t('رقم تواصل المؤسسة')} value={form.phone} onChange={(value) => update('phone', value)} countries={countries} errors={errors} required />
+      <TextField id="institution-email" label={t('البريد الإلكتروني للمؤسسة')} type="email" value={form.email} onChange={(value) => update('email', value)} error={errors['institution.email']} autoComplete="off" maxLength={255} required />
       <div className="form-grid__full">
-        <TextField id="institution-website" label="الموقع الإلكتروني" type="url" value={form.website} onChange={(value) => update('website', value)} error={errors['institution.website']} hint="الرابط الكامل، مثل https://www.example.org" autoComplete="url" maxLength={500} optional />
+        <TextField id="institution-website" label={t('الموقع الإلكتروني')} type="url" value={form.website} onChange={(value) => update('website', value)} error={errors['institution.website']} hint={t('الرابط الكامل، مثل https://www.example.org')} autoComplete="url" maxLength={500} optional />
       </div>
       <SocialLinksField links={form.social_links} onChange={(links) => update('social_links', links)} errors={errors} />
     </div>
@@ -666,6 +675,7 @@ function ReviewStep({
   setDeclaration: (key: keyof FormState['declarations'], value: boolean) => void
   emailVerified: boolean
 }) {
+  const { t } = useLocale()
   return (
     <>
       <div className="lock-warning" role="note">
@@ -673,13 +683,13 @@ function ReviewStep({
           <rect x="5" y="10.5" width="14" height="10" rx="1.5" />
           <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
         </svg>
-        <p>{LOCK_WARNING}</p>
+        <p>{t(LOCK_WARNING)}</p>
       </div>
 
       <ProfileSummary groups={summaryFromForm(form, countries)} onEdit={onEdit} headingLevel={3} />
 
       <fieldset className="declarations">
-        <legend className="declarations__title">الموافقات والإقرارات</legend>
+        <legend className="declarations__title">{t('الموافقات والإقرارات')}</legend>
         {(['privacy_policy', 'terms_of_use'] as PolicyCode[]).map((code) => {
           const policy = requirements.policies[code]
           if (!policy) return null
@@ -687,22 +697,22 @@ function ReviewStep({
             <div key={code} className="declaration">
               <p className="declaration__link">
                 <a href={`/policies/${POLICY_SLUGS[code]}?version=${policy.version_number}`} target="_blank" rel="noopener">
-                  اقرأ {POLICY_NAMES[code]} (الإصدار {policy.version_number})
+                  {t('اقرأ {name} (الإصدار {n})', { name: t(POLICY_NAMES[code]), n: policy.version_number })}
                 </a>{' '}
-                <span className="field__hint">تُفتح في نافذة جديدة، ويبقى ما أدخلته هنا.</span>
+                <span className="field__hint">{t('تُفتح في نافذة جديدة، ويبقى ما أدخلته هنا.')}</span>
               </p>
               <CheckboxField id={`declaration-${code}`} checked={form.declarations[code]} onChange={(checked) => setDeclaration(code, checked)} error={errors[`accepted_policies.${code}`]}>
-                قرأت {POLICY_NAMES[code]} (الإصدار {policy.version_number}) وأوافق عليها.
+                {t('قرأت {name} (الإصدار {n}) وأوافق عليها.', { name: t(POLICY_NAMES[code]), n: policy.version_number })}
               </CheckboxField>
             </div>
           )
         })}
         <CheckboxField id="declaration-data_accuracy" checked={form.declarations.data_accuracy} onChange={(checked) => setDeclaration('data_accuracy', checked)} error={errors['declarations.data_accuracy']}>
-          أُقرّ بأن البيانات التي أدخلتها صحيحة وكاملة على حدّ علمي.
+          {t('أُقرّ بأن البيانات التي أدخلتها صحيحة وكاملة على حدّ علمي.')}
         </CheckboxField>
         {form.profileType === 'institution' && (
           <CheckboxField id="declaration-representation" checked={form.declarations.representation} onChange={(checked) => setDeclaration('representation', checked)} error={errors['declarations.representation']}>
-            أُقرّ بأنني مخوَّل بتمثيل المؤسسة المذكورة وتقديم بياناتها.
+            {t('أُقرّ بأنني مخوَّل بتمثيل المؤسسة المذكورة وتقديم بياناتها.')}
           </CheckboxField>
         )}
       </fieldset>

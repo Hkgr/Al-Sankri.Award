@@ -1,4 +1,5 @@
 import type { User } from '../../../auth/useAuth'
+import { labels, tr } from '../../../i18n/messages'
 
 /**
  * Types, labels and limits for Stage 3 («ملفات العمل وتوثيقه») and the
@@ -26,11 +27,11 @@ export type DocumentationLink = { title: string; url: string }
 /** What award administration has done with a submission (never its internal notes). */
 export type Processing = 'pending' | 'referred' | 'excluded'
 
-export const PROCESSING_TEXT: Record<Processing, string> = {
+export const PROCESSING_TEXT: Record<Processing, string> = labels({
   pending: 'ملف الترشح لدى إدارة الجائزة للمراجعة الأولية.',
   referred: 'أحالت إدارة الجائزة ملف الترشح إلى لجنة التحكيم.',
   excluded: 'لم يُحل ملف الترشح إلى التحكيم بعد المراجعة الأولية لإدارة الجائزة، وحُفظ في الأرشيف.',
-}
+})
 
 export type Receipt = { reference_number: string; submitted_at: string; version_number: number; processing: Processing }
 
@@ -93,9 +94,9 @@ export function formatName(mimeType: string): string {
 
 /** Sizes in binary units, as the limits are stated (25 MiB = 26,214,400 bytes). */
 export function formatBytes(bytes: number): string {
-  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toLocaleString('en', { maximumFractionDigits: 1 })} ميغابايت`
-  if (bytes >= 1024) return `${Math.max(1, Math.round(bytes / 1024))} كيلوبايت`
-  return `${bytes} بايت`
+  if (bytes >= 1_048_576) return tr('{v} ميغابايت', { v: (bytes / 1_048_576).toLocaleString('en', { maximumFractionDigits: 1 }) })
+  if (bytes >= 1024) return tr('{v} كيلوبايت', { v: Math.max(1, Math.round(bytes / 1024)) })
+  return tr('{bytes} بايت', { bytes })
 }
 
 /**
@@ -105,9 +106,9 @@ export function formatBytes(bytes: number): string {
 export function precheck(kind: AttachmentKind, file: File): string | null {
   const rules = KIND_RULES[kind]
   const extension = file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : ''
-  if (!rules.extensions.includes(extension)) return `نوع الملف غير مقبول هنا. الأنواع المقبولة: ${rules.formats}.`
-  if (file.size === 0) return 'الملف فارغ.'
-  if (file.size > rules.maxBytes) return `حجم الملف (${formatBytes(file.size)}) أكبر من الحد المسموح (${formatBytes(rules.maxBytes)}).`
+  if (!rules.extensions.includes(extension)) return tr('نوع الملف غير مقبول هنا. الأنواع المقبولة: {formats}.', { formats: tr(rules.formats) })
+  if (file.size === 0) return tr('الملف فارغ.')
+  if (file.size > rules.maxBytes) return tr('حجم الملف ({size}) أكبر من الحد المسموح ({maxBytes}).', { size: formatBytes(file.size), maxBytes: formatBytes(rules.maxBytes) })
   return null
 }
 
@@ -147,7 +148,7 @@ export async function saveAttachment(url: string, name: string): Promise<string 
     })
     const type = response.headers.get('Content-Type') ?? ''
     if (!response.ok || type.includes('json')) {
-      let message = 'تعذّر تنزيل الملف.'
+      let message = tr('تعذّر تنزيل الملف.')
       try {
         const payload = (await response.json()) as { message?: string }
         if (payload.message) message = payload.message
@@ -167,7 +168,7 @@ export async function saveAttachment(url: string, name: string): Promise<string 
     setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
     return null
   } catch {
-    return 'تعذّر تنزيل الملف. تحقق من الاتصال ثم أعد المحاولة.'
+    return tr('تعذّر تنزيل الملف. تحقق من الاتصال ثم أعد المحاولة.')
   } finally {
     clearTimeout(timer)
   }
@@ -184,10 +185,10 @@ export function journeyStateUrl(area: 'documentation' | 'review', journeyKey: st
   return `/api/candidate/${area}/journey?${new URLSearchParams({ journey_key: journeyKey }).toString()}`
 }
 
-export const SECTION_TITLES: Record<AttachmentKind, string> = {
+export const SECTION_TITLES: Record<AttachmentKind, string> = labels({
   explanatory: 'وثيقة شرح العمل',
   supporting: 'وثائق داعمة إضافية',
   video: 'فيديوهات توثيق العمل',
-}
+})
 
 export const SUBMIT_CONFIRMATION = 'يُرسل ملف الترشح إلى إدارة الجائزة للمراجعة الأولية. بعد الإرسال لن تتمكن من إضافة ملفات أو تعديل بيانات المشاركة. هل تريد تأكيد الإرسال؟'

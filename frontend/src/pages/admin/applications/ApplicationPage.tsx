@@ -21,9 +21,11 @@ import { ExportMenu } from '../ExportMenu'
 import { saveFile } from '../saveFile'
 import { ReviewSection } from './ReviewSection'
 import { StatusBadge } from './StatusBadge'
+import { useLocale } from '../../../i18n/useLocale'
 
 /** «تنزيل بطاقة الترشح PDF»: the submitted application as a server-made PDF. */
 function CardDownload({ user, applicationId }: { user: User; applicationId: number }) {
+  const { t } = useLocale()
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
 
@@ -43,7 +45,7 @@ function CardDownload({ user, applicationId }: { user: User; applicationId: numb
   return (
     <div className="admin-export">
       <button type="button" className="button button--primary button--small" onClick={() => void download()} disabled={busy} aria-busy={busy || undefined}>
-        {busy ? 'جارٍ إعداد البطاقة…' : 'تنزيل بطاقة الترشح PDF'}
+        {busy ? t('جارٍ إعداد البطاقة…') : t('تنزيل بطاقة الترشح PDF')}
       </button>
       {failure && (
         <p className="admin-export__error" role="alert">
@@ -84,8 +86,9 @@ function Section({ id, title, children }: { id: string; title: string; children:
  * downloads and native video playback, and the recorded declarations.
  */
 export function ApplicationPage({ applicationId }: { applicationId: number }) {
+  const { t } = useLocale()
   const { user } = useAuth()
-  usePageTitle('ملف ترشح')
+  usePageTitle(t('ملف ترشح'))
   const { location } = useRouter()
   const back = backAddress(new URLSearchParams(location.search).get('from'))
   const [detail, setDetail] = useState<ApplicationDetail | null>(null)
@@ -108,7 +111,7 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
 
   const backLink = (
     <p className="admin-back">
-      <Link href={back}>العودة إلى جدول ملفات الترشح</Link>
+      <Link href={back}>{t('العودة إلى جدول ملفات الترشح')}</Link>
     </p>
   )
 
@@ -121,7 +124,7 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
           {!error.missing && (
             <p>
               <button type="button" className="button button--secondary button--small" onClick={() => void load()}>
-                إعادة المحاولة
+                {t('إعادة المحاولة')}
               </button>
             </p>
           )}
@@ -135,7 +138,7 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
       <div className="admin-page">
         {backLink}
         <p className="admin-loading" role="status">
-          جارٍ تحميل ملف الترشح…
+          {t('جارٍ تحميل ملف الترشح…')}
         </p>
       </div>
     )
@@ -149,7 +152,7 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
       {backLink}
       <header className="admin-page__header admin-page__header--actions">
         <div>
-          <p className="admin-page__eyebrow">ملف ترشح مرسل · للعرض فقط</p>
+          <p className="admin-page__eyebrow">{t('ملف ترشح مرسل · للعرض فقط')}</p>
           <h1 className="admin-page__title">
             <bdi>{detail.nomination_details?.title ?? summary.reference_number}</bdi>
           </h1>
@@ -157,10 +160,10 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
         {user?.admin_permissions.includes('reports.export') && <CardDownload user={user} applicationId={summary.id} />}
       </header>
 
-      <Section id="admin-summary" title="ملخص الإرسال">
+      <Section id="admin-summary" title={t('ملخص الإرسال')}>
         <dl className="admin-facts">
           <div>
-            <dt>الرقم المرجعي</dt>
+            <dt>{t('الرقم المرجعي')}</dt>
             <dd>
               <bdi dir="ltr" className="admin-ref">
                 {summary.reference_number}
@@ -168,32 +171,32 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
             </dd>
           </div>
           <div>
-            <dt>الدورة</dt>
+            <dt>{t('الدورة')}</dt>
             <dd>{cycleLabel(summary.cycle)}</dd>
           </div>
           <div>
-            <dt>المجال الرئيسي</dt>
+            <dt>{t('المجال الرئيسي')}</dt>
             <dd>{summary.domain?.name ?? '—'}</dd>
           </div>
           <div>
-            <dt>الفئة الفرعية</dt>
+            <dt>{t('الفئة الفرعية')}</dt>
             <dd>{summary.subcategory?.name ?? '—'}</dd>
           </div>
           <div>
-            <dt>الحالة</dt>
+            <dt>{t('الحالة')}</dt>
             <dd>
               <StatusBadge status={summary.status} />
             </dd>
           </div>
           <div>
-            <dt>وقت الإرسال</dt>
-            <dd>{formatDamascusDateTime(summary.submitted_at)} بتوقيت دمشق</dd>
+            <dt>{t('وقت الإرسال')}</dt>
+            <dd>{t('{when} بتوقيت دمشق', { when: formatDamascusDateTime(summary.submitted_at) })}</dd>
           </div>
           <div>
-            <dt>النسخة المرسلة</dt>
+            <dt>{t('النسخة المرسلة')}</dt>
             <dd>
               {summary.version_number}
-              <span className="admin-hash" title="بصمة SHA-256 لمحتوى النسخة المرسلة">
+              <span className="admin-hash" title={t('بصمة SHA-256 لمحتوى النسخة المرسلة')}>
                 <bdi dir="ltr">{summary.content_hash.slice(0, 16)}…</bdi>
               </span>
             </dd>
@@ -201,7 +204,7 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
         </dl>
       </Section>
 
-      <Section id="admin-review" title="التصنيف الإداري">
+      <Section id="admin-review" title={t('التصنيف الإداري')}>
         {user && (
           <ReviewSection
             user={user}
@@ -213,31 +216,31 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
         )}
       </Section>
 
-      <Section id="admin-decision" title="قرار اللجنة">
+      <Section id="admin-decision" title={t('قرار اللجنة')}>
         {user && detail.judging.ready && (
           <div className="admin-section__tools">
-            <ExportMenu user={user} label="تصدير تقييمات الحكام" url={(format) => `/api/admin/exports/judge-scores?format=${format}&application=${summary.id}`} />
+            <ExportMenu user={user} label={t('تصدير تقييمات الحكام')} url={(format) => `/api/admin/exports/judge-scores?format=${format}&application=${summary.id}`} />
           </div>
         )}
         {!detail.judging.ready ? (
-          <p className="admin-muted">{detail.judging.referred ? 'لم تُعتمد لجنة تحكيم هذا المحور بعد.' : 'لم يُرسل هذا الملف إلى التحكيم؛ لا يقيّمه الحكام قبل إرسال إدارة الجائزة له.'}</p>
+          <p className="admin-muted">{detail.judging.referred ? t('لم تُعتمد لجنة تحكيم هذا المحور بعد.') : t('لم يُرسل هذا الملف إلى التحكيم؛ لا يقيّمه الحكام قبل إرسال إدارة الجائزة له.')}</p>
         ) : (
           <>
             <p className="admin-muted">
               {detail.judging.excluded
-                ? 'النتيجة: استبعاد.'
+                ? t('النتيجة: استبعاد.')
                 : detail.judging.decision
-                  ? `متوسط التقييمات ${detail.judging.decision} من 100.`
-                  : `أُرسل ${detail.judging.received} من ${detail.judging.expected}. يظهر المتوسط عندما يرسل كل أعضاء اللجنة، ما لم يُستبعد المشارك.`}
+                  ? t('متوسط التقييمات {decision} من 100.', { decision: detail.judging.decision })
+                  : t('أُرسل {received} من {expected}. يظهر المتوسط عندما يرسل كل أعضاء اللجنة، ما لم يُستبعد المشارك.', { received: detail.judging.received, expected: detail.judging.expected })}
             </p>
             <dl className="admin-facts">
               {detail.judging.scores.map((item, index) => (
                 <div key={`${item.name}-${index}`}>
                   <dt>{item.name}</dt>
                   <dd>
-                    {item.excluded ? 'استبعاد' : item.score === null ? 'بانتظار الإرسال' : `${item.score} من 100`}
-                    {item.notes ? ` — الملاحظات: ${item.notes}` : ''}
-                    {item.recommendations ? ` — التوصيات: ${item.recommendations}` : ''}
+                    {item.excluded ? t('استبعاد') : item.score === null ? t('بانتظار الإرسال') : t('{score} من 100', { score: item.score })}
+                    {item.notes ? t(' — الملاحظات: {notes}', { notes: item.notes }) : ''}
+                    {item.recommendations ? t(' — التوصيات: {recommendations}', { recommendations: item.recommendations }) : ''}
                   </dd>
                 </div>
               ))}
@@ -246,56 +249,56 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
         )}
       </Section>
 
-      <Section id="admin-stage-1" title="المرحلة 1: البيانات الأساسية">
+      <Section id="admin-stage-1" title={t('المرحلة 1: البيانات الأساسية')}>
         {detail.basic_information ? (
           <ProfileSummary groups={summaryFromProfile(detail.basic_information)} headingLevel={3} />
         ) : (
-          <p className="admin-muted">لم يُعثر على البيانات الأساسية المشار إليها في النسخة المرسلة.</p>
+          <p className="admin-muted">{t('لم يُعثر على البيانات الأساسية المشار إليها في النسخة المرسلة.')}</p>
         )}
       </Section>
 
-      <Section id="admin-stage-2" title="المرحلة 2: فئة الترشح وبيانات العمل">
+      <Section id="admin-stage-2" title={t('المرحلة 2: فئة الترشح وبيانات العمل')}>
         {detail.nomination_details ? (
           <ProfileSummary groups={nominationSummaryFromDetails(detail.nomination_details)} headingLevel={3} />
         ) : (
-          <p className="admin-muted">لا توجد بيانات للمرحلة 2 في النسخة المرسلة.</p>
+          <p className="admin-muted">{t('لا توجد بيانات للمرحلة 2 في النسخة المرسلة.')}</p>
         )}
       </Section>
 
-      <Section id="admin-stage-3" title="المرحلة 3: ملفات العمل وتوثيقه">
+      <Section id="admin-stage-3" title={t('المرحلة 3: ملفات العمل وتوثيقه')}>
         {pendingScan && (
           <p className="admin-scan-note">
-            لم تُفحص هذه الملفات بحثاً عن البرمجيات الضارة (الحالة: بانتظار الفحص). تحقّق المنصة من نوعها وبنيتها فقط؛ تعامل معها بوصفها ملفات غير موثوقة.
+            {t('لم تُفحص هذه الملفات بحثاً عن البرمجيات الضارة (الحالة: بانتظار الفحص). تحقّق المنصة من نوعها وبنيتها فقط؛ تعامل معها بوصفها ملفات غير موثوقة.')}
           </p>
         )}
         {(['explanatory', 'supporting', 'video'] as AttachmentKind[]).map((kind) => (
           <div key={kind} className="summary-group">
-            <h3 className="summary-group__title">{SECTION_TITLES[kind]}</h3>
+            <h3 className="summary-group__title">{t(SECTION_TITLES[kind])}</h3>
             <AttachmentList
               attachments={documentation.attachments.filter((item) => item.kind === kind)}
               urlFor={(attachment) => adminFileUrl(summary.id, attachment)}
-              emptyText="لم يُضف شيء."
+              emptyText={t('لم يُضف شيء.')}
             />
           </div>
         ))}
         <div className="summary-group">
-          <h3 className="summary-group__title">روابط توثيق إضافية</h3>
-          <LinkList links={documentation.links} emptyText="لم تُضف روابط." />
+          <h3 className="summary-group__title">{t('روابط توثيق إضافية')}</h3>
+          <LinkList links={documentation.links} emptyText={t('لم تُضف روابط.')} />
         </div>
       </Section>
 
-      <Section id="admin-declarations" title="الإقرارات والسياسات المقبولة">
+      <Section id="admin-declarations" title={t('الإقرارات والسياسات المقبولة')}>
         <dl className="admin-facts">
           <div>
-            <dt>إقرار صحة البيانات</dt>
-            <dd>{declarations.data_accuracy_declared_at ? `${formatDamascusDateTime(declarations.data_accuracy_declared_at)} بتوقيت دمشق` : '—'}</dd>
+            <dt>{t('إقرار صحة البيانات')}</dt>
+            <dd>{declarations.data_accuracy_declared_at ? t('{data_accuracy_declared_at} بتوقيت دمشق', { data_accuracy_declared_at: formatDamascusDateTime(declarations.data_accuracy_declared_at) }) : '—'}</dd>
           </div>
           {declarations.accepted_policies.map((policy) => (
             <div key={`${policy.code}-${policy.version_number}`}>
-              <dt>{policy.title ?? POLICY_NAMES[policy.code as PolicyCode] ?? policy.code}</dt>
+              <dt>{policy.title ?? (POLICY_NAMES[policy.code as PolicyCode] ? t(POLICY_NAMES[policy.code as PolicyCode]) : policy.code)}</dt>
               <dd>
-                الإصدار {policy.version_number}
-                {policy.accepted_at && ` · قُبلت في ${formatDamascusDateTime(policy.accepted_at)} بتوقيت دمشق`}
+                {t('الإصدار {n}', { n: policy.version_number })}
+                {policy.accepted_at && t(' · قُبلت في {accepted_at} بتوقيت دمشق', { accepted_at: formatDamascusDateTime(policy.accepted_at) })}
               </dd>
             </div>
           ))}

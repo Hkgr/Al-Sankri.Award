@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
 import type { User } from '../../auth/useAuth'
+import { LanguageToggle } from '../../i18n/LanguageToggle'
+import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 import '../auth/auth.css'
@@ -17,30 +19,32 @@ const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري'
  */
 export function JudgeLayout({ user, children }: { user: User; children: ReactNode }) {
   const { location } = useRouter()
+  const { t } = useLocale()
   const links = [
-    { href: '/judge', label: 'التحكيم' },
-    { href: '/account', label: 'إعدادات الحساب' },
-    { href: '/', label: 'العودة إلى الموقع العام' },
+    { href: '/judge', label: t('judge.nav') },
+    { href: '/account', label: t('common.accountSettings') },
+    { href: '/', label: t('common.publicSite') },
   ]
 
   return (
     <div className="candidate-shell">
       <a className="skip-link" href="#main">
-        انتقل إلى المحتوى الرئيسي
+        {t('common.skip')}
       </a>
       <header className="candidate-header">
         <div className="candidate-header__inner container">
           <Link className="candidate-header__brand" href="/judge">
-            <img src={logo} alt={`${AWARD_NAME}: التحكيم`} width={240} height={78} />
+            <img src={logo} alt={`${AWARD_NAME}: ${t('judge.nav')}`} width={240} height={78} />
           </Link>
           <DamascusClock />
-          <ProfileMenu user={user} role="حكَم" links={links} />
+          <LanguageToggle />
+          <ProfileMenu user={user} role={t('judge.role')} links={links} />
         </div>
-        <nav className="candidate-nav" aria-label="أقسام بوابة الحكم">
+        <nav className="candidate-nav" aria-label={t('judge.sections')}>
           <ul className="candidate-nav__list container">
             <li>
               <Link className="candidate-nav__link" href="/judge" aria-current={location.pathname === '/judge' ? 'page' : undefined}>
-                التحكيم
+                {t('judge.nav')}
               </Link>
             </li>
           </ul>

@@ -6,14 +6,18 @@ import './styles/base.css'
 import './components/layout/layout.css'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthContext'
+import { LocaleProvider } from './i18n/LocaleContext'
+import './i18n/i18n.css'
 import { RouterProvider } from './lib/router'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RouterProvider>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <LocaleProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </LocaleProvider>
     </RouterProvider>
   </StrictMode>,
 )

@@ -59,13 +59,37 @@ export const UPLOAD_TIMEOUT_MS = 5 * 60_000
 /** Reports are built inside the request; a download has its own, longer deadline. */
 export const DOWNLOAD_TIMEOUT_MS = 2 * 60_000
 
+/**
+ * Turns the Arabic texts of this module and of the server's answers into the
+ * interface language. Installed by the i18n module (this file stays free of
+ * imports so the Node test runner can load it); the identity until then.
+ */
+let localizer: { text: (value: string) => string; data: <T>(value: T) => T } = { text: (value) => value, data: (value) => value }
+
+export function setLocalizer(next: typeof localizer): void {
+  localizer = next
+}
+
+/** Each message is read in the current language. */
 export const messages = {
-  network: 'تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',
-  sessionExpired: 'انتهت صلاحية الجلسة. أعد تحميل الصفحة ثم حاول مرة أخرى.',
-  unexpected: 'حدث خطأ غير متوقع. أعد المحاولة بعد قليل.',
-  tooManyAttempts: 'محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة.',
-  timeout: 'لم يصل ردّ الخادم في الوقت المتوقع. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.',
-  tooLarge: 'الطلب أكبر من الحد الذي يقبله الخادم. تأكّد من أن حجم الملف ضمن الحد المسموح ثم أعد المحاولة.',
+  get network() {
+    return localizer.text('تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.')
+  },
+  get sessionExpired() {
+    return localizer.text('انتهت صلاحية الجلسة. أعد تحميل الصفحة ثم حاول مرة أخرى.')
+  },
+  get unexpected() {
+    return localizer.text('حدث خطأ غير متوقع. أعد المحاولة بعد قليل.')
+  },
+  get tooManyAttempts() {
+    return localizer.text('محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة.')
+  },
+  get timeout() {
+    return localizer.text('لم يصل ردّ الخادم في الوقت المتوقع. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.')
+  },
+  get tooLarge() {
+    return localizer.text('الطلب أكبر من الحد الذي يقبله الخادم. تأكّد من أن حجم الملف ضمن الحد المسموح ثم أعد المحاولة.')
+  },
 }
 
 /**
@@ -139,7 +163,7 @@ async function send(method: Method, url: string, signal: AbortSignal, body?: unk
 async function toError(response: Response): Promise<ApiError> {
   let payload: { message?: string; errors?: FieldErrors; code?: string } & Record<string, unknown> = {}
   try {
-    payload = await response.json()
+    payload = localizer.data(await response.json())
   } catch {
     // Not JSON (for example a proxy error page): fall back to a generic message.
   }
@@ -178,7 +202,7 @@ function attempt<T>(
     if (response.status === 204) return undefined as T
 
     try {
-      return (await response.json()) as T
+      return localizer.data((await response.json()) as T)
     } catch {
       throw new NetworkError(messages.network)
     }

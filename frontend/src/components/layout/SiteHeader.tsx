@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
 import { homeFor, useAuth } from '../../auth/useAuth'
-import { award, pages } from '../../content/site'
+import { useSite } from '../../content/useSite'
+import { LanguageToggle } from '../../i18n/LanguageToggle'
+import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 
@@ -16,6 +18,7 @@ const INLINE_NAV_QUERY = '(min-width: 64rem)'
 function AccountLink({ placement }: { placement: 'compact' | 'wide' }) {
   const { user } = useAuth()
   const { location } = useRouter()
+  const { t } = useLocale()
   const signedIn = Boolean(user)
   const href = user ? homeFor(user) : '/login'
 
@@ -29,7 +32,7 @@ function AccountLink({ placement }: { placement: 'compact' | 'wide' }) {
         <circle cx="12" cy="8" r="4" />
         <path d="M4.5 20.5c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5" />
       </svg>
-      <span className="account-link__label">{signedIn ? 'حسابي' : 'تسجيل'}</span>
+      <span className="account-link__label">{signedIn ? t('common.account') : t('common.signIn')}</span>
     </Link>
   )
 }
@@ -42,6 +45,8 @@ function AccountLink({ placement }: { placement: 'compact' | 'wide' }) {
  * to, such as a domain under شروط التقدم) is marked aria-current.
  */
 export function SiteHeader() {
+  const { t } = useLocale()
+  const { award, pages } = useSite()
   const [menuOpen, setMenuOpen] = useState(false)
   const { location } = useRouter()
   const current = (href: string) => (href === '/' ? location.pathname === '/' : location.pathname === href || location.pathname.startsWith(`${href}/`))
@@ -77,7 +82,7 @@ export function SiteHeader() {
   return (
     <header id="top" className="site-header" ref={headerRef}>
       <a className="skip-link" href="#main">
-        انتقل إلى المحتوى الرئيسي
+        {t('common.skip')}
       </a>
       <div className="site-header__inner container">
         <Link className="site-header__brand" href="/">
@@ -85,6 +90,7 @@ export function SiteHeader() {
         </Link>
 
         <div className="site-header__actions">
+          <LanguageToggle />
           <AccountLink placement="compact" />
           <button
             ref={toggleRef}
@@ -101,14 +107,14 @@ export function SiteHeader() {
                 <path d="M4 7h16M4 12h16M4 17h16" />
               )}
             </svg>
-            <span className="site-header__toggle-label">القائمة</span>
+            <span className="site-header__toggle-label">{t('common.menu')}</span>
           </button>
         </div>
 
         <nav
           id="site-nav"
           className="site-nav"
-          aria-label="التنقل الرئيسي"
+          aria-label={t('nav.main')}
           data-open={menuOpen}
         >
           <ul className="site-nav__list">
@@ -127,6 +133,7 @@ export function SiteHeader() {
           </ul>
         </nav>
         <AccountLink placement="wide" />
+        <LanguageToggle className="lang-toggle--wide" />
       </div>
     </header>
   )
