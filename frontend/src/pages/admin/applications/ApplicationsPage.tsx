@@ -13,6 +13,7 @@ import { ExportMenu } from '../ExportMenu'
 import { ReviewBadge } from './ReviewBadge'
 import { StatusBadge } from './StatusBadge'
 import { ALL_CYCLES, tableQuery } from './tableState'
+import { useLocale } from '../../../i18n/useLocale'
 
 /**
  * «ملفات الترشح»: the submitted participations, searched, filtered, sorted
@@ -32,7 +33,8 @@ export function ApplicationsPage({
   scope: string
   onScopeChange: (scope: string) => void
 }) {
-  usePageTitle('ملفات الترشح')
+  const { t } = useLocale()
+  usePageTitle(t('ملفات الترشح'))
   const { location, navigate } = useRouter()
   const params = new URLSearchParams(location.search)
   const cycleParam = scope
@@ -126,32 +128,32 @@ export function ApplicationsPage({
   return (
     <div className="admin-page">
       <header className="admin-page__header">
-        <h1 className="admin-page__title">ملفات الترشح</h1>
-        <p className="admin-page__intro">المشاركات المرسلة فقط، بما فيها ما انتقل بعد الإرسال إلى مراحل أخرى. المسودات لا تظهر هنا.</p>
+        <h1 className="admin-page__title">{t('ملفات الترشح')}</h1>
+        <p className="admin-page__intro">{t('المشاركات المرسلة فقط، بما فيها ما انتقل بعد الإرسال إلى مراحل أخرى. المسودات لا تظهر هنا.')}</p>
       </header>
 
-      <div className="admin-toolbar" role="search" aria-label="البحث في ملفات الترشح وتصفيتها">
+      <div className="admin-toolbar" role="search" aria-label={t('البحث في ملفات الترشح وتصفيتها')}>
         <form className="admin-toolbar__search" onSubmit={onSearch}>
-          <label htmlFor={ids.search}>بحث</label>
+          <label htmlFor={ids.search}>{t('بحث')}</label>
           <div className="admin-toolbar__search-row">
             <input
               id={ids.search}
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="الرقم المرجعي أو عنوان العمل أو اسم المترشح"
+              placeholder={t('الرقم المرجعي أو عنوان العمل أو اسم المترشح')}
               maxLength={150}
             />
             <button type="submit" className="button button--primary button--small">
-              بحث
+              {t('بحث')}
             </button>
           </div>
         </form>
         <div className="admin-toolbar__filters">
           <div className="admin-filter">
-            <label htmlFor={ids.cycle}>الدورة</label>
+            <label htmlFor={ids.cycle}>{t('الدورة')}</label>
             <select id={ids.cycle} value={scope} onChange={(event) => onScopeChange(event.target.value)}>
-              <option value={ALL_CYCLES}>كل الدورات</option>
+              <option value={ALL_CYCLES}>{t('كل الدورات')}</option>
               {cycles.map((item) => (
                 <option key={item.id} value={item.id}>
                   {cycleLabel(item)}
@@ -160,9 +162,9 @@ export function ApplicationsPage({
             </select>
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.domain}>المجال الرئيسي</label>
+            <label htmlFor={ids.domain}>{t('المجال الرئيسي')}</label>
             <select id={ids.domain} value={domain} onChange={(event) => update({ domain: event.target.value || null, subcategory: null })}>
-              <option value="">كل المجالات</option>
+              <option value="">{t('كل المجالات')}</option>
               {domains.map((item) => (
                 <option key={item.code} value={item.code}>
                   {item.name}
@@ -171,7 +173,7 @@ export function ApplicationsPage({
             </select>
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.subcategory}>الفئة الفرعية</label>
+            <label htmlFor={ids.subcategory}>{t('الفئة الفرعية')}</label>
             <select
               id={ids.subcategory}
               value={params.get('subcategory') ?? ''}
@@ -179,7 +181,7 @@ export function ApplicationsPage({
               disabled={!domain}
               aria-describedby={domain ? undefined : `${ids.subcategory}-hint`}
             >
-              <option value="">{domain ? 'كل الفئات' : 'اختر المجال أولاً'}</option>
+              <option value="">{domain ? t('كل الفئات') : t('اختر المجال أولاً')}</option>
               {subcategories.map((item) => (
                 <option key={item.code} value={item.code}>
                   {item.name}
@@ -188,14 +190,14 @@ export function ApplicationsPage({
             </select>
             {!domain && (
               <span id={`${ids.subcategory}-hint`} className="visually-hidden">
-                تُتاح بعد اختيار المجال الرئيسي.
+                {t('تُتاح بعد اختيار المجال الرئيسي.')}
               </span>
             )}
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.type}>نوع المترشح</label>
+            <label htmlFor={ids.type}>{t('نوع المترشح')}</label>
             <select id={ids.type} value={params.get('applicant_type') ?? ''} onChange={(event) => update({ applicant_type: event.target.value || null })}>
-              <option value="">الكل</option>
+              <option value="">{t('الكل')}</option>
               {Object.entries(APPLICANT_TYPE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -204,9 +206,9 @@ export function ApplicationsPage({
             </select>
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.status}>الحالة</label>
+            <label htmlFor={ids.status}>{t('الحالة')}</label>
             <select id={ids.status} value={params.get('status') ?? ''} onChange={(event) => update({ status: event.target.value || null })}>
-              <option value="">كل الحالات</option>
+              <option value="">{t('كل الحالات')}</option>
               {Object.entries(STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -215,9 +217,9 @@ export function ApplicationsPage({
             </select>
           </div>
           <div className="admin-filter">
-            <label htmlFor={ids.review}>التصنيف الإداري</label>
+            <label htmlFor={ids.review}>{t('التصنيف الإداري')}</label>
             <select id={ids.review} value={params.get('review') ?? ''} onChange={(event) => update({ review: event.target.value || null })}>
-              <option value="">كل التصنيفات</option>
+              <option value="">{t('كل التصنيفات')}</option>
               {Object.entries(REVIEW_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -234,7 +236,7 @@ export function ApplicationsPage({
                 update({ domain: null, subcategory: null, applicant_type: null, status: null, review: null, q: null })
               }}
             >
-              مسح المرشّحات
+              {t('مسح المرشّحات')}
             </button>
           )}
         </div>
@@ -242,47 +244,51 @@ export function ApplicationsPage({
 
       <div className="admin-results-bar">
         <p className="admin-results" role="status" aria-live="polite">
-          {loading ? 'جارٍ التحميل…' : meta ? `${meta.total === 0 ? 'لا نتائج' : `${meta.total} مشاركة مرسلة`} · النطاق: ${cycle ? cycleLabel(cycle) : 'كل الدورات'}` : ''}
+          {loading
+            ? t('جارٍ التحميل…')
+            : meta
+              ? `${meta.total === 0 ? t('لا نتائج') : t('{total} مشاركة مرسلة', { total: meta.total })} · ${t('النطاق: {scope}', { scope: cycle ? cycleLabel(cycle) : t('كل الدورات') })}`
+              : ''}
         </p>
         <ExportMenu user={user} url={(format) => `/api/admin/exports/applications?format=${format}&${queryString}`} />
       </div>
 
       {error ? (
         <FormAlert tone="error">
-          <p>تعذّر تحميل ملفات الترشح. {error}</p>
+          <p>{t('تعذّر تحميل ملفات الترشح.')} {error}</p>
           <p>
             <button type="button" className="button button--secondary button--small" onClick={() => setRetry((count) => count + 1)}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
       ) : result && result.data.length === 0 && !loading ? (
         <div className="admin-empty">
-          <p className="admin-empty__title">{filtered ? 'لا توجد مشاركات مرسلة تطابق هذا البحث أو هذه المرشّحات.' : 'لم تُرسل أي مشاركة بعد في هذا النطاق.'}</p>
-          {filtered && <p>جرّب تغيير المرشّحات أو مسحها.</p>}
+          <p className="admin-empty__title">{filtered ? t('لا توجد مشاركات مرسلة تطابق هذا البحث أو هذه المرشّحات.') : t('لم تُرسل أي مشاركة بعد في هذا النطاق.')}</p>
+          {filtered && <p>{t('جرّب تغيير المرشّحات أو مسحها.')}</p>}
         </div>
       ) : result ? (
         <div className="admin-table-wrap" tabIndex={0} role="region" aria-labelledby={ids.caption} aria-busy={loading || undefined}>
           <table className="admin-table">
             <caption id={ids.caption} className="visually-hidden">
-              ملفات الترشح المرسلة، الصفحة {meta?.page} من {meta?.last_page}، مرتّبة حسب {SORT_LABELS[sort]}
+              {t('ملفات الترشح المرسلة، الصفحة {page} من {last}، مرتّبة حسب {sort}', { page: meta?.page ?? '', last: meta?.last_page ?? '', sort: SORT_LABELS[sort] })}
             </caption>
             <thead>
               <tr>
-                {sortHeader('reference', 'الرقم المرجعي')}
-                {sortHeader('title', 'عنوان العمل')}
-                {sortHeader('applicant', 'المترشح أو المؤسسة')}
-                <th scope="col">النوع</th>
-                <th scope="col">المجال الرئيسي</th>
-                <th scope="col">الفئة الفرعية</th>
-                {sortHeader('submitted_at', 'وقت الإرسال')}
-                {sortHeader('status', 'الحالة')}
+                {sortHeader('reference', t('الرقم المرجعي'))}
+                {sortHeader('title', t('عنوان العمل'))}
+                {sortHeader('applicant', t('المترشح أو المؤسسة'))}
+                <th scope="col">{t('النوع')}</th>
+                <th scope="col">{t('المجال الرئيسي')}</th>
+                <th scope="col">{t('الفئة الفرعية')}</th>
+                {sortHeader('submitted_at', t('وقت الإرسال'))}
+                {sortHeader('status', t('الحالة'))}
                 <th scope="col" className="admin-table__wrap">
-                  التصنيف الإداري
+                  {t('التصنيف الإداري')}
                 </th>
-                <th scope="col">المرفقات</th>
+                <th scope="col">{t('المرفقات')}</th>
                 <th scope="col">
-                  <span className="visually-hidden">الإجراء</span>
+                  <span className="visually-hidden">{t('الإجراء')}</span>
                 </th>
               </tr>
             </thead>
@@ -313,7 +319,7 @@ export function ApplicationsPage({
                   <td className="admin-table__count">{row.attachment_count}</td>
                   <td>
                     <Link className="button button--secondary button--small" href={`/admin/applications/${row.id}?from=${encodeURIComponent(backTo)}`}>
-                      عرض الملف
+                      {t('عرض الملف')}
                       <span className="visually-hidden"> {row.reference_number}</span>
                     </Link>
                   </td>
@@ -325,12 +331,12 @@ export function ApplicationsPage({
       ) : null}
 
       {meta && meta.total > 0 && (
-        <nav className="admin-pager" aria-label="صفحات الجدول">
+        <nav className="admin-pager" aria-label={t('صفحات الجدول')}>
           <button type="button" className="button button--secondary button--small" disabled={meta.page <= 1 || loading} onClick={() => update({ page: String(meta.page - 1) })}>
-            السابق
+            {t('السابق')}
           </button>
           <span className="admin-pager__status">
-            الصفحة {meta.page} من {meta.last_page}
+            {t('الصفحة {page} من {last}', { page: meta.page, last: meta.last_page })}
           </span>
           <button
             type="button"
@@ -338,10 +344,10 @@ export function ApplicationsPage({
             disabled={meta.page >= meta.last_page || loading}
             onClick={() => update({ page: String(meta.page + 1) })}
           >
-            التالي
+            {t('التالي')}
           </button>
           <span className="admin-filter admin-filter--inline">
-            <label htmlFor={ids.perPage}>لكل صفحة</label>
+            <label htmlFor={ids.perPage}>{t('لكل صفحة')}</label>
             <select id={ids.perPage} value={String(meta.per_page)} onChange={(event) => update({ per_page: event.target.value })}>
               {[10, 25, 50].map((size) => (
                 <option key={size} value={size}>

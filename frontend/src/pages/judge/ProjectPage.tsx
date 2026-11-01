@@ -14,15 +14,20 @@ import { SECTION_TITLES } from '../candidate/documentation/documentationApi'
 import { nominationSummaryFromDetails } from '../candidate/nomination/nominationSummaries'
 import { ProfileSummary } from '../candidate/basic/ProfileSummary'
 import { cycleLabel } from '../admin/adminApi'
-import type { JudgeProject } from './judgeApi'
+import type { JudgeProject, JudgeWindow } from './judgeApi'
 import { judgeFileUrl } from './judgeApi'
+import { JudgeWindowNotice } from './JudgeWindowNotice'
+import { useLocale } from '../../i18n/useLocale'
+
+type LoadError = { message: string; missing: boolean; closed: boolean; window: JudgeWindow | null }
 
 /** One assigned project: the submitted work, then this judge's mark. */
 export function ProjectPage({ user, applicationId }: { user: User; applicationId: number }) {
-  usePageTitle('تحكيم مشروع')
+  const { t, locale } = useLocale()
+  usePageTitle(t('judge.projectTitle'))
   const { navigate } = useRouter()
   const [project, setProject] = useState<JudgeProject | null>(null)
-  const [error, setError] = useState<{ message: string; missing: boolean } | null>(null)
+  const [error, setError] = useState<LoadError | null>(null)
   const [score, setScore] = useState('')
   const [notes, setNotes] = useState('')
   const [recommendations, setRecommendations] = useState('')
@@ -36,7 +41,13 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
     try {
       setProject((await api.get<{ data: JudgeProject }>(`/api/judge/projects/${applicationId}`, contextHeader(user))).data)
     } catch (failure) {
-      setError({ message: errorMessage(failure), missing: failure instanceof ApiError && failure.status === 404 })
+      const closed = failure instanceof ApiError && failure.code === 'stage_closed'
+      setError({
+        message: errorMessage(failure),
+        missing: failure instanceof ApiError && failure.status === 404,
+        closed,
+        window: closed ? ((failure as ApiError).payload.window as JudgeWindow | null | undefined) ?? null : null,
+      })
     }
   }, [applicationId, user])
 
@@ -48,15 +59,15 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
 
   const pending = project?.evaluation.status !== 'sent'
   const dirty = score.trim() !== '' || notes.trim() !== '' || recommendations.trim() !== '' || excluded
-  useLeaveWarning(pending && dirty ? 'علامتك لم تُرسل إلى الإدارة بعد. هل تغادر الصفحة؟' : null)
+  useLeaveWarning(pending && dirty ? t('judge.leaveWarning') : null)
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
     if (sending || !pending) return
     const next = {
-      score: !excluded && score.trim() === '' ? 'ضع العلامة من 100.' : undefined,
-      notes: notes.trim() === '' ? 'اكتب الملاحظات قبل الإرسال.' : undefined,
-      recommendations: recommendations.trim() === '' ? 'اكتب التوصيات قبل الإرسال.' : undefined,
+      score: !excluded && score.trim() === '' ? t('judge.error.score') : undefined,
+      notes: notes.trim() === '' ? t('judge.error.notes') : undefined,
+      recommendations: recommendations.trim() === '' ? t('judge.error.recommendations') : undefined,
     }
     setFieldErrors(next)
     if (next.score || next.notes || next.recommendations) return
@@ -84,7 +95,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
           recommendations: failure.errors.recommendations?.[0],
         })
       }
-      setFormError(errorMessage(failure))
+      setFormError(failure instanceof ApiError && failure.code === 'stage_closed' ? t('judge.scoreClosed') : errorMessage(failure))
       if (failure instanceof ApiError && failure.code === 'already_sent') void load()
     } finally {
       setSending(false)
@@ -93,20 +104,33 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
 
   const back = (
     <p className="candidate-page__intro">
-      <Link href="/judge">العودة إلى المشاريع</Link>
+      <Link href="/judge">{t('judge.backToList')}</Link>
     </p>
   )
+
+  if (error?.closed) {
+    return (
+      <div className="candidate-page">
+        {back}
+        <header className="candidate-page__header">
+          <h1 className="candidate-page__title">{t('judge.stageClosedTitle')}</h1>
+          <p className="candidate-page__intro">{t('judge.stageClosedBody')}</p>
+        </header>
+        <JudgeWindowNotice window={error.window} />
+      </div>
+    )
+  }
 
   if (error) {
     return (
       <div className="candidate-page">
         {back}
         <FormAlert tone={error.missing ? 'info' : 'error'}>
-          <p>{error.message}</p>
+          <p>{error.missing ? t('judge.notAssigned') : error.message}</p>
           {!error.missing && (
             <p>
               <button type="button" className="button button--secondary" onClick={() => void load()}>
-                إعادة المحاولة
+                {t('common.retry')}
               </button>
             </p>
           )}
@@ -119,7 +143,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
     return (
       <div className="candidate-page">
         <p className="candidate-loading" role="status">
-          جارٍ تحميل المشروع…
+          {t('judge.loadingProject')}
         </p>
       </div>
     )
@@ -133,7 +157,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
       {back}
       <header className="candidate-page__header">
         <p className="eyebrow">
-          {project.summary.domain?.name ?? 'المحور'}
+          {project.summary.domain?.name ?? t('judge.domain')}
           {project.summary.subcategory ? ` · ${project.summary.subcategory.name}` : ''}
         </p>
         <h1 className="candidate-page__title">
@@ -143,15 +167,14 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
           <bdi dir="ltr">{project.summary.reference_number}</bdi>
           {' · '}
           {cycleLabel(project.summary.cycle)}
-          {' · أُرسل '}
-          {formatDamascusDateTime(project.summary.submitted_at)} بتوقيت دمشق
+          {` · ${t('judge.submittedAt', { when: formatDamascusDateTime(project.summary.submitted_at, locale) })}`}
         </p>
       </header>
 
       {project.nomination_details && (
         <section className="candidate-section" aria-labelledby="judge-work">
           <h2 id="judge-work" className="candidate-section__title">
-            بيانات العمل
+            {t('judge.workData')}
           </h2>
           <ProfileSummary groups={nominationSummaryFromDetails(project.nomination_details)} headingLevel={3} />
         </section>
@@ -159,40 +182,50 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
 
       <section className="candidate-section" aria-labelledby="judge-files">
         <h2 id="judge-files" className="candidate-section__title">
-          ملفات العمل
+          {t('judge.workFiles')}
         </h2>
         {(['explanatory', 'supporting', 'video'] as AttachmentKind[]).map((kind) => (
           <div key={kind} className="summary-group">
-            <h3 className="summary-group__title">{SECTION_TITLES[kind]}</h3>
+            <h3 className="summary-group__title">{t(SECTION_TITLES[kind])}</h3>
             <AttachmentList
               attachments={project.documentation.attachments.filter((item) => item.kind === kind)}
               urlFor={(attachment) => judgeFileUrl(user, project.summary.id, attachment)}
-              emptyText="لم يُضف شيء."
+              emptyText={t('judge.noFiles')}
             />
           </div>
         ))}
         <div className="summary-group">
-          <h3 className="summary-group__title">روابط توثيق إضافية</h3>
-          <LinkList links={project.documentation.links} emptyText="لم تُضف روابط." />
+          <h3 className="summary-group__title">{t('judge.extraLinks')}</h3>
+          <LinkList links={project.documentation.links} emptyText={t('judge.noLinks')} />
         </div>
       </section>
 
       <section className="candidate-section" aria-labelledby="judge-score">
         <h2 id="judge-score" className="candidate-section__title">
-          علامتك
+          {t('judge.yourMark')}
         </h2>
         {sent ? (
           <FormAlert tone="success">
             <p>
-              أُرسلت إلى الإدارة: {project.evaluation.excluded ? 'استبعاد' : `${project.evaluation.score} من 100`}
-              {project.evaluation.sent_at ? `، في ${formatDamascusDateTime(project.evaluation.sent_at)} بتوقيت دمشق` : ''}.
+              {project.evaluation.excluded
+                ? t('judge.sentExcluded')
+                : t('judge.sentScore', { score: project.evaluation.score ?? '' })}
+              {project.evaluation.sent_at ? ` · ${formatDamascusDateTime(project.evaluation.sent_at, locale)} ${t('common.damascusTime')}` : ''}
             </p>
-            {project.evaluation.notes && <p>الملاحظات: {project.evaluation.notes}</p>}
-            {project.evaluation.recommendations && <p>التوصيات: {project.evaluation.recommendations}</p>}
+            {project.evaluation.notes && (
+              <p>
+                {t('judge.notes')}: {project.evaluation.notes}
+              </p>
+            )}
+            {project.evaluation.recommendations && (
+              <p>
+                {t('judge.recommendations')}: {project.evaluation.recommendations}
+              </p>
+            )}
           </FormAlert>
         ) : !project.judging_open ? (
           <FormAlert tone="info">
-            <p>فترة التحكيم غير مفتوحة الآن، فلا تُرسل العلامة في هذا الوقت.</p>
+            <p>{t('judge.scoreClosed')}</p>
           </FormAlert>
         ) : (
           <form onSubmit={(event) => void onSubmit(event)} noValidate>
@@ -204,7 +237,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
             {!excluded && (
               <TextField
                 id="score"
-                label="العلامة من 100"
+                label={t('judge.scoreLabel')}
                 value={score}
                 onChange={(value) => {
                   setScore(value)
@@ -218,7 +251,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
               />
             )}
             <div className="field">
-              <FieldLabel htmlFor="notes" label="الملاحظات" required />
+              <FieldLabel htmlFor="notes" label={t('judge.notes')} required />
               <textarea
                 id="notes"
                 name="notes"
@@ -235,7 +268,7 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
               <FieldMessages id="notes" error={fieldErrors.notes} />
             </div>
             <div className="field">
-              <FieldLabel htmlFor="recommendations" label="التوصيات" required />
+              <FieldLabel htmlFor="recommendations" label={t('judge.recommendations')} required />
               <textarea
                 id="recommendations"
                 name="recommendations"
@@ -262,18 +295,18 @@ export function ProjectPage({ user, applicationId }: { user: User; applicationId
                 }
               }}
             >
-              استبعاد المشارك
+              {t('judge.exclude')}
             </CheckboxField>
-            <p className="field__hint">المشارك مخالف، فلا تُوضع له علامة، ونتيجته استبعاد.</p>
+            <p className="field__hint">{t('judge.excludeHint')}</p>
             <button type="submit" className="button button--primary" disabled={sending}>
-              {sending ? 'جارٍ الإرسال…' : 'إرسال إلى الإدارة'}
+              {sending ? t('judge.sending') : t('judge.send')}
             </button>
           </form>
         )}
       </section>
       <p className="candidate-page__intro">
         <button type="button" className="button button--secondary button--small" onClick={() => navigate('/judge')}>
-          العودة إلى المشاريع
+          {t('judge.backToList')}
         </button>
       </p>
     </div>

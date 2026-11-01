@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Judging;
 
+use App\Admin\CycleSchedule;
 use App\Candidates\AccountContext;
 use App\Candidates\Documentation;
 use App\Models\ApplicantIndividualDetail;
@@ -240,6 +241,53 @@ class JudgePortalTest extends TestCase
             ->assertJsonPath('data.judging.scores.0.excluded', true)
             ->assertJsonPath('data.judging.scores.1.score', '90')
             ->assertJsonPath('data.judging.scores.1.excluded', false);
+    }
+
+    public function test_a_judge_sees_the_list_but_cannot_open_a_project_before_the_judging_window(): void
+    {
+        $submitted = $this->submitApplication();
+        $judges = [
+            User::factory()->create(['email' => 'huda@example.org', 'name' => 'هدى الخالد']),
+            User::factory()->create(['email' => 'sami@example.org', 'name' => 'سامي نعسان']),
+            User::factory()->create(['email' => 'reem@example.org', 'name' => 'ريم عدرة']),
+        ];
+        $this->signInAdmin();
+        $this->adminPost('/committees', ['domain' => 'creativity', 'name' => 'لجنة تحكيم الإبداع'])->assertCreated();
+        foreach ($judges as $judge) {
+            $this->appoint('creativity', $judge->email)->assertCreated();
+        }
+        $this->approve('creativity')->assertOk();
+        $this->refer($submitted['id'])->assertOk();
+
+        app(CycleSchedule::class)->ensureJudgingStage($this->cycleId, $this->operator, now()->addDays(5), now()->addDays(10));
+        $link = (int) DB::table('file_links')->whereNotNull('application_version_id')->value('id');
+
+        $this->signIn($judges[0]->email);
+        $this->read('/api/judge/projects')->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.judging_open', false)
+            ->assertJsonPath('window.open', false)
+            ->assertJsonPath('window.opens_at', now()->addDays(5)->utc()->toIso8601ZuluString());
+        $this->read('/api/judge/projects/'.$submitted['id'])->assertForbidden()
+            ->assertJsonPath('code', 'stage_closed')
+            ->assertJsonPath('window.open', false)
+            ->assertJsonMissingPath('data');
+        $this->browser('GET', '/api/judge/projects/'.$submitted['id'].'/files/'.$link, [
+            'account_context' => AccountContext::for($judges[0]),
+        ])->assertForbidden()->assertJsonPath('code', 'stage_closed');
+        $this->sendMark($judges[0], $submitted['id'], '80', 'مبكرة')->assertForbidden()->assertJsonPath('code', 'stage_closed');
+        $this->assertSame(0, DB::table('evaluations')->count());
+
+        $this->travel(6)->days();
+        $this->signIn($judges[0]->email);
+        $this->read('/api/judge/projects')->assertOk()->assertJsonPath('data.0.judging_open', true)->assertJsonPath('window.open', true);
+        $this->read('/api/judge/projects/'.$submitted['id'])->assertOk()->assertJsonPath('data.judging_open', true);
+        $this->sendMark($judges[0], $submitted['id'], '80', 'في الفترة')->assertOk();
+
+        $this->travel(10)->days();
+        $this->signIn($judges[0]->email);
+        $this->read('/api/judge/projects')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('window.open', false);
+        $this->read('/api/judge/projects/'.$submitted['id'])->assertForbidden()->assertJsonPath('code', 'stage_closed');
     }
 
     /**

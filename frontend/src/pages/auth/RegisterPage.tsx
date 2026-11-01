@@ -4,17 +4,17 @@ import { useAuth } from '../../auth/useAuth'
 import type { User } from '../../auth/useAuth'
 import { FormAlert, PasswordField, SubmitButton, TextField } from '../../components/forms/FormControls'
 import { GoogleButton } from '../../components/GoogleButton'
+import { useLocale } from '../../i18n/useLocale'
 import { api } from '../../lib/api'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 import { AuthLayout, Divider } from './AuthLayout'
 import { ALERT_ID, useSubmission } from './useSubmission'
 
-export const PASSWORD_HINT = '8 أحرف على الأقل، وتتضمن حرفاً ورقماً واحداً على الأقل.'
-
 export function RegisterPage() {
   const { navigate } = useRouter()
   const { setUser, googleAvailable } = useAuth()
+  const { t } = useLocale()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,10 +42,7 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout
-      title="إنشاء حساب"
-      intro={<p>أنشئ حساباً في موقع الجائزة. إنشاء الحساب لا يعني التقدّم إلى الجائزة أو الترشّح لها.</p>}
-    >
+    <AuthLayout title={t('auth.registerTitle')} intro={<p>{t('auth.registerIntro')}</p>}>
       {alert && (
         <FormAlert tone="error" id={ALERT_ID}>
           <p>{alert}</p>
@@ -53,47 +50,47 @@ export function RegisterPage() {
       )}
 
       <form className="auth-form" onSubmit={onSubmit} noValidate>
-        <TextField id="name" label="الاسم الكامل" autoComplete="name" value={name} onChange={setName} error={fieldError('name')} required />
+        <TextField id="name" label={t('auth.fullName')} autoComplete="name" value={name} onChange={setName} error={fieldError('name')} required />
         <TextField
           id="email"
-          label="البريد الإلكتروني"
+          label={t('auth.email')}
           type="email"
           autoComplete="email"
           value={email}
           onChange={setEmail}
           error={fieldError('email')}
-          hint="سنرسل إليه رابطاً لتأكيده."
+          hint={t('auth.emailHint')}
           required
         />
         <PasswordField
           id="password"
-          label="كلمة المرور"
+          label={t('auth.password')}
           autoComplete="new-password"
           value={password}
           onChange={setPassword}
           error={fieldError('password')}
-          hint={PASSWORD_HINT}
+          hint={t('auth.passwordHint')}
           required
         />
         <PasswordField
           id="password_confirmation"
-          label="تأكيد كلمة المرور"
+          label={t('auth.confirmPassword')}
           autoComplete="new-password"
           value={confirmation}
           onChange={setConfirmation}
           error={fieldError('password_confirmation')}
           required
         />
-        <SubmitButton busy={busy} busyLabel="جارٍ إنشاء الحساب…">
-          إنشاء الحساب
+        <SubmitButton busy={busy} busyLabel={t('auth.creating')}>
+          {t('auth.createAccount')}
         </SubmitButton>
       </form>
 
-      <Divider>أو</Divider>
+      <Divider>{t('auth.or')}</Divider>
       <GoogleButton available={googleAvailable} />
 
       <p className="auth-panel__switch">
-        لديك حساب؟ <Link href="/login">تسجيل الدخول</Link>
+        {t('auth.haveAccount')} <Link href="/login">{t('auth.login')}</Link>
       </p>
     </AuthLayout>
   )

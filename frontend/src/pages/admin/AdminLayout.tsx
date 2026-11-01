@@ -11,6 +11,8 @@ import { ProfileMenu } from '../candidate/ProfileMenu'
 import type { AdminCycle } from './adminApi'
 import { cycleLabel } from './adminApi'
 import { ALL_CYCLES } from './applications/tableState'
+import { LanguageToggle } from '../../i18n/LanguageToggle'
+import { useLocale } from '../../i18n/useLocale'
 import './admin.css'
 
 const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري'
@@ -55,6 +57,7 @@ export function AdminLayout({
   onCycleChange: (value: string) => void
   children: ReactNode
 }) {
+  const { t } = useLocale()
   const { location } = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const navId = useId()
@@ -70,19 +73,19 @@ export function AdminLayout({
   return (
     <div className="admin-shell">
       <a className="skip-link" href="#main">
-        انتقل إلى المحتوى الرئيسي
+        {t('انتقل إلى المحتوى الرئيسي')}
       </a>
       <header className="admin-header">
         <div className="admin-header__inner">
           <Link className="admin-header__brand" href="/admin">
-            <img src={logo} alt={AWARD_NAME} width={200} height={65} />
+            <img src={logo} alt={t(AWARD_NAME)} width={200} height={65} />
           </Link>
-          <p className="admin-header__title">لوحة الإدارة</p>
+          <p className="admin-header__title">{t('لوحة الإدارة')}</p>
           <div className="admin-header__cycle">
-            <label htmlFor={cycleSelectId}>الدورة</label>
+            <label htmlFor={cycleSelectId}>{t('الدورة')}</label>
             {cycles.length > 0 && cycleValue ? (
               <select id={cycleSelectId} value={cycleValue} onChange={(event) => onCycleChange(event.target.value)}>
-                {includeAll && <option value={ALL_CYCLES}>كل الدورات</option>}
+                {includeAll && <option value={ALL_CYCLES}>{t('كل الدورات')}</option>}
                 {cycles.map((item) => (
                   <option key={item.id} value={item.id}>
                     {cycleLabel(item)}
@@ -91,31 +94,32 @@ export function AdminLayout({
               </select>
             ) : (
               <span id={cycleSelectId} className="admin-header__cycle-empty">
-                لا توجد دورات بعد
+                {t('لا توجد دورات بعد')}
               </span>
             )}
           </div>
           <DamascusClock />
-          <ProfileMenu user={user} role="إدارة الجائزة" links={PROFILE_LINKS} />
+          <LanguageToggle />
+          <ProfileMenu user={user} role={t('إدارة الجائزة')} links={PROFILE_LINKS.map((link) => ({ ...link, label: t(link.label) }))} />
         </div>
-        <nav className="admin-nav" aria-label="أقسام لوحة الإدارة">
+        <nav className="admin-nav" aria-label={t('أقسام لوحة الإدارة')}>
           <button type="button" className="admin-nav__toggle" aria-expanded={menuOpen} aria-controls={navId} onClick={() => setMenuOpen((open) => !open)}>
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d={menuOpen ? 'M6 6l12 12M18 6L6 18' : 'M4 7h16M4 12h16M4 17h16'} />
             </svg>
-            القائمة
+            {t('القائمة')}
           </button>
           <ul id={navId} className="admin-nav__list" data-open={menuOpen}>
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
                 {item.soon ? (
                   <span className="admin-nav__link admin-nav__link--soon" aria-disabled="true">
-                    {item.label}
-                    <span className="admin-nav__soon">قريباً</span>
+                    {t(item.label)}
+                    <span className="admin-nav__soon">{t('قريباً')}</span>
                   </span>
                 ) : (
                   <Link className="admin-nav__link" href={item.href} aria-current={section === item.href ? 'page' : undefined}>
-                    {item.label}
+                    {t(item.label)}
                   </Link>
                 )}
               </li>

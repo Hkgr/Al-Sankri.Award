@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { LanguageToggle } from '../../i18n/LanguageToggle'
 import './auth.css'
 import { usePageTitle } from './usePageTitle'
 
@@ -7,12 +8,30 @@ import { usePageTitle } from './usePageTitle'
  * band behind a white panel with a single gold rule (identity-guidelines.md
  * §7.4 and §8.2–8.3).
  */
-export function AuthLayout({ title, intro, children, wide = false }: { title: string; intro?: ReactNode; children: ReactNode; wide?: boolean }) {
+export function AuthLayout({
+  title,
+  intro,
+  children,
+  wide = false,
+  languageToggle = false,
+}: {
+  title: string
+  intro?: ReactNode
+  children: ReactNode
+  wide?: boolean
+  /** When the page has no SiteHeader (portal refusals), show the language switch here. */
+  languageToggle?: boolean
+}) {
   usePageTitle(title)
 
   return (
     <div className="auth-page">
       <div className={`auth-page__inner container${wide ? ' auth-page__inner--wide' : ''}`}>
+        {languageToggle && (
+          <div className="auth-page__lang">
+            <LanguageToggle />
+          </div>
+        )}
         <section className="auth-panel" aria-labelledby="auth-title">
           <h1 id="auth-title" className="auth-panel__title">
             {title}

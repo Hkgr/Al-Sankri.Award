@@ -37,39 +37,43 @@ export const award = {
 }
 
 /** Organisations named in public prose; each is rendered as an external link (OrgLink). */
-export const organizations = {
+export type OrganizationKey = 'rowad' | 'hand'
+
+export const organizations: Record<OrganizationKey, { name: string; url: string }> = {
   rowad: { name: 'مؤسسة الروّاد للتعاون والتنمية', url: 'https://www.alrowadngo.sy/' },
   hand: { name: 'منظمة HAND', url: 'https://www.hand.ngo/' },
-} as const
-
-export type OrganizationKey = keyof typeof organizations
+}
 
 /** Prose that may name an organisation: plain strings and organisation links, in order. */
 export type RichText = (string | { org: OrganizationKey; label?: string })[]
 
-export type SitePage = { href: string; label: string; description: string }
+export type SitePage = { href: string; label: string; labelEn?: string; description: string }
 
 /** The four main pages, in navigation order. */
 export const pages: SitePage[] = [
   {
     href: '/',
     label: 'الرئيسية',
+    labelEn: 'Home',
     description:
       'جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع: جائزة سنوية تكتشف المبادرات والأفراد والفرق التي تصنع أثراً حقيقياً موثقاً في سوريا وتكرّمها، وتنفّذها مؤسسة الروّاد للتعاون والتنمية.',
   },
   {
     href: '/about',
     label: 'عن الجائزة',
+    labelEn: 'About the award',
     description: 'غاية الجائزة وقيمها، وتركيزها على الأثر الموثق، والجهة المنفذة، وصلتها بمسيرة الدكتور عبد القادر سنكري في العطاء الإنساني والتنموي.',
   },
   {
     href: '/journey',
     label: 'مسيرة الجائزة',
+    labelEn: 'Award journey',
     description: 'مراحل الدورة الأولى للجائزة: الإعداد، والإطلاق واستقبال ملفات الترشح، والتدقيق الإداري، والتحكيم المستقل، وأسبوع الجائزة المخطط له.',
   },
   {
     href: '/eligibility',
     label: 'شروط التقدم',
+    labelEn: 'Eligibility',
     description: 'شروط التقدم المشتركة لمحاور الجائزة الثلاثة، والوثائق وأدلة الأثر المطلوبة، وقواعد منع تضارب المصالح، ومبادئ التقييم.',
   },
 ]
@@ -308,3 +312,8 @@ export const closing = {
   // Guide p. 16.
   statement: 'إنها جائزة تحتفي بمن يصنع أثراً... ويبقيه حاضراً في الذاكرة والمجتمع',
 }
+
+/** The Arabic copy as one value; siteEn.ts has the same shape in English (use it through useSite). */
+export const siteAr = { award, organizations, pages, hero, domains, about, legacy, confirmedSchedule, journey, eligibility, closing }
+
+export type SiteContent = typeof siteAr

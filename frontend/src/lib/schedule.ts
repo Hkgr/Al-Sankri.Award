@@ -34,6 +34,7 @@ export type SchedulePhase = ApplicationPhase | 'judging' | 'judged'
 export type Remaining = { days: number; hours: number; minutes: number; seconds: number; totalMs: number }
 
 const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 function instant(value: string | null | undefined): number | null {
   if (!value) return null
@@ -119,31 +120,35 @@ export function lastIncludedDay(endMs: number): { day: number; month: number; ye
   return damascusDate(endMs - 1)
 }
 
-export function monthName(month: number): string {
-  return MONTHS[month - 1] ?? ''
+export type ScheduleLocale = 'ar' | 'en'
+
+export function monthName(month: number, locale: ScheduleLocale = 'ar'): string {
+  return (locale === 'en' ? MONTHS_EN : MONTHS)[month - 1] ?? ''
 }
 
-/** «بنهاية يوم 15 نوفمبر 2026» for an exclusive closing instant. */
-export function deadlineText(closesAt: string): string | null {
+/** «بنهاية يوم 15 نوفمبر 2026» (“by the end of 15 November 2026”) for an exclusive closing instant. */
+export function deadlineText(closesAt: string, locale: ScheduleLocale = 'ar'): string | null {
   const ms = instant(closesAt)
   if (ms === null) return null
   const { day, month, year } = lastIncludedDay(ms)
 
-  return `بنهاية يوم ${day} ${monthName(month)} ${year}`
+  return locale === 'en' ? `by the end of ${day} ${monthName(month, locale)} ${year}` : `بنهاية يوم ${day} ${monthName(month)} ${year}`
 }
 
-/** «من 16 إلى 25 نوفمبر 2026» for a period with an exclusive end. */
-export function periodText(opensAt: string | null, closesAt: string | null): string | null {
+/** «من 16 إلى 25 نوفمبر 2026» (“16 to 25 November 2026”) for a period with an exclusive end. */
+export function periodText(opensAt: string | null, closesAt: string | null, locale: ScheduleLocale = 'ar'): string | null {
   const start = instant(opensAt)
   const end = instant(closesAt)
   if (start === null || end === null) return null
   const from = damascusDate(start)
   const to = lastIncludedDay(end)
+  const [word, join] = locale === 'en' ? ['from ', ' to '] : ['من ', ' إلى ']
+  const month = (value: number) => monthName(value, locale)
 
-  if (from.year !== to.year) return `من ${from.day} ${monthName(from.month)} ${from.year} إلى ${to.day} ${monthName(to.month)} ${to.year}`
-  if (from.month !== to.month) return `من ${from.day} ${monthName(from.month)} إلى ${to.day} ${monthName(to.month)} ${to.year}`
+  if (from.year !== to.year) return `${word}${from.day} ${month(from.month)} ${from.year}${join}${to.day} ${month(to.month)} ${to.year}`
+  if (from.month !== to.month) return `${word}${from.day} ${month(from.month)}${join}${to.day} ${month(to.month)} ${to.year}`
 
-  return `من ${from.day} إلى ${to.day} ${monthName(to.month)} ${to.year}`
+  return `${word}${from.day}${join}${to.day} ${month(to.month)} ${to.year}`
 }
 
 /** The difference between the server's clock and this device's, from one exchange. */

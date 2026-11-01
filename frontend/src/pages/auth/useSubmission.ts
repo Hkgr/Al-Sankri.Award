@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocale } from '../../i18n/useLocale'
 import { ApiError, errorMessage } from '../../lib/api'
 import type { FieldErrors } from '../../lib/api'
 
@@ -10,6 +11,7 @@ export const ALERT_ID = 'form-alert'
  * message that receives focus so it is read out.
  */
 export function useSubmission() {
+  const { t } = useLocale()
   const [busy, setBusy] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [alert, setAlert] = useState<string | null>(null)
@@ -33,7 +35,7 @@ export function useSubmission() {
       if (error instanceof ApiError && Object.keys(error.errors).length > 0) {
         const messages = Object.values(error.errors).flat()
         setFieldErrors(error.errors)
-        setAlert(messages.length === 1 ? messages[0] : 'تحقّق من الحقول المشار إليها أدناه.')
+        setAlert(messages.length === 1 ? messages[0] : t('form.fixFields'))
       } else {
         setAlert(errorMessage(error))
       }
@@ -43,7 +45,7 @@ export function useSubmission() {
       busyRef.current = false
       setBusy(false)
     }
-  }, [])
+  }, [t])
 
   const fieldError = (name: string) => fieldErrors[name]?.[0]
 

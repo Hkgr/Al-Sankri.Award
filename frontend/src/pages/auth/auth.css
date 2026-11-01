@@ -18,6 +18,12 @@
   max-inline-size: calc(var(--sa-container-narrow) + 2 * var(--sa-gutter));
 }
 
+.auth-page__lang {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: var(--sa-space-3);
+}
+
 .auth-panel {
   padding: var(--sa-space-6) clamp(var(--sa-space-4), 2vw + 0.75rem, var(--sa-space-6));
   border: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);

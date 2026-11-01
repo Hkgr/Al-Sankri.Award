@@ -11,6 +11,7 @@ import { cycleLabel } from '../adminApi'
 import { AddJudgeDialog } from './AddJudgeDialog'
 import { ExportMenu } from '../ExportMenu'
 import { AdminDialog, ConfirmDialog } from './AdminDialog'
+import { useLocale } from '../../../i18n/useLocale'
 
 type Notice = { tone: 'success' | 'error' | 'info'; content: ReactNode }
 
@@ -27,7 +28,8 @@ type Pending =
  * committee returns to draft explicitly before its membership changes.
  */
 export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle | null }) {
-  usePageTitle('لجان الحكام')
+  const { t } = useLocale()
+  usePageTitle(t('لجان الحكام'))
   const handleAccountFailure = useAccountFailure()
   const [committees, setCommittees] = useState<DomainCommittee[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -62,9 +64,9 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
   if (!cycle) {
     return (
       <div className="admin-page">
-        <h1 className="admin-page__title">لجان الحكام</h1>
+        <h1 className="admin-page__title">{t('لجان الحكام')}</h1>
         <FormAlert tone="info">
-          <p>لا توجد دورة جائزة مُعدّة بعد. تُنشأ اللجان لدورة محدّدة.</p>
+          <p>{t('لا توجد دورة جائزة مُعدّة بعد. تُنشأ اللجان لدورة محدّدة.')}</p>
         </FormAlert>
       </div>
     )
@@ -99,7 +101,7 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
 
   const askCreate = (domain: DomainCode) => {
     const name = committees?.find((item) => item.domain.code === domain)?.domain.name ?? ''
-    setCommitteeName(`لجنة تحكيم مجال ${name}`)
+    setCommitteeName(t('لجنة تحكيم مجال {name}', { name }))
     setAdding(false)
     setPending({ kind: 'create', domain })
   }
@@ -135,9 +137,9 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
   return (
     <div className="admin-page">
       <header className="admin-page__header">
-        <h1 className="admin-page__title">لجان الحكام</h1>
+        <h1 className="admin-page__title">{t('لجان الحكام')}</h1>
         <p className="admin-page__intro">
-          {cycleLabel(cycle)}: لجنة تحكيم واحدة لكل مجال رئيسي، تشمل كل فئاته الفرعية. يُعتمد تشكيل اللجنة بثلاثة حكام أو خمسة بالضبط.
+          {cycleLabel(cycle)}: {t('لجنة تحكيم واحدة لكل مجال رئيسي، تشمل كل فئاته الفرعية. يُعتمد تشكيل اللجنة بثلاثة حكام أو خمسة بالضبط.')}
         </p>
       </header>
 
@@ -152,21 +154,21 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
           <p>{loadError}</p>
           <p>
             <button type="button" className="button button--secondary button--small" onClick={() => void load()}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
       ) : !committees ? (
         <p className="admin-loading" role="status">
-          جارٍ تحميل اللجان…
+          {t('جارٍ تحميل اللجان…')}
         </p>
       ) : committees.length === 0 ? (
         <FormAlert tone="info">
-          <p>لم تُعدّ المجالات الرئيسية لهذه الدورة بعد، فلا يمكن تشكيل لجانها.</p>
+          <p>{t('لم تُعدّ المجالات الرئيسية لهذه الدورة بعد، فلا يمكن تشكيل لجانها.')}</p>
         </FormAlert>
       ) : (
         <>
-          <div className="admin-tabs" role="tablist" aria-label="لجان المجالات الرئيسية">
+          <div className="admin-tabs" role="tablist" aria-label={t('لجان المجالات الرئيسية')}>
             {committees.map((item, index) => (
               <button
                 key={item.domain.code}
@@ -185,7 +187,7 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
               >
                 <span className="admin-tab__name">{item.domain.name}</span>
                 <span className="admin-tab__meta">
-                  {item.committee ? `${item.committee.status === 'approved' ? 'معتمدة' : 'مسودة'} · ${item.committee.current_count} حكام` : 'لم تُنشأ بعد'}
+                  {item.committee ? t('{v} · {current_count} حكام', { v: item.committee.status === 'approved' ? t('معتمدة') : t('مسودة'), current_count: item.committee.current_count }) : t('لم تُنشأ بعد')}
                 </span>
               </button>
             ))}
@@ -217,10 +219,10 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
                 />
               ) : (
                 <div className="admin-empty">
-                  <p className="admin-empty__title">لا توجد لجنة تحكيم لمجال «{item.domain.name}» في هذه الدورة.</p>
-                  <p>تُنشأ اللجنة مسودةً، ثم يُضاف إليها الحكام تدريجياً.</p>
+                  <p className="admin-empty__title">{t('لا توجد لجنة تحكيم لمجال «{domain}» في هذه الدورة.', { domain: item.domain.name })}</p>
+                  <p>{t('تُنشأ اللجنة مسودةً، ثم يُضاف إليها الحكام تدريجياً.')}</p>
                   <button type="button" className="button button--primary" onClick={() => askCreate(item.domain.code)}>
-                    إنشاء اللجنة
+                    {t('إنشاء اللجنة')}
                   </button>
                 </div>
               )}
@@ -245,7 +247,7 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
 
           <AdminDialog
             open={pending?.kind === 'create'}
-            title={`إنشاء لجنة تحكيم مجال ${pendingDomain}`}
+            title={t('إنشاء لجنة تحكيم مجال {pendingDomain}', { pendingDomain })}
             titleId="create-committee-title"
             onClose={() => setPending(null)}
           >
@@ -256,14 +258,14 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
                 confirmPending()
               }}
             >
-              <p>تُنشأ اللجنة مسودةً لهذه الدورة، بلا أعضاء. لا تُنشأ أي لجنة أخرى.</p>
-              <TextField id="committee-name" label="اسم اللجنة" value={committeeName} onChange={setCommitteeName} required maxLength={255} autoComplete="off" />
+              <p>{t('تُنشأ اللجنة مسودةً لهذه الدورة، بلا أعضاء. لا تُنشأ أي لجنة أخرى.')}</p>
+              <TextField id="committee-name" label={t('اسم اللجنة')} value={committeeName} onChange={setCommitteeName} required maxLength={255} autoComplete="off" />
               <div className="admin-dialog__actions">
                 <button type="button" className="button button--secondary" onClick={() => setPending(null)}>
-                  تراجع
+                  {t('تراجع')}
                 </button>
                 <button type="submit" className="button button--primary" disabled={busy || !committeeName.trim()}>
-                  {busy ? 'جارٍ الإنشاء…' : 'إنشاء اللجنة'}
+                  {busy ? t('جارٍ الإنشاء…') : t('إنشاء اللجنة')}
                 </button>
               </div>
             </form>
@@ -274,16 +276,16 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
             busy={busy}
             onClose={() => setPending(null)}
             onConfirm={confirmPending}
-            title={pending?.kind === 'approve' ? 'اعتماد اللجنة' : pending?.kind === 'draft' ? 'إعادة اللجنة إلى المسودة' : 'إنهاء العضوية'}
-            confirmLabel={pending?.kind === 'approve' ? 'اعتماد اللجنة' : pending?.kind === 'draft' ? 'إعادة إلى المسودة' : 'إنهاء العضوية'}
+            title={pending?.kind === 'approve' ? t('اعتماد اللجنة') : pending?.kind === 'draft' ? t('إعادة اللجنة إلى المسودة') : t('إنهاء العضوية')}
+            confirmLabel={pending?.kind === 'approve' ? t('اعتماد اللجنة') : pending?.kind === 'draft' ? t('إعادة إلى المسودة') : t('إنهاء العضوية')}
             text={
               pending?.kind === 'approve' ? (
-                <p>ستُعتمد لجنة مجال «{pendingDomain}» بأعضائها الحاليين. لا تتغيّر عضويتها بعد الاعتماد إلا بإعادتها إلى المسودة.</p>
+                <p>{t('ستُعتمد لجنة مجال «{domain}» بأعضائها الحاليين. لا تتغيّر عضويتها بعد الاعتماد إلا بإعادتها إلى المسودة.', { domain: pendingDomain ?? '' })}</p>
               ) : pending?.kind === 'draft' ? (
-                <p>ستعود اللجنة إلى المسودة، فتُتاح إضافة الحكام وإنهاء عضوياتهم، ثم يلزم اعتمادها من جديد.</p>
+                <p>{t('ستعود اللجنة إلى المسودة، فتُتاح إضافة الحكام وإنهاء عضوياتهم، ثم يلزم اعتمادها من جديد.')}</p>
               ) : pending?.kind === 'end' ? (
                 <p>
-                  ستنتهي عضوية <bdi>{pending.member.name}</bdi> في هذه اللجنة. تبقى العضوية في سجل اللجنة، ولا يُحذف الحساب.
+                  {t('ستنتهي عضوية')} <bdi>{pending.member.name}</bdi> {t('في هذه اللجنة. تبقى العضوية في سجل اللجنة، ولا يُحذف الحساب.')}
                 </p>
               ) : null
             }
@@ -317,6 +319,7 @@ function CommitteePanel({
   onResendLink: (member: CommitteeMember) => void
   exportMenu: ReactNode
 }) {
+  const { t } = useLocale()
   const draft = committee.status === 'draft'
   const sizeOk = committee.allowed_sizes.includes(committee.current_count)
   const requirementId = useId()
@@ -330,11 +333,11 @@ function CommitteePanel({
           </h2>
           <p className="admin-committee__meta">
             <span className="admin-state" data-state={committee.status}>
-              {draft ? 'مسودة' : 'معتمدة'}
+              {draft ? t('مسودة') : t('معتمدة')}
             </span>
-            <span>المجال الرئيسي: {domain.domain.name}</span>
-            <span>الحكام الحاليون: {committee.current_count}</span>
-            {committee.approved_at && <span>اعتُمدت في {formatDamascusDateTime(committee.approved_at)}</span>}
+            <span>{t('المجال الرئيسي: {domain}', { domain: domain.domain.name })}</span>
+            <span>{t('الحكام الحاليون: {n}', { n: committee.current_count })}</span>
+            {committee.approved_at && <span>{t('اعتُمدت في {when}', { when: formatDamascusDateTime(committee.approved_at) })}</span>}
           </p>
         </div>
         <div className="admin-committee__actions">
@@ -342,10 +345,10 @@ function CommitteePanel({
           {draft ? (
             <>
               <button type="button" className="button button--secondary" onClick={onAdd} disabled={busy}>
-                إضافة حكَم
+                {t('إضافة حكَم')}
               </button>
               <button type="button" className="button button--primary" onClick={onApprove} disabled={busy || !sizeOk} aria-describedby={requirementId}>
-                اعتماد اللجنة
+                {t('اعتماد اللجنة')}
               </button>
             </>
           ) : (
@@ -356,7 +359,7 @@ function CommitteePanel({
               disabled={busy || committee.has_judging_history}
               aria-describedby={requirementId}
             >
-              إعادة إلى المسودة
+              {t('إعادة إلى المسودة')}
             </button>
           )}
         </div>
@@ -366,32 +369,32 @@ function CommitteePanel({
         <span>
           {draft
             ? sizeOk
-              ? `يمكن اعتماد اللجنة: فيها ${committee.current_count} حكام حاليين.`
-              : `يتطلّب الاعتماد 3 أو 5 حكام حاليين بالضبط؛ في اللجنة الآن ${committee.current_count}.`
+              ? t('يمكن اعتماد اللجنة: فيها {current_count} حكام حاليين.', { current_count: committee.current_count })
+              : t('يتطلّب الاعتماد 3 أو 5 حكام حاليين بالضبط؛ في اللجنة الآن {current_count}.', { current_count: committee.current_count })
             : committee.has_judging_history
-              ? 'للجنة سجل تحكيم قائم، فلا تُعاد إلى المسودة.'
-              : 'اللجنة معتمدة. لتغيير أعضائها أعدها إلى المسودة أولاً، ثم اعتمدها من جديد.'}
+              ? t('للجنة سجل تحكيم قائم، فلا تُعاد إلى المسودة.')
+              : t('اللجنة معتمدة. لتغيير أعضائها أعدها إلى المسودة أولاً، ثم اعتمدها من جديد.')}
         </span>
       </p>
 
       {committee.members.length === 0 ? (
         <div className="admin-empty">
-          <p className="admin-empty__title">لا يوجد حكام في هذه اللجنة بعد.</p>
-          {draft && <p>أضف الحكام واحداً تلو الآخر، ثم اعتمد اللجنة.</p>}
+          <p className="admin-empty__title">{t('لا يوجد حكام في هذه اللجنة بعد.')}</p>
+          {draft && <p>{t('أضف الحكام واحداً تلو الآخر، ثم اعتمد اللجنة.')}</p>}
         </div>
       ) : (
-        <div className="admin-table-wrap" tabIndex={0} role="region" aria-label={`أعضاء ${committee.name}`}>
+        <div className="admin-table-wrap" tabIndex={0} role="region" aria-label={t('أعضاء {name}', { name: committee.name })}>
           <table className="admin-table">
             <thead>
               <tr>
-                <th scope="col">الاسم</th>
-                <th scope="col">البريد الإلكتروني</th>
-                <th scope="col">الهاتف</th>
-                <th scope="col">التخصص</th>
-                <th scope="col">المجال الرئيسي</th>
-                <th scope="col">حالة العضوية والحساب</th>
+                <th scope="col">{t('الاسم')}</th>
+                <th scope="col">{t('البريد الإلكتروني')}</th>
+                <th scope="col">{t('الهاتف')}</th>
+                <th scope="col">{t('التخصص')}</th>
+                <th scope="col">{t('المجال الرئيسي')}</th>
+                <th scope="col">{t('حالة العضوية والحساب')}</th>
                 <th scope="col">
-                  <span className="visually-hidden">الإجراءات</span>
+                  <span className="visually-hidden">{t('الإجراءات')}</span>
                 </th>
               </tr>
             </thead>
@@ -409,22 +412,22 @@ function CommitteePanel({
                   <td>{member.domain}</td>
                   <td>
                     <ul className="admin-flags">
-                      <li>عضو منذ {formatDamascusDateTime(member.joined_at)}</li>
-                      <li data-tone={member.account.active ? undefined : 'warn'}>{member.account.active ? 'الحساب نشط' : 'الحساب معطّل'}</li>
-                      {member.account.setup_pending && <li data-tone="warn">بانتظار تعيين كلمة المرور</li>}
-                      {!member.account.email_verified && <li>البريد غير مؤكَّد</li>}
+                      <li>{t('عضو منذ {when}', { when: formatDamascusDateTime(member.joined_at) })}</li>
+                      <li data-tone={member.account.active ? undefined : 'warn'}>{member.account.active ? t('الحساب نشط') : t('الحساب معطّل')}</li>
+                      {member.account.setup_pending && <li data-tone="warn">{t('بانتظار تعيين كلمة المرور')}</li>}
+                      {!member.account.email_verified && <li>{t('البريد غير مؤكَّد')}</li>}
                     </ul>
                   </td>
                   <td className="admin-table__actions">
                     {member.account.setup_pending && member.account.active && (
                       <button type="button" className="button button--quiet button--small" onClick={() => onResendLink(member)} disabled={linkBusy === member.id}>
-                        {linkBusy === member.id ? 'جارٍ الإرسال…' : 'إعادة إرسال رابط الإعداد'}
-                        <span className="visually-hidden"> إلى {member.name}</span>
+                        {linkBusy === member.id ? t('جارٍ الإرسال…') : t('إعادة إرسال رابط الإعداد')}
+                        <span className="visually-hidden"> {t('إلى {name}', { name: member.name })}</span>
                       </button>
                     )}
                     {draft && (
                       <button type="button" className="button button--quiet button--small" onClick={() => onEnd(member)} disabled={busy}>
-                        إنهاء العضوية
+                        {t('إنهاء العضوية')}
                         <span className="visually-hidden"> {member.name}</span>
                       </button>
                     )}
@@ -438,12 +441,12 @@ function CommitteePanel({
 
       {committee.former_members.length > 0 && (
         <details className="admin-history">
-          <summary>العضويات المنتهية ({committee.former_members.length})</summary>
+          <summary>{t('العضويات المنتهية ({n})', { n: committee.former_members.length })}</summary>
           <ul>
             {committee.former_members.map((member) => (
               <li key={member.id}>
-                <bdi>{member.name}</bdi> (<bdi dir="ltr">{member.email}</bdi>): من {formatDamascusDateTime(member.joined_at)} إلى{' '}
-                {member.left_at ? formatDamascusDateTime(member.left_at) : '—'}
+                <bdi>{member.name}</bdi> (<bdi dir="ltr">{member.email}</bdi>):{' '}
+                {t('من {from} إلى {to}', { from: formatDamascusDateTime(member.joined_at), to: member.left_at ? formatDamascusDateTime(member.left_at) : '—' })}
               </li>
             ))}
           </ul>

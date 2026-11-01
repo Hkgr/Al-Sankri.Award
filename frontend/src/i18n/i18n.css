@@ -1,0 +1,67 @@
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.lang-toggle__btn {
+  margin: 0;
+  padding: 0.15rem 0.2rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  cursor: pointer;
+  opacity: 0.72;
+}
+
+.lang-toggle__btn[aria-pressed='true'] {
+  opacity: 1;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.lang-toggle__btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.lang-toggle__sep {
+  opacity: 0.45;
+  user-select: none;
+}
+
+/* The header's action group is hidden on wide screens, so the switch repeats beside the account link there. */
+.lang-toggle--wide {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .lang-toggle--wide {
+    display: inline-flex;
+  }
+}
+
+.site-header .lang-toggle,
+.candidate-header .lang-toggle,
+.admin-header .lang-toggle {
+  color: inherit;
+}
+
+.judge-list__item--locked {
+  display: grid;
+  gap: 0.35rem;
+  padding: var(--sa-space-4);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
+  border-radius: var(--sa-radius-md);
+  background: var(--sa-color-surface);
+}
+
+.judge-list__locked {
+  font-size: 0.9rem;
+  color: var(--sa-color-text-muted);
+}

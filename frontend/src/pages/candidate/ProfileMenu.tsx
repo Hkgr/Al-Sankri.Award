@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import type { User } from '../../auth/useAuth'
+import { useLocale } from '../../i18n/useLocale'
 import { errorMessage } from '../../lib/api'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
@@ -8,21 +9,24 @@ import { initialsOf } from './initials'
 
 export type ProfileMenuLink = { href: string; label: string }
 
-const CANDIDATE_LINKS: ProfileMenuLink[] = [
-  { href: '/dashboard', label: 'لوحة المترشح' },
-  { href: '/account', label: 'إعدادات الحساب' },
-  { href: '/', label: 'العودة إلى الموقع العام' },
-]
-
 /**
  * The account menu: a disclosure button that reveals a short list of links.
  * Escape closes it and returns focus to the button; so does clicking
  * outside or moving focus out of it. The candidate area shows «مترشح» and
  * its links; the administration area passes its own.
  */
-export function ProfileMenu({ user, role = 'مترشح', links = CANDIDATE_LINKS }: { user: User; role?: string; links?: ProfileMenuLink[] }) {
+export function ProfileMenu({ user, role, links }: { user: User; role?: string; links?: ProfileMenuLink[] }) {
   const { logout } = useAuth()
+  const { t } = useLocale()
   const { navigate, confirmLeave } = useRouter()
+  const resolvedRole = role ?? t('candidate.role')
+  const resolvedLinks =
+    links ??
+    ([
+      { href: '/dashboard', label: t('candidate.dashboard') },
+      { href: '/account', label: t('common.accountSettings') },
+      { href: '/', label: t('common.publicSite') },
+    ] satisfies ProfileMenuLink[])
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -84,12 +88,12 @@ export function ProfileMenu({ user, role = 'مترشح', links = CANDIDATE_LINKS
           <span className="profile-menu__name" dir="auto">
             {user.name}
           </span>
-          <span className="profile-menu__role">{role}</span>
+          <span className="profile-menu__role">{resolvedRole}</span>
         </span>
         <svg className="profile-menu__chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d={open ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
         </svg>
-        <span className="visually-hidden">قائمة الحساب</span>
+        <span className="visually-hidden">{t('auth.accountMenu')}</span>
       </button>
 
       <div id={menuId} className="profile-menu__panel" hidden={!open}>
@@ -98,10 +102,10 @@ export function ProfileMenu({ user, role = 'مترشح', links = CANDIDATE_LINKS
           <span className="profile-menu__name" dir="auto">
             {user.name}
           </span>
-          <span className="profile-menu__role">{role}</span>
+          <span className="profile-menu__role">{resolvedRole}</span>
         </p>
         <ul className="profile-menu__list">
-          {links.map((link) => (
+          {resolvedLinks.map((link) => (
             <li key={link.href}>
               <Link className="profile-menu__item" href={link.href} onClick={() => setOpen(false)}>
                 {link.label}
@@ -110,7 +114,7 @@ export function ProfileMenu({ user, role = 'مترشح', links = CANDIDATE_LINKS
           ))}
           <li>
             <button type="button" className="profile-menu__item" onClick={onLogout} aria-busy={busy || undefined} aria-disabled={busy || undefined}>
-              {busy ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج'}
+              {busy ? t('common.loggingOut') : t('common.logout')}
             </button>
           </li>
         </ul>

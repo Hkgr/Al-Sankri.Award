@@ -16,6 +16,7 @@ import type { NominationDetails } from '../nomination/nominationApi'
 import { DomainArtwork } from '../nomination/nominationFields'
 import { nominationSummaryFromDetails } from '../nomination/nominationSummaries'
 import { useAccountFailure } from '../useCandidateRequests'
+import { useLocale } from '../../../i18n/useLocale'
 
 type Review = {
   basic_information: BasicProfile
@@ -33,7 +34,8 @@ type ReviewState = { data: Review | null; journey_key?: string; availability?: {
  * if it changed meanwhile (another tab), the server asks for a fresh review.
  */
 export function ReviewPage({ user }: { user: User }) {
-  usePageTitle('مراجعة المشاركة وإرسالها')
+  const { t, locale } = useLocale()
+  usePageTitle(t('مراجعة المشاركة وإرسالها'))
   const handleAccountFailure = useAccountFailure()
   const [state, setState] = useState<ReviewState | null>(null)
   const [stage1Required, setStage1Required] = useState(false)
@@ -110,8 +112,7 @@ export function ReviewPage({ user }: { user: User }) {
       tone: 'error',
       content: (
         <p>
-          لم تصل نتيجة الإرسال، ولا يظهر أن المشاركة أُرسلت حتى الآن، لكن ذلك لم يتأكد بعد. أعد المحاولة بعد قليل: إن كان الإرسال الأول قد نجح فستظهر المشاركة المرسلة
-          نفسها، ولن تُرسل مرة ثانية.
+          {t('لم تصل نتيجة الإرسال، ولا يظهر أن المشاركة أُرسلت حتى الآن، لكن ذلك لم يتأكد بعد. أعد المحاولة بعد قليل: إن كان الإرسال الأول قد نجح فستظهر المشاركة المرسلة نفسها، ولن تُرسل مرة ثانية.')}
         </p>
       ),
     })
@@ -120,10 +121,10 @@ export function ReviewPage({ user }: { user: User }) {
   return (
     <div className="candidate-page">
       <header className="candidate-page__header">
-        <p className="eyebrow">المراجعة والإرسال</p>
-        <h1 className="candidate-page__title">مراجعة المشاركة</h1>
+        <p className="eyebrow">{t('المراجعة والإرسال')}</p>
+        <h1 className="candidate-page__title">{t('مراجعة المشاركة')}</h1>
         <p className="candidate-page__intro">
-          {review?.submission ? 'هذه المشاركة كما أُرسلت. هي متاحة للعرض فقط.' : 'راجع بيانات المشاركة كلها كما حُفظت، ثم أرسل ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.'}
+          {review?.submission ? t('هذه المشاركة كما أُرسلت. هي متاحة للعرض فقط.') : t('راجع بيانات المشاركة كلها كما حُفظت، ثم أرسل ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.')}
         </p>
       </header>
 
@@ -132,20 +133,20 @@ export function ReviewPage({ user }: { user: User }) {
           <p>{loadError}</p>
           <p>
             <button type="button" className="button button--secondary" onClick={() => void load()}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
       ) : stage1Required || (state && !review) ? (
         <FormAlert tone="info">
-          <p>تُتاح المراجعة بعد استكمال المراحل الثلاث: البيانات الأساسية، وفئة الترشح وبيانات العمل، وملفات العمل وتوثيقه.</p>
+          <p>{t('تُتاح المراجعة بعد استكمال المراحل الثلاث: البيانات الأساسية، وفئة الترشح وبيانات العمل، وملفات العمل وتوثيقه.')}</p>
           <p>
-            <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+            <Link href="/dashboard">{t('العودة إلى لوحة المترشح')}</Link>
           </p>
         </FormAlert>
       ) : !review || !state?.journey_key ? (
         <p className="candidate-loading" role="status">
-          جارٍ تحميل المشاركة…
+          {t('جارٍ تحميل المشاركة…')}
         </p>
       ) : (
         <>
@@ -153,20 +154,20 @@ export function ReviewPage({ user }: { user: User }) {
             <div className="locked-banner submitted-banner" role="status">
               <StatusIcon tone="success" />
               <div>
-                <p className="locked-banner__title">تم إرسال المشاركة</p>
+                <p className="locked-banner__title">{t('تم إرسال المشاركة')}</p>
                 <p>
-                  الرقم المرجعي: <bdi dir="ltr">{review.submission.reference_number}</bdi>
+                  {t('الرقم المرجعي:')} <bdi dir="ltr">{review.submission.reference_number}</bdi>
                 </p>
-                <p>وقت الإرسال: {formatDamascusDateTime(review.submission.submitted_at)} بتوقيت دمشق.</p>
-                <p>{PROCESSING_TEXT[review.submission.processing] ?? PROCESSING_TEXT.pending}</p>
-                <p>لا يمكن تعديل المشاركة أو إضافة ملفات إليها بعد الإرسال.</p>
+                <p>{t('وقت الإرسال: {when} بتوقيت دمشق.', { when: formatDamascusDateTime(review.submission.submitted_at, locale) })}</p>
+                <p>{t(PROCESSING_TEXT[review.submission.processing] ?? PROCESSING_TEXT.pending)}</p>
+                <p>{t('لا يمكن تعديل المشاركة أو إضافة ملفات إليها بعد الإرسال.')}</p>
               </div>
             </div>
           ) : !review.documentation.confirmed ? (
             <FormAlert tone="info">
-              <p>لم يُؤكَّد حفظ ملفات العمل وتوثيقه (المرحلة 3) بصورتها الحالية. احفظ المرحلة ثم عد إلى هنا للإرسال.</p>
+              <p>{t('لم يُؤكَّد حفظ ملفات العمل وتوثيقه (المرحلة 3) بصورتها الحالية. احفظ المرحلة ثم عد إلى هنا للإرسال.')}</p>
               <p>
-                <Link href="/dashboard/documentation">الانتقال إلى ملفات العمل وتوثيقه</Link>
+                <Link href="/dashboard/documentation">{t('الانتقال إلى ملفات العمل وتوثيقه')}</Link>
               </p>
             </FormAlert>
           ) : null}
@@ -174,14 +175,14 @@ export function ReviewPage({ user }: { user: User }) {
 
           <section className="review-part" aria-labelledby="review-stage-1">
             <h2 id="review-stage-1" className="review-part__title">
-              المرحلة 1: البيانات الأساسية
+              {t('المرحلة 1: البيانات الأساسية')}
             </h2>
             <ProfileSummary groups={summaryFromProfile(review.basic_information)} headingLevel={3} />
           </section>
 
           <section className="review-part" aria-labelledby="review-stage-2">
             <h2 id="review-stage-2" className="review-part__title">
-              المرحلة 2: فئة الترشح وبيانات العمل
+              {t('المرحلة 2: فئة الترشح وبيانات العمل')}
             </h2>
             <div className="domain-preview domain-preview--summary">
               <DomainArtwork artwork={review.nomination_details.domain.artwork} domainName={review.nomination_details.domain.name} size="preview" />
@@ -195,54 +196,54 @@ export function ReviewPage({ user }: { user: User }) {
 
           <section className="review-part" aria-labelledby="review-stage-3">
             <h2 id="review-stage-3" className="review-part__title">
-              المرحلة 3: ملفات العمل وتوثيقه
+              {t('المرحلة 3: ملفات العمل وتوثيقه')}
             </h2>
             {(['explanatory', 'supporting', 'video'] as AttachmentKind[]).map((kind) => (
               <div key={kind} className="summary-group">
-                <h3 className="summary-group__title">{SECTION_TITLES[kind]}</h3>
+                <h3 className="summary-group__title">{t(SECTION_TITLES[kind])}</h3>
                 <AttachmentList
                   attachments={review.documentation.attachments.filter((item) => item.kind === kind)}
                   user={user}
                   journeyKey={state.journey_key!}
-                  emptyText="لم يُضف شيء."
+                  emptyText={t('لم يُضف شيء.')}
                 />
               </div>
             ))}
             <div className="summary-group">
-              <h3 className="summary-group__title">روابط توثيق إضافية</h3>
-              <LinkList links={review.documentation.links} emptyText="لم تُضف روابط." />
+              <h3 className="summary-group__title">{t('روابط توثيق إضافية')}</h3>
+              <LinkList links={review.documentation.links} emptyText={t('لم تُضف روابط.')} />
             </div>
           </section>
 
           {!review.submission && (
             <div className="review-actions">
               <Link className="button button--secondary" href="/dashboard/documentation">
-                العودة إلى ملفات العمل
+                {t('العودة إلى ملفات العمل')}
               </Link>
               {review.documentation.confirmed && (
                 <button type="button" className="button button--primary" onClick={() => dialogRef.current?.showModal()} disabled={sending}>
-                  {sending ? 'جارٍ الإرسال…' : 'إرسال ملف الترشح'}
+                  {sending ? t('جارٍ الإرسال…') : t('إرسال ملف الترشح')}
                 </button>
               )}
             </div>
           )}
           {review.submission && (
             <p className="candidate-page__back">
-              <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+              <Link href="/dashboard">{t('العودة إلى لوحة المترشح')}</Link>
             </p>
           )}
 
           <dialog ref={dialogRef} className="confirm-dialog" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-text">
             <h2 id="confirm-dialog-title" className="confirm-dialog__title">
-              تأكيد الإرسال
+              {t('تأكيد الإرسال')}
             </h2>
-            <p id="confirm-dialog-text">{SUBMIT_CONFIRMATION}</p>
+            <p id="confirm-dialog-text">{t(SUBMIT_CONFIRMATION)}</p>
             <div className="confirm-dialog__actions">
               <button type="button" className="button button--secondary" onClick={() => dialogRef.current?.close()} autoFocus>
-                العودة للمراجعة
+                {t('العودة للمراجعة')}
               </button>
               <button type="button" className="button button--primary" onClick={() => void submit()}>
-                تأكيد الإرسال
+                {t('تأكيد الإرسال')}
               </button>
             </div>
           </dialog>

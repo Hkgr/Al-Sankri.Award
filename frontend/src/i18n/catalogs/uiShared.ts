@@ -1,0 +1,31 @@
+import type { Dict } from '../types'
+
+/** English texts, keyed by the Arabic text the interface shows (see t()). */
+export const en: Dict = {
+  'تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.': 'Could not connect to the server. Check your internet connection, then try again.',
+  'انتهت صلاحية الجلسة. أعد تحميل الصفحة ثم حاول مرة أخرى.': 'Your session has expired. Reload the page, then try again.',
+  'حدث خطأ غير متوقع. أعد المحاولة بعد قليل.': 'An unexpected error occurred. Try again in a moment.',
+  'محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة.': 'Too many attempts. Wait a moment, then try again.',
+  'لم يصل ردّ الخادم في الوقت المتوقع. تحقّق من اتصالك بالإنترنت ثم أعد المحاولة.': 'The server did not answer in time. Check your internet connection, then try again.',
+  'الطلب أكبر من الحد الذي يقبله الخادم. تأكّد من أن حجم الملف ضمن الحد المسموح ثم أعد المحاولة.': 'The request is larger than the server accepts. Make sure the file size is within the allowed limit, then try again.',
+  'فرد': 'Individual',
+  'مؤسسة': 'Institution',
+  'الرقم المرجعي': 'Reference number',
+  'عنوان العمل': 'Work title',
+  'إعادة المحاولة': 'Try again',
+  'جائزة الدكتور عبد القادر سنكري': 'Dr. Abdulkader Sankari Award',
+  'المرحلة 1: البيانات الأساسية': 'Stage 1: Basic information',
+  'المرحلة 2: فئة الترشح وبيانات العمل': 'Stage 2: Nomination category and work details',
+  'المرحلة 3: ملفات العمل وتوثيقه': 'Stage 3: Work files and documentation',
+  'لم يُضف شيء.': 'Nothing added.',
+  'روابط توثيق إضافية': 'Additional documentation links',
+  'لم تُضف روابط.': 'No links added.',
+  'الإصدار {n}': 'Version {n}',
+  '(مطلوب)': '(required)',
+  'جارٍ التحقق…': 'Verifying…',
+  'متابعة': 'Continue',
+  'جارٍ الحفظ…': 'Saving…',
+  'جارٍ الإرسال…': 'Sending…',
+  'إخفاء': 'Hide',
+  'الفئة': 'Category',
+}

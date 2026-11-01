@@ -8,6 +8,7 @@ import { formatDamascusDateTime } from '../../candidate/candidateApi'
 import { useAccountFailure } from '../../candidate/useCandidateRequests'
 import type { AdminCycle, CycleSchedule } from '../adminApi'
 import { cycleLabel } from '../adminApi'
+import { useLocale } from '../../../i18n/useLocale'
 
 type FormState = {
   nomination_opens_on: string
@@ -22,7 +23,8 @@ type FormState = {
  * (Asia/Damascus); the closing day is included in full.
  */
 export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | null }) {
-  usePageTitle('المواعيد')
+  const { t } = useLocale()
+  usePageTitle(t('المواعيد'))
   const handleAccountFailure = useAccountFailure()
   const [schedule, setSchedule] = useState<CycleSchedule | null>(null)
   const [form, setForm] = useState<FormState | null>(null)
@@ -57,9 +59,9 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
   if (!cycle) {
     return (
       <div className="admin-page">
-        <h1 className="admin-page__title">المواعيد</h1>
+        <h1 className="admin-page__title">{t('المواعيد')}</h1>
         <FormAlert tone="info">
-          <p>لا توجد دورة جائزة مُعدّة بعد. تُضبط المواعيد لدورة محدّدة.</p>
+          <p>{t('لا توجد دورة جائزة مُعدّة بعد. تُضبط المواعيد لدورة محدّدة.')}</p>
         </FormAlert>
       </div>
     )
@@ -97,10 +99,11 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
   return (
     <div className="admin-page">
       <header className="admin-page__header">
-        <p className="admin-page__eyebrow">إدارة الجائزة</p>
-        <h1 className="admin-page__title">المواعيد</h1>
+        <p className="admin-page__eyebrow">{t('إدارة الجائزة')}</p>
+        <h1 className="admin-page__title">{t('المواعيد')}</h1>
         <p className="admin-page__intro">
-          مواعيد الترشح والتحكيم لدورة <strong>{cycleLabel(cycle)}</strong>. التواريخ بتوقيت {schedule?.cycle.timezone ?? 'Asia/Damascus'}، ويوم الانتهاء مشمول بالكامل. فترة التحكيم تبدأ بعد انتهاء التسجيل.
+          {t('مواعيد الترشح والتحكيم لدورة')} <strong>{cycleLabel(cycle)}</strong>.{' '}
+          {t('التواريخ بتوقيت {tz}، ويوم الانتهاء مشمول بالكامل. فترة التحكيم تبدأ بعد انتهاء التسجيل.', { tz: schedule?.cycle.timezone ?? 'Asia/Damascus' })}
         </p>
       </header>
 
@@ -109,7 +112,7 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
           <p>{loadError}</p>
           <p>
             <button type="button" className="button button--secondary" onClick={() => void load()}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
@@ -117,7 +120,7 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
 
       {!loadError && !form && (
         <p className="admin-loading" role="status">
-          جارٍ تحميل المواعيد…
+          {t('جارٍ تحميل المواعيد…')}
         </p>
       )}
 
@@ -125,7 +128,7 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
         <form className="admin-form" onSubmit={(event) => void onSubmit(event)} noValidate>
           {saved && (
             <FormAlert tone="success">
-              <p>حُفظت المواعيد.</p>
+              <p>{t('حُفظت المواعيد.')}</p>
             </FormAlert>
           )}
           {formError && (
@@ -139,14 +142,14 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
               {schedule.nomination.name}
             </h2>
             <p className="admin-muted">
-              الحالة الآن: {schedule.nomination.open ? 'مفتوحة للترشح' : 'مغلقة'}
-              {schedule.nomination.opens_at ? ` · من ${formatDamascusDateTime(schedule.nomination.opens_at)}` : ''}
-              {schedule.nomination.closes_at ? ` إلى ${formatDamascusDateTime(schedule.nomination.closes_at)}` : ''}.
+              {t('الحالة الآن:')} {schedule.nomination.open ? t('مفتوحة للترشح') : t('مغلقة')}
+              {schedule.nomination.opens_at ? t(' · من {opens_at}', { opens_at: formatDamascusDateTime(schedule.nomination.opens_at) }) : ''}
+              {schedule.nomination.closes_at ? t(' إلى {closes_at}', { closes_at: formatDamascusDateTime(schedule.nomination.closes_at) }) : ''}.
             </p>
             <div className="admin-schedule-fields">
               <TextField
                 id="nomination_opens_on"
-                label="تاريخ بدء الترشح"
+                label={t('تاريخ بدء الترشح')}
                 type="date"
                 value={form.nomination_opens_on}
                 onChange={(value) => setForm((current) => (current ? { ...current, nomination_opens_on: value } : current))}
@@ -156,7 +159,7 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
               />
               <TextField
                 id="nomination_closes_on"
-                label="تاريخ انتهاء التسجيل"
+                label={t('تاريخ انتهاء التسجيل')}
                 type="date"
                 value={form.nomination_closes_on}
                 onChange={(value) => setForm((current) => (current ? { ...current, nomination_closes_on: value } : current))}
@@ -172,14 +175,14 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
               {schedule.judging.name}
             </h2>
             <p className="admin-muted">
-              الحالة الآن: {schedule.judging.open ? 'مفتوحة للتحكيم' : 'مغلقة'}
-              {schedule.judging.opens_at ? ` · من ${formatDamascusDateTime(schedule.judging.opens_at)}` : ''}
-              {schedule.judging.closes_at ? ` إلى ${formatDamascusDateTime(schedule.judging.closes_at)}` : ''}.
+              {t('الحالة الآن:')} {schedule.judging.open ? t('مفتوحة للتحكيم') : t('مغلقة')}
+              {schedule.judging.opens_at ? t(' · من {opens_at}', { opens_at: formatDamascusDateTime(schedule.judging.opens_at) }) : ''}
+              {schedule.judging.closes_at ? t(' إلى {closes_at}', { closes_at: formatDamascusDateTime(schedule.judging.closes_at) }) : ''}.
             </p>
             <div className="admin-schedule-fields">
               <TextField
                 id="judging_opens_on"
-                label="تاريخ بدء التحكيم"
+                label={t('تاريخ بدء التحكيم')}
                 type="date"
                 value={form.judging_opens_on}
                 onChange={(value) => setForm((current) => (current ? { ...current, judging_opens_on: value } : current))}
@@ -189,7 +192,7 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
               />
               <TextField
                 id="judging_closes_on"
-                label="تاريخ انتهاء التحكيم"
+                label={t('تاريخ انتهاء التحكيم')}
                 type="date"
                 value={form.judging_closes_on}
                 onChange={(value) => setForm((current) => (current ? { ...current, judging_closes_on: value } : current))}
@@ -201,7 +204,7 @@ export function SchedulePage({ user, cycle }: { user: User; cycle: AdminCycle | 
           </section>
 
           <button type="submit" className="button button--primary" disabled={busy}>
-            {busy ? 'جارٍ الحفظ…' : 'حفظ المواعيد'}
+            {busy ? t('جارٍ الحفظ…') : t('حفظ المواعيد')}
           </button>
         </form>
       )}

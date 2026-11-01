@@ -1,7 +1,8 @@
 import { Countdown } from '../../components/Countdown'
 import { Photo } from '../../components/Photo'
 import { PlatformActions } from '../../components/PlatformActions'
-import { about, award, domains, hero, journey, pages } from '../../content/site'
+import { useSite } from '../../content/useSite'
+import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
 import { phaseAt } from '../../lib/schedule'
 import { usePageMeta } from '../../lib/usePageMeta'
@@ -9,6 +10,8 @@ import { useSchedule, useServerNow } from '../../lib/useSchedule'
 import './home.css'
 
 export function HomePage() {
+  const { about, award, domains, hero, journey, pages } = useSite()
+  const { t } = useLocale()
   usePageMeta(null, pages[0].description)
   const { schedule, offset } = useSchedule()
   // The phase decides which way into the platform is offered; it changes at the closing instant.
@@ -30,7 +33,7 @@ export function HomePage() {
               ))}
             </h1>
             <p className="hero__lead">{hero.lead}</p>
-            <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: 'اقرأ شروط التقدم' }} />
+            <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: t('actions.readEligibility') }} />
           </div>
 
           <div className="hero__stage">
@@ -46,16 +49,16 @@ export function HomePage() {
       <section className="section intro" aria-labelledby="intro-title">
         <div className="container intro__inner">
           <div>
-            <p className="eyebrow">عن الجائزة</p>
+            <p className="eyebrow">{t('home.aboutEyebrow')}</p>
             <h2 id="intro-title" className="section__title">
-              أثرٌ يُرى، وأصحابه يُكرَّمون
+              {t('home.aboutTitle')}
             </h2>
           </div>
           <div className="intro__body">
             <p className="intro__statement">{about.statement}</p>
             <p>{about.philosophy}</p>
             <Link className="text-link" href="/about">
-              المزيد عن الجائزة
+              {t('home.aboutMore')}
             </Link>
           </div>
         </div>
@@ -64,9 +67,9 @@ export function HomePage() {
       <section className="section domains-preview" aria-labelledby="domains-title">
         <div className="container">
           <div className="section__head">
-            <p className="eyebrow">محاور الجائزة</p>
+            <p className="eyebrow">{t('home.domainsEyebrow')}</p>
             <h2 id="domains-title" className="section__title">
-              ثلاثة محاور رئيسية، وسبع فئات
+              {t('home.domainsTitle')}
             </h2>
           </div>
           <ul className="domain-cards">
@@ -76,13 +79,14 @@ export function HomePage() {
                 <img className="domain-card__symbol" src={domain.symbol} alt="" width={88} height={99} />
                 <h3 className="domain-card__title">{domain.label}</h3>
                 <p className="domain-card__intro">{domain.intro}</p>
-                <ul className="domain-card__subcategories" aria-label={`فئات محور ${domain.label}`}>
+                <ul className="domain-card__subcategories" aria-label={t('home.domainSubs', { domain: domain.label })}>
                   {domain.subcategories.map((subcategory) => (
                     <li key={subcategory.label}>{subcategory.label}</li>
                   ))}
                 </ul>
                 <Link className="domain-card__link" href={`/eligibility/${domain.slug}`}>
-                  شروط المحور وفئاته<span className="visually-hidden">: {domain.label}</span>
+                  {t('home.domainLink')}
+                  <span className="visually-hidden">: {domain.label}</span>
                 </Link>
               </li>
             ))}
@@ -93,9 +97,9 @@ export function HomePage() {
       <section className="section journey-preview" aria-labelledby="journey-title">
         <div className="container">
           <div className="section__head">
-            <p className="eyebrow">مسيرة الجائزة</p>
+            <p className="eyebrow">{t('home.journeyEyebrow')}</p>
             <h2 id="journey-title" className="section__title">
-              من الإعداد إلى أسبوع الجائزة
+              {t('home.journeyTitle')}
             </h2>
           </div>
           <ol className="journey-strip">
@@ -110,7 +114,7 @@ export function HomePage() {
             ))}
           </ol>
           <Link className="text-link" href="/journey">
-            تفاصيل مسيرة الجائزة ومواعيدها
+            {t('home.journeyMore')}
           </Link>
         </div>
       </section>
@@ -119,14 +123,11 @@ export function HomePage() {
         <div className="container platform-band__inner">
           <div>
             <h2 id="platform-title" className="platform-band__title">
-              منصة الترشح الإلكترونية
+              {t('home.platformTitle')}
             </h2>
-            <p className="platform-band__text">
-              يُقدَّم ملف الترشح عبر المنصة: البيانات الأساسية، ثم فئة الترشح وبيانات العمل، ثم ملفات العمل وأدلة أثره. يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق
-              قبل إحالته إلى لجنة التحكيم المختصة.
-            </p>
+            <p className="platform-band__text">{t('home.platformText')}</p>
           </div>
-          <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: 'شروط التقدم' }} />
+          <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: t('actions.eligibility') }} />
         </div>
       </section>
     </>

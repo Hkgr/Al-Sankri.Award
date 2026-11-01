@@ -1,4 +1,5 @@
 import googleG from '../assets/google/google-g.svg'
+import { useLocale } from '../i18n/useLocale'
 
 /**
  * "Continue with Google", built to Google's sign-in branding guidelines
@@ -8,7 +9,8 @@ import googleG from '../assets/google/google-g.svg'
  * whole OAuth flow, and the browser never sees credentials or tokens.
  */
 export function GoogleButton({ available, redirect }: { available: boolean; redirect?: string }) {
-  const label = 'المتابعة مع Google'
+  const { t } = useLocale()
+  const label = t('google.continue')
 
   if (!available) {
     return (
@@ -18,7 +20,7 @@ export function GoogleButton({ available, redirect }: { available: boolean; redi
           <span className="google-button__label">{label}</span>
         </button>
         <p id="google-unavailable" className="google-signin__note">
-          تسجيل الدخول عبر Google غير متاح مؤقتاً. يمكنك استخدام البريد الإلكتروني وكلمة المرور.
+          {t('google.unavailable')}
         </p>
       </div>
     )

@@ -11,6 +11,7 @@ import { useAccountFailure } from '../useCandidateRequests'
 import { BasicInformationForm } from './BasicInformationForm'
 import { ProfileSummary } from './ProfileSummary'
 import { summaryFromProfile } from './summaries'
+import { useLocale } from '../../../i18n/useLocale'
 
 type Loaded = { profile: BasicProfile | null; requirements: Requirements; countries: Country[] }
 
@@ -19,7 +20,8 @@ type Loaded = { profile: BasicProfile | null; requirements: Requirements; countr
  * permanent read-only summary afterwards (the server refuses any change).
  */
 export function BasicInformationPage({ user }: { user: User }) {
-  usePageTitle('البيانات الأساسية')
+  const { t } = useLocale()
+  usePageTitle(t('البيانات الأساسية'))
   const { navigate } = useRouter()
   const handleAccountFailure = useAccountFailure()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
@@ -62,12 +64,12 @@ export function BasicInformationPage({ user }: { user: User }) {
   return (
     <div className="candidate-page">
       <header className="candidate-page__header">
-        <p className="eyebrow">المرحلة 1 من ملف الترشح</p>
-        <h1 className="candidate-page__title">{profile ? 'البيانات الأساسية' : 'استكمال البيانات الأساسية'}</h1>
+        <p className="eyebrow">{t('المرحلة 1 من ملف الترشح')}</p>
+        <h1 className="candidate-page__title">{profile ? t('البيانات الأساسية') : t('استكمال البيانات الأساسية')}</h1>
         <p className="candidate-page__intro">
           {profile
-            ? 'هذه بياناتك الأساسية كما حُفظت. هي متاحة للعرض فقط.'
-            : 'أدخل بيانات المتقدم ووسائل التواصل معه، ثم راجعها قبل تأكيد الحفظ.'}
+            ? t('هذه بياناتك الأساسية كما حُفظت. هي متاحة للعرض فقط.')
+            : t('أدخل بيانات المتقدم ووسائل التواصل معه، ثم راجعها قبل تأكيد الحفظ.')}
         </p>
       </header>
 
@@ -76,24 +78,23 @@ export function BasicInformationPage({ user }: { user: User }) {
           <p>{loadError}</p>
           <p>
             <button type="button" className="button button--secondary" onClick={() => void load()}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
       ) : !loaded ? (
         <p className="candidate-loading" role="status">
-          جارٍ تحميل البيانات…
+          {t('جارٍ تحميل البيانات…')}
         </p>
       ) : profile ? (
         <ReadOnlyProfile profile={profile} storedNotice={storedNotice} />
       ) : !loaded.requirements.finalization_available ? (
         <FormAlert tone="info">
           <p>
-            استكمال البيانات الأساسية غير متاح بعد: لم تُنشر سياسة الخصوصية وشروط الاستخدام المعتمدة للجائزة. ستتمكن من البدء حين نشرها، ولن
-            يُطلب منك إدخال شيء قبل ذلك.
+            {t('استكمال البيانات الأساسية غير متاح بعد: لم تُنشر سياسة الخصوصية وشروط الاستخدام المعتمدة للجائزة. ستتمكن من البدء حين نشرها، ولن يُطلب منك إدخال شيء قبل ذلك.')}
           </p>
           <p>
-            <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+            <Link href="/dashboard">{t('العودة إلى لوحة المترشح')}</Link>
           </p>
         </FormAlert>
       ) : (
@@ -111,26 +112,28 @@ export function BasicInformationPage({ user }: { user: User }) {
 }
 
 function ReadOnlyProfile({ profile, storedNotice }: { profile: BasicProfile; storedNotice: boolean }) {
+  const { t, locale } = useLocale()
   return (
     <>
       {storedNotice && (
         <FormAlert tone="info">
-          <p>تأكّدنا من أن بياناتك الأساسية محفوظة، وهي متاحة للعرض فقط. لم تُحفظ مرة ثانية ولم يُغيَّر فيها شيء.</p>
+          <p>{t('تأكّدنا من أن بياناتك الأساسية محفوظة، وهي متاحة للعرض فقط. لم تُحفظ مرة ثانية ولم يُغيَّر فيها شيء.')}</p>
         </FormAlert>
       )}
       <div className="locked-banner">
         <StatusIcon tone="success" />
         <div>
-          <p className="locked-banner__title">حُفظت البيانات الأساسية</p>
+          <p className="locked-banner__title">{t('حُفظت البيانات الأساسية')}</p>
           <p>
-            حُفظت في {formatDamascusDateTime(profile.completed_at)} بتوقيت دمشق، وهي متاحة للعرض فقط ولا يمكن تعديلها من حسابك. ستُتاح
-            المراحل التالية من ملف الترشح لاحقاً.
+            {t('حُفظت في {when} بتوقيت دمشق، وهي متاحة للعرض فقط ولا يمكن تعديلها من حسابك. ستُتاح المراحل التالية من ملف الترشح لاحقاً.', {
+              when: formatDamascusDateTime(profile.completed_at, locale),
+            })}
           </p>
         </div>
       </div>
       <ProfileSummary groups={summaryFromProfile(profile)} />
       <p className="candidate-page__back">
-        <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+        <Link href="/dashboard">{t('العودة إلى لوحة المترشح')}</Link>
       </p>
     </>
   )

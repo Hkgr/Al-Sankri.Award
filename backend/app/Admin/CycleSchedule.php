@@ -68,6 +68,29 @@ class CycleSchedule
     }
 
     /**
+     * The judging window as shown to judges (opens/closes as ISO UTC, plus
+     * calendar days in the cycle timezone). Null when the cycle is missing.
+     *
+     * @return array{open: bool, opens_at: string|null, closes_at: string|null, opens_on: string|null, closes_on: string|null}|null
+     */
+    public function judgingWindow(int $cycleId): ?array
+    {
+        $cycle = DB::table('award_cycles')->where('id', $cycleId)->first(['id', 'timezone']);
+        if ($cycle === null) {
+            return null;
+        }
+        $stage = $this->present($cycle, self::JUDGING, self::JUDGING_NAME);
+
+        return [
+            'open' => $stage['open'],
+            'opens_at' => $stage['opens_at'],
+            'closes_at' => $stage['closes_at'],
+            'opens_on' => $stage['opens_on'],
+            'closes_on' => $stage['closes_on'],
+        ];
+    }
+
+    /**
      * @param  array{nomination_opens_on: string, nomination_closes_on: string, judging_opens_on: string, judging_closes_on: string}  $input
      * @return array{0: string, 1: array<string, mixed>|null}
      */

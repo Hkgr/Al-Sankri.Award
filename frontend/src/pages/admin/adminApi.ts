@@ -1,3 +1,4 @@
+import { labels } from '../../i18n/messages'
 import type { BasicProfile } from '../candidate/candidateApi'
 import type { Attachment, DocumentationLink } from '../candidate/documentation/documentationApi'
 import type { NominationDetails } from '../candidate/nomination/nominationApi'
@@ -34,7 +35,7 @@ export type DomainCode = 'culture_and_arts' | 'heritage' | 'creativity'
 
 export type ApplicationStatus = 'submitted' | 'completion_requested' | 'eligible' | 'ineligible' | 'in_judging' | 'withdrawn' | 'closed'
 
-export const STATUS_LABELS: Record<ApplicationStatus, string> = {
+export const STATUS_LABELS: Record<ApplicationStatus, string> = labels({
   submitted: 'مُرسَل',
   completion_requested: 'مطلوب استكماله',
   eligible: 'مستوفٍ للشروط',
@@ -42,24 +43,24 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   in_judging: 'قيد التحكيم',
   withdrawn: 'مسحوب',
   closed: 'مغلق',
-}
+})
 
 /** The administrative classification, separate from the workflow status. */
 export type ReviewStatus = 'pending' | 'referred' | 'excluded'
 
-export const REVIEW_LABELS: Record<ReviewStatus, string> = {
+export const REVIEW_LABELS: Record<ReviewStatus, string> = labels({
   pending: 'لم يُصنّف بعد',
   referred: 'مرسل للتحكيم',
   excluded: 'مستبعد — مؤرشف',
-}
+})
 
 export type ReviewRefusal = 'committee_missing' | 'committee_not_approved' | 'not_eligible'
 
-export const REVIEW_REFUSALS: Record<ReviewRefusal, string> = {
+export const REVIEW_REFUSALS: Record<ReviewRefusal, string> = labels({
   committee_missing: 'لا توجد لجنة تحكيم لهذا المجال الرئيسي في دورة الملف. أنشئها واعتمدها في «لجان الحكام» أولاً.',
   committee_not_approved: 'لجنة تحكيم هذا المجال لم تُعتمد بعد. اعتمدها بثلاثة حكام أو خمسة في «لجان الحكام» أولاً.',
   not_eligible: 'هذا الملف مسحوب أو مغلق، فلا يُرسل إلى التحكيم. يبقى ظاهراً للإدارة ولصاحبه كما هو.',
-}
+})
 
 export type ApplicationReview = {
   status: ReviewStatus
@@ -72,10 +73,10 @@ export type ApplicationReview = {
   target: { committee: { id: number; name: string; approved: boolean } | null; refusal: ReviewRefusal | null } | null
 }
 
-export const APPLICANT_TYPE_LABELS = { individual: 'فرد', institution: 'مؤسسة' } as const
+export const APPLICANT_TYPE_LABELS = labels({ individual: 'فرد', institution: 'مؤسسة' } as const)
 export type ApplicantType = keyof typeof APPLICANT_TYPE_LABELS
 
-export const CYCLE_STATUS_LABELS: Record<string, string> = { draft: 'مسودة', published: 'منشورة', closed: 'مغلقة', archived: 'مؤرشفة' }
+export const CYCLE_STATUS_LABELS: Record<string, string> = labels({ draft: 'مسودة', published: 'منشورة', closed: 'مغلقة', archived: 'مؤرشفة' })
 
 export type ApplicationRow = {
   id: number
@@ -129,13 +130,13 @@ export type ApplicationDetail = {
 
 export { TABLE_PARAMS } from './applications/tableState'
 
-export const SORT_LABELS = {
+export const SORT_LABELS = labels({
   submitted_at: 'تاريخ الإرسال',
   reference: 'الرقم المرجعي',
   title: 'عنوان العمل',
   applicant: 'اسم المترشح',
   status: 'الحالة',
-} as const
+} as const)
 export type SortKey = keyof typeof SORT_LABELS
 
 export function adminFileUrl(applicationId: number, attachment: Pick<Attachment, 'id'>): string {
@@ -204,7 +205,7 @@ export type UserProgressState =
   | 'basic_information_only'
 
 /** The overall candidate state in the selected cycle (RegisteredUsers::PROGRESS). */
-export const PROGRESS_LABELS: Record<UserProgressState, string> = {
+export const PROGRESS_LABELS: Record<UserProgressState, string> = labels({
   no_basic_information: 'لم يستكمل البيانات الأساسية',
   awaiting_nomination: 'بانتظار فئة الترشح وبيانات العمل',
   awaiting_documentation: 'بانتظار ملفات العمل',
@@ -213,7 +214,7 @@ export const PROGRESS_LABELS: Record<UserProgressState, string> = {
   submitted: 'تم إرسال ملف الترشح',
   not_required: 'غير مطلوب لهذا الدور',
   basic_information_only: 'البيانات الأساسية مكتملة (لا دورة)',
-}
+})
 
 export type StageState = 'complete' | 'incomplete' | 'none'
 
@@ -244,9 +245,9 @@ export type UsersPage = {
   }
 }
 
-export const USER_ROLE_FILTERS = { candidate: 'مترشح', award_admin: 'مدير الجائزة', judge: 'حكَم في الدورة المختارة' } as const
+export const USER_ROLE_FILTERS = labels({ candidate: 'مترشح', award_admin: 'مدير الجائزة', judge: 'حكَم في الدورة المختارة' } as const)
 
-export const USER_SORT_LABELS = { name: 'الاسم', registered_at: 'تاريخ التسجيل', last_login_at: 'آخر تسجيل دخول' } as const
+export const USER_SORT_LABELS = labels({ name: 'الاسم', registered_at: 'تاريخ التسجيل', last_login_at: 'آخر تسجيل دخول' } as const)
 export type UserSortKey = keyof typeof USER_SORT_LABELS
 
 export type AuditEntry = {

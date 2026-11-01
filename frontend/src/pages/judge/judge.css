@@ -7,7 +7,8 @@
   list-style: none;
 }
 
-.judge-list a {
+.judge-list a,
+.judge-list__item {
   display: grid;
   gap: var(--sa-space-1);
   padding: var(--sa-space-4);
@@ -20,6 +21,15 @@
 
 .judge-list a:hover {
   border-color: var(--sa-color-border-strong);
+}
+
+/* Listed but not yet openable: the judging period has not started (or has ended). */
+.judge-list__item--locked {
+  opacity: 0.75;
+}
+
+.judge-list__locked {
+  font-style: italic;
 }
 
 .judge-list__title {

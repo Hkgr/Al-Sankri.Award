@@ -3,39 +3,41 @@ import { Link } from '../../lib/router'
 import { usePageTitle } from '../auth/usePageTitle'
 import type { AdminCycle } from './adminApi'
 import { cycleLabel, CYCLE_STATUS_LABELS } from './adminApi'
+import { useLocale } from '../../i18n/useLocale'
 
 /** A short welcome with the available modules. */
 export function AdminHomePage({ user, cycle }: { user: User; cycle: AdminCycle | null }) {
-  usePageTitle('لوحة الإدارة')
+  const { t } = useLocale()
+  usePageTitle(t('لوحة الإدارة'))
   const modules = [
     {
       href: '/admin/users',
-      title: 'المستخدمون',
-      text: 'كل الحسابات المسجّلة للعرض فقط: الأدوار الحالية، وحالة الحساب، وتقدّم الترشح في الدورة المختارة.',
+      title: t('المستخدمون'),
+      text: t('كل الحسابات المسجّلة للعرض فقط: الأدوار الحالية، وحالة الحساب، وتقدّم الترشح في الدورة المختارة.'),
       allowed: user.admin_permissions.includes('users.view_registered'),
     },
     {
       href: '/admin/applications',
-      title: 'ملفات الترشح',
-      text: 'المشاركات المرسلة في الدورة: البحث والتصفية، وعرض كل ملف كما أُرسل مع وثائقه وفيديوهاته.',
+      title: t('ملفات الترشح'),
+      text: t('المشاركات المرسلة في الدورة: البحث والتصفية، وعرض كل ملف كما أُرسل مع وثائقه وفيديوهاته.'),
       allowed: user.admin_permissions.includes('applications.view_submitted'),
     },
     {
       href: '/admin/committees',
-      title: 'لجان الحكام',
-      text: 'لجنة تحكيم لكل مجال رئيسي: إضافة الحكام وإنهاء العضويات واعتماد اللجنة بثلاثة أو خمسة حكام.',
+      title: t('لجان الحكام'),
+      text: t('لجنة تحكيم لكل مجال رئيسي: إضافة الحكام وإنهاء العضويات واعتماد اللجنة بثلاثة أو خمسة حكام.'),
       allowed: user.admin_permissions.includes('committees.manage_judging'),
     },
     {
       href: '/admin/schedule',
-      title: 'المواعيد',
-      text: 'فترة الترشح والتسجيل وفترة التحكيم للدورة المختارة، مع إمكانية تغيير تواريخها.',
+      title: t('المواعيد'),
+      text: t('فترة الترشح والتسجيل وفترة التحكيم للدورة المختارة، مع إمكانية تغيير تواريخها.'),
       allowed: user.admin_permissions.includes('schedules.manage'),
     },
     {
       href: '/admin/log',
-      title: 'السجل',
-      text: 'سجل الحركات المسجّلة في المنصة، وملخّصات منقّحة للأخطاء التقنية في سجلات التطبيق.',
+      title: t('السجل'),
+      text: t('سجل الحركات المسجّلة في المنصة، وملخّصات منقّحة للأخطاء التقنية في سجلات التطبيق.'),
       allowed: user.admin_permissions.includes('audit.view') || user.admin_permissions.includes('logs.view_system'),
     },
   ]
@@ -44,15 +46,15 @@ export function AdminHomePage({ user, cycle }: { user: User; cycle: AdminCycle |
     <div className="admin-page">
       <header className="admin-page__header">
         <h1 className="admin-page__title">
-          أهلاً، <bdi>{user.name}</bdi>
+          {t('أهلاً،')} <bdi>{user.name}</bdi>
         </h1>
         <p className="admin-page__intro">
           {cycle ? (
             <>
-              الدورة المختارة: <strong>{cycleLabel(cycle)}</strong> ({CYCLE_STATUS_LABELS[cycle.status] ?? cycle.status}). يمكنك تغييرها من أعلى الصفحة.
+              {t('الدورة المختارة:')} <strong>{cycleLabel(cycle)}</strong> ({CYCLE_STATUS_LABELS[cycle.status] ?? cycle.status}). {t('يمكنك تغييرها من أعلى الصفحة.')}
             </>
           ) : (
-            'لا توجد دورة جائزة مُعدّة بعد.'
+            t('لا توجد دورة جائزة مُعدّة بعد.')
           )}
         </p>
       </header>

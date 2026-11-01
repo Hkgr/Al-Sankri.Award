@@ -34,7 +34,7 @@ class JudgePortal
     ) {}
 
     /**
-     * @return list<array<string, mixed>>
+     * @return array{data: list<array<string, mixed>>, window: array{open: bool, opens_at: string|null, closes_at: string|null, opens_on: string|null, closes_on: string|null}|null}
      */
     public function list(User $judge): array
     {
@@ -45,28 +45,36 @@ class JudgePortal
             'evaluations.status as evaluation_status', 'evaluations.recommendation', 'evaluation_scores.score',
         ]);
 
-        return $rows->map(fn (object $row): array => [
-            'id' => (int) $row->id,
-            'reference_number' => $row->reference_number,
-            'title' => $row->title,
-            'domain' => ['code' => $row->domain_code, 'name' => $row->domain_name],
-            'subcategory' => $row->subcategory_code === null ? null : ['code' => $row->subcategory_code, 'name' => $row->subcategory_name],
-            'judging_open' => $this->schedule->judgingOpen((int) $row->cycle_id),
-            'evaluation' => [
-                'status' => $row->evaluation_status === 'finalized' ? 'sent' : 'pending',
-                'score' => $row->evaluation_status === 'finalized' && $row->score !== null ? Scores::present((string) $row->score) : null,
-                'excluded' => $row->evaluation_status === 'finalized' && $row->recommendation === 'exclude',
-            ],
-        ])->all();
+        $cycleId = $rows->isEmpty() ? $this->cycleIdFor($judge) : (int) $rows->first()->cycle_id;
+        $window = $cycleId === null ? null : $this->schedule->judgingWindow($cycleId);
+        $open = $window['open'] ?? false;
+
+        return [
+            'data' => $rows->map(fn (object $row): array => [
+                'id' => (int) $row->id,
+                'reference_number' => $row->reference_number,
+                'title' => $row->title,
+                'domain' => ['code' => $row->domain_code, 'name' => $row->domain_name],
+                'subcategory' => $row->subcategory_code === null ? null : ['code' => $row->subcategory_code, 'name' => $row->subcategory_name],
+                'judging_open' => $open && $this->schedule->judgingOpen((int) $row->cycle_id),
+                'evaluation' => [
+                    'status' => $row->evaluation_status === 'finalized' ? 'sent' : 'pending',
+                    'score' => $row->evaluation_status === 'finalized' && $row->score !== null ? Scores::present((string) $row->score) : null,
+                    'excluded' => $row->evaluation_status === 'finalized' && $row->recommendation === 'exclude',
+                ],
+            ])->all(),
+            'window' => $window,
+        ];
     }
 
     /**
-     * The submitted work and this judge's own mark, or null when this judge
-     * has no assignment for that application.
+     * The submitted work and this judge's own mark. Null when this judge has
+     * no assignment. STAGE_CLOSED when the judging window is not open yet
+     * (or has ended): the list stays visible, the detail does not.
      *
-     * @return array<string, mixed>|null
+     * @return array<string, mixed>|string|null
      */
-    public function show(User $judge, int $applicationId): ?array
+    public function show(User $judge, int $applicationId): array|string|null
     {
         $assignment = $this->assignments($judge)->where('applications.id', $applicationId)->first([
             'judging_assignments.id as assignment_id', 'applications.cycle_id',
@@ -75,6 +83,9 @@ class JudgePortal
         ]);
         if ($assignment === null) {
             return null;
+        }
+        if (! $this->schedule->judgingOpen((int) $assignment->cycle_id)) {
+            return self::STAGE_CLOSED;
         }
 
         $detail = $this->applications->show($applicationId);
@@ -88,7 +99,7 @@ class JudgePortal
             'summary' => $detail['summary'],
             'nomination_details' => $detail['nomination_details'],
             'documentation' => $detail['documentation'],
-            'judging_open' => $this->schedule->judgingOpen((int) $assignment->cycle_id),
+            'judging_open' => true,
             'evaluation' => [
                 'status' => $sent ? 'sent' : 'pending',
                 'score' => $sent && $assignment->score !== null ? Scores::present((string) $assignment->score) : null,
@@ -104,12 +115,49 @@ class JudgePortal
 
     /**
      * A file of the assigned application's submitted version, or null.
+     * Refused while the judging window is closed (same gate as show).
      */
-    public function file(User $judge, int $applicationId, int $linkId): ?FileLink
+    public function file(User $judge, int $applicationId, int $linkId): FileLink|string|null
     {
-        $assigned = $this->assignments($judge)->where('applications.id', $applicationId)->exists();
+        $row = $this->assignments($judge)->where('applications.id', $applicationId)->first(['applications.cycle_id']);
+        if ($row === null) {
+            return null;
+        }
+        if (! $this->schedule->judgingOpen((int) $row->cycle_id)) {
+            return self::STAGE_CLOSED;
+        }
 
-        return $assigned ? $this->applications->file($applicationId, $linkId) : null;
+        return $this->applications->file($applicationId, $linkId);
+    }
+
+    /**
+     * The judging window of the cycle an application belongs to, for the
+     * «not open yet» answer of show() and file().
+     *
+     * @return array{open: bool, opens_at: string|null, closes_at: string|null, opens_on: string|null, closes_on: string|null}|null
+     */
+    public function windowForApplication(int $applicationId): ?array
+    {
+        $cycleId = DB::table('applications')->where('id', $applicationId)->value('cycle_id');
+
+        return $cycleId === null ? null : $this->schedule->judgingWindow((int) $cycleId);
+    }
+
+    /** The judge's current cycle when they have a grant but no assignments yet. */
+    private function cycleIdFor(User $judge): ?int
+    {
+        $now = now();
+        $id = DB::table('cycle_user_roles')
+            ->join('roles', 'roles.id', '=', 'cycle_user_roles.role_id')
+            ->where('cycle_user_roles.user_id', $judge->getKey())
+            ->where('roles.code', 'judge')
+            ->whereNull('cycle_user_roles.revoked_at')
+            ->where('cycle_user_roles.starts_at', '<=', $now)
+            ->where(fn ($query) => $query->whereNull('cycle_user_roles.ends_at')->orWhere('cycle_user_roles.ends_at', '>', $now))
+            ->orderByDesc('cycle_user_roles.id')
+            ->value('cycle_user_roles.cycle_id');
+
+        return $id === null ? null : (int) $id;
     }
 
     /**

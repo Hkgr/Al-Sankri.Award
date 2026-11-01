@@ -14,6 +14,27 @@ export type JudgeEvaluation = {
   sent_at?: string | null
 }
 
+/** The judging period as the server states it: `*_on` are calendar days in the cycle's time zone. */
+export type JudgeWindow = {
+  open: boolean
+  opens_at: string | null
+  closes_at: string | null
+  opens_on: string | null
+  closes_on: string | null
+}
+
+export type JudgeProjectsAnswer = { data: JudgeProjectRow[]; window: JudgeWindow | null }
+
+/** `upcoming` before the period starts, `closed` once it ended, `unknown` when no dates are set. */
+export type JudgeWindowState = 'open' | 'upcoming' | 'closed' | 'unknown'
+
+export function judgeWindowState(window: JudgeWindow | null): JudgeWindowState {
+  if (!window) return 'unknown'
+  if (window.open) return 'open'
+  if (!window.opens_at || !window.closes_at) return 'unknown'
+  return Date.now() < new Date(window.opens_at).getTime() ? 'upcoming' : 'closed'
+}
+
 export type JudgeProjectRow = {
   id: number
   reference_number: string

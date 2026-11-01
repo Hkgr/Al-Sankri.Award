@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
 import type { User } from '../../auth/useAuth'
 import { FormAlert } from '../../components/forms/FormControls'
+import { LanguageToggle } from '../../i18n/LanguageToggle'
+import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 import '../auth/auth.css'
@@ -12,14 +14,6 @@ import { ProfileMenu } from './ProfileMenu'
 /** The neutral award name, as in the account emails (the full title is a content decision). */
 const AWARD_NAME = 'جائزة الدكتور عبد القادر سنكري'
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'الرئيسية' },
-  { href: '/dashboard/basic-information', label: 'البيانات الأساسية' },
-  { href: '/dashboard/nomination-details', label: 'فئة الترشح وبيانات العمل' },
-  { href: '/dashboard/documentation', label: 'ملفات العمل وتوثيقه' },
-  { href: '/dashboard/review', label: 'المراجعة والإرسال' },
-]
-
 /**
  * The candidate area's own frame: the original logo on white, the date and
  * Damascus time, the account menu, and a short navigation row instead of a
@@ -27,23 +21,37 @@ const NAV_ITEMS = [
  */
 export function CandidateLayout({ user, children }: { user: User; children: ReactNode }) {
   const { location } = useRouter()
+  const { t } = useLocale()
+  const navItems = [
+    { href: '/dashboard', label: t('candidate.home') },
+    { href: '/dashboard/basic-information', label: t('candidate.basic') },
+    { href: '/dashboard/nomination-details', label: t('candidate.nomination') },
+    { href: '/dashboard/documentation', label: t('candidate.documentation') },
+    { href: '/dashboard/review', label: t('candidate.review') },
+  ]
+  const links = [
+    { href: '/dashboard', label: t('candidate.dashboard') },
+    { href: '/account', label: t('common.accountSettings') },
+    { href: '/', label: t('common.publicSite') },
+  ]
 
   return (
     <div className="candidate-shell">
       <a className="skip-link" href="#main">
-        انتقل إلى المحتوى الرئيسي
+        {t('common.skip')}
       </a>
       <header className="candidate-header">
         <div className="candidate-header__inner container">
           <Link className="candidate-header__brand" href="/dashboard">
-            <img src={logo} alt={`${AWARD_NAME}: لوحة المترشح`} width={240} height={78} />
+            <img src={logo} alt={`${AWARD_NAME}: ${t('candidate.dashboard')}`} width={240} height={78} />
           </Link>
           <DamascusClock />
-          <ProfileMenu user={user} />
+          <LanguageToggle />
+          <ProfileMenu user={user} role={t('candidate.role')} links={links} />
         </div>
-        <nav className="candidate-nav" aria-label="أقسام لوحة المترشح">
+        <nav className="candidate-nav" aria-label={t('candidate.nav')}>
           <ul className="candidate-nav__list container">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <li key={item.href}>
                 <Link
                   className="candidate-nav__link"
@@ -62,7 +70,7 @@ export function CandidateLayout({ user, children }: { user: User; children: Reac
           {new URLSearchParams(location.search).get('account') === 'changed' && (
             <div className="candidate-page candidate-page--notice">
               <FormAlert tone="info">
-                <p>تغيّر الحساب المسجّل دخوله في هذا المتصفح، فحدّثنا الصفحة لتعرض الحساب الحالي وبياناته.</p>
+                <p>{t('candidate.accountChanged')}</p>
               </FormAlert>
             </div>
           )}
@@ -72,7 +80,7 @@ export function CandidateLayout({ user, children }: { user: User; children: Reac
       <footer className="candidate-footer">
         <div className="candidate-footer__inner container">
           <p>{AWARD_NAME}</p>
-          <Link href="/">العودة إلى الموقع العام</Link>
+          <Link href="/">{t('common.publicSite')}</Link>
         </div>
       </footer>
     </div>

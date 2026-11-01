@@ -17,6 +17,7 @@ import { LogPage } from './log/LogPage'
 import { SchedulePage } from './schedule/SchedulePage'
 import { UsersPage } from './users/UsersPage'
 import { usersScope, withUsersCycle } from './users/usersState'
+import { useLocale } from '../../i18n/useLocale'
 
 const CYCLE_KEY = 'sa-admin-cycle'
 
@@ -36,6 +37,7 @@ function storedCycle(): number | null {
  * this browser only, as a convenience.
  */
 export function AdminApp() {
+  const { t } = useLocale()
   const { user } = useAuth()
   const { location, navigate } = useRouter()
   const [context, setContext] = useState<AdminContext | null>(null)
@@ -99,7 +101,7 @@ export function AdminApp() {
     return (
       <main id="main" tabIndex={-1}>
         <p className="auth-loading" role="status">
-          جارٍ التحقق من الجلسة…
+          {t('جارٍ التحقق من الجلسة…')}
         </p>
       </main>
     )
@@ -108,10 +110,10 @@ export function AdminApp() {
   if (!isAdmin) {
     return (
       <main id="main" tabIndex={-1}>
-        <AuthLayout title="لوحة الإدارة">
-          <p className="auth-panel__text">هذه اللوحة مخصّصة لإدارة الجائزة، وحسابك لا يملك صلاحية الوصول إليها.</p>
+        <AuthLayout title={t('لوحة الإدارة')}>
+          <p className="auth-panel__text">{t('هذه اللوحة مخصّصة لإدارة الجائزة، وحسابك لا يملك صلاحية الوصول إليها.')}</p>
           <p className="auth-panel__switch">
-            <Link href="/account">الانتقال إلى حسابي</Link>
+            <Link href="/account">{t('الانتقال إلى حسابي')}</Link>
           </p>
         </AuthLayout>
       </main>
@@ -128,7 +130,7 @@ export function AdminApp() {
         <p>{contextError}</p>
         <p>
           <button type="button" className="button button--secondary" onClick={() => void loadContext()}>
-            إعادة المحاولة
+            {t('إعادة المحاولة')}
           </button>
         </p>
       </FormAlert>
@@ -136,7 +138,7 @@ export function AdminApp() {
   } else if (!context) {
     page = (
       <p className="admin-loading" role="status">
-        جارٍ تحميل لوحة الإدارة…
+        {t('جارٍ تحميل لوحة الإدارة…')}
       </p>
     )
   } else if (location.pathname === '/admin/log' && (can('audit.view') || can('logs.view_system'))) {
@@ -156,7 +158,7 @@ export function AdminApp() {
   } else {
     page = (
       <FormAlert tone="info">
-        <p>لا يملك حسابك صلاحية هذا القسم.</p>
+        <p>{t('لا يملك حسابك صلاحية هذا القسم.')}</p>
       </FormAlert>
     )
   }

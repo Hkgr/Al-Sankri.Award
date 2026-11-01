@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
-
-const SITE_NAME = 'جائزة الدكتور عبد القادر سنكري'
+import { useSite } from '../../content/useSite'
 
 /** Sets the browser tab title for an account page. */
 export function usePageTitle(title: string) {
+  const { award } = useSite()
+
   useEffect(() => {
-    document.title = `${title} | ${SITE_NAME}`
-  }, [title])
+    document.title = `${title} | ${award.shortName}`
+  }, [title, award])
 }

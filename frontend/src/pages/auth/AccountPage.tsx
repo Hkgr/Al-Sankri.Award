@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useAuth } from '../../auth/useAuth'
 import type { User } from '../../auth/useAuth'
 import { FormAlert, PasswordField, StatusIcon, SubmitButton } from '../../components/forms/FormControls'
+import { useLocale } from '../../i18n/useLocale'
 import { ApiError, api, errorMessage } from '../../lib/api'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
@@ -30,12 +31,13 @@ export function AccountPage() {
 }
 
 function AccountLoading() {
-  usePageTitle('حسابي')
+  const { t } = useLocale()
+  usePageTitle(t('account.title'))
   return (
     <div className="auth-page">
       <div className="auth-page__inner container">
         <p className="auth-loading" role="status">
-          جارٍ التحقق من الجلسة…
+          {t('account.checking')}
         </p>
       </div>
     </div>
@@ -64,6 +66,7 @@ function useSessionGuard() {
 function AccountDetails({ user }: { user: User }) {
   const { location, navigate } = useRouter()
   const { logout } = useAuth()
+  const { t } = useLocale()
   const handleSessionError = useSessionGuard()
   const params = new URLSearchParams(location.search)
   const notice = accountNotice(params)
@@ -86,53 +89,49 @@ function AccountDetails({ user }: { user: User }) {
   }
 
   return (
-    <AuthLayout title="حسابي" wide>
+    <AuthLayout title={t('account.title')} wide>
       {user.admin_permissions.length > 0 && (
         <p className="auth-panel__text">
-          <Link href="/admin">الانتقال إلى لوحة الإدارة</Link>
+          <Link href="/admin">{t('auth.goAdmin')}</Link>
         </p>
       )}
       {user.is_judge && (
         <p className="auth-panel__text">
-          <Link href="/judge">الانتقال إلى التحكيم</Link>
+          <Link href="/judge">{t('auth.goJudging')}</Link>
         </p>
       )}
       {user.is_candidate && !user.is_judge && (
         <p className="auth-panel__text">
-          <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+          <Link href="/dashboard">{t('auth.backCandidate')}</Link>
         </p>
       )}
       {welcome && (
         <FormAlert tone={mailFailed ? 'info' : 'success'}>
-          <p>
-            {mailFailed
-              ? 'أُنشئ حسابك، لكن تعذّر إرسال رسالة التأكيد الآن. اطلب رابطاً جديداً من الأسفل بعد قليل.'
-              : 'أُنشئ حسابك، وأرسلنا رابط تأكيد إلى بريدك الإلكتروني.'}
-          </p>
+          <p>{mailFailed ? t('account.welcomeMailFailed') : t('account.welcome')}</p>
         </FormAlert>
       )}
       {notice && (
         <FormAlert tone={notice.tone}>
-          <p>{notice.text}</p>
+          <p>{t(notice.key)}</p>
         </FormAlert>
       )}
 
       <dl className="account-details">
         <div>
-          <dt>الاسم</dt>
+          <dt>{t('account.name')}</dt>
           <dd>{user.name}</dd>
         </div>
         <div>
-          <dt>البريد الإلكتروني</dt>
+          <dt>{t('auth.email')}</dt>
           <dd>
             <bdi dir="ltr">{user.email}</bdi>
           </dd>
         </div>
         <div>
-          <dt>حالة البريد الإلكتروني</dt>
+          <dt>{t('account.emailStatus')}</dt>
           <dd className="account-status">
             <StatusIcon tone={user.email_verified ? 'success' : 'info'} />
-            {user.email_verified ? 'مؤكَّد' : 'غير مؤكَّد بعد'}
+            {user.email_verified ? t('account.verified') : t('account.unverified')}
           </dd>
         </div>
       </dl>
@@ -142,7 +141,7 @@ function AccountDetails({ user }: { user: User }) {
 
       <section className="account-section" aria-labelledby="logout-title">
         <h2 id="logout-title" className="account-section__title">
-          تسجيل الخروج
+          {t('account.logout')}
         </h2>
         {logoutError && (
           <FormAlert tone="error">
@@ -156,7 +155,7 @@ function AccountDetails({ user }: { user: User }) {
           aria-busy={loggingOut || undefined}
           aria-disabled={loggingOut || undefined}
         >
-          {loggingOut ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج'}
+          {loggingOut ? t('common.loggingOut') : t('account.logout')}
         </button>
       </section>
     </AuthLayout>
@@ -164,6 +163,7 @@ function AccountDetails({ user }: { user: User }) {
 }
 
 function VerificationSection({ onSessionError }: { onSessionError: (error: unknown) => boolean }) {
+  const { t } = useLocale()
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
 
@@ -184,16 +184,16 @@ function VerificationSection({ onSessionError }: { onSessionError: (error: unkno
   return (
     <section className="account-section" aria-labelledby="verify-title">
       <h2 id="verify-title" className="account-section__title">
-        تأكيد البريد الإلكتروني
+        {t('account.verifySection')}
       </h2>
-      <p className="account-section__text">افتح الرابط الذي أرسلناه إلى بريدك الإلكتروني لتأكيده. لم تصلك الرسالة؟ اطلب رابطاً جديداً.</p>
+      <p className="account-section__text">{t('account.verifyText')}</p>
       {result && (
         <FormAlert tone={result.tone}>
           <p>{result.text}</p>
         </FormAlert>
       )}
       <button type="button" className="button button--secondary" onClick={resend} aria-busy={busy || undefined} aria-disabled={busy || undefined}>
-        {busy ? 'جارٍ الإرسال…' : 'إرسال رابط تأكيد جديد'}
+        {busy ? t('auth.sending') : t('account.resend')}
       </button>
     </section>
   )
@@ -201,6 +201,7 @@ function VerificationSection({ onSessionError }: { onSessionError: (error: unkno
 
 function GoogleSection({ user, onSessionError }: { user: User; onSessionError: (error: unknown) => boolean }) {
   const { googleAvailable } = useAuth()
+  const { t } = useLocale()
   const [password, setPassword] = useState('')
   const { busy, alert, fieldError, submit } = useSubmission()
 
@@ -208,11 +209,11 @@ function GoogleSection({ user, onSessionError }: { user: User; onSessionError: (
     return (
       <section className="account-section" aria-labelledby="google-title">
         <h2 id="google-title" className="account-section__title">
-          حساب Google
+          {t('account.googleTitle')}
         </h2>
         <p className="account-status">
           <StatusIcon tone="success" />
-          حساب Google مرتبط بهذا الحساب، ويمكنك تسجيل الدخول به.
+          {t('account.googleLinked')}
         </p>
       </section>
     )
@@ -240,16 +241,10 @@ function GoogleSection({ user, onSessionError }: { user: User; onSessionError: (
   return (
     <section className="account-section" aria-labelledby="google-title">
       <h2 id="google-title" className="account-section__title">
-        ربط حساب Google
+        {t('account.googleLinkTitle')}
       </h2>
-      <p className="account-section__text">
-        بعد الربط يمكنك تسجيل الدخول بحساب Google أيضاً. للتأكد من أنك صاحب الحساب، أدخل كلمة المرور الحالية، ثم اختر حساب Google الذي تريد ربطه.
-      </p>
-      {!user.email_verified && (
-        <p className="account-section__text">
-          بريدك الإلكتروني غير مؤكَّد بعد، لذلك لن يُربط إلا حساب Gmail أو حساب Google لمؤسسة يستخدم البريد نفسه. لربط حساب آخر، أكّد بريدك أولاً.
-        </p>
-      )}
+      <p className="account-section__text">{t('account.googleLinkText')}</p>
+      {!user.email_verified && <p className="account-section__text">{t('account.googleUnverified')}</p>}
       {alert && (
         <FormAlert tone="error" id={ALERT_ID}>
           <p>{alert}</p>
@@ -258,15 +253,15 @@ function GoogleSection({ user, onSessionError }: { user: User; onSessionError: (
       <form className="auth-form auth-form--inline" onSubmit={onSubmit} noValidate>
         <PasswordField
           id="link-password"
-          label="كلمة المرور الحالية"
+          label={t('account.currentPassword')}
           autoComplete="current-password"
           value={password}
           onChange={setPassword}
           error={fieldError('password')}
           required
         />
-        <SubmitButton busy={busy} busyLabel="جارٍ التحقق…" variant="secondary">
-          تأكيد وربط حساب Google
+        <SubmitButton busy={busy} busyLabel={t('account.verifying')} variant="secondary">
+          {t('account.confirmLink')}
         </SubmitButton>
       </form>
     </section>

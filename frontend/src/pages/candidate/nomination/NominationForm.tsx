@@ -21,6 +21,7 @@ import {
 } from './nominationModel'
 import type { NominationForm as FormState, NominationStepId } from './nominationModel'
 import { nominationSummaryFromForm } from './nominationSummaries'
+import { useLocale } from '../../../i18n/useLocale'
 
 const LEAVE_WARNING = 'لم تُحفظ بيانات هذه المرحلة بعد. إذا غادرت هذه الصفحة فسيُحذف ما أدخلته. هل تريد المغادرة؟'
 
@@ -53,6 +54,7 @@ export function NominationForm({
   domains: DomainOption[]
   onConfirmed: (details: NominationDetails, alreadyStored: boolean) => void
 }) {
+  const { t } = useLocale()
   const { setLeaveWarning } = useRouter()
   const handleAccountFailure = useAccountFailure()
   const [form, setForm] = useState<FormState>(initialNomination)
@@ -70,7 +72,7 @@ export function NominationForm({
 
   const step = NOMINATION_STEPS[stepIndex]
   const dirty = !confirmed && nominationHasInput(form)
-  useLeaveWarning(dirty ? (unconfirmedSave ? LEAVE_WARNING_UNCONFIRMED : LEAVE_WARNING) : null)
+  useLeaveWarning(dirty ? t(unconfirmedSave ? LEAVE_WARNING_UNCONFIRMED : LEAVE_WARNING) : null)
 
   useEffect(() => {
     if (firstRender.current) {
@@ -120,12 +122,11 @@ export function NominationForm({
         <>
           <p>{message}</p>
           <p>
-            لحماية البيانات، لا يُرسَل هذا النموذج باسم حساب آخر. ما أدخلته ما زال في هذه الصفحة. للمتابعة، سجّل الخروج من الحساب الآخر وسجّل الدخول بالحساب
-            الذي فُتح به النموذج في نافذة أخرى، ثم أعد المحاولة هنا.
+            {t('لحماية البيانات، لا يُرسَل هذا النموذج باسم حساب آخر. ما أدخلته ما زال في هذه الصفحة. للمتابعة، سجّل الخروج من الحساب الآخر وسجّل الدخول بالحساب الذي فُتح به النموذج في نافذة أخرى، ثم أعد المحاولة هنا.')}
           </p>
           <p>
             <button type="button" className="button button--secondary" onClick={() => leaveFor('/dashboard')}>
-              تجاهل ما أدخلته والانتقال إلى الحساب المسجّل دخوله الآن
+              {t('تجاهل ما أدخلته والانتقال إلى الحساب المسجّل دخوله الآن')}
             </button>
           </p>
         </>
@@ -143,12 +144,12 @@ export function NominationForm({
         tone: 'error',
         content: (
           <>
-            <p>انتهت جلستك، ولم يُحفظ شيء. ما أدخلته ما زال في هذه الصفحة.</p>
+            <p>{t('انتهت جلستك، ولم يُحفظ شيء. ما أدخلته ما زال في هذه الصفحة.')}</p>
             <p>
               <a href="/login" target="_blank" rel="noopener">
-                سجّل الدخول بالحساب نفسه في نافذة جديدة
+                {t('سجّل الدخول بالحساب نفسه في نافذة جديدة')}
               </a>{' '}
-              ثم ارجع إلى هنا وأعد المحاولة.
+              {t('ثم ارجع إلى هنا وأعد المحاولة.')}
             </p>
           </>
         ),
@@ -171,7 +172,7 @@ export function NominationForm({
             <p>{error.message}</p>
             <p>
               <button type="button" className="button button--secondary" onClick={() => leaveFor('/dashboard/nomination-details')}>
-                إعادة تحميل الصفحة (يُحذف ما أدخلته)
+                {t('إعادة تحميل الصفحة (يُحذف ما أدخلته)')}
               </button>
             </p>
           </>
@@ -182,8 +183,8 @@ export function NominationForm({
     const text =
       error instanceof NetworkError
         ? context === 'check'
-          ? `${error.message} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.`
-          : `${error.message} ما أدخلته ما زال هنا.`
+          ? t('{message} التحقق من القسم لا يحفظ شيئاً، وما أدخلته ما زال هنا.', { message: error.message })
+          : t('{message} ما أدخلته ما زال هنا.', { message: error.message })
         : errorMessage(error)
     setAlert({ tone: 'error', content: <p>{text}</p> })
   }
@@ -209,22 +210,22 @@ export function NominationForm({
         tone: 'error',
         content: (
           <>
-            <p>لم تصل نتيجة الحفظ: انقطع الاتصال أو تأخّر ردّ الخادم. لا تظهر بيانات محفوظة لهذا النموذج حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.</p>
+            <p>{t('لم تصل نتيجة الحفظ: انقطع الاتصال أو تأخّر ردّ الخادم. لا تظهر بيانات محفوظة لهذا النموذج حتى الآن، لكن نتيجة الحفظ لم تتأكد بعد: قد يكون الطلب ما زال قيد المعالجة.')}</p>
             {state.journey.status !== 'open' && (
               <p>
                 {state.journey.status === 'unavailable'
-                  ? 'وهذه المرحلة غير متاحة حالياً، فقد تُرفض إعادة المحاولة.'
-                  : 'وقد تغيّرت إعدادات هذه المرحلة منذ فتحت النموذج، فقد تُرفض إعادة المحاولة.'}
+                  ? t('وهذه المرحلة غير متاحة حالياً، فقد تُرفض إعادة المحاولة.')
+                  : t('وقد تغيّرت إعدادات هذه المرحلة منذ فتحت النموذج، فقد تُرفض إعادة المحاولة.')}
               </p>
             )}
-            <p>ما أدخلته ما زال هنا. أعد المحاولة بعد قليل: إن كان الطلب الأول قد نجح فستظهر بياناتك المحفوظة كما هي، ولن تُحفظ مرة ثانية.</p>
+            <p>{t('ما أدخلته ما زال هنا. أعد المحاولة بعد قليل: إن كان الطلب الأول قد نجح فستظهر بياناتك المحفوظة كما هي، ولن تُحفظ مرة ثانية.')}</p>
           </>
         ),
       })
     } catch (error) {
       setUnconfirmedSave(true)
       if (error instanceof ApiError && error.code === 'account_mismatch') {
-        showAccountMismatch('تعذّر تأكيد نتيجة الحفظ، والحساب المسجّل دخوله الآن في هذا المتصفح غير الحساب الذي فُتح به النموذج.')
+        showAccountMismatch(t('تعذّر تأكيد نتيجة الحفظ، والحساب المسجّل دخوله الآن في هذا المتصفح غير الحساب الذي فُتح به النموذج.'))
         return
       }
       const sessionEnded = error instanceof ApiError && error.status === 401
@@ -233,20 +234,21 @@ export function NominationForm({
         content: (
           <>
             <p>
-              تعذّر تأكيد نتيجة الحفظ: ربما حُفظت البيانات وربما لم تُحفظ.{sessionEnded ? ' انتهت جلستك أيضاً.' : ''} ما أدخلته ما زال هنا.
+              {t('تعذّر تأكيد نتيجة الحفظ: ربما حُفظت البيانات وربما لم تُحفظ.')}
+              {sessionEnded ? ` ${t('انتهت جلستك أيضاً.')}` : ''} {t('ما أدخلته ما زال هنا.')}
             </p>
             <p>
               {sessionEnded ? (
                 <>
                   <a href="/login" target="_blank" rel="noopener">
-                    سجّل الدخول بالحساب نفسه في نافذة جديدة
+                    {t('سجّل الدخول بالحساب نفسه في نافذة جديدة')}
                   </a>{' '}
-                  ثم أعد المحاولة هنا.
+                  {t('ثم أعد المحاولة هنا.')}
                 </>
               ) : (
-                'أعد المحاولة عند عودة الاتصال.'
+                t('أعد المحاولة عند عودة الاتصال.')
               )}{' '}
-              إن كانت قد حُفظت فسنعرضها لك كما هي، ولن تُحفظ مرة ثانية.
+              {t('إن كانت قد حُفظت فسنعرضها لك كما هي، ولن تُحفظ مرة ثانية.')}
             </p>
           </>
         ),
@@ -347,7 +349,7 @@ export function NominationForm({
 
   return (
     <form className="wizard" onSubmit={onSubmit} noValidate>
-      <ol className="stepper" aria-label="أقسام فئة الترشح وبيانات العمل">
+      <ol className="stepper" aria-label={t('أقسام فئة الترشح وبيانات العمل')}>
         {NOMINATION_STEPS.map((item, index) => (
           <li key={item.id} className="stepper__item" data-state={index < stepIndex ? 'done' : index === stepIndex ? 'current' : 'next'} aria-current={index === stepIndex ? 'step' : undefined}>
             <span className="stepper__number" aria-hidden="true">
@@ -355,14 +357,14 @@ export function NominationForm({
             </span>
             <span className="stepper__title">
               {item.title}
-              {index < stepIndex && <span className="visually-hidden"> (مكتمل)</span>}
+              {index < stepIndex && <span className="visually-hidden">{t('(مكتمل)')}</span>}
             </span>
           </li>
         ))}
       </ol>
 
       <div className="wizard__panel">
-        <p className="wizard__progress">{`القسم ${stepIndex + 1} من ${NOMINATION_STEPS.length}`}</p>
+        <p className="wizard__progress">{t('القسم {v} من {length}', { v: stepIndex + 1, length: NOMINATION_STEPS.length })}</p>
         <h2 ref={headingRef} tabIndex={-1} className="wizard__title">
           {step.title}
         </h2>
@@ -376,7 +378,7 @@ export function NominationForm({
 
         {step.id === 'domain' && (
           <>
-            <p className="wizard__intro">اختر محوراً واحداً، ثم فئة واحدة من فئاته.</p>
+            <p className="wizard__intro">{t('اختر محوراً واحداً، ثم فئة واحدة من فئاته.')}</p>
             <DomainChooser
               domains={domains}
               domain={form.domain}
@@ -387,11 +389,12 @@ export function NominationForm({
               warning={pendingWarning(
                 'domain',
                 <>
-                  تغيير المحور إلى «{domains.find((option) => option.code === (pending?.kind === 'domain' ? pending.code : ''))?.name}» يلغي اختيار الفئة الحالية،
-                  لأن فئات كل محور خاصة به. بقية بيانات العمل تبقى كما هي.
+                  {t('تغيير المحور إلى «{name}» يلغي اختيار الفئة الحالية، لأن فئات كل محور خاصة به. بقية بيانات العمل تبقى كما هي.', {
+                    name: domains.find((option) => option.code === (pending?.kind === 'domain' ? pending.code : ''))?.name ?? '',
+                  })}
                 </>,
-                'تغيير المحور',
-                'الإبقاء على المحور الحالي',
+                t('تغيير المحور'),
+                t('الإبقاء على المحور الحالي'),
               )}
             />
           </>
@@ -400,16 +403,16 @@ export function NominationForm({
         {step.id === 'work' && (
           <div className="form-grid">
             <div className="form-grid__full">
-              <TextField id="title" label="عنوان العمل" value={form.title} onChange={(value) => update('title', value)} error={errors.title} autoComplete="off" dir="auto" required />
+              <TextField id="title" label={t('عنوان العمل')} value={form.title} onChange={(value) => update('title', value)} error={errors.title} autoComplete="off" dir="auto" required />
             </div>
             <div className="form-grid__full">
               <TextAreaField
                 id="purpose_and_mission"
-                label="الغاية والرسالة"
+                label={t('الغاية والرسالة')}
                 value={form.purpose_and_mission}
                 onChange={(value) => update('purpose_and_mission', value)}
                 error={errors.purpose_and_mission}
-                hint="لماذا وُجد هذا العمل، وما الرسالة التي يحملها."
+                hint={t('لماذا وُجد هذا العمل، وما الرسالة التي يحملها.')}
                 autoComplete="off"
                 rows={4}
                 limit={LIMITS.purpose}
@@ -418,11 +421,11 @@ export function NominationForm({
             <div className="form-grid__full">
               <TextAreaField
                 id="objectives"
-                label="الأهداف"
+                label={t('الأهداف')}
                 value={form.objectives}
                 onChange={(value) => update('objectives', value)}
                 error={errors.objectives}
-                hint="اكتب كل هدف في سطر مستقل."
+                hint={t('اكتب كل هدف في سطر مستقل.')}
                 autoComplete="off"
                 rows={5}
                 limit={LIMITS.objectives}
@@ -431,11 +434,11 @@ export function NominationForm({
             <div className="form-grid__full">
               <TextAreaField
                 id="impact"
-                label="الأثر"
+                label={t('الأثر')}
                 value={form.impact}
                 onChange={(value) => update('impact', value)}
                 error={errors.impact}
-                hint="ما الذي تغيّر فعلاً بفضل العمل، ومن استفاد منه، وما الذي يدل على ذلك. اكتب ما تعرفه، دون أرقام تقديرية."
+                hint={t('ما الذي تغيّر فعلاً بفضل العمل، ومن استفاد منه، وما الذي يدل على ذلك. اكتب ما تعرفه، دون أرقام تقديرية.')}
                 autoComplete="off"
                 rows={6}
                 limit={LIMITS.impact}
@@ -451,7 +454,7 @@ export function NominationForm({
                 <rect x="5" y="10.5" width="14" height="10" rx="1.5" />
                 <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
               </svg>
-              <p>{STAGE_2_LOCK_WARNING}</p>
+              <p>{t(STAGE_2_LOCK_WARNING)}</p>
             </div>
             <ProfileSummary groups={nominationSummaryFromForm(form, domains)} onEdit={goTo} headingLevel={3} />
           </>
@@ -460,13 +463,13 @@ export function NominationForm({
         <div className="wizard__actions">
           <button type="submit" className="button button--primary" aria-busy={busy || undefined} aria-disabled={busy || pending !== null || undefined}>
             <span className="button__label" data-hidden={busy}>
-              {step.id === 'review' ? 'حفظ المرحلة والمتابعة' : 'متابعة'}
+              {step.id === 'review' ? t('حفظ المرحلة والمتابعة') : t('متابعة')}
             </span>
-            {busy && <span className="button__busy">{step.id === 'review' ? 'جارٍ الحفظ…' : 'جارٍ التحقق…'}</span>}
+            {busy && <span className="button__busy">{step.id === 'review' ? t('جارٍ الحفظ…') : t('جارٍ التحقق…')}</span>}
           </button>
           {stepIndex > 0 && (
             <button type="button" className="button button--secondary" onClick={() => goTo(NOMINATION_STEPS[stepIndex - 1].id)} disabled={busy}>
-              رجوع
+              {t('رجوع')}
             </button>
           )}
         </div>

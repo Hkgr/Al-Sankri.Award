@@ -12,6 +12,7 @@ import type { NominationDetails, NominationState } from './nominationApi'
 import { DomainArtwork } from './nominationFields'
 import { NominationForm } from './NominationForm'
 import { nominationSummaryFromDetails } from './nominationSummaries'
+import { useLocale } from '../../../i18n/useLocale'
 
 type Loaded = { kind: 'state'; state: NominationState } | { kind: 'stage_1_required' }
 
@@ -21,7 +22,8 @@ type Loaded = { kind: 'state'; state: NominationState } | { kind: 'stage_1_requi
  * Unavailable or not-yet-reachable states say so plainly.
  */
 export function NominationDetailsPage({ user }: { user: User }) {
-  usePageTitle('فئة الترشح وبيانات العمل')
+  const { t } = useLocale()
+  usePageTitle(t('فئة الترشح وبيانات العمل'))
   const { navigate } = useRouter()
   const handleAccountFailure = useAccountFailure()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
@@ -64,10 +66,10 @@ export function NominationDetailsPage({ user }: { user: User }) {
   return (
     <div className="candidate-page">
       <header className="candidate-page__header">
-        <p className="eyebrow">المرحلة 2 من ملف الترشح</p>
-        <h1 className="candidate-page__title">فئة الترشح وبيانات العمل</h1>
+        <p className="eyebrow">{t('المرحلة 2 من ملف الترشح')}</p>
+        <h1 className="candidate-page__title">{t('فئة الترشح وبيانات العمل')}</h1>
         <p className="candidate-page__intro">
-          {details ? 'هذه بيانات المرحلة كما حُفظت. هي متاحة للعرض فقط.' : 'اختر محور الترشح وفئته، وعرّف بالعمل: عنوانه وغايته ورسالته وأهدافه وأثره.'}
+          {details ? t('هذه بيانات المرحلة كما حُفظت. هي متاحة للعرض فقط.') : t('اختر محور الترشح وفئته، وعرّف بالعمل: عنوانه وغايته ورسالته وأهدافه وأثره.')}
         </p>
       </header>
 
@@ -76,19 +78,19 @@ export function NominationDetailsPage({ user }: { user: User }) {
           <p>{loadError}</p>
           <p>
             <button type="button" className="button button--secondary" onClick={() => void load()}>
-              إعادة المحاولة
+              {t('إعادة المحاولة')}
             </button>
           </p>
         </FormAlert>
       ) : !loaded ? (
         <p className="candidate-loading" role="status">
-          جارٍ تحميل البيانات…
+          {t('جارٍ تحميل البيانات…')}
         </p>
       ) : loaded.kind === 'stage_1_required' ? (
         <FormAlert tone="info">
-          <p>تُتاح هذه المرحلة بعد تأكيد حفظ البيانات الأساسية (المرحلة 1).</p>
+          <p>{t('تُتاح هذه المرحلة بعد تأكيد حفظ البيانات الأساسية (المرحلة 1).')}</p>
           <p>
-            <Link href="/dashboard/basic-information">الانتقال إلى البيانات الأساسية</Link>
+            <Link href="/dashboard/basic-information">{t('الانتقال إلى البيانات الأساسية')}</Link>
           </p>
         </FormAlert>
       ) : details ? (
@@ -104,11 +106,11 @@ export function NominationDetailsPage({ user }: { user: User }) {
         <FormAlert tone="info">
           <p>
             {state?.availability.status === 'ambiguous'
-              ? 'هذه المرحلة غير متاحة حالياً: أكثر من دورة مفتوحة لها في الوقت نفسه، وتحتاج إدارة الجائزة إلى إبقاء دورة واحدة فقط.'
-              : 'هذه المرحلة غير متاحة حالياً: لم تفتحها إدارة الجائزة بعد لدورة الجائزة الحالية. لا يُطلب منك إدخال شيء قبل ذلك.'}
+              ? t('هذه المرحلة غير متاحة حالياً: أكثر من دورة مفتوحة لها في الوقت نفسه، وتحتاج إدارة الجائزة إلى إبقاء دورة واحدة فقط.')
+              : t('هذه المرحلة غير متاحة حالياً: لم تفتحها إدارة الجائزة بعد لدورة الجائزة الحالية. لا يُطلب منك إدخال شيء قبل ذلك.')}
           </p>
           <p>
-            <Link href="/dashboard">العودة إلى لوحة المترشح</Link>
+            <Link href="/dashboard">{t('العودة إلى لوحة المترشح')}</Link>
           </p>
         </FormAlert>
       )}
@@ -117,20 +119,22 @@ export function NominationDetailsPage({ user }: { user: User }) {
 }
 
 function ReadOnlyNomination({ details, storedNotice }: { details: NominationDetails; storedNotice: boolean }) {
+  const { t, locale } = useLocale()
   return (
     <>
       {storedNotice && (
         <FormAlert tone="info">
-          <p>تأكّدنا من أن بيانات هذه المرحلة محفوظة، وهي متاحة للعرض فقط. لم تُحفظ مرة ثانية ولم يُغيَّر فيها شيء.</p>
+          <p>{t('تأكّدنا من أن بيانات هذه المرحلة محفوظة، وهي متاحة للعرض فقط. لم تُحفظ مرة ثانية ولم يُغيَّر فيها شيء.')}</p>
         </FormAlert>
       )}
       <div className="locked-banner">
         <StatusIcon tone="success" />
         <div>
-          <p className="locked-banner__title">حُفظت فئة الترشح وبيانات العمل</p>
+          <p className="locked-banner__title">{t('حُفظت فئة الترشح وبيانات العمل')}</p>
           <p>
-            حُفظت في {formatDamascusDateTime(details.confirmed_at)} بتوقيت دمشق، وهي متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ تُرسل المشاركة من صفحة
-            المراجعة بعد استكمال ملفات العمل وتوثيقه.
+            {t('حُفظت في {when} بتوقيت دمشق، وهي متاحة للعرض فقط. هذا ليس تقديماً نهائياً لطلب الترشح؛ تُرسل المشاركة من صفحة المراجعة بعد استكمال ملفات العمل وتوثيقه.', {
+              when: formatDamascusDateTime(details.confirmed_at, locale),
+            })}
           </p>
         </div>
       </div>
@@ -143,7 +147,7 @@ function ReadOnlyNomination({ details, storedNotice }: { details: NominationDeta
       </div>
       <ProfileSummary groups={nominationSummaryFromDetails(details)} />
       <p className="candidate-page__back">
-        <Link href="/dashboard/documentation">المتابعة إلى ملفات العمل وتوثيقه</Link>
+        <Link href="/dashboard/documentation">{t('المتابعة إلى ملفات العمل وتوثيقه')}</Link>
       </p>
     </>
   )

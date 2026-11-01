@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { homeFor, useAuth } from './auth/useAuth'
+import { useLocale } from './i18n/useLocale'
 import { SiteFooter } from './components/layout/SiteFooter'
 import { SiteHeader } from './components/layout/SiteHeader'
 import { Link } from './lib/router'
@@ -37,11 +38,13 @@ function GuestOnly({ children }: { children: ReactNode }) {
 }
 
 function NotFoundPage() {
+  const { t } = useLocale()
+
   return (
-    <AuthLayout title="الصفحة غير موجودة">
-      <p className="auth-panel__text">لم نجد الصفحة التي طلبتها.</p>
+    <AuthLayout title={t('notFound.title')}>
+      <p className="auth-panel__text">{t('notFound.text')}</p>
       <p className="auth-panel__switch">
-        <Link href="/">العودة إلى الصفحة الرئيسية</Link>
+        <Link href="/">{t('notFound.home')}</Link>
       </p>
     </AuthLayout>
   )

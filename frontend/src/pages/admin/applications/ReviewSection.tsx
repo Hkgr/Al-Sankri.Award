@@ -7,6 +7,7 @@ import type { ApplicationReview } from '../adminApi'
 import { REVIEW_REFUSALS } from '../adminApi'
 import { AdminDialog, ConfirmDialog } from '../committees/AdminDialog'
 import { ReviewBadge } from './ReviewBadge'
+import { useLocale } from '../../../i18n/useLocale'
 
 const REASON_MAX = 500
 
@@ -31,6 +32,7 @@ export function ReviewSection({
   review: ApplicationReview
   onChange: (review: ApplicationReview) => void
 }) {
+  const { t } = useLocale()
   const [dialog, setDialog] = useState<'refer' | 'exclude' | null>(null)
   const [reason, setReason] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
@@ -68,11 +70,11 @@ export function ReviewSection({
   const exclude = () => {
     const text = reason.trim().replace(/\s+/g, ' ')
     if (!text) {
-      setReasonError('اكتب سبب الاستبعاد باختصار.')
+      setReasonError(t('اكتب سبب الاستبعاد باختصار.'))
       return
     }
     if (Array.from(text).length > REASON_MAX) {
-      setReasonError(`سبب الاستبعاد حتى ${REASON_MAX} حرف.`)
+      setReasonError(t('سبب الاستبعاد حتى {REASON_MAX} حرف.', { REASON_MAX }))
       return
     }
     setReasonError(null)
@@ -88,14 +90,14 @@ export function ReviewSection({
       )}
       <dl className="admin-facts">
         <div>
-          <dt>التصنيف</dt>
+          <dt>{t('التصنيف')}</dt>
           <dd>
             <ReviewBadge status={review.status} />
           </dd>
         </div>
         {review.committee && (
           <div>
-            <dt>لجنة التحكيم</dt>
+            <dt>{t('لجنة التحكيم')}</dt>
             <dd>
               <bdi>{review.committee.name}</bdi>
             </dd>
@@ -103,17 +105,17 @@ export function ReviewSection({
         )}
         {review.status !== 'pending' && (
           <div>
-            <dt>القرار</dt>
+            <dt>{t('القرار')}</dt>
             <dd>
               {review.legacy
-                ? 'إحالة سابقة من سجل التحكيم (قبل المراجعة الأولية؛ لا يُسجَّل لها مدير).'
-                : `${review.decided_by ?? '—'}${review.decided_at ? ` · ${formatDamascusDateTime(review.decided_at)} بتوقيت دمشق` : ''}`}
+                ? t('إحالة سابقة من سجل التحكيم (قبل المراجعة الأولية؛ لا يُسجَّل لها مدير).')
+                : `${review.decided_by ?? '—'}${review.decided_at ? ` · ${t('{when} بتوقيت دمشق', { when: formatDamascusDateTime(review.decided_at) })}` : ''}`}
             </dd>
           </div>
         )}
         {review.status === 'excluded' && review.reason && (
           <div>
-            <dt>سبب الاستبعاد (للإدارة فقط)</dt>
+            <dt>{t('سبب الاستبعاد (للإدارة فقط)')}</dt>
             <dd>
               <bdi>{review.reason}</bdi>
             </dd>
@@ -124,7 +126,7 @@ export function ReviewSection({
       {review.status === 'pending' && (
         <>
           <p className="admin-muted">
-            لم يُرسل هذا الملف إلى التحكيم بعد. لا يراه الحكام قبل الإرسال إلى اللجنة. يبقى الاستبعاد أرشفةً: يبقى الملف وملفاته متاحين للإدارة ولصاحبه.
+            {t('لم يُرسل هذا الملف إلى التحكيم بعد. لا يراه الحكام قبل الإرسال إلى اللجنة. يبقى الاستبعاد أرشفةً: يبقى الملف وملفاته متاحين للإدارة ولصاحبه.')}
           </p>
           {target?.refusal && <p className="admin-requirement">{REVIEW_REFUSALS[target.refusal]}</p>}
           {canDecide && (
@@ -135,7 +137,7 @@ export function ReviewSection({
                 onClick={() => setDialog('refer')}
                 disabled={busy || target?.refusal != null || !committee}
               >
-                إرسال إلى اللجنة
+                {t('إرسال إلى اللجنة')}
               </button>
               <button
                 type="button"
@@ -147,7 +149,7 @@ export function ReviewSection({
                 }}
                 disabled={busy}
               >
-                استبعاد وأرشفة
+                {t('استبعاد وأرشفة')}
               </button>
             </div>
           )}
@@ -156,20 +158,21 @@ export function ReviewSection({
 
       <ConfirmDialog
         open={dialog === 'refer'}
-        title="إرسال إلى اللجنة"
+        title={t('إرسال إلى اللجنة')}
         text={
           <p>
-            يُرسل ملف الترشح إلى لجنة التحكيم «<bdi>{committee?.name}</bdi>» للمجال الرئيسي «{domainName}»، ويصبح متاحاً لحكامها الحاليين. لا يُلغى هذا الإرسال من هذه
-            الصفحة.
+            {t('يُرسل ملف الترشح إلى لجنة التحكيم «')}
+            <bdi>{committee?.name}</bdi>
+            {t('» للمجال الرئيسي «{domain}»، ويصبح متاحاً لحكامها الحاليين. لا يُلغى هذا الإرسال من هذه الصفحة.', { domain: domainName })}
           </p>
         }
-        confirmLabel="تأكيد الإرسال إلى اللجنة"
+        confirmLabel={t('تأكيد الإرسال إلى اللجنة')}
         busy={busy}
         onConfirm={() => committee && void decide('refer', { committee_id: committee.id })}
         onClose={() => setDialog(null)}
       />
 
-      <AdminDialog open={dialog === 'exclude'} title="استبعاد وأرشفة" titleId="admin-exclude-title" onClose={() => setDialog(null)}>
+      <AdminDialog open={dialog === 'exclude'} title={t('استبعاد وأرشفة')} titleId="admin-exclude-title" onClose={() => setDialog(null)}>
         <form
           className="admin-dialog__body admin-form"
           onSubmit={(event) => {
@@ -178,10 +181,10 @@ export function ReviewSection({
           }}
           noValidate
         >
-          <p>لا يُرسل الملف إلى التحكيم، ويُحفظ في الأرشيف مع سببه. يبقى الملف وملفاته متاحين للإدارة ولصاحبه، ولا يُعرض السبب على المترشح.</p>
+          <p>{t('لا يُرسل الملف إلى التحكيم، ويُحفظ في الأرشيف مع سببه. يبقى الملف وملفاته متاحين للإدارة ولصاحبه، ولا يُعرض السبب على المترشح.')}</p>
           <div className="field">
             <label className="field__label" htmlFor={reasonId}>
-              سبب الاستبعاد<span className="field__required"> (مطلوب)</span>
+              {t('سبب الاستبعاد')}<span className="field__required">{t('(مطلوب)')}</span>
             </label>
             <textarea
               id={reasonId}
@@ -195,16 +198,16 @@ export function ReviewSection({
             />
             {reasonError && (
               <p id={`${reasonId}-error`} className="field__error">
-                خطأ: {reasonError}
+                {t('form.errorPrefix')} {reasonError}
               </p>
             )}
           </div>
           <div className="admin-dialog__actions">
             <button type="button" className="button button--secondary" onClick={() => setDialog(null)}>
-              تراجع
+              {t('تراجع')}
             </button>
             <button type="submit" className="button button--primary" disabled={busy} aria-busy={busy || undefined}>
-              {busy ? 'جارٍ التنفيذ…' : 'تأكيد الاستبعاد والأرشفة'}
+              {busy ? t('جارٍ التنفيذ…') : t('تأكيد الاستبعاد والأرشفة')}
             </button>
           </div>
         </form>

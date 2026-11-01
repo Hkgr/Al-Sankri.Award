@@ -1,5 +1,6 @@
 import logo from '../../assets/brand/logo-horizontal-dark-bg.svg'
-import { award, closing, domains, pages } from '../../content/site'
+import { useSite } from '../../content/useSite'
+import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
 import { OrgLink } from '../OrgLink'
 
@@ -10,6 +11,9 @@ import { OrgLink } from '../OrgLink'
  * No contact details, accounts or sponsor marks are invented.
  */
 export function SiteFooter() {
+  const { award, closing, domains, pages } = useSite()
+  const { t } = useLocale()
+
   return (
     <footer className="site-footer">
       <div className="site-footer__rule" aria-hidden="true" />
@@ -19,12 +23,12 @@ export function SiteFooter() {
           <p className="site-footer__statement">{closing.statement}</p>
           <p className="site-footer__slogan">{award.slogan}</p>
           <p className="site-footer__org">
-            تنفّذها <OrgLink org="rowad" className="org-link--on-dark" />
+            {t('footer.implementedBy')} <OrgLink org="rowad" className="org-link--on-dark" />
           </p>
         </div>
 
-        <nav className="site-footer__nav" aria-label="صفحات الموقع">
-          <h2 className="site-footer__heading">الجائزة</h2>
+        <nav className="site-footer__nav" aria-label={t('footer.pages')}>
+          <h2 className="site-footer__heading">{t('footer.award')}</h2>
           <ul className="site-footer__links">
             {pages.map((page) => (
               <li key={page.href}>
@@ -34,8 +38,8 @@ export function SiteFooter() {
           </ul>
         </nav>
 
-        <nav className="site-footer__nav" aria-label="محاور الجائزة">
-          <h2 className="site-footer__heading">المحاور</h2>
+        <nav className="site-footer__nav" aria-label={t('footer.domains')}>
+          <h2 className="site-footer__heading">{t('footer.domainsHeading')}</h2>
           <ul className="site-footer__links">
             {domains.map((domain) => (
               <li key={domain.slug}>
@@ -45,17 +49,17 @@ export function SiteFooter() {
           </ul>
         </nav>
 
-        <nav className="site-footer__nav" aria-label="المنصة والسياسات">
-          <h2 className="site-footer__heading">المنصة</h2>
+        <nav className="site-footer__nav" aria-label={t('footer.platformNav')}>
+          <h2 className="site-footer__heading">{t('footer.platform')}</h2>
           <ul className="site-footer__links">
             <li>
-              <Link href="/login">الدخول إلى المنصة</Link>
+              <Link href="/login">{t('footer.login')}</Link>
             </li>
             <li>
-              <Link href="/policies/privacy-policy">سياسة الخصوصية</Link>
+              <Link href="/policies/privacy-policy">{t('footer.privacy')}</Link>
             </li>
             <li>
-              <Link href="/policies/terms-of-use">شروط الاستخدام</Link>
+              <Link href="/policies/terms-of-use">{t('footer.terms')}</Link>
             </li>
           </ul>
         </nav>

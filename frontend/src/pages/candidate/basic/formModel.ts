@@ -1,4 +1,5 @@
 import type { Country, PolicyCode, ProfileType, Requirements } from '../candidateApi'
+import { tr } from '../../../i18n/messages'
 
 /*
  * The stage 1 form, held in memory only (never in localStorage or
@@ -95,7 +96,7 @@ export const STEPS: Record<ProfileType, { id: StepId; title: string }[]> = {
 }
 
 export function stepsFor(type: ProfileType | ''): { id: StepId; title: string }[] {
-  return type ? STEPS[type] : [{ id: 'type', title: 'نوع المتقدم' }]
+  return (type ? STEPS[type] : [{ id: 'type' as const, title: 'نوع المتقدم' }]).map((step) => ({ ...step, title: tr(step.title) }))
 }
 
 /** The step that holds a field, so a server error can lead back to it. */
@@ -258,41 +259,41 @@ function length(value: string): number {
 function checkName(errors: Errors, key: string, value: string, label: string, max: number, required = true) {
   const trimmed = value.trim()
   if (!trimmed) {
-    if (required) errors[key] = `أدخل ${label}.`
+    if (required) errors[key] = tr('أدخل {label}.', { label })
   } else if (length(trimmed) > max) {
-    errors[key] = `يجب ألا يزيد ${label} على ${max} حرفاً.`
+    errors[key] = tr('يجب ألا يزيد {label} على {max} حرفاً.', { label, max })
   } else if (!PERSON_NAME.test(trimmed.replace(/\s+/g, ' '))) {
-    errors[key] = `استخدم الحروف والمسافات وعلامات الأسماء المعتادة فقط في ${label}.`
+    errors[key] = tr('استخدم الحروف والمسافات وعلامات الأسماء المعتادة فقط في {label}.', { label })
   }
 }
 
 function checkText(errors: Errors, key: string, value: string, label: string, max: number) {
-  if (!value.trim()) errors[key] = `أدخل ${label}.`
-  else if (length(value) > max) errors[key] = `يجب ألا يزيد ${label} على ${max} حرفاً.`
+  if (!value.trim()) errors[key] = tr('أدخل {label}.', { label })
+  else if (length(value) > max) errors[key] = tr('يجب ألا يزيد {label} على {max} حرفاً.', { label, max })
 }
 
 function checkIdentifier(errors: Errors, key: string, value: string, label: string) {
   const trimmed = asciiDigits(value).trim()
-  if (!trimmed) errors[key] = `أدخل ${label}.`
-  else if (length(trimmed) > 50) errors[key] = `يجب ألا يزيد ${label} على 50 حرفاً.`
-  else if (!IDENTIFIER.test(trimmed)) errors[key] = `استخدم الحروف والأرقام والفواصل المعتادة (- / .) فقط في ${label}.`
+  if (!trimmed) errors[key] = tr('أدخل {label}.', { label })
+  else if (length(trimmed) > 50) errors[key] = tr('يجب ألا يزيد {label} على 50 حرفاً.', { label })
+  else if (!IDENTIFIER.test(trimmed)) errors[key] = tr('استخدم الحروف والأرقام والفواصل المعتادة (- / .) فقط في {label}.', { label })
 }
 
 function checkEmail(errors: Errors, key: string, value: string, label: string) {
   const trimmed = value.trim()
-  if (!trimmed) errors[key] = `أدخل ${label}.`
-  else if (trimmed.length > 255 || !EMAIL.test(trimmed)) errors[key] = `أدخل ${label} صحيحاً، مثل name@example.com.`
+  if (!trimmed) errors[key] = tr('أدخل {label}.', { label })
+  else if (trimmed.length > 255 || !EMAIL.test(trimmed)) errors[key] = tr('أدخل {label} صحيحاً، مثل name@example.com.', { label })
 }
 
 function checkPhone(errors: Errors, key: string, phone: PhoneValue, label: string, required: boolean) {
   const digits = asciiDigits(phone.number).replace(/[^\d]/g, '')
   if (!phone.number.trim()) {
-    if (required) errors[`${key}.number`] = `أدخل ${label}.`
+    if (required) errors[`${key}.number`] = tr('أدخل {label}.', { label })
     return
   }
-  if (!phone.country) errors[`${key}.country`] = 'اختر رمز الدولة.'
+  if (!phone.country) errors[`${key}.country`] = tr('اختر رمز الدولة.')
   if (digits.length < 4 || digits.length > 17 || /[^\d\s()+.-]/.test(asciiDigits(phone.number))) {
-    errors[`${key}.number`] = 'رقم الهاتف غير صحيح لرمز الدولة المختار. تحقّق من الرقم ورمز الدولة.'
+    errors[`${key}.number`] = tr('رقم الهاتف غير صحيح لرمز الدولة المختار. تحقّق من الرقم ورمز الدولة.')
   }
 }
 
@@ -307,10 +308,10 @@ export function isWebUrl(value: string): boolean {
 
 function checkLinks(errors: Errors, links: SocialLink[]) {
   links.forEach((link, index) => {
-    if (!link.platform.trim()) errors[`social_links.${index}.platform`] = 'أدخل اسم المنصة.'
-    else if (length(link.platform) > 50) errors[`social_links.${index}.platform`] = 'يجب ألا يزيد اسم المنصة على 50 حرفاً.'
-    if (!link.url.trim()) errors[`social_links.${index}.url`] = 'أدخل الرابط.'
-    else if (link.url.trim().length > 500 || !isWebUrl(link.url)) errors[`social_links.${index}.url`] = 'أدخل رابطاً كاملاً يبدأ بـ https:// أو http://.'
+    if (!link.platform.trim()) errors[`social_links.${index}.platform`] = tr('أدخل اسم المنصة.')
+    else if (length(link.platform) > 50) errors[`social_links.${index}.platform`] = tr('يجب ألا يزيد اسم المنصة على 50 حرفاً.')
+    if (!link.url.trim()) errors[`social_links.${index}.url`] = tr('أدخل الرابط.')
+    else if (link.url.trim().length > 500 || !isWebUrl(link.url)) errors[`social_links.${index}.url`] = tr('أدخل رابطاً كاملاً يبدأ بـ https:// أو http://.')
   })
 }
 
@@ -321,16 +322,16 @@ function checkBirthDate(errors: Errors, person: IndividualForm, today: Date) {
   const yearText = asciiDigits(person.birth_year).trim()
   const year = Number(yearText)
   if (!person.birth_day.trim() || !person.birth_month || !yearText) {
-    errors[key] = 'أدخل تاريخ الميلاد كاملاً: اليوم والشهر والسنة.'
+    errors[key] = tr('أدخل تاريخ الميلاد كاملاً: اليوم والشهر والسنة.')
     return
   }
   const date = new Date(Date.UTC(year, month - 1, day))
   if (!/^\d{4}$/.test(yearText) || !Number.isInteger(day) || date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
-    errors[key] = 'أدخل تاريخ ميلاد حقيقياً بالتقويم الميلادي.'
+    errors[key] = tr('أدخل تاريخ ميلاد حقيقياً بالتقويم الميلادي.')
   } else if (year < 1900) {
-    errors[key] = 'أدخل سنة ميلاد من 1900 أو بعدها.'
+    errors[key] = tr('أدخل سنة ميلاد من 1900 أو بعدها.')
   } else if (date.getTime() > today.getTime()) {
-    errors[key] = 'لا يمكن أن يكون تاريخ الميلاد في المستقبل.'
+    errors[key] = tr('لا يمكن أن يكون تاريخ الميلاد في المستقبل.')
   }
 }
 
@@ -347,51 +348,51 @@ export function validateStep(step: StepId, state: FormState, requirements: Requi
 
   switch (step) {
     case 'type':
-      if (!state.profileType) errors.profile_type = 'اختر نوع المتقدم: فرد أو مؤسسة.'
+      if (!state.profileType) errors.profile_type = tr('اختر نوع المتقدم: فرد أو مؤسسة.')
       break
     case 'individual_identity':
-      checkName(errors, 'individual.first_name', person.first_name, 'الاسم الأول', 80)
-      checkName(errors, 'individual.middle_name', person.middle_name, 'الاسم الأوسط', 80, false)
-      checkName(errors, 'individual.last_name', person.last_name, 'الاسم الأخير', 80)
+      checkName(errors, 'individual.first_name', person.first_name, tr('الاسم الأول'), 80)
+      checkName(errors, 'individual.middle_name', person.middle_name, tr('الاسم الأوسط'), 80, false)
+      checkName(errors, 'individual.last_name', person.last_name, tr('الاسم الأخير'), 80)
       checkBirthDate(errors, person, damascusToday())
-      if (!person.nationality) errors['individual.nationality'] = 'اختر الجنسية.'
-      if (!person.gender) errors['individual.gender'] = 'اختر الجنس.'
-      checkIdentifier(errors, 'individual.national_id_number', person.national_id_number, 'رقم الهوية الشخصية')
+      if (!person.nationality) errors['individual.nationality'] = tr('اختر الجنسية.')
+      if (!person.gender) errors['individual.gender'] = tr('اختر الجنس.')
+      checkIdentifier(errors, 'individual.national_id_number', person.national_id_number, tr('رقم الهوية الشخصية'))
       break
     case 'individual_contact':
-      if (!person.residence_country) errors['individual.residence_country'] = 'اختر دولة الإقامة.'
-      checkText(errors, 'individual.address', person.address, 'العنوان', 500)
-      checkPhone(errors, 'individual.primary_phone', person.primary_phone, 'رقم التواصل الأساسي', true)
-      checkPhone(errors, 'individual.secondary_phone', person.secondary_phone, 'رقم التواصل الاحتياطي', false)
-      checkEmail(errors, 'individual.contact_email', person.contact_email, 'البريد الإلكتروني للتواصل')
+      if (!person.residence_country) errors['individual.residence_country'] = tr('اختر دولة الإقامة.')
+      checkText(errors, 'individual.address', person.address, tr('العنوان'), 500)
+      checkPhone(errors, 'individual.primary_phone', person.primary_phone, tr('رقم التواصل الأساسي'), true)
+      checkPhone(errors, 'individual.secondary_phone', person.secondary_phone, tr('رقم التواصل الاحتياطي'), false)
+      checkEmail(errors, 'individual.contact_email', person.contact_email, tr('البريد الإلكتروني للتواصل'))
       checkLinks(errors, person.social_links)
       break
     case 'institution_details':
-      checkText(errors, 'institution.name', institution.name, 'اسم المؤسسة', 255)
-      if (!institution.country) errors['institution.country'] = 'اختر دولة المؤسسة.'
-      checkText(errors, 'institution.activity_type', institution.activity_type, 'نوع النشاط المؤسسي', 150)
-      checkIdentifier(errors, 'institution.license_number', institution.license_number, 'رقم الترخيص')
+      checkText(errors, 'institution.name', institution.name, tr('اسم المؤسسة'), 255)
+      if (!institution.country) errors['institution.country'] = tr('اختر دولة المؤسسة.')
+      checkText(errors, 'institution.activity_type', institution.activity_type, tr('نوع النشاط المؤسسي'), 150)
+      checkIdentifier(errors, 'institution.license_number', institution.license_number, tr('رقم الترخيص'))
       break
     case 'institution_contact':
-      checkName(errors, 'institution.representative_name', institution.representative_name, 'اسم الشخص المتقدم بالنيابة عن المؤسسة', 150)
-      checkText(errors, 'institution.representative_title', institution.representative_title, 'الصفة الوظيفية', 150)
-      checkPhone(errors, 'institution.phone', institution.phone, 'رقم تواصل المؤسسة', true)
-      checkEmail(errors, 'institution.email', institution.email, 'البريد الإلكتروني للمؤسسة')
+      checkName(errors, 'institution.representative_name', institution.representative_name, tr('اسم الشخص المتقدم بالنيابة عن المؤسسة'), 150)
+      checkText(errors, 'institution.representative_title', institution.representative_title, tr('الصفة الوظيفية'), 150)
+      checkPhone(errors, 'institution.phone', institution.phone, tr('رقم تواصل المؤسسة'), true)
+      checkEmail(errors, 'institution.email', institution.email, tr('البريد الإلكتروني للمؤسسة'))
       if (institution.website.trim() && (institution.website.trim().length > 500 || !isWebUrl(institution.website))) {
-        errors['institution.website'] = 'أدخل رابطاً كاملاً يبدأ بـ https:// أو http://.'
+        errors['institution.website'] = tr('أدخل رابطاً كاملاً يبدأ بـ https:// أو http://.')
       }
       checkLinks(errors, institution.social_links)
       break
     case 'review':
       for (const code of ['privacy_policy', 'terms_of_use'] as PolicyCode[]) {
-        if (!requirements?.policies[code]) errors[`accepted_policies.${code}`] = 'النص المعتمد غير منشور بعد.'
+        if (!requirements?.policies[code]) errors[`accepted_policies.${code}`] = tr('النص المعتمد غير منشور بعد.')
         else if (!state.declarations[code]) {
-          errors[`accepted_policies.${code}`] = code === 'privacy_policy' ? 'وافق على سياسة الخصوصية للمتابعة.' : 'وافق على شروط الاستخدام للمتابعة.'
+          errors[`accepted_policies.${code}`] = code === 'privacy_policy' ? tr('وافق على سياسة الخصوصية للمتابعة.') : tr('وافق على شروط الاستخدام للمتابعة.')
         }
       }
-      if (!state.declarations.data_accuracy) errors['declarations.data_accuracy'] = 'أكّد صحة البيانات المقدمة للمتابعة.'
+      if (!state.declarations.data_accuracy) errors['declarations.data_accuracy'] = tr('أكّد صحة البيانات المقدمة للمتابعة.')
       if (state.profileType === 'institution' && !state.declarations.representation) {
-        errors['declarations.representation'] = 'أكّد أنك مخوَّل بتمثيل المؤسسة للمتابعة.'
+        errors['declarations.representation'] = tr('أكّد أنك مخوَّل بتمثيل المؤسسة للمتابعة.')
       }
       break
   }
