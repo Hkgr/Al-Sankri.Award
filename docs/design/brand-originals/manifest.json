@@ -1,0 +1,207 @@
+{
+  "folder": "https://drive.google.com/drive/folders/1iqeB1LxnTZF1Q78iFHJNvI6zPhaETmny",
+  "retrieved_on": "2026-11-02",
+  "sources": [
+    {
+      "key": "ar-white",
+      "kind": "logo",
+      "file": "logos/ar-white.png",
+      "drive_path": "LOGO/Arabic/لوغو أبيض عرضي.png",
+      "drive_file_id": "1hckXEovBinMIsuEfSf_omt8VX2u9AuBO",
+      "sha256": "fcee0fba4bc2c71d5c5ca676fdc1b362a81cc0f95e8e691596e49b16c2a25d96",
+      "bytes": 523239,
+      "width": 17184,
+      "height": 5568,
+      "transparent": true,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/logo-ar-white-400.webp",
+          "width": 400,
+          "height": 130,
+          "bytes": 16418,
+          "sha256": "73f1ae2cbb8c012255bd7e2dca4f512ee676e5b8409dd900ef0947916d161fca"
+        },
+        {
+          "file": "frontend/src/assets/brand/official/logo-ar-white-800.webp",
+          "width": 800,
+          "height": 259,
+          "bytes": 33324,
+          "sha256": "1146b306d4189901a8b22d60eb187770f5c977b4b000b5e82ad758482a80037d"
+        }
+      ]
+    },
+    {
+      "key": "ar-green",
+      "kind": "logo",
+      "file": "logos/ar-green.png",
+      "drive_path": "LOGO/Arabic/لوغو أخضر عرضي.png",
+      "drive_file_id": "1HLYl68cgtybYBiUToxGoGoec_w7eWetW",
+      "sha256": "9041f0c9916860a291fdd59656add08fc63f92d7287f29e4c86fc12cdbf7e842",
+      "bytes": 525091,
+      "width": 17222,
+      "height": 5580,
+      "transparent": true,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/logo-ar-green-400.webp",
+          "width": 400,
+          "height": 130,
+          "bytes": 20190,
+          "sha256": "17cefe98c564acd92b2a022c362d38d66441312aa37db6651d6519d20f6ce564"
+        },
+        {
+          "file": "frontend/src/assets/brand/official/logo-ar-green-800.webp",
+          "width": 800,
+          "height": 259,
+          "bytes": 39804,
+          "sha256": "40218c52659e78cdb64722751596ac9caff8edb9f7f0a54eadf0d43278cfc603"
+        }
+      ]
+    },
+    {
+      "key": "en-white",
+      "kind": "logo",
+      "file": "logos/en-white.png",
+      "drive_path": "LOGO/English/لوغو أبيض عرضي.png",
+      "drive_file_id": "1rUbPxkSqBqsZF3cpn4f5NpkIOBgAaxPx",
+      "sha256": "62a490b90c2f269bdc9e10f9f8f7510cdd5d0532fcd59505c14fcd5f9bc17b30",
+      "bytes": 543517,
+      "width": 16272,
+      "height": 5262,
+      "transparent": true,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/logo-en-white-400.webp",
+          "width": 400,
+          "height": 129,
+          "bytes": 16640,
+          "sha256": "574ada85fd111a5babf913240b42821151a3f8782450ea312bc53c4d102b5c3d"
+        },
+        {
+          "file": "frontend/src/assets/brand/official/logo-en-white-800.webp",
+          "width": 800,
+          "height": 259,
+          "bytes": 33868,
+          "sha256": "f0d16cf2b41e7677b77b4fedf237bcdc3abbfd66a0eef8d9c4816e25d00093ed"
+        }
+      ]
+    },
+    {
+      "key": "en-green",
+      "kind": "logo",
+      "file": "logos/en-green.png",
+      "drive_path": "LOGO/English/لوغو أخضر عرضي.png",
+      "drive_file_id": "1UTcjPmYqO_DG1_x7zHPahG_12QvSLWws",
+      "sha256": "5ba64399f42b9cbcb914a63e60324a39d67f64de74312a41942200b679a3d402",
+      "bytes": 543430,
+      "width": 16272,
+      "height": 5262,
+      "transparent": true,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/logo-en-green-400.webp",
+          "width": 400,
+          "height": 129,
+          "bytes": 20454,
+          "sha256": "0e8aeb90669170eca0e92c19da32d3172bb1529c6876ca4c89f30ed79ce0e95f"
+        },
+        {
+          "file": "frontend/src/assets/brand/official/logo-en-green-800.webp",
+          "width": 800,
+          "height": 259,
+          "bytes": 40066,
+          "sha256": "2a5598851ca2c4c9debcab0ef1730d08e20ebfb45e1cbe69d299dcdd3d8aa712"
+        }
+      ]
+    },
+    {
+      "key": "creativity",
+      "kind": "trophy",
+      "file": "trophies/creativity.png",
+      "drive_path": "تصميم الكأس/جائزة-الإبداع.png",
+      "drive_file_id": "1sgAIHuRSen8WrLKXL8WCRRz9byGfG7B2",
+      "sha256": "235d2a09bae4545d72a8bc27632d0320d7c53429426b4ee2530b1ed320a14244",
+      "bytes": 4152747,
+      "width": 3508,
+      "height": 2480,
+      "transparent": false,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/trophy-creativity-480.webp",
+          "width": 480,
+          "height": 339,
+          "bytes": 9268,
+          "sha256": "d4f84ac169f8afe4eba2b455f4a42b08485317f23b5eeef15619a0fcb6cc7b75"
+        },
+        {
+          "file": "frontend/src/assets/brand/official/trophy-creativity-960.webp",
+          "width": 960,
+          "height": 679,
+          "bytes": 30830,
+          "sha256": "05258db5d9232bde6aab9b30f58f434e1fdebcbeac7f26e3931aa41b2bf407c0"
+        }
+      ]
+    },
+    {
+      "key": "heritage",
+      "kind": "trophy",
+      "file": "trophies/heritage.png",
+      "drive_path": "تصميم الكأس/جائزة-التراث-المادي-واللامادي.png",
+      "drive_file_id": "1an8AUKZJhf1JCV7GR5R6B6eBSOh8o4F0",
+      "sha256": "928cb7805b6a6237111109d2636bf21c6f2b3ba226c08a80e1763afbc1d0460e",
+      "bytes": 3634051,
+      "width": 3508,
+      "height": 2480,
+      "transparent": false,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/trophy-heritage-480.webp",
+          "width": 480,
+          "height": 339,
+          "bytes": 9220,
+          "sha256": "eefff7a6e1656122cf0df14257e40f480e59d0f6d3a58e28ac6a28dd164e9d98"
+        },
+        {
+          "file": "frontend/src/assets/brand/official/trophy-heritage-960.webp",
+          "width": 960,
+          "height": 679,
+          "bytes": 30364,
+          "sha256": "5894e637fe79f6537aaa406d88b21a634b5d6610dc9fcf2d9ddb814ca196d4ed"
+        }
+      ]
+    },
+    {
+      "key": "culture-and-arts",
+      "kind": "trophy",
+      "file": "trophies/culture-and-arts.png",
+      "drive_path": "تصميم الكأس/جائزة-الثقافةو-والفنون.png",
+      "drive_file_id": "1eSZYNjTV4PjAEH84Ln4RxBHuNo_iofnA",
+      "sha256": "edccce5209bb27809745e9453bee3a5f10ced399c48af081a353d466010427cf",
+      "bytes": 3495606,
+      "width": 3508,
+      "height": 2480,
+      "transparent": false,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/trophy-culture-and-arts-480.webp",
+          "width": 480,
+          "height": 339,
+          "bytes": 9548,
+          "sha256": "a5213c7d411c4b3a13c898a279bfa0ca4046fea4925bedcc632cc18c3479ca78"
+        },
+        {
+          "file": "frontend/src/assets/brand/official/trophy-culture-and-arts-960.webp",
+          "width": 960,
+          "height": 679,
+          "bytes": 31638,
+          "sha256": "ffa3520593e8507cafbc7fda88d9c76f0c703bea61e8ab6bd87d23cca0bc3fb6"
+        }
+      ]
+    }
+  ],
+  "excluded_reference": {
+    "drive_file_id": "1IRvthCE0ncyCygZSgV8U6DV22xQG6IA3",
+    "name": "الجائزة العامة.png",
+    "reason": "Reference only: obsolete award name. Not copied into the repository or website build."
+  }
+}

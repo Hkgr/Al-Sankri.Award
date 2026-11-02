@@ -1,5 +1,7 @@
 # Digital identity guidelines
 
+**Current implementation (2026-11-02):** the official name is «جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع». The owner's supplied `LOGO/Arabic` and `LOGO/English` horizontal originals supersede the historical logo instructions below: green on light surfaces, official white on dark surfaces, switching with the interface language. Preserve transparency, proportions and colors; do not recolor or add a backing card. See [the current asset manifest](assets-manifest.md#current-official-originals-2026-11-02). The older name and extracted assets below document the original guide, not the current published wordmark. The general trophy mockup with the old name remains reference-only.
+
 **جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية**
 
 These guidelines set out how the award's supplied identity should appear on the public website. They are the Phase 0 foundation. No pages are built yet.

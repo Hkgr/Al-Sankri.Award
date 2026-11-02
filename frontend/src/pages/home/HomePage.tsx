@@ -1,4 +1,5 @@
 import { Countdown } from '../../components/Countdown'
+import { DomainTrophy } from '../../components/DomainTrophy'
 import { Photo } from '../../components/Photo'
 import { PlatformActions } from '../../components/PlatformActions'
 import { useSite } from '../../content/useSite'
@@ -76,7 +77,7 @@ export function HomePage() {
             {domains.map((domain) => (
               <li key={domain.slug} className="domain-card">
                 {/* The visible label names the artwork, so it is decorative. */}
-                <img className="domain-card__symbol" src={domain.symbol} alt="" width={88} height={99} />
+                <DomainTrophy domain={domain.slug} className="domain-card__trophy" sizes="(min-width: 40rem) 352px, 85vw" />
                 <h3 className="domain-card__title">{domain.label}</h3>
                 <p className="domain-card__intro">{domain.intro}</p>
                 <ul className="domain-card__subcategories" aria-label={t('home.domainSubs', { domain: domain.label })}>
