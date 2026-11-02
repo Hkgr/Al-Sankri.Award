@@ -187,10 +187,10 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
         </form>
         <div className="admin-toolbar__filters">
           <div className="admin-filter">
-            <label htmlFor={ids.role}>{t('الدور')}</label>
+            <label htmlFor={ids.role}>{t('roles.allCycles')}</label>
             <select id={ids.role} value={params.get('role') ?? ''} onChange={(event) => update({ role: event.target.value || null })}>
               <option value="">{t('كل الأدوار')}</option>
-              {Object.entries(USER_ROLE_FILTERS).map(([value, label]) => (
+              {(meta?.role_options?.map((role) => [role.code, t(role.name)]) ?? Object.entries(USER_ROLE_FILTERS)).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>

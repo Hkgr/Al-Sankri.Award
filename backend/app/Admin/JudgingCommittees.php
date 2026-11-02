@@ -2,6 +2,7 @@
 
 namespace App\Admin;
 
+use App\Auth\CandidateRole;
 use App\Auth\GoogleAccounts;
 use App\Auth\RoleExclusivity;
 use App\Candidates\NominationTaxonomy;
@@ -223,6 +224,7 @@ class JudgingCommittees
                         'password' => null,
                         'status' => User::STATUS_ACTIVE,
                     ])->save();
+                    app(CandidateRole::class)->grant($target, 'judge_account_created');
                 }
 
                 $committee = $this->committee($cycleId, (int) $domain->cycle_domain_id, lock: true);
@@ -247,20 +249,15 @@ class JudgingCommittees
                     'committee_id' => $committee->id, 'user_id' => $target->getKey(), 'position' => 'member',
                     'specialty' => $input['specialty'], 'joined_at' => $now, 'created_at' => $now, 'updated_at' => $now,
                 ]);
-                DB::table('cycle_user_roles')->insert([
-                    'cycle_id' => $cycleId, 'user_id' => $target->getKey(), 'role_id' => $this->access->roleId(AdminAccess::JUDGE_ROLE),
-                    'assigned_by' => $actor->getKey(), 'starts_at' => $now, 'created_at' => $now, 'updated_at' => $now,
-                ]);
+                $this->roles->grantCycle($target, AdminAccess::JUDGE_ROLE, $cycleId, $actor);
 
                 $actorId = (int) $actor->getKey();
                 if ($created) {
                     AuditLog::record('user.created', $actorId, 'user', (int) $target->getKey(), ['source' => 'judge_appointment'], $cycleId);
                 }
-                AuditLog::record('cycle_user_role.granted', $actorId, 'user', (int) $target->getKey(), ['role' => AdminAccess::JUDGE_ROLE, 'cycle_id' => $cycleId], $cycleId);
                 AuditLog::record('committee_member.added', $actorId, 'committee', (int) $committee->id, [
                     'committee_member_id' => $memberId, 'user_id' => $target->getKey(), 'domain' => $domain->code,
                 ], $cycleId);
-                $this->roles->revokeCandidateForJudgeship($target, $actor, $cycleId);
 
                 return ['member_id' => $memberId, 'user' => $target, 'created' => $created];
             });
@@ -312,15 +309,10 @@ class JudgingCommittees
 
             $now = now();
             DB::table('committee_members')->where('id', $member->id)->update(['left_at' => $now, 'updated_at' => $now]);
-            DB::table('cycle_user_roles')
-                ->where('cycle_id', $cycleId)->where('user_id', $target->getKey())->where('role_id', $this->access->roleId(AdminAccess::JUDGE_ROLE))
-                ->whereNull('revoked_at')
-                ->update(['revoked_at' => $now, 'revoked_by' => $actor->getKey(), 'revocation_reason' => 'انتهاء العضوية في لجنة التحكيم', 'updated_at' => $now]);
+            $this->roles->revokeCycle($target, AdminAccess::JUDGE_ROLE, $cycleId, $actor, 'انتهاء العضوية في لجنة التحكيم');
 
             $actorId = (int) $actor->getKey();
             AuditLog::record('committee_member.ended', $actorId, 'committee', (int) $committee->id, ['committee_member_id' => $member->id, 'user_id' => $target->getKey()], $cycleId);
-            AuditLog::record('cycle_user_role.revoked', $actorId, 'user', (int) $target->getKey(), ['role' => AdminAccess::JUDGE_ROLE, 'cycle_id' => $cycleId], $cycleId);
-            $this->roles->restoreCandidateAfterJudgeship($target);
 
             return self::UPDATED;
         });

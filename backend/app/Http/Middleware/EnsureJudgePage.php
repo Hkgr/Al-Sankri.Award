@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Admin\AdminAccess;
+use App\Auth\RoleExclusivity;
 use App\Http\Controllers\SpaController;
 use Closure;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class EnsureJudgePage
         if ($user === null) {
             return redirect('/login?redirect='.rawurlencode($request->getRequestUri()));
         }
+        app(RoleExclusivity::class)->reconcile($user);
 
         if (! $user->isActive() || ! $this->access->isJudge((int) $user->getKey())) {
             return SpaController::withStatus(403);

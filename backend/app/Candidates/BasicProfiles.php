@@ -2,6 +2,8 @@
 
 namespace App\Candidates;
 
+use App\Auth\CandidateRole;
+use App\Auth\RoleExclusivity;
 use App\Models\AccountPolicyVersion;
 use App\Models\Applicant;
 use App\Models\ApplicantIndividualDetail;
@@ -129,6 +131,9 @@ class BasicProfiles
 
         if ($account === null || ! $account->isActive()) {
             return [self::ACCOUNT_INACTIVE, null];
+        }
+        if (! app(CandidateRole::class)->isHeldBy($account)) {
+            return [RoleExclusivity::UNAVAILABLE, null];
         }
 
         // A retry (double click, second tab, lost response) finds the result

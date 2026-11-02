@@ -302,7 +302,7 @@ class GoogleAuthenticationTest extends TestCase
         $state = $this->startGoogle()['state'];
         // Google now reports a different email: the subject, not the email, identifies the account.
         $this->queueGoogleUser(['sub' => 'returning-sub', 'email' => 'renamed@gmail.com', 'email_verified' => true]);
-        $this->returnFromGoogle($state)->assertRedirect('/account');
+        $this->returnFromGoogle($state)->assertRedirect('/dashboard');
 
         $this->assertSame(1, User::query()->count());
         $this->browser('GET', '/api/user')->assertOk()->assertJsonPath('data.email', 'layla@gmail.com');
@@ -412,7 +412,7 @@ class GoogleAuthenticationTest extends TestCase
         $this->browser('POST', '/api/auth/logout')->assertNoContent();
         $state = $this->startGoogle()['state'];
         $this->queueGoogleUser(['sub' => 'owner-sub', 'email' => 'reader@gmail.com', 'email_verified' => true]);
-        $this->returnFromGoogle($state)->assertRedirect('/account');
+        $this->returnFromGoogle($state)->assertRedirect('/dashboard');
         $this->browser('GET', '/api/user')->assertJsonPath('data.email', 'reader@gmail.com');
     }
 

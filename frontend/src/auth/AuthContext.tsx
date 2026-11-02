@@ -50,6 +50,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return 'updated'
   }, [])
 
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'visible' && current.current) {
+        void refreshUser({ keepAccount: true }).catch(() => undefined)
+      }
+    }
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+    }
+  }, [refreshUser])
+
   const logout = useCallback(async () => {
     try {
       await api.post('/api/auth/logout')

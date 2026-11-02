@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Candidate;
 
+use App\Admin\AdminAccess;
 use App\Candidates\AccountContext;
 use App\Http\Requests\Candidate\NominationDetailsRequest;
 use App\Models\CandidateNomination;
@@ -437,8 +438,9 @@ class NominationDetailsTest extends TestCase
         $this->startCsrfSession();
         $this->browser('GET', '/api/candidate/nomination-details')->assertUnauthorized();
 
+        app(AdminAccess::class)->grantAdmin($this->operator);
         $this->signIn($this->operator->email);
-        $this->browser('GET', '/api/candidate/nomination-details')->assertForbidden()->assertJsonPath('code', 'not_candidate');
+        $this->browser('GET', '/api/candidate/nomination-details')->assertForbidden()->assertJsonPath('code', 'candidate_role_unavailable');
 
         $this->completeStage1($this->candidate);
         $this->signIn();

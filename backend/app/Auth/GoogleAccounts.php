@@ -156,6 +156,8 @@ class GoogleAccounts
             ->where('provider_subject', $identity->subject)
             ->update(['last_login_at' => now(), 'updated_at' => now()]);
 
+        app(RoleExclusivity::class)->reconcile($user);
+
         return [self::SIGNED_IN, $user];
     }
 

@@ -160,7 +160,7 @@ export function NominationForm({
       showAccountMismatch(error.message)
       return
     }
-    if (error instanceof ApiError && (error.code === 'account_disabled' || error.code === 'not_candidate')) {
+    if (error instanceof ApiError && ['account_disabled', 'not_candidate', 'is_judge', 'candidate_role_unavailable'].includes(error.code ?? '')) {
       handleAccountFailure(error)
       return
     }

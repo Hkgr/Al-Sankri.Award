@@ -11,8 +11,7 @@ use Tests\TestCase;
 
 /**
  * The «مترشح» classification: assigned by the backend with every new public
- * account, and provisioned for older ordinary accounts by a command that
- * never converts staff, judges or administrators.
+ * account, and reconciled for older accounts against all effective roles.
  */
 class CandidateClassificationTest extends TestCase
 {
@@ -46,7 +45,7 @@ class CandidateClassificationTest extends TestCase
             ]);
             $this->fail('Registration should fail without the candidate role.');
         } catch (\RuntimeException $exception) {
-            $this->assertStringContainsString('candidate role is missing', $exception->getMessage());
+            $this->assertStringContainsString('role is missing', $exception->getMessage());
         }
 
         $this->assertSame(0, User::query()->count());
@@ -56,7 +55,7 @@ class CandidateClassificationTest extends TestCase
     public function test_a_candidate_signs_in_to_the_dashboard_and_others_to_the_account_page(): void
     {
         User::factory()->candidate()->create(['email' => 'candidate@example.org']);
-        User::factory()->create(['email' => 'staff@example.org']);
+        $this->userWithPlatformRole('staff', 'staff@example.org');
 
         $this->browser('POST', '/api/auth/login', ['email' => 'candidate@example.org', 'password' => 'password'])
             ->assertOk()
@@ -83,7 +82,7 @@ class CandidateClassificationTest extends TestCase
             ->assertJsonPath('redirect', '/email/verify/1/abc?expires=1&signature=x');
     }
 
-    public function test_provisioning_classifies_only_ordinary_role_less_accounts(): void
+    public function test_the_legacy_provisioning_entry_point_uses_current_roles_and_requires_explicit_apply(): void
     {
         $ordinary = User::factory()->create(['email' => 'ordinary@example.org']);
         $alreadyCandidate = User::factory()->candidate()->create(['email' => 'candidate@example.org']);
@@ -96,12 +95,13 @@ class CandidateClassificationTest extends TestCase
         $grantsBefore = DB::table('user_roles')->orderBy('id')->get()->toArray();
 
         $this->artisan('candidates:provision', ['--dry-run' => true])
-            ->expectsOutputToContain("Would classify account #{$ordinary->id}")
-            ->expectsOutputToContain('Dry run: nothing was changed.')
+            ->expectsOutputToContain('Preview only')
             ->assertSuccessful();
         $this->assertEquals($grantsBefore, DB::table('user_roles')->orderBy('id')->get()->toArray());
 
-        $this->artisan('candidates:provision')->expectsOutputToContain('Classified 1 account(s)')->assertSuccessful();
+        $this->artisan('candidates:provision')->expectsOutputToContain('Preview only')->assertSuccessful();
+        $this->assertEquals($grantsBefore, DB::table('user_roles')->orderBy('id')->get()->toArray());
+        $this->artisan('candidates:provision', ['--apply' => true])->assertSuccessful();
 
         $candidates = DB::table('user_roles')
             ->join('roles', 'roles.id', '=', 'user_roles.role_id')
@@ -110,16 +110,19 @@ class CandidateClassificationTest extends TestCase
             ->pluck('user_roles.user_id')
             ->map(fn ($id): int => (int) $id)
             ->all();
-        $this->assertSame([$ordinary->id, $alreadyCandidate->id], $candidates);
-        foreach ([$disabled, $administrator, $revoked, $judge, $coordinator] as $skipped) {
+        $this->assertSame([$ordinary->id, $alreadyCandidate->id, $disabled->id, $revoked->id], $candidates);
+        $this->assertFalse($disabled->fresh()->isActive());
+        foreach ([$administrator, $judge, $coordinator] as $skipped) {
             $this->assertFalse(app(CandidateRole::class)->isHeldBy($skipped), $skipped->email);
         }
         $this->assertSame(1, DB::table('audit_logs')->where('action', 'user_role.granted')->where('subject_id', $ordinary->id)
-            ->where('after_data', 'like', '%provisioning%')->count());
+            ->where('after_data', 'like', '%candidate_role_policy%')->count());
 
         // Idempotent: a second run finds nothing to do.
-        $this->artisan('candidates:provision')->expectsOutputToContain('Classified 0 account(s)')->assertSuccessful();
-        $this->assertSame(2, DB::table('user_roles')->join('roles', 'roles.id', '=', 'user_roles.role_id')->where('roles.code', CandidateRole::CODE)->count());
+        $audits = DB::table('audit_logs')->count();
+        $this->artisan('candidates:provision', ['--apply' => true])->assertSuccessful();
+        $this->assertSame($audits, DB::table('audit_logs')->count());
+        $this->assertSame(4, DB::table('user_roles')->join('roles', 'roles.id', '=', 'user_roles.role_id')->where('roles.code', CandidateRole::CODE)->count());
     }
 
     private function userWithPlatformRole(string $code, string $email, bool $revoked = false): User
@@ -148,6 +151,9 @@ class CandidateClassificationTest extends TestCase
         DB::table('committee_members')->insert([
             'committee_id' => $committeeId, 'user_id' => $judge->id, 'position' => 'member', 'joined_at' => now(),
             'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('cycle_user_roles')->insert([
+            'cycle_id' => $cycleId, 'user_id' => $judge->id, 'role_id' => DB::table('roles')->where('code', 'judge')->value('id'), 'starts_at' => now(),
         ]);
         $cycleRole = DB::table('roles')->insertGetId(['code' => 'cycle_coordinator', 'name_ar' => 'منسق', 'scope' => 'cycle', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('cycle_user_roles')->insert([

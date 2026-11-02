@@ -9,6 +9,7 @@ export type User = {
   google_linked: boolean
   /** Holds the «مترشح» classification (assigned by the backend only). */
   is_candidate: boolean
+  roles?: { code: string; name: string; scope: 'platform' | 'cycle'; cycle: { id: number; name: string; year: number } | null }[]
   /** Administration permissions from current role grants (empty for everyone else). */
   admin_permissions: AdminPermission[]
   /** A current judge of an award cycle (the judge portal is /judge). */

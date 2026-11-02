@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Auth\RoleExclusivity;
 use App\Auth\SafeRedirect;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureAccountIsActive;
@@ -29,6 +30,7 @@ class AuthenticatedSessionController extends Controller
             return response()->json(['message' => EnsureAccountIsActive::MESSAGE, 'code' => 'account_disabled'], 403);
         }
 
+        app(RoleExclusivity::class)->reconcile($user);
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
         $user->forceFill(['last_login_at' => now()])->save();

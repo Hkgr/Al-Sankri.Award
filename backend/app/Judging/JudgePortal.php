@@ -4,6 +4,7 @@ namespace App\Judging;
 
 use App\Admin\CycleSchedule;
 use App\Admin\SubmittedApplications;
+use App\Auth\RoleExclusivity;
 use App\Models\Application;
 use App\Models\FileLink;
 use App\Models\User;
@@ -146,14 +147,9 @@ class JudgePortal
     /** The judge's current cycle when they have a grant but no assignments yet. */
     private function cycleIdFor(User $judge): ?int
     {
-        $now = now();
-        $id = DB::table('cycle_user_roles')
-            ->join('roles', 'roles.id', '=', 'cycle_user_roles.role_id')
+        $id = app(RoleExclusivity::class)->cycles()
             ->where('cycle_user_roles.user_id', $judge->getKey())
             ->where('roles.code', 'judge')
-            ->whereNull('cycle_user_roles.revoked_at')
-            ->where('cycle_user_roles.starts_at', '<=', $now)
-            ->where(fn ($query) => $query->whereNull('cycle_user_roles.ends_at')->orWhere('cycle_user_roles.ends_at', '>', $now))
             ->orderByDesc('cycle_user_roles.id')
             ->value('cycle_user_roles.cycle_id');
 

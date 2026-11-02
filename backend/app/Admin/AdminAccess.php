@@ -2,8 +2,8 @@
 
 namespace App\Admin;
 
+use App\Auth\RoleExclusivity;
 use App\Models\User;
-use App\Support\AuditLog;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -60,11 +60,14 @@ class AdminAccess
      */
     public function permissionsOf(User $user): array
     {
-        return DB::table('user_roles')
+        if (! $user->isActive()) {
+            return [];
+        }
+
+        return app(RoleExclusivity::class)->platform(lock: DB::transactionLevel() > 0)
             ->join('role_permissions', 'role_permissions.role_id', '=', 'user_roles.role_id')
             ->join('permissions', 'permissions.id', '=', 'role_permissions.permission_id')
             ->where('user_roles.user_id', $user->getKey())
-            ->whereNull('user_roles.revoked_at')
             ->whereIn('permissions.code', self::PERMISSIONS)
             ->orderBy('permissions.code')
             ->distinct()
@@ -88,12 +91,8 @@ class AdminAccess
      */
     public function holdsAdminRole(int $userId): bool
     {
-        return DB::table('user_roles')
-            ->join('roles', 'roles.id', '=', 'user_roles.role_id')
-            ->where('user_roles.user_id', $userId)
-            ->where('roles.code', self::ADMIN_ROLE)
-            ->whereNull('user_roles.revoked_at')
-            ->exists();
+        return app(RoleExclusivity::class)->platform(lock: DB::transactionLevel() > 0)
+            ->where('user_roles.user_id', $userId)->where('roles.code', self::ADMIN_ROLE)->first(['user_roles.id']) !== null;
     }
 
     /**
@@ -101,17 +100,10 @@ class AdminAccess
      */
     public function isJudge(int $userId, ?int $cycleId = null): bool
     {
-        $now = now();
-
-        return DB::table('cycle_user_roles')
-            ->join('roles', 'roles.id', '=', 'cycle_user_roles.role_id')
-            ->where('cycle_user_roles.user_id', $userId)
-            ->where('roles.code', self::JUDGE_ROLE)
-            ->whereNull('cycle_user_roles.revoked_at')
-            ->where('cycle_user_roles.starts_at', '<=', $now)
-            ->where(fn ($query) => $query->whereNull('cycle_user_roles.ends_at')->orWhere('cycle_user_roles.ends_at', '>', $now))
+        return app(RoleExclusivity::class)->cycles(lock: DB::transactionLevel() > 0)
+            ->where('cycle_user_roles.user_id', $userId)->where('roles.code', self::JUDGE_ROLE)
             ->when($cycleId !== null, fn ($query) => $query->where('cycle_user_roles.cycle_id', $cycleId))
-            ->exists();
+            ->first(['cycle_user_roles.id']) !== null;
     }
 
     public function roleId(string $code): int
@@ -132,29 +124,6 @@ class AdminAccess
      */
     public function grantAdmin(User $user, bool $dryRun = false): bool
     {
-        $roleId = $this->roleId(self::ADMIN_ROLE);
-
-        return DB::transaction(function () use ($user, $roleId, $dryRun): bool {
-            $locked = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
-
-            if (! $locked->isActive()) {
-                throw new RuntimeException('This account is disabled; it is not given administration access.');
-            }
-            if ($this->holdsAdminRole((int) $locked->getKey())) {
-                return false;
-            }
-            if ($dryRun) {
-                return true;
-            }
-
-            $now = now();
-            DB::table('user_roles')->insert([
-                'user_id' => $locked->getKey(), 'role_id' => $roleId, 'assigned_by' => null, 'assigned_at' => $now,
-                'created_at' => $now, 'updated_at' => $now,
-            ]);
-            AuditLog::record('user_role.granted', null, 'user', (int) $locked->getKey(), ['role' => self::ADMIN_ROLE, 'source' => self::SOURCE_COMMAND]);
-
-            return true;
-        });
+        return app(RoleExclusivity::class)->grantPlatform($user, self::ADMIN_ROLE, self::SOURCE_COMMAND, dryRun: $dryRun);
     }
 }

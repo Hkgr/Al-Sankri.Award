@@ -244,7 +244,8 @@ class AdministrationTest extends TestCase
         $this->assertTrue(app(AdminAccess::class)->isJudge((int) $legacy->id));
         $this->assertTrue(app(CandidateRole::class)->isHeldBy($candidateOnly), 'a candidate who is not a judge keeps the classification');
         $migration->down();
-        $this->assertTrue(app(CandidateRole::class)->isHeldBy($legacy));
+        $this->assertDatabaseHas('user_roles', ['user_id' => $legacy->id, 'role_id' => app(CandidateRole::class)->roleId(), 'revoked_at' => null]);
+        $this->assertFalse(app(CandidateRole::class)->isHeldBy($legacy), 'even a contradictory legacy grant cannot authorize candidate access');
         $this->assertSame(0, DB::table('audit_logs')->where('action', 'user_role.separated')->count());
     }
 
@@ -534,9 +535,9 @@ class AdministrationTest extends TestCase
         $staffReady = $this->readyToSubmit($staff);
         $this->artisan('admin:grant-access', ['--email' => $staff->email])->assertSuccessful();
         $this->signIn($staff->email);
-        $this->send('/api/candidate/submission', ['reviewed_revision' => 1], $staffReady)->assertForbidden()->assertJsonPath('code', 'award_admin');
+        $this->send('/api/candidate/submission', ['reviewed_revision' => 1], $staffReady)->assertForbidden()->assertJsonPath('code', 'candidate_role_unavailable');
         $this->assertSame(2, DB::table('application_versions')->count());
-        $this->assertTrue(app(CandidateRole::class)->isHeldBy($staff));
+        $this->assertFalse(app(CandidateRole::class)->isHeldBy($staff));
         $this->assertSame(1, DB::table('applications')->where('created_by', $staff->id)->count());
     }
 
@@ -581,7 +582,7 @@ class AdministrationTest extends TestCase
             'layla@example.org' => ['submitted', 'complete', 'complete', 'complete'],
             'off@example.org' => ['no_basic_information', 'none', 'none', 'none'],
             'admin@example.org' => ['not_required', 'none', 'none', 'none'],
-            'operator@example.org' => ['not_required', 'none', 'none', 'none'],
+            'operator@example.org' => ['no_basic_information', 'none', 'none', 'none'],
             'judge@example.org' => ['not_required', 'none', 'none', 'none'],
         ];
         foreach ($expected as $email => $progress) {
@@ -590,7 +591,7 @@ class AdministrationTest extends TestCase
         $this->assertFalse($rows['fresh@example.org']['email_verified']);
         $this->assertFalse($rows['off@example.org']['active']);
         $this->assertNull($rows['fresh@example.org']['last_login_at']);
-        $this->assertSame(['award_admin', 'candidate'], array_column($rows['layla@example.org']['roles']['platform'], 'code'), 'candidate history kept beside the new role');
+        $this->assertSame(['award_admin'], array_column($rows['layla@example.org']['roles']['platform'], 'code'), 'revoked candidate history is preserved but is not a current role');
         $this->assertNotNull($rows['layla@example.org']['submission']['application_id']);
         $this->assertSame([['judge', 'الإبداع']], array_map(fn ($role) => [$role['code'], $role['domain']], $rows['judge@example.org']['roles']['cycle']));
         $this->assertSame([], $rows['gone@example.org']['roles']['cycle'], 'a revoked grant is not shown');
@@ -622,7 +623,7 @@ class AdministrationTest extends TestCase
             $this->assertSame('awaiting_nomination', $otherRows["{$name}@example.org"]['progress']['state'], $name);
         }
         $this->assertNull($otherRows['layla@example.org']['submission']);
-        $this->assertSame([], collect($this->read("/api/admin/users?cycle={$next}&role=judge")->json('data'))->pluck('email')->all(), 'judge is cycle-scoped');
+        $this->assertSame(['judge@example.org'], collect($this->read("/api/admin/users?cycle={$next}&role=judge")->json('data'))->pluck('email')->all(), 'current roles are filtered across every cycle');
         $closed = collect($this->read("/api/admin/users?cycle={$this->cycleId}&per_page=50")->assertJsonPath('meta.cycle.stage_open', false)->json('data'))->keyBy('email');
         $this->assertSame(['submitted', 'ready'], [$closed['layla@example.org']['progress']['state'], $closed['ready@example.org']['progress']['state']]);
         $this->read('/api/admin/users?cycle=999')->assertNotFound();

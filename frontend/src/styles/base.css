@@ -56,11 +56,8 @@ img {
   block-size: auto;
 }
 
-/* The official transparent green/gold artwork needs a light surface in every shell. */
+/* Preserve the official artwork's transparency against its surrounding surface. */
 .award-logo {
-  background: #fff;
-  padding: 0.35rem;
-  border-radius: var(--sa-radius-sm);
   object-fit: contain;
 }
 
