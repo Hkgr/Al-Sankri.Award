@@ -10,6 +10,7 @@ use App\Admin\JudgingCommittees;
 use App\Admin\RemovalFiles;
 use App\Candidates\AccountContext;
 use App\Candidates\AwardTerms;
+use App\Judging\Assignments;
 use App\Judging\CommitteeDecision;
 use App\Judging\JudgePortal;
 use App\Models\Application;
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AccountRemovalTest extends TestCase
@@ -225,6 +227,127 @@ class AccountRemovalTest extends TestCase
         $this->postJson($this->url($judges[0]).'/remove', $input)->assertConflict();
         $this->assertDatabaseCount('evaluations', 3);
         $this->assertTrue($judges[0]->fresh()->isActive());
+    }
+
+    /** @return array<string, array{string, bool}> */
+    public static function categoryCorrectionOrders(): array
+    {
+        return [
+            'retain, correct after reapproval' => ['retain', true],
+            'purge, correct after reapproval' => ['purge', true],
+            'retain, correct before reapproval' => ['retain', false],
+            'purge, correct before reapproval' => ['purge', false],
+        ];
+    }
+
+    #[DataProvider('categoryCorrectionOrders')]
+    public function test_category_correction_delivers_the_current_version_after_judge_replacement(string $mode, bool $approveFirst): void
+    {
+        [$app, $version, , $committee, $judges] = $this->judgedParticipation();
+        $submitted = (array) DB::table('application_versions')->where('id', $version)->first();
+        $keptAssignments = DB::table('judging_assignments')->whereIn('committee_member_id', DB::table('committee_members')->whereIn('user_id', [$judges[1]->id, $judges[2]->id])->select('id'))->orderBy('id')->get();
+        $keptEvaluations = DB::table('evaluations')->whereIn('judging_assignment_id', $keptAssignments->pluck('id'))->orderBy('id')->get();
+        $keptScores = DB::table('evaluation_scores')->whereIn('evaluation_id', $keptEvaluations->pluck('id'))->orderBy('id')->get();
+        DB::table('applications')->where('id', $app)->update(['taxonomy_review_required' => true]);
+        $this->actingAs($this->admin);
+        $input = $this->input($judges[0], $mode) + ['confirmation' => $judges[0]->email];
+        $this->postJson($this->url($judges[0]).'/remove', $input)->assertOk();
+        $this->assertDatabaseHas('committees', ['id' => $committee, 'status' => 'draft']);
+        $history = DB::table('audit_logs')->orderBy('id')->get();
+        $formerAssignments = DB::table('judging_assignments')->whereNotIn('id', $keptAssignments->pluck('id'))->orderBy('id')->get();
+        $formerEvaluations = DB::table('evaluations')->whereIn('judging_assignment_id', $formerAssignments->pluck('id'))->orderBy('id')->get();
+        $formerScores = DB::table('evaluation_scores')->whereIn('evaluation_id', $formerEvaluations->pluck('id'))->orderBy('id')->get();
+
+        $replacement = User::factory()->create();
+        $cycle = (int) DB::table('applications')->where('id', $app)->value('cycle_id');
+        $committees = app(JudgingCommittees::class);
+        [$outcome, $appointment] = $committees->appoint($this->admin, $cycle, 'culture_and_arts', ['email' => $replacement->email, 'specialty' => 'Literature'], true, $committees->accountRef($replacement));
+        $this->assertSame(JudgingCommittees::APPOINTED, $outcome);
+        $member = $appointment['member_id'];
+        if ($approveFirst) {
+            $this->assertSame(JudgingCommittees::UPDATED, $committees->approve($this->admin, $cycle, 'culture_and_arts'));
+        }
+        $this->assertDatabaseMissing('judging_assignments', ['committee_member_id' => $member]);
+        $this->assertFalse(app(Assignments::class)->delivered($app, $committee));
+
+        $correction = ['account_context' => AccountContext::for($this->admin), 'subcategory' => 'poetry'];
+        $this->postJson('/api/admin/applications/'.$app.'/category-correction', $correction)->assertOk()->assertJsonPath('data.current_category.review_required', false);
+        if (! $approveFirst) {
+            $this->assertDatabaseMissing('judging_assignments', ['committee_member_id' => $member]);
+            $this->assertSame(JudgingCommittees::UPDATED, $committees->approve($this->admin, $cycle, 'culture_and_arts'));
+        }
+        $this->assertSame(1, DB::table('judging_assignments')->where('committee_member_id', $member)->where('application_version_id', $version)->where('round_number', 1)->count(), 'The replacement must receive exactly one assignment for the current version.');
+        $this->assertTrue(app(Assignments::class)->delivered($app, $committee));
+
+        $assignments = DB::table('judging_assignments')->orderBy('id')->get();
+        $this->postJson('/api/admin/applications/'.$app.'/category-correction', $correction)->assertOk();
+        $this->assertSame(ApplicationReviews::UNCHANGED, app(ApplicationReviews::class)->refer($this->admin, $app, $committee));
+        $this->assertEquals($assignments, DB::table('judging_assignments')->orderBy('id')->get(), 'Retries and a repeated referral must not duplicate or rewrite assignments.');
+        $this->assertSame(1, DB::table('audit_logs')->where('action', 'application.category_corrected')->count());
+        $this->assertSame(JudgePortal::SENT, app(JudgePortal::class)->send($replacement, $app, '100', 'Replacement notes', 'Recommendations', false));
+        $this->assertSame('90', app(CommitteeDecision::class)->forApplication(Application::findOrFail($app))['decision']);
+        $this->assertEquals($keptAssignments, DB::table('judging_assignments')->whereIn('id', $keptAssignments->pluck('id'))->orderBy('id')->get());
+        $this->assertEquals($keptEvaluations, DB::table('evaluations')->whereIn('id', $keptEvaluations->pluck('id'))->orderBy('id')->get());
+        $this->assertEquals($keptScores, DB::table('evaluation_scores')->whereIn('id', $keptScores->pluck('id'))->orderBy('id')->get());
+        $this->assertEquals($formerAssignments, DB::table('judging_assignments')->whereIn('id', $formerAssignments->pluck('id'))->orderBy('id')->get());
+        $this->assertEquals($formerEvaluations, DB::table('evaluations')->whereIn('id', $formerEvaluations->pluck('id'))->orderBy('id')->get());
+        $this->assertEquals($formerScores, DB::table('evaluation_scores')->whereIn('id', $formerScores->pluck('id'))->orderBy('id')->get());
+        $this->assertEquals($history, DB::table('audit_logs')->whereIn('id', $history->pluck('id'))->orderBy('id')->get());
+        $this->assertSame($submitted, (array) DB::table('application_versions')->where('id', $version)->first(), 'The submitted snapshot, form and content hash must remain byte-for-byte unchanged.');
+    }
+
+    /** @return array<string, array{bool}> */
+    public static function unassignedReviewStates(): array
+    {
+        return ['pending' => [false], 'excluded' => [true]];
+    }
+
+    #[DataProvider('unassignedReviewStates')]
+    public function test_category_correction_does_not_assign_an_application_without_a_referral(bool $excluded): void
+    {
+        [$app, $version] = $this->participation($this->candidate);
+        $submitted = (array) DB::table('application_versions')->where('id', $version)->first();
+        $cycle = (int) DB::table('applications')->where('id', $app)->value('cycle_id');
+        $committees = app(JudgingCommittees::class);
+        [, $committee] = $committees->create($this->admin, $cycle, 'culture_and_arts', 'Test committee');
+        foreach (range(1, 3) as $index) {
+            $this->addJudge($committee, User::factory()->create());
+        }
+        $this->assertSame(JudgingCommittees::UPDATED, $committees->approve($this->admin, $cycle, 'culture_and_arts'));
+        if ($excluded) {
+            $this->assertSame(ApplicationReviews::EXCLUDED, app(ApplicationReviews::class)->exclude($this->admin, $app, 'Outside scope'));
+        }
+        DB::table('applications')->where('id', $app)->update(['taxonomy_review_required' => true]);
+        $this->actingAs($this->admin)->postJson('/api/admin/applications/'.$app.'/category-correction', ['account_context' => AccountContext::for($this->admin), 'subcategory' => 'poetry'])
+            ->assertOk()->assertJsonPath('data.current_category.review_required', false);
+        $this->assertDatabaseHas('applications', ['id' => $app, 'review_status' => $excluded ? 'excluded' : 'pending']);
+        $this->assertDatabaseCount('judging_assignments', 0);
+        $this->assertDatabaseCount('evaluations', 0);
+        $this->assertSame($submitted, (array) DB::table('application_versions')->where('id', $version)->first());
+    }
+
+    public function test_category_correction_rolls_back_when_assignment_creation_fails(): void
+    {
+        [$app, , , $committee, $judges] = $this->judgedParticipation();
+        DB::table('applications')->where('id', $app)->update(['taxonomy_review_required' => true]);
+        $this->actingAs($this->admin);
+        $this->postJson($this->url($judges[0]).'/remove', $this->input($judges[0], 'retain'))->assertOk();
+        $this->addJudge($committee, User::factory()->create());
+        $cycle = (int) DB::table('applications')->where('id', $app)->value('cycle_id');
+        $this->assertSame(JudgingCommittees::UPDATED, app(JudgingCommittees::class)->approve($this->admin, $cycle, 'culture_and_arts'));
+        $snapshot = fn (): array => collect(['applications', 'application_versions', 'judging_assignments', 'evaluations', 'evaluation_scores', 'audit_logs'])
+            ->mapWithKeys(fn (string $table): array => [$table => DB::table($table)->orderBy('id')->get()->all()])->all();
+        $before = $snapshot();
+        $armed = true;
+        DB::listen(function (QueryExecuted $query) use (&$armed): void {
+            if ($armed && str_starts_with(strtolower($query->sql), 'insert') && str_contains($query->sql, 'judging_assignments')) {
+                $armed = false;
+                throw new \RuntimeException('injected assignment failure');
+            }
+        });
+        $this->postJson('/api/admin/applications/'.$app.'/category-correction', ['account_context' => AccountContext::for($this->admin), 'subcategory' => 'poetry'])->assertStatus(500);
+        $this->assertFalse($armed, 'The failure must occur during assignment creation, after the category update.');
+        $this->assertEquals($before, $snapshot(), 'Category, assignments, marks, submitted versions and audit events must all roll back together.');
     }
 
     public function test_purging_a_candidate_removes_its_published_history_without_removing_judges(): void

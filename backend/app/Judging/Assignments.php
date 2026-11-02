@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
  * average.
  *
  * Called when the committee is approved and when an administrator refers an
- * application (App\Admin\ApplicationReviews). Pending and administratively
+ * application (App\Admin\ApplicationReviews), including after category
+ * correction lifts its review flag. Pending and administratively
  * excluded applications are never assigned on either path: the referral
  * gate is applied here, where every path ends. The committee row is locked
  * by the caller, so two paths cannot create the same assignment twice.
@@ -58,7 +59,7 @@ class Assignments
      */
     public function provisionCommittee(int $committeeId, int $assignedBy): void
     {
-        $committee = DB::table('committees')->where('id', $committeeId)->first();
+        $committee = DB::table('committees')->where('id', $committeeId)->lockForUpdate()->first();
         if ($committee === null || $committee->type !== 'judging' || $committee->status !== 'approved') {
             return;
         }
@@ -73,12 +74,12 @@ class Assignments
      */
     public function provisionReferral(int $applicationId, int $assignedBy): void
     {
-        $application = DB::table('applications')->where('id', $applicationId)->first();
+        $application = DB::table('applications')->where('id', $applicationId)->lockForUpdate()->first();
         if ($application === null || $application->review_status !== Application::REVIEW_REFERRED || $application->review_committee_id === null) {
             return;
         }
 
-        $committee = DB::table('committees')->where('id', $application->review_committee_id)->first();
+        $committee = DB::table('committees')->where('id', $application->review_committee_id)->lockForUpdate()->first();
         if ($committee === null || $committee->type !== 'judging' || $committee->status !== 'approved') {
             return;
         }
@@ -88,10 +89,13 @@ class Assignments
 
     private function assign(object $committee, int $assignedBy, ?int $onlyApplicationId = null): void
     {
+        // Locking reads see commits made while waiting for the committee,
+        // including replacement members and assignments from a parallel retry.
         $rubricId = $this->rubricId((int) $committee->cycle_domain_id, $assignedBy);
         $members = DB::table('committee_members')
             ->where('committee_id', $committee->id)
             ->whereNull('left_at')
+            ->orderBy('id')->lockForUpdate()
             ->pluck('id');
 
         $applications = DB::table('applications')
@@ -103,6 +107,7 @@ class Assignments
             ->where('review_status', Application::REVIEW_REFERRED)
             ->where('review_committee_id', $committee->id)
             ->when($onlyApplicationId !== null, fn ($query) => $query->where('id', $onlyApplicationId))
+            ->orderBy('id')->lockForUpdate()
             ->get(['id', 'current_version_id', 'status']);
 
         $now = now();
@@ -113,7 +118,7 @@ class Assignments
                     ->where('application_version_id', $application->current_version_id)
                     ->where('committee_member_id', $memberId)
                     ->where('round_number', 1)
-                    ->exists();
+                    ->lockForUpdate()->first(['id']);
                 if ($exists) {
                     continue;
                 }
@@ -163,6 +168,7 @@ class Assignments
             ->where('evaluation_criteria.code', self::CRITERION)
             ->where('evaluation_criteria.max_score', 100)
             ->orderByDesc('evaluation_rubrics.version_number')
+            ->lockForUpdate()
             ->value('evaluation_rubrics.id');
         if ($existing !== null) {
             return (int) $existing;

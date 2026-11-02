@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Admin\AdminAccess;
 use App\Admin\SubmittedApplications;
 use App\Http\Controllers\Controller;
+use App\Judging\Assignments;
 use App\Models\User;
 use App\Support\AuditLog;
 use App\Support\PrivateFileResponse;
@@ -20,14 +21,19 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  */
 class ApplicationsController extends Controller
 {
-    /** Correct only a flagged current category; submitted snapshots stay immutable. */
+    /** Correct the current category and resume referred delivery; submitted snapshots stay immutable. */
     public function correctCategory(Request $request, int $application): JsonResponse
     {
         $data = $request->validate(['subcategory' => ['required', 'string', 'max:80']]);
 
-        return DB::transaction(function () use ($request, $application, $data): JsonResponse {
+        DB::transaction(function () use ($request, $application, $data): void {
             $actor = User::query()->whereKey($request->user()->id)->lockForUpdate()->first();
             abort_unless($actor?->isActive() && app(AdminAccess::class)->can($actor, AdminAccess::REVIEW_APPLICATIONS), 403);
+            $found = DB::table('applications')->where('id', $application)->first(['cycle_id', 'cycle_domain_id']);
+            abort_if($found === null, 404);
+            // As in referral, approval and account removal: committee before application.
+            DB::table('committees')->where('cycle_id', $found->cycle_id)->where('cycle_domain_id', $found->cycle_domain_id)
+                ->where('type', 'judging')->orderBy('id')->lockForUpdate()->get(['id']);
             $row = DB::table('applications')->where('id', $application)->lockForUpdate()->first();
             abort_if($row === null || $row->current_version_id === null, 404);
             if ($row->taxonomy_review_required) {
@@ -37,9 +43,11 @@ class ApplicationsController extends Controller
                 DB::table('applications')->where('id', $application)->update(['subcategory_id' => $category->id, 'taxonomy_review_required' => false, 'updated_at' => now()]);
                 AuditLog::record('application.category_corrected', (int) $actor->id, 'application', $application, ['subcategory_id' => (int) $category->id], (int) $row->cycle_id);
             }
+            app(Assignments::class)->provisionReferral($application, (int) $actor->id);
+        }, 3);
 
-            return response()->json(['data' => $this->applications->show($application)]);
-        });
+        // A waiting retry must not return its earlier consistent-read snapshot.
+        return response()->json(['data' => $this->applications->show($application)]);
     }
 
     private const NOT_FOUND = 'لم يُعثر على ملف ترشح مرسل بهذا الرقم.';
