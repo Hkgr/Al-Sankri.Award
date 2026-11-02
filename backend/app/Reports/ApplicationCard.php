@@ -63,6 +63,7 @@ final class ApplicationCard
                 ['الدورة', "{$summary['cycle']['name']} — {$summary['cycle']['year']}"],
                 ['المجال الرئيسي', (string) ($summary['domain']['name'] ?? '—')],
                 ['الفئة الفرعية', (string) ($summary['subcategory']['name'] ?? '—')],
+                ['الفئة الحالية المعتمدة إدارياً', (string) (($detail['current_category']['review_required'] ?? false) ? 'تحتاج مراجعة إدارية' : ($detail['current_category']['name'] ?? $summary['subcategory']['name'] ?? '—'))],
                 ['حالة الملف', self::STATUS_LABELS[$summary['status']] ?? (string) $summary['status']],
                 ['التصنيف الإداري', self::review($detail['review'] ?? null)],
                 ['وقت الإرسال', Formats::dateTime($summary['submitted_at']).' بتوقيت دمشق'],

@@ -83,15 +83,15 @@ class NominationDetailsTest extends TestCase
         $domains = $this->read('/api/candidate/nomination-details')->assertOk()->json('options.domains');
 
         $this->assertSame([
-            ['code' => 'culture_and_arts', 'name' => 'الثقافة والفنون', 'artwork' => 'domain-culture-and-arts', 'subcategories' => [['code' => 'culture', 'name' => 'الثقافة'], ['code' => 'arts', 'name' => 'الفنون']]],
+            ['code' => 'culture_and_arts', 'name' => 'الثقافة والفنون', 'artwork' => 'domain-culture-and-arts', 'subcategories' => [['code' => 'poetry', 'name' => 'الشعر'], ['code' => 'story', 'name' => 'القصة']]],
             ['code' => 'heritage', 'name' => 'التراث', 'artwork' => 'domain-tangible-and-intangible-heritage', 'subcategories' => [['code' => 'tangible_heritage', 'name' => 'التراث المادي'], ['code' => 'intangible_heritage', 'name' => 'التراث اللامادي']]],
             // Creativity uses the approved former Volunteer Work artwork.
             ['code' => 'creativity', 'name' => 'الإبداع', 'artwork' => 'domain-volunteer-work', 'subcategories' => [
-                ['code' => 'social_responsibility', 'name' => 'المسؤولية المجتمعية'], ['code' => 'entrepreneurship', 'name' => 'ريادة الأعمال'], ['code' => 'quality', 'name' => 'الجودة'],
+                ['code' => 'entrepreneurship', 'name' => 'ريادة الأعمال'], ['code' => 'social_responsibility', 'name' => 'المسؤولية المجتمعية'],
             ]],
         ], $domains);
 
-        $pairs = ['culture_and_arts' => ['culture', 'arts'], 'heritage' => ['tangible_heritage', 'intangible_heritage'], 'creativity' => ['social_responsibility', 'entrepreneurship', 'quality']];
+        $pairs = ['culture_and_arts' => ['poetry', 'story'], 'heritage' => ['tangible_heritage', 'intangible_heritage'], 'creativity' => ['entrepreneurship', 'social_responsibility']];
         foreach ($pairs as $domain => $subcategories) {
             foreach ($subcategories as $subcategory) {
                 $this->check('domain', ['domain' => $domain, 'subcategory' => $subcategory])->assertNoContent();
@@ -107,16 +107,16 @@ class NominationDetailsTest extends TestCase
         $this->completeStage1($this->candidate);
         $this->signIn();
 
-        $this->check('domain', ['domain' => 'culture_and_arts', 'subcategory' => 'quality'])->assertUnprocessable()->assertJsonValidationErrors(['subcategory']);
+        $this->check('domain', ['domain' => 'culture_and_arts', 'subcategory' => 'entrepreneurship'])->assertUnprocessable()->assertJsonValidationErrors(['subcategory']);
         $this->check('domain', ['domain' => 'culture_and_arts'])->assertUnprocessable()->assertJsonValidationErrors(['subcategory']);
-        $this->check('domain', ['subcategory' => 'arts'])->assertUnprocessable()->assertJsonValidationErrors(['domain']);
-        $this->check('domain', ['domain' => 'volunteer_work', 'subcategory' => 'arts'])->assertUnprocessable()->assertJsonValidationErrors(['domain']);
-        $this->check('domain', ['domain' => ['culture_and_arts', 'heritage'], 'subcategory' => ['culture', 'arts']])
+        $this->check('domain', ['subcategory' => 'story'])->assertUnprocessable()->assertJsonValidationErrors(['domain']);
+        $this->check('domain', ['domain' => 'volunteer_work', 'subcategory' => 'story'])->assertUnprocessable()->assertJsonValidationErrors(['domain']);
+        $this->check('domain', ['domain' => ['culture_and_arts', 'heritage'], 'subcategory' => ['poetry', 'story']])
             ->assertUnprocessable()->assertJsonValidationErrors(['domain', 'subcategory']);
 
         // An inactive subcategory or a closed domain is not available.
-        DB::table('cycle_domain_subcategories')->where('code', 'arts')->update(['is_active' => false]);
-        $this->check('domain', ['domain' => 'culture_and_arts', 'subcategory' => 'arts'])->assertUnprocessable()->assertJsonValidationErrors(['subcategory']);
+        DB::table('cycle_domain_subcategories')->where('code', 'story')->update(['is_active' => false]);
+        $this->check('domain', ['domain' => 'culture_and_arts', 'subcategory' => 'story'])->assertUnprocessable()->assertJsonValidationErrors(['subcategory']);
         DB::table('cycle_domains')->where('name_ar', 'التراث')->update(['is_open_for_applications' => false]);
         $this->check('domain', ['domain' => 'heritage', 'subcategory' => 'tangible_heritage'])->assertUnprocessable()->assertJsonValidationErrors(['domain']);
         $this->assertSame(['culture_and_arts', 'creativity'], array_column($this->read('/api/candidate/nomination-details')->json('options.domains'), 'code'));
@@ -133,7 +133,7 @@ class NominationDetailsTest extends TestCase
             'applicant_id' => $applicant, 'created_by' => $this->candidate->id, 'status' => 'draft',
         ]);
 
-        foreach ([$this->subcategoryId('cycle-a', 'quality'), $this->subcategoryId('cycle-b', 'arts')] as $foreign) {
+        foreach ([$this->subcategoryId('cycle-a', 'entrepreneurship'), $this->subcategoryId('cycle-b', 'story')] as $foreign) {
             try {
                 $insert($foreign);
                 $this->fail('A subcategory of another domain or cycle was accepted.');
@@ -141,7 +141,7 @@ class NominationDetailsTest extends TestCase
                 $this->assertSame(0, DB::table('applications')->count());
             }
         }
-        $insert($this->subcategoryId('cycle-a', 'arts'));
+        $insert($this->subcategoryId('cycle-a', 'story'));
         $this->assertSame(1, DB::table('applications')->count());
     }
 
@@ -174,7 +174,7 @@ class NominationDetailsTest extends TestCase
 
         // The current form saves the work without any retired value.
         $saved = $this->confirm($this->payload(), $journeyKey)->assertCreated()->json('data');
-        $this->assertSame(['confirmed_at', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($saved));
+        $this->assertSame(['confirmed_at', 'taxonomy_review_required', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($saved));
         $application = DB::table('applications')->sole();
         foreach (['funding_type', 'funder_name', 'funding_amount_usd', 'has_partnerships', 'implementation_started_on', 'implementation_ended_on', 'implementation_status'] as $column) {
             $this->assertNull($application->{$column}, $column);
@@ -208,7 +208,7 @@ class NominationDetailsTest extends TestCase
 
         $this->confirm($this->payload(), $journeyKey)->assertCreated()
             ->assertJsonPath('data.domain', ['code' => 'creativity', 'name' => 'الإبداع', 'artwork' => 'domain-volunteer-work'])
-            ->assertJsonPath('data.subcategory.code', 'quality');
+            ->assertJsonPath('data.subcategory.code', 'entrepreneurship');
         $application = DB::table('applications')->sole();
         $this->assertSame(['draft', null, null, null], [$application->status, $application->first_submitted_at, $application->current_version_id, $application->reference_number]);
         $this->assertSame(0, DB::table('application_versions')->count());
@@ -225,7 +225,7 @@ class NominationDetailsTest extends TestCase
 
         // Retries return the stored stage; nothing is replaced or added.
         $snapshot = $this->snapshot();
-        $this->confirm($this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', 'nomination_details_already_confirmed')->assertJsonPath('data.subcategory.code', 'quality');
+        $this->confirm($this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', 'nomination_details_already_confirmed')->assertJsonPath('data.subcategory.code', 'entrepreneurship');
         $this->confirm(['domain' => 'heritage', 'subcategory' => 'tangible_heritage', 'title' => 'آخر'] + $this->payload(), $journeyKey)
             ->assertConflict()->assertJsonPath('data.title', 'مبادرة ذاكرة الحيّ');
         $this->check('domain', $this->payload(), $journeyKey)->assertConflict()->assertJsonPath('code', 'nomination_details_already_confirmed');
@@ -465,7 +465,7 @@ class NominationDetailsTest extends TestCase
         $this->assertSame(0, DB::table('audit_logs')->where('actor_user_id', $this->operator->id)->count());
 
         $this->artisan('nomination:setup', $full)->expectsOutputToContain('Stage 2 availability after these changes: available')->assertSuccessful();
-        $this->assertSame([3, 3, 7, 1], [DB::table('award_domains')->count(), DB::table('cycle_domains')->count(), DB::table('cycle_domain_subcategories')->count(), DB::table('cycle_stages')->count()]);
+        $this->assertSame([3, 3, 6, 1], [DB::table('award_domains')->count(), DB::table('cycle_domains')->count(), DB::table('cycle_domain_subcategories')->count(), DB::table('cycle_stages')->count()]);
         $this->assertSame($existingDomain, (array) DB::table('award_domains')->where('code', 'heritage')->first(), 'existing domain kept as it is');
         $stage = DB::table('cycle_stages')->sole();
         $this->assertSame(['enabled', $this->operator->id, '2026-01-01 06:00:00'], [$stage->status, (int) $stage->enabled_by, $stage->opens_at]);

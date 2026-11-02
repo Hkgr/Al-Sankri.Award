@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Candidates\AwardTerms;
 use App\Candidates\NominationCycles;
 use App\Candidates\NominationTaxonomy;
 use App\Candidates\PublicSchedule;
@@ -24,7 +25,7 @@ use Throwable;
  *
  * - the cycle: an existing one, or a new draft with --create-cycle and its
  *   explicit name, award name, year and timezone (nothing is invented);
- * - the three approved domains and seven subcategories
+ * - the three approved domains and six subcategories
  *   (App\Candidates\NominationTaxonomy): created when missing, existing
  *   records and identifiers kept as they are;
  * - the cycle's implementation country (--country), never overwritten;
@@ -114,6 +115,7 @@ class SetUpNominationStage extends Command
             $this->country($cycle, $actor);
             $this->stage($cycle, $actor);
             $this->judgingPeriod($cycle, $actor);
+            app(AwardTerms::class)->publishForCycle((int) $cycle->id);
             if ($this->option('publish-cycle')) {
                 $this->publish($cycle, $actor);
             }

@@ -21,7 +21,7 @@ test('a delayed lookup for A is dropped once the field holds B, and a confirmati
 })
 
 const cycles = [
-  { id: 2, domains: [{ code: 'heritage', subcategories: [{ code: 'tangible_heritage' }] }, { code: 'creativity', subcategories: [{ code: 'quality' }] }] },
+  { id: 2, domains: [{ code: 'heritage', subcategories: [{ code: 'tangible_heritage' }] }, { code: 'creativity', subcategories: [{ code: 'entrepreneurship' }] }] },
   { id: 1, domains: [{ code: 'heritage', subcategories: [{ code: 'old_heritage' }] }] },
 ]
 
@@ -32,7 +32,7 @@ test('changing the header cycle updates the address, and the request matches it'
   assert.equal(tableQuery(after, tableScope(after, 1, cycles)), 'cycle=2&domain=heritage&status=submitted', 'page reset; subcategory not in cycle 2 dropped')
 
   // A domain the new cycle lacks goes too.
-  assert.equal(new URLSearchParams(withScope('?cycle=2&domain=creativity&subcategory=quality', '1', cycles)).get('domain'), null)
+  assert.equal(new URLSearchParams(withScope('?cycle=2&domain=creativity&subcategory=entrepreneurship', '1', cycles)).get('domain'), null)
 })
 
 test('a restored address (back, forward, return link) decides the scope, and «all» stays explicit', () => {

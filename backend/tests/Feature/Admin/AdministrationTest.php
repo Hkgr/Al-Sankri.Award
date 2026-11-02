@@ -121,7 +121,7 @@ class AdministrationTest extends TestCase
         $this->signedIn = $this->admin;
         $this->read('/api/user')->assertJsonPath('data.admin_permissions', [
             AdminAccess::REVIEW_APPLICATIONS, AdminAccess::VIEW_APPLICATIONS, AdminAccess::VIEW_AUDIT, AdminAccess::MANAGE_COMMITTEES,
-            AdminAccess::VIEW_SYSTEM_LOGS, AdminAccess::EXPORT_REPORTS, AdminAccess::MANAGE_SCHEDULE, AdminAccess::VIEW_USERS,
+            AdminAccess::VIEW_SYSTEM_LOGS, AdminAccess::EXPORT_REPORTS, AdminAccess::MANAGE_SCHEDULE, AdminAccess::REMOVE_ACCOUNTS, AdminAccess::VIEW_USERS,
         ]);
         $this->navigate('/admin/applications')->assertOk();
         $this->navigate('/admin/applications/12')->assertOk();
@@ -274,7 +274,7 @@ class AdministrationTest extends TestCase
         $titles = fn (string $query): array => array_column($this->read('/api/admin/applications?'.$query)->assertOk()->json('data'), 'title');
         $this->assertSame(['ترميم خان قديم'], $titles('domain=heritage'));
         $this->assertSame(['ترميم خان قديم'], $titles('domain=heritage&subcategory=tangible_heritage'));
-        $this->assertSame([], $titles('domain=heritage&subcategory=quality'));
+        $this->assertSame([], $titles('domain=heritage&subcategory=entrepreneurship'));
         $this->assertSame(['ترميم خان قديم'], $titles('applicant_type=institution'));
         $this->assertSame('institution', $this->read('/api/admin/applications?q=العاديات')->json('data.0.applicant_type'));
         $this->assertCount(2, $titles('applicant_type=individual'));
@@ -301,7 +301,7 @@ class AdministrationTest extends TestCase
         $page = $this->read("/api/admin/applications/{$mine['id']}")->assertOk();
         $this->assertSame($mine['reference_number'], $page->json('data.summary.reference_number'));
         $this->assertSame('creativity', $page->json('data.summary.domain.code'));
-        $this->assertSame(['confirmed_at', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($page->json('data.nomination_details')));
+        $this->assertSame(['confirmed_at', 'taxonomy_review_required', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($page->json('data.nomination_details')));
         $this->assertSame('pending', $page->json('data.review.status'));
         $this->assertSame(self::NATIONAL_ID, $page->json('data.basic_information.individual.national_id_number'), 'the full basic information, for administrators');
         $this->assertSame(['explanatory'], array_column($page->json('data.documentation.attachments'), 'kind'));
@@ -346,7 +346,7 @@ class AdministrationTest extends TestCase
 
         // A new account: no password, unverified, no candidate role; the setup link is the reset link.
         $this->adminPost('/judges/lookup', ['email' => 'New.Judge@example.org'])->assertOk()->assertJsonPath('data.account', null);
-        $created = $this->appoint('creativity', 'New.Judge@example.org', extra: ['phone' => '+963 944 123 456', 'specialty' => 'الفنون البصرية', 'subcategory' => 'quality'])
+        $created = $this->appoint('creativity', 'New.Judge@example.org', extra: ['phone' => '+963 944 123 456', 'specialty' => 'الفنون البصرية', 'subcategory' => 'entrepreneurship'])
             ->assertCreated()->assertJsonPath('appointment.account_created', true)->assertJsonPath('appointment.setup_link', 'sent');
         $judge = User::query()->where('email', 'new.judge@example.org')->sole();
         $this->assertNull($judge->password);
@@ -640,7 +640,7 @@ class AdministrationTest extends TestCase
         $response = $this->read('/api/admin/users?per_page=50')->assertOk();
         $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         $this->assertSame(
-            ['id', 'name', 'email', 'email_verified', 'active', 'registered_at', 'last_login_at', 'roles', 'progress', 'submission'],
+            ['id', 'removable', 'name', 'email', 'email_verified', 'active', 'registered_at', 'last_login_at', 'roles', 'progress', 'submission'],
             array_keys($response->json('data.0')),
         );
         $body = (string) $response->getContent();
@@ -897,7 +897,7 @@ class AdministrationTest extends TestCase
 
     public function test_review_decisions_need_their_permission_a_ready_committee_and_the_displayed_account(): void
     {
-        $pending = $this->submitApplication($this->candidate, ['domain' => 'culture_and_arts', 'subcategory' => 'culture']);
+        $pending = $this->submitApplication($this->candidate, ['domain' => 'culture_and_arts', 'subcategory' => 'poetry']);
         $this->signInAdmin();
 
         // No committee, then a draft one: explained, and the application stays pending.

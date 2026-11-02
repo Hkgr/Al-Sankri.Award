@@ -4,6 +4,7 @@ import type { Errors } from '../basic/formModel'
 import { artworkFor, artworkLabel } from './nominationApi'
 import type { DomainOption } from './nominationApi'
 import { useLocale } from '../../../i18n/useLocale'
+import { categoryRequirements } from '../../../content/awardTerms'
 
 /*
  * Stage 2 controls, built on the Stage 1 field styles: visible labels,
@@ -62,7 +63,7 @@ export function DomainChooser({
   errors: Errors
   warning: ReactNode
 }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const selected = domains.find((option) => option.code === domain)
   const chosenSubcategory = selected?.subcategories.find((option) => option.code === subcategory)
 
@@ -95,6 +96,12 @@ export function DomainChooser({
       </fieldset>
 
       {warning}
+      {chosenSubcategory && <section className="form-alert form-alert--info" aria-label={t('eligibility.conditions')}>
+        <div className="form-alert__body">
+          <h3>{chosenSubcategory.name}</h3>
+          <ol className="check-list">{categoryRequirements(locale, chosenSubcategory.code).map((condition) => <li key={condition}>{condition}</li>)}</ol>
+        </div>
+      </section>}
 
       {selected && (
         <div className="domain-choice">

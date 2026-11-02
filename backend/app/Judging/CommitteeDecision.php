@@ -34,7 +34,7 @@ class CommitteeDecision
             ->where('id', $application->review_committee_id)
             ->where('cycle_domain_id', $application->cycle_domain_id)
             ->where('type', 'judging')
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'draft'])
             ->first();
         if ($committee === null) {
             return $empty;
@@ -43,15 +43,15 @@ class CommitteeDecision
         $members = DB::table('committee_members')
             ->join('users', 'users.id', '=', 'committee_members.user_id')
             ->where('committee_members.committee_id', $committee->id)
-            ->whereNull('committee_members.left_at')
             ->orderBy('committee_members.id')
-            ->get(['committee_members.id', 'users.name']);
+            ->get(['committee_members.id', 'committee_members.left_at', 'users.name']);
 
         $scores = [];
         $marks = [];
         $received = 0;
         $excluded = false;
         foreach ($members as $member) {
+            $current = $member->left_at === null;
             $row = DB::table('judging_assignments')
                 ->leftJoin('evaluations', 'evaluations.judging_assignment_id', '=', 'judging_assignments.id')
                 ->leftJoin('evaluation_scores', 'evaluation_scores.evaluation_id', '=', 'evaluations.id')
@@ -62,18 +62,19 @@ class CommitteeDecision
 
             $memberExcluded = $row !== null && $row->status === 'finalized' && $row->recommendation === 'exclude';
             $scored = $row !== null && $row->status === 'finalized' && ! $memberExcluded && $row->score !== null;
-            if ($memberExcluded || $scored) {
+            if ($current && ($memberExcluded || $scored)) {
                 $received++;
             }
-            if ($memberExcluded) {
+            if ($current && $memberExcluded) {
                 $excluded = true;
             }
-            if ($scored) {
+            if ($current && $scored) {
                 $marks[] = (string) $row->score;
             }
             $sent = $memberExcluded || $scored;
             $scores[] = [
                 'name' => $member->name,
+                'historical' => ! $current,
                 'score' => $scored ? Scores::present((string) $row->score) : null,
                 'notes' => $sent ? $row->overall_comment : null,
                 'recommendations' => $sent ? $row->recommendations : null,
@@ -82,12 +83,14 @@ class CommitteeDecision
             ];
         }
 
-        $complete = $members->isNotEmpty() && $received === $members->count();
+        $expected = $members->whereNull('left_at')->count();
+        $ready = $committee->status === 'approved' && ! $application->taxonomy_review_required;
+        $complete = $ready && in_array($expected, [3, 5], true) && $received === $expected;
 
         return [
-            'ready' => true,
+            'ready' => $ready,
             'referred' => true,
-            'expected' => $members->count(),
+            'expected' => $expected,
             'received' => $received,
             'decision' => $complete && ! $excluded ? Scores::average($marks) : null,
             'excluded' => $complete && $excluded,

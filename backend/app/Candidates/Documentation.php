@@ -400,10 +400,14 @@ class Documentation
      */
     public function lockForChange(User $user, CandidateNomination $journey): array
     {
-        User::query()->whereKey($user->getKey())->lockForUpdate()->first();
+        $account = User::query()->whereKey($user->getKey())->lockForUpdate()->first();
         $this->cycles->lockConfiguration();
         $journey = CandidateNomination::query()->whereKey($journey->getKey())->lockForUpdate()->firstOrFail();
         $application = Application::query()->whereKey($journey->application_id)->lockForUpdate()->firstOrFail();
+
+        if ($account === null || ! $account->isActive()) {
+            return [self::UNAVAILABLE, $journey, $application];
+        }
 
         if (! $application->isEditable()) {
             return [self::SUBMITTED, $journey, $application];

@@ -19,6 +19,7 @@ import { useAccountFailure } from '../useCandidateRequests'
 import { useLocale } from '../../../i18n/useLocale'
 
 type Review = {
+  terms: { id: number; version_number: number; body_ar: string; body_en: string | null } | null
   basic_information: BasicProfile
   nomination_details: NominationDetails
   documentation: Documentation
@@ -42,10 +43,12 @@ export function ReviewPage({ user }: { user: User }) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [alert, setAlert] = useState<{ tone: 'error' | 'info' | 'success'; content: ReactNode } | null>(null)
   const [sending, setSending] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   const load = useCallback(async () => {
     setLoadError(null)
+    setAcceptedTerms(false)
     try {
       setState(await api.get<ReviewState>('/api/candidate/review', contextHeader(user)))
     } catch (error) {
@@ -76,10 +79,12 @@ export function ReviewPage({ user }: { user: User }) {
         reviewed_revision: review.documentation.revision,
         account_context: user.account_context,
         journey_key: journeyKey,
+        terms_version_id: review.terms?.id,
+        accepted_terms: acceptedTerms,
       })
       setState({ ...state, data: { ...review, submission: response.data } })
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'review_outdated') {
+      if (error instanceof ApiError && ['review_outdated', 'terms_changed'].includes(error.code ?? '')) {
         setAlert({ tone: 'error', content: <p>{error.message}</p> })
         await load()
       } else if (error instanceof NetworkError || (error instanceof ApiError && error.status >= 500)) {
@@ -215,13 +220,19 @@ export function ReviewPage({ user }: { user: User }) {
             </div>
           </section>
 
+          {review.terms && <section className="review-part">
+            <h2 className="review-part__title">{t('terms.title')}</h2>
+            <details><summary>{t('terms.version', { version: review.terms.version_number })}</summary><div style={{ whiteSpace: 'pre-wrap' }}>{locale === 'en' ? review.terms.body_en : review.terms.body_ar}</div></details>
+            {!review.submission && <p><label><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /> {t('terms.accept')}</label></p>}
+          </section>}
+          {review.nomination_details.taxonomy_review_required && <FormAlert tone="info"><p>{t('category.adminReview')}</p><Link href="/dashboard/nomination-details">{t('category.choose')}</Link></FormAlert>}
           {!review.submission && (
             <div className="review-actions">
               <Link className="button button--secondary" href="/dashboard/documentation">
                 {t('العودة إلى ملفات العمل')}
               </Link>
               {review.documentation.confirmed && (
-                <button type="button" className="button button--primary" onClick={() => dialogRef.current?.showModal()} disabled={sending}>
+                <button type="button" className="button button--primary" onClick={() => dialogRef.current?.showModal()} disabled={sending || !acceptedTerms || !review.terms || review.nomination_details.taxonomy_review_required}>
                   {sending ? t('جارٍ الإرسال…') : t('إرسال ملف الترشح')}
                 </button>
               )}

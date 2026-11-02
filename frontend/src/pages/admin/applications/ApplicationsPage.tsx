@@ -308,7 +308,7 @@ export function ApplicationsPage({
                   </td>
                   <td>{APPLICANT_TYPE_LABELS[row.applicant_type]}</td>
                   <td>{row.domain.name}</td>
-                  <td>{row.subcategory?.name ?? '—'}</td>
+                    <td>{row.subcategory?.name ?? '—'}{row.taxonomy_review_required && <p className="field__hint">{t('category.adminReview')}</p>}</td>
                   <td className="admin-table__time">{formatDamascusDateTime(row.submitted_at)}</td>
                   <td>
                     <StatusBadge status={row.status as ApplicationStatus} />

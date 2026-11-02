@@ -12,6 +12,7 @@ import { AddJudgeDialog } from './AddJudgeDialog'
 import { ExportMenu } from '../ExportMenu'
 import { AdminDialog, ConfirmDialog } from './AdminDialog'
 import { useLocale } from '../../../i18n/useLocale'
+import { AccountRemovalDialog } from '../AccountRemovalDialog'
 
 type Notice = { tone: 'success' | 'error' | 'info'; content: ReactNode }
 
@@ -40,6 +41,7 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
   const [busy, setBusy] = useState(false)
   const [adding, setAdding] = useState(false)
   const [linkBusy, setLinkBusy] = useState<number | null>(null)
+  const [removing, setRemoving] = useState<number | null>(null)
   const tabs = useRef<(HTMLButtonElement | null)[]>([])
   const baseId = useId()
 
@@ -143,6 +145,12 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
         </p>
       </header>
 
+      {removing !== null && <AccountRemovalDialog key={removing} targetId={removing} user={user} onClose={() => setRemoving(null)} onDone={(pendingFiles) => {
+        setRemoving(null)
+        setNotice({ tone: 'success', content: <p>{t('removal.success')}{pendingFiles && ` ${t('removal.pendingFiles')}`}</p> })
+        void load()
+      }} />}
+
       {notice && (
         <div role={notice.tone === 'error' ? 'alert' : 'status'}>
           <FormAlert tone={notice.tone}>{notice.content}</FormAlert>
@@ -213,6 +221,7 @@ export function CommitteesPage({ user, cycle }: { user: User; cycle: AdminCycle 
                   onReturnToDraft={() => setPending({ kind: 'draft', domain: item.domain.code })}
                   onEnd={(member) => setPending({ kind: 'end', domain: item.domain.code, member })}
                   onResendLink={(member) => void resendLink(item.domain.code, member)}
+                  onRemove={user.admin_permissions.includes('users.remove_accounts') ? (member) => setRemoving(member.user_id) : undefined}
                   exportMenu={
                     <ExportMenu user={user} url={(format) => `/api/admin/exports/committee-members?format=${format}&cycle=${cycle.id}&domain=${item.domain.code}`} />
                   }
@@ -306,6 +315,7 @@ function CommitteePanel({
   onReturnToDraft,
   onEnd,
   onResendLink,
+  onRemove,
   exportMenu,
 }: {
   domain: DomainCommittee
@@ -317,6 +327,7 @@ function CommitteePanel({
   onReturnToDraft: () => void
   onEnd: (member: CommitteeMember) => void
   onResendLink: (member: CommitteeMember) => void
+  onRemove?: (member: CommitteeMember) => void
   exportMenu: ReactNode
 }) {
   const { t } = useLocale()
@@ -419,6 +430,7 @@ function CommitteePanel({
                     </ul>
                   </td>
                   <td className="admin-table__actions">
+                    {onRemove && member.removable && <button type="button" className="button button--quiet button--small" onClick={() => onRemove(member)}>{t('removal.title')}<span className="visually-hidden"> {member.name}</span></button>}
                     {member.account.setup_pending && member.account.active && (
                       <button type="button" className="button button--quiet button--small" onClick={() => onResendLink(member)} disabled={linkBusy === member.id}>
                         {linkBusy === member.id ? t('جارٍ الإرسال…') : t('إعادة إرسال رابط الإعداد')}

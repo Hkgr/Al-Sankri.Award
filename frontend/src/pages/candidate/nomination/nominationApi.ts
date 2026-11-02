@@ -19,6 +19,7 @@ export type Availability = 'available' | 'confirmed' | 'not_configured' | 'ambig
 
 /** The confirmed Stage 2 (NominationDetailsResource). */
 export type NominationDetails = {
+  taxonomy_review_required?: boolean
   confirmed_at: string
   cycle: { code: string; name: string }
   domain: { code: string; name: string; artwork: string }
@@ -30,6 +31,7 @@ export type NominationDetails = {
 }
 
 export type NominationState = {
+  correction_options?: { code: string; name: string }[]
   data: NominationDetails | null
   availability: { status: Availability }
   cycle?: { code: string; name: string }

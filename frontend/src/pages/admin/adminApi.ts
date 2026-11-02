@@ -79,6 +79,7 @@ export type ApplicantType = keyof typeof APPLICANT_TYPE_LABELS
 export const CYCLE_STATUS_LABELS: Record<string, string> = labels({ draft: 'مسودة', published: 'منشورة', closed: 'مغلقة', archived: 'مؤرشفة' })
 
 export type ApplicationRow = {
+  taxonomy_review_required?: boolean
   id: number
   reference_number: string
   title: string
@@ -98,6 +99,7 @@ export type ApplicationsPage = {
 }
 
 export type ApplicationDetail = {
+  current_category?: { review_required: boolean; name: string | null; options: { code: string; name: string }[] }
   summary: {
     id: number
     reference_number: string
@@ -119,7 +121,7 @@ export type ApplicationDetail = {
     received: number
     decision: string | null
     excluded: boolean
-    scores: { name: string; score: string | null; notes: string | null; recommendations: string | null; excluded: boolean; sent_at: string | null }[]
+    scores: { name: string; historical?: boolean; score: string | null; notes: string | null; recommendations: string | null; excluded: boolean; sent_at: string | null }[]
   }
   review: ApplicationReview
   declarations: {
@@ -146,7 +148,9 @@ export function adminFileUrl(applicationId: number, attachment: Pick<Attachment,
 export type MemberAccount = { active: boolean; email_verified: boolean; setup_pending: boolean }
 
 export type CommitteeMember = {
+  removable?: boolean
   id: number
+  user_id: number
   name: string
   email: string
   phone: string | null
@@ -219,6 +223,7 @@ export const PROGRESS_LABELS: Record<UserProgressState, string> = labels({
 export type StageState = 'complete' | 'incomplete' | 'none'
 
 export type UserRow = {
+  removable?: boolean
   id: number
   name: string
   email: string

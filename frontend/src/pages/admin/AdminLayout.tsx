@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import type { ReactNode } from 'react'
-import logo from '../../assets/brand/logo-horizontal-dark-bg.svg'
+import logo from '../../assets/brand/award-logo-official.png'
 import type { User } from '../../auth/useAuth'
 import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
@@ -78,7 +78,7 @@ export function AdminLayout({
       <header className="admin-header">
         <div className="admin-header__inner">
           <Link className="admin-header__brand" href="/admin">
-            <img src={logo} alt={t(AWARD_NAME)} width={200} height={65} />
+            <img className="award-logo" src={logo} alt={t(AWARD_NAME)} width={200} height={68} />
           </Link>
           <p className="admin-header__title">{t('لوحة الإدارة')}</p>
           <div className="admin-header__cycle">

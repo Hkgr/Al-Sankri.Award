@@ -56,6 +56,7 @@ class NominationDetailsResource extends JsonResource
 
         return [
             'confirmed_at' => $this->details_confirmed_at->toIso8601ZuluString(),
+            'taxonomy_review_required' => (bool) $application->taxonomy_review_required,
             'cycle' => ['code' => $choice->cycle_code, 'name' => $choice->cycle_name],
             'domain' => ['code' => $choice->domain_code, 'name' => $choice->domain_name, 'artwork' => NominationTaxonomy::artworkFor($choice->domain_code)],
             'subcategory' => ['code' => $choice->subcategory_code, 'name' => $choice->subcategory_name],

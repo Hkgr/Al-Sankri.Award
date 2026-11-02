@@ -24,9 +24,11 @@ class EnsureAccountIsActive
         $user = $request->user();
 
         if ($user !== null && ! $user->isActive()) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            if ($request->hasSession()) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => self::MESSAGE, 'code' => 'account_disabled'], 403);

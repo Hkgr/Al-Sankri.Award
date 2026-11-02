@@ -25,6 +25,9 @@ class AuditTrail
 
     /** Arabic labels of the recorded actions; an unknown code is shown as itself. */
     public const ACTIONS = [
+        'account.removed' => 'حذف حساب مرشح أو محكّم',
+        'application.category_corrected' => 'تصحيح فئة الطلب وفق التصنيف المعتمد',
+        'account_removal.schema_installed' => 'تهيئة صلاحية حذف الحسابات',
         'user.registered' => 'تسجيل حساب جديد',
         'user.created' => 'إنشاء حساب من الإدارة',
         'user_role.granted' => 'منح دور على مستوى المنصة',

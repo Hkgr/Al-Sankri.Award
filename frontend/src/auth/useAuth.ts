@@ -35,6 +35,7 @@ export type AdminPermission =
   | 'applications.review'
   | 'committees.manage_judging'
   | 'users.view_registered'
+  | 'users.remove_accounts'
   | 'reports.export'
   | 'audit.view'
   | 'logs.view_system'

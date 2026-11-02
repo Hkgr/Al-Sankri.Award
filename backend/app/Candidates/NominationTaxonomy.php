@@ -7,9 +7,9 @@ namespace App\Candidates;
  * subcategories, identified by stable codes (never by their labels).
  *
  * This is the owner-approved structure that supersedes the earlier note that
- * Creativity sub-areas were unresolved: Culture and Arts (culture, arts),
- * Heritage (tangible, intangible) and Creativity (social responsibility,
- * entrepreneurship, quality). The subcategories carry no award slots,
+ * Creativity sub-areas were unresolved: Culture and Arts (poetry, story),
+ * Heritage (tangible, intangible) and Creativity (entrepreneurship,
+ * social responsibility). The subcategories carry no award slots,
  * rankings, committees or rubrics of their own.
  *
  * `nomination:setup` provisions these codes for an explicitly chosen cycle
@@ -29,8 +29,8 @@ final class NominationTaxonomy
             'name' => 'الثقافة والفنون',
             'artwork' => 'domain-culture-and-arts',
             'subcategories' => [
-                'culture' => 'الثقافة',
-                'arts' => 'الفنون',
+                'poetry' => 'الشعر',
+                'story' => 'القصة',
             ],
         ],
         'heritage' => [
@@ -45,9 +45,8 @@ final class NominationTaxonomy
             'name' => 'الإبداع',
             'artwork' => 'domain-volunteer-work',
             'subcategories' => [
-                'social_responsibility' => 'المسؤولية المجتمعية',
                 'entrepreneurship' => 'ريادة الأعمال',
-                'quality' => 'الجودة',
+                'social_responsibility' => 'المسؤولية المجتمعية',
             ],
         ],
     ];

@@ -14,6 +14,7 @@ import { ExportMenu } from '../ExportMenu'
 import { usersQuery } from './usersState'
 import { labels } from '../../../i18n/messages'
 import { useLocale } from '../../../i18n/useLocale'
+import { AccountRemovalDialog } from '../AccountRemovalDialog'
 
 const STAGE_LABELS: Record<StageState, string> = labels({ complete: 'مكتملة', incomplete: 'غير مكتملة', none: 'لم تُحفظ بعد' })
 
@@ -82,6 +83,8 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
     setSearch(q)
   }
   const [retry, setRetry] = useState(0)
+  const [removing, setRemoving] = useState<number | null>(null)
+  const [removed, setRemoved] = useState<'done' | 'pending' | null>(null)
   const latest = useRef(0)
   const ids = { search: useId(), role: useId(), state: useId(), verified: useId(), progress: useId(), perPage: useId(), caption: useId() }
   const queryString = usersQuery(location.search, scope)
@@ -151,6 +154,13 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
           {t('يُحسب التقدّم مما حُفظ فعلاً؛ ما يكتبه المترشح ولم يحفظه لا يُعرف.')}
         </p>
       </header>
+
+      {removed && <FormAlert tone="success"><p>{t('removal.success')}</p>{removed === 'pending' && <p>{t('removal.pendingFiles')}</p>}</FormAlert>}
+      {removing !== null && <AccountRemovalDialog key={removing} targetId={removing} user={user} onClose={() => setRemoving(null)} onDone={(pending) => {
+        setRemoving(null)
+        setRemoved(pending ? 'pending' : 'done')
+        setRetry((count) => count + 1)
+      }} />}
 
       {scope === null ? (
         <FormAlert tone="info">
@@ -301,6 +311,7 @@ export function UsersPage({ user, cycles, scope }: { user: User; cycles: AdminCy
                     {row.progress.state !== 'not_required' && <Stages progress={row.progress} />}
                   </td>
                   <td className="admin-table__time">
+                    {user.admin_permissions.includes('users.remove_accounts') && row.email !== user.email && row.removable && <button type="button" className="button button--quiet button--small" onClick={() => setRemoving(row.id)}>{t('removal.title')}<span className="visually-hidden"> {row.name}</span></button>}
                     {row.submission ? (
                       <>
                         <span className="admin-submitted">

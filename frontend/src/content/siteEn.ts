@@ -6,6 +6,7 @@
 
 import { siteAr } from './site'
 import type { SiteContent } from './site'
+import { awardTerms } from './awardTerms'
 
 export const siteEn: SiteContent = {
   award: {
@@ -43,7 +44,7 @@ export const siteEn: SiteContent = {
       href: '/eligibility',
       label: 'Eligibility',
       labelEn: 'Eligibility',
-      description: "The eligibility conditions shared by the award's three domains, the documents and evidence of impact required, the rules preventing conflicts of interest, and the evaluation principles.",
+      description: "The eligibility conditions shared by the award's three domains, the documents and evidence of impact required, the rules preventing conflicts of interest, and the complete category-specific conditions.",
     },
   ],
 
@@ -57,36 +58,10 @@ export const siteEn: SiteContent = {
     },
   },
 
-  domains: [
-    {
-      ...siteAr.domains[0],
-      label: 'Culture and Arts',
-      intro: 'Celebrates reading, the arts and cultural production as impact that is written and shared.',
-      subcategories: [
-        { label: 'Culture', scope: 'Work in reading, knowledge and cultural production that creates impact written and shared in society.' },
-        { label: 'Arts', scope: 'Artistic and creative work that delivers tangible cultural impact beyond its maker, reaching its audience and community.' },
-      ],
-    },
-    {
-      ...siteAr.domains[1],
-      label: 'Heritage',
-      intro: 'Celebrates the preservation of tangible and intangible heritage, and the documentation of crafts, stories and cultural elements as impact that is safeguarded and shared.',
-      subcategories: [
-        { label: 'Tangible heritage', scope: 'Safeguarding and documenting the physical witnesses of collective memory: crafts, sites, artifacts and the material heritage that carries identity.' },
-        { label: 'Intangible heritage', scope: 'Preserving and passing on living heritage: stories, oral tradition, practices and inherited knowledge.' },
-      ],
-    },
-    {
-      ...siteAr.domains[2],
-      label: 'Creativity',
-      intro: 'Celebrates initiatives that bring people around a shared value, ideas that turn into opportunities, and precision and continuous improvement as impact that is made in practice.',
-      subcategories: [
-        { label: 'Social responsibility', scope: 'Initiatives that bring individuals and organizations around a shared value and serve the community.' },
-        { label: 'Entrepreneurship', scope: "An idea taking off and turning into an opportunity, and the growth and expansion that carry a project on its journey toward continuity and creating value." },
-        { label: 'Quality', scope: "Precision and continuous improvement, with quality as a standard that protects the value of the work and confirms that its impact deserves recognition." },
-      ],
-    },
-  ],
+  domains: awardTerms.en.domains.map((domain, index) => ({
+    ...siteAr.domains[index], label: domain.name, intro: domain.intro,
+    subcategories: domain.subcategories.map((category) => ({ code: category.code, label: category.name, requirements: category.requirements })),
+  })),
 
   about: {
     philosophy:
@@ -186,16 +161,8 @@ export const siteEn: SiteContent = {
   ],
 
   eligibility: {
-    conditions: [
-      { title: 'Geographic scope', text: 'The work, whether an initiative, project or activity, must exist and be carried out inside Syria, with its base and activity within the Syrian geographic scope in this cycle.' },
-      { title: 'Documented impact', text: 'The work must have tangible, documented impact in the real world, and must not be a theoretical idea or a proposal whose implementation has not begun.' },
-      { title: 'Fit with a domain', text: 'The work must fit one of the three announced main domains and be submitted within one of its categories.' },
-      { title: 'Completeness and eligibility', text: 'The required information, supporting documents and evidence of impact must be provided, and the application must be free of any breach of the technical or legal conditions.' },
-      { title: 'Integrity and transparency', text: 'Commitment to ethics, integrity and transparency in all the information and reports submitted.' },
-      { title: 'Documenting the impact story', text: "Consent to documenting the impact story in the media and including it in the foundation's knowledge archive and open digital database." },
-      { title: 'Participation in Award Week', text: 'Commitment to take part in the planned Award Week events (the exhibition, workshops and forum) if shortlisted for the final round.' },
-    ],
-    applicants: 'Individuals, teams, initiatives, official institutions and organizations may apply. When registering on the platform, the application is submitted in the name of an individual or an institution.',
+    conditions: awardTerms.en.general.slice(0, 4),
+    applicants: awardTerms.en.general[1].text,
     evidence: {
       intro: 'The application is built on evidence that proves the work is complete and shows its impact: documentation files, procedural reports, photos, videos and testimonials.',
       items: [
@@ -206,18 +173,12 @@ export const siteEn: SiteContent = {
       ],
     },
     conflict: [
-      'Members of the board of trustees, the judging committees, the integrity committee, and the award administration staff at ',
+      'Members of the board of trustees, judging committees and integrity committee, and award administration staff at ',
       { org: 'rowad', label: 'Al-Rowad Foundation' },
-      ' are strictly prohibited from applying to the award, or from intervening in or influencing any application related to them, to guarantee complete integrity and impartiality.',
+      ' are prohibited from applying, to ensure impartiality and integrity.',
     ],
-    criteria: [
-      { title: 'Originality and innovation', text: 'Offering pioneering or community solutions that are innovative and address real local needs.' },
-      { title: 'Credibility and depth of community impact', text: 'The scale of the tangible positive change the work has made in the lives of beneficiaries and the community, and how verifiable that impact is through the evidence submitted.' },
-      { title: 'Sustainability and scalability', text: 'The ability of the work to continue and grow by itself after the recognition stage.' },
-      { title: 'Governance and process management', text: 'Clear management and documentation models, financial and procedural transparency, and mechanisms for dealing with beneficiaries.' },
-      { title: 'Preserving heritage and identity', text: 'How far the work contributes to safeguarding collective memory and cultural heritage, tangible or intangible.' },
-    ],
-    shared: 'The same conditions and evaluation criteria apply to the three domains and their seven categories; each category’s definition states only its scope, with no additional conditions of its own.',
+
+    shared: 'The general conditions apply to all six categories, together with the specific conditions for each category below.',
   },
 
   closing: {

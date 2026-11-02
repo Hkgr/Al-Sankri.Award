@@ -4,6 +4,8 @@ import { en as uiAdminEn } from './catalogs/uiAdmin'
 import { en as uiCandidateEn } from './catalogs/uiCandidate'
 import { en as uiServerEn } from './catalogs/uiServer'
 import { en as uiSharedEn } from './catalogs/uiShared'
+import { ar as removalAr, en as removalEn } from './catalogs/accountRemoval'
+import { ar as updateAr, en as updateEn } from './catalogs/awardUpdate'
 import type { Dict, Locale } from './types'
 
 export type { Locale }
@@ -205,8 +207,8 @@ const baseEn: Dict = {
 }
 
 const catalogs: Record<Locale, Dict> = {
-  ar: { ...baseAr, ...publicAr, ...authAr },
-  en: { ...baseEn, ...publicEn, ...authEn, ...uiSharedEn, ...uiCandidateEn, ...uiAdminEn, ...uiServerEn },
+  ar: { ...baseAr, ...publicAr, ...authAr, ...removalAr, ...updateAr },
+  en: { ...baseEn, ...publicEn, ...authEn, ...uiSharedEn, ...uiCandidateEn, ...uiAdminEn, ...uiServerEn, ...removalEn, ...updateEn },
 }
 
 export function translate(locale: Locale, key: string, vars?: Record<string, string | number>): string {

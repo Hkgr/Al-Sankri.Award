@@ -780,6 +780,27 @@ a.admin-nav__link[aria-current='page']:hover {
   inline-size: min(100% - 2 * var(--sa-gutter), 40rem);
 }
 
+.account-removal-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.account-removal-dialog .admin-dialog__body {
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+.account-removal-dialog .admin-dialog__header,
+.account-removal-dialog .admin-dialog__actions {
+  flex-shrink: 0;
+}
+
+.account-removal-dialog .admin-dialog__actions {
+  padding-block-start: var(--sa-space-4);
+  border-block-start: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
+}
+
 .admin-dialog::backdrop {
   background: rgb(15 51 48 / 0.55);
 }
