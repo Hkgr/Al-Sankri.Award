@@ -39,12 +39,12 @@ The migration `2026_10_28_600001_provision_administration_and_judge_roles` adds 
   - administrators go to `/admin`;
   - judges go to `/judge` (never to the candidate dashboard just because they are judges);
   - candidates go to `/dashboard` as before.
-- **One classification, changed only by administration:** a person is not a judge and a participant at the same time.
+- **Exclusive default classification:** candidate cannot coexist with any other effective role, including administration, judging and custom roles across all cycles. Other roles may coexist with each other.
   - Every public registration starts as a candidate («مترشح»).
   - Appointing the account as a judge revokes «مترشح» in the appointment's transaction, after the conflict-of-interest checks. The account, profile, unsubmitted drafts and role history are kept.
   - A judge cannot cancel the judgeship: there is no self-service conversion. Candidate pages explain the role and link to the judge portal, and candidate APIs answer `403 is_judge`.
-  - Ending the last judgeship (only through «لجان الحكام», under the existing rules: a draft committee and no judging history) restores «مترشح» when an appointment had revoked it.
-  - `award_admin` is unchanged and may still sit beside «مترشح»; administrators are still granted only through the CLI command.
+  - Ending the last other assignment restores «مترشح» even without candidate history. Explicit committee endings retain the existing draft/no-history rules. Timed roles take effect and expire automatically; first-request authorization does not depend on the scheduler.
+  - `admin:grant-access` grants `award_admin` and revokes candidate in one transaction. Generic grants/endings use `App\Auth\RoleExclusivity`, locking accounts before role writes and retaining history/audits. Existing-account repair uses the preview/explicit-apply commands in [candidate-onboarding.md](candidate-onboarding.md#classifying-existing-accounts).
 - **Registration:** public registration still grants only the candidate classification to a new account.
 
 ### Granting administration access (the only way)
@@ -99,7 +99,7 @@ php artisan admin:grant-access --email="existing-account@example.com"
   - **The confirmation is bound to the account shown.** The lookup returns an `account_ref` (an HMAC of the account id and normalized email). The appointment sends that account's own email with it, and the server checks both again under the account's lock. If the email no longer names exactly that account, nothing happens (`409 account_changed`) and the administrator looks the email up again. An account is never resolved by email alone.
   - **In the dialog:** a late or out-of-order lookup answer is dropped, editing the email discards the account shown, and confirmation is unavailable while a lookup is pending.
 - **New email:**
-  - **What is created:** an account with the given name and optional phone, **no password**, an unverified email and no candidate classification.
+  - **What is created:** an account with the given name and optional phone, **no password** and an unverified email. Its initial candidate grant is revoked by the judge appointment within the same transaction.
   - **Delivery of the link:** after the commit, the existing password-reset link is sent (same broker, mailer, 60-minute expiry and throttle). The appointment does not depend on the email.
   - **If sending fails:** the page says so, and «إعادة إرسال رابط الإعداد» in the members table retries.
   - **Not done:** no shared or default password, and no new invitation system.
@@ -138,9 +138,9 @@ Nothing else changes: no `.env`, Plesk, Document Root, `deploy.sh` or mail setti
 **Columns:** name; email with a verified/unverified badge; current roles; account state; registration date; last sign-in («لم يسجّل دخولاً» when there is none); candidate progress; final submission, with a link to the read-only application page for administrators who may open it.
 
 **Roles:**
-- **Platform roles:** current, unrevoked `user_roles` grants, all shown (for example «مترشح» and «مدير الجائزة» together).
+- **Platform roles:** unrevoked `user_roles` grants inside their assignment/start/end windows. Candidate appears only when no other role is effective.
 - **Cycle roles:** current `cycle_user_roles` grants (not revoked, inside `starts_at`/`ends_at`), shown with their cycle and, for a judge, the main domain of the current membership.
-- **Hidden:** revoked or expired grants.
+- **Hidden:** revoked, future or expired grants. List, filter, account resource, Excel and PDF use effective roles across **all** cycles, including custom roles. The selected cycle affects candidature progress only. Pending classifications are reconciled before lists/exports; no candidate label is invented for an empty list.
 
 **Progress** is computed for the **cycle selected in the header**, from stored records only. There are no progress columns and no second copy of stage state.
 

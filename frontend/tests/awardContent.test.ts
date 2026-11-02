@@ -29,7 +29,7 @@ test('new deletion and consent messages have complete English and Arabic catalog
   }
 })
 
-test('the report and web use identical official PNG bytes', () => {
+test('the legacy official PNG source remains intact for the Arabic reports', () => {
   const web = readFileSync(new URL('../src/assets/brand/award-logo-official.png', import.meta.url))
   const report = readFileSync(new URL('../../backend/resources/reports/award-logo-official.png', import.meta.url))
   assert.equal(web.readUInt32BE(16), 3561)

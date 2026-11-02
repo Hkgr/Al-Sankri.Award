@@ -32,7 +32,7 @@ export function useAccountFailure() {
         navigate('/login?account=disabled', { replace: true })
         return true
       }
-      if (error.code === 'not_candidate') {
+      if (['not_candidate', 'is_judge', 'candidate_role_unavailable'].includes(error.code ?? '')) {
         void refreshUser().catch(() => undefined)
         return true
       }

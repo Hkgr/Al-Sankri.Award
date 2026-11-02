@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Candidate;
 
+use App\Auth\RoleExclusivity;
 use App\Candidates\Documentation;
 use App\Candidates\NominationCycles;
 use App\Candidates\NominationDetails;
@@ -119,6 +120,7 @@ class NominationDetailsController extends Controller
         [$outcome, $journey] = $this->details->confirm($request->user(), $request->validated(), (string) $request->input('journey_key'));
 
         return match ($outcome) {
+            RoleExclusivity::UNAVAILABLE => response()->json(['code' => $outcome, 'message' => RoleExclusivity::MESSAGE], 403),
             NominationDetails::CONFIRMED => response()->json([
                 'message' => 'حُفظت بيانات هذه المرحلة، وأصبحت متاحة للعرض فقط.',
                 'data' => new NominationDetailsResource($journey),

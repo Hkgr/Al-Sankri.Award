@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Candidate;
 
+use App\Admin\AdminAccess;
 use App\Candidates\AccountContext;
 use App\Models\AccountPolicyVersion;
 use App\Models\ApplicantIndividualDetail;
@@ -490,10 +491,11 @@ class BasicProfileTest extends TestCase
         $this->confirm($this->individualPayload())->assertUnauthorized();
 
         // A staff account without the classification is refused.
-        User::factory()->create(['email' => 'staff@example.org']);
+        $staff = User::factory()->create(['email' => 'staff@example.org']);
+        app(AdminAccess::class)->grantAdmin($staff);
         $this->signIn('staff@example.org');
         foreach (['/api/candidate/overview', '/api/candidate/basic-profile', '/api/candidate/reference-data'] as $uri) {
-            $this->assertPrivate($this->browser('GET', $uri)->assertForbidden()->assertJsonPath('code', 'not_candidate'));
+            $this->assertPrivate($this->browser('GET', $uri)->assertForbidden()->assertJsonPath('code', 'candidate_role_unavailable'));
         }
         $this->confirm($this->individualPayload())->assertForbidden();
 

@@ -2,6 +2,8 @@
 
 namespace App\Candidates;
 
+use App\Auth\CandidateRole;
+use App\Auth\RoleExclusivity;
 use App\Models\Application;
 use App\Models\CandidateNomination;
 use App\Models\CandidateProfile;
@@ -215,6 +217,10 @@ class NominationDetails
 
         if ($profile === null) {
             return [self::BASIC_INFORMATION_REQUIRED, null];
+        }
+
+        if (! app(CandidateRole::class)->isHeldBy($account)) {
+            return [RoleExclusivity::UNAVAILABLE, null];
         }
 
         if ($existing = $this->confirmedByKey($profile, $journeyKey)) {

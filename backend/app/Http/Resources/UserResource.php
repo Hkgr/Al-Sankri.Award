@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Admin\AdminAccess;
 use App\Auth\CandidateRole;
 use App\Auth\GoogleAccounts;
+use App\Auth\RoleExclusivity;
 use App\Candidates\AccountContext;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -25,6 +26,9 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $policy = app(RoleExclusivity::class);
+        $policy->reconcile($this->resource);
+
         return [
             'name' => $this->name,
             'email' => $this->email,
@@ -32,6 +36,7 @@ class UserResource extends JsonResource
             'has_password' => $this->hasPassword(),
             'google_linked' => app(GoogleAccounts::class)->isLinked($this->resource),
             'is_candidate' => app(CandidateRole::class)->isHeldBy($this->resource),
+            'roles' => $policy->currentRoles($this->resource),
             // Codes only; current role grants decide them on the server.
             'admin_permissions' => app(AdminAccess::class)->permissionsOf($this->resource),
             'is_judge' => app(AdminAccess::class)->isJudge((int) $this->resource->getKey()),

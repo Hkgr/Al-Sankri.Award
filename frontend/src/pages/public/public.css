@@ -491,9 +491,15 @@
   align-items: center;
 }
 
-.domain-hero__symbol {
-  flex: none;
-  inline-size: 7rem;
+.domain-hero__trophy {
+  display: block;
+  flex: 0 1 22rem;
+  max-inline-size: 100%;
+}
+
+.domain-hero__trophy img {
+  inline-size: 100%;
+  block-size: auto;
 }
 
 .domain-hero p {

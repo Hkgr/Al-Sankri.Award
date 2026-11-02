@@ -1,4 +1,5 @@
 import { RichText } from '../../components/OrgLink'
+import { DomainTrophy } from '../../components/DomainTrophy'
 import type { MainDomain } from '../../content/site'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
@@ -156,7 +157,7 @@ export function EligibilityDomainPage({ domain: requested }: { domain: MainDomai
         title={domain.label}
       >
         <div className="domain-hero">
-          <img className="domain-hero__symbol" src={domain.symbol} alt="" width={112} height={126} />
+          <DomainTrophy domain={domain.slug} className="domain-hero__trophy" sizes="(min-width: 40rem) 352px, 85vw" />
           <p>{domain.intro}</p>
         </div>
       </PageHeader>

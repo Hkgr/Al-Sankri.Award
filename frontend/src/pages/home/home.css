@@ -302,9 +302,16 @@
   background: var(--sa-color-surface-raised);
 }
 
-.domain-card__symbol {
-  inline-size: 5.5rem;
+.domain-card__trophy,
+.domain-card__trophy img {
+  display: block;
+  inline-size: 100%;
   block-size: auto;
+}
+
+.domain-card__trophy {
+  max-inline-size: 22rem;
+  justify-self: center;
 }
 
 .domain-card__title {

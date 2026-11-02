@@ -2,6 +2,8 @@
 
 namespace App\Candidates;
 
+use App\Auth\CandidateRole;
+use App\Auth\RoleExclusivity;
 use App\Models\Application;
 use App\Models\CandidateNomination;
 use App\Models\CandidateProfile;
@@ -407,6 +409,9 @@ class Documentation
 
         if ($account === null || ! $account->isActive()) {
             return [self::UNAVAILABLE, $journey, $application];
+        }
+        if (! app(CandidateRole::class)->isHeldBy($account)) {
+            return [RoleExclusivity::UNAVAILABLE, $journey, $application];
         }
 
         if (! $application->isEditable()) {

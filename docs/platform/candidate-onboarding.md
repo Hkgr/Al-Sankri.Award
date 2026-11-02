@@ -17,40 +17,37 @@ Related: [authentication.md](authentication.md) (accounts and sign-in), [databas
 | --- | --- |
 | Role | `roles.code = 'candidate'`, `name_ar = 'مترشح'`, `scope = 'platform'`, no permissions |
 | Provisioned by | migration `2026_10_27_300001_provision_candidate_role`. It is idempotent: an existing `candidate` role is kept exactly as it is. When the migration creates the role itself, it records `role.provisioned` in `audit_logs`. |
-| Granted to | every new public account, by the backend only, in the **same transaction** that creates the account |
-| Grant row | `user_roles` with `assigned_by = NULL` (system) and an `audit_logs` entry `user_role.granted` with `{role, source}` only |
+| Granted to | every ordinary account without another effective role, regardless of email verification or profile completion; account creation and classification share a transaction |
+| Grant row | `user_roles` and `user_role.granted` audit history; automatic reconciliation has a nullable system actor, while an administrative transition retains its actor |
 
 **Account-creation paths that grant it:**
 
 - email and password registration (`POST /api/auth/register`);
 - a new Google account whose address Google is authoritative for;
 - a Google sign-up completed through the same-browser email confirmation (`/auth/google/confirm`).
+- an account created for a judge appointment (the candidate grant is then revoked by the appointment in that same transaction).
 
 If the role is missing (migrations not run), account creation fails and nothing is written, rather than creating an unclassified account.
 
-**Never changed by:** linking Google to an existing account, a returning sign-in, or a request field such as `role` or `is_candidate`. Those fields are ignored.
+**Server policy:** `App\Auth\RoleExclusivity` supplies the effective platform/cycle queries and serializes grants, endings and reconciliation on the account row. Browser fields such as `role` and `is_candidate` cannot grant roles. Returning sign-in, Google linking and authenticated requests reconcile the stored classification with the current assignments.
 
-**Not held together with «حكَم».** Every public registration starts with this classification. Appointing the account as a judge (administration only) revokes it in the appointment's transaction; the account, its profile, any unsubmitted draft and the role history stay stored. A judge cannot undo this: there is no self-service conversion, candidate pages explain that the account is a judge and link to the judge portal, and candidate APIs answer `403 is_judge`. Roles change only through award administration. See [administration.md](administration.md) §2.
+**Exclusive default:** any other effective role, including `award_admin`, `judge` and custom roles in **any** cycle, excludes candidate. Other roles may coexist with each other. Revocation of candidate and the other grant occur in one transaction; ending the last other role restores candidate even if it was never held before. History is retained. Platform grants honor `assigned_at`, optional `starts_at` and exclusive `ends_at`; cycle grants honor `starts_at` and exclusive `ends_at`. Revoked, future and expired roles do not exclude candidate. Changing the displayed administration cycle changes candidature progress only. Candidate APIs refuse other-role accounts with `403 candidate_role_unavailable` (judges retain `is_judge`). Submitted versions never become editable because of a role transition. See [administration.md](administration.md) §2.
 
-**Default destination.** After sign-in or registration, a candidate goes to `/dashboard`; an account without the role goes to `/account`. A legitimate intended destination still wins: a signed email-verification link opened while signed out returns there after sign-in. `App\Auth\SafeRedirect` keeps its explicit allowlist: `/dashboard`, `/dashboard/basic-information`, `/account` and `/email/verify/…`.
+**Timed assignments:** the scheduler runs `roles:reconcile-candidates --apply` every minute, but correctness does not depend on that task: authenticated requests reconcile before authorization, and permission queries themselves check the effective window. The account snapshot refreshes when the browser tab regains focus. User lists and exports also reconcile pending classifications before querying the same effective grants.
+
+**Default destination.** Administrators go to `/admin`, judges to `/judge`, candidates to `/dashboard`, and other-role accounts to `/account`. A legitimate authorized intended destination still wins, including signed email-verification links. A saved candidate destination cannot bypass the current role policy.
 
 ### Classifying existing accounts
 
-Accounts created before this change have no role. Classify the ordinary ones with:
+After running migrations, preview and explicitly apply the repair to current state:
 
 ```sh
-php artisan candidates:provision --dry-run   # lists the accounts it would classify; writes nothing
-php artisan candidates:provision             # classifies them
+php artisan roles:reconcile-candidates --dry-run   # counts intended actions; no writes or audit events
+php artisan roles:reconcile-candidates --apply     # rechecks each account under its lock and applies
+# Optional: --user=123 limits either operation to one account.
 ```
 
-**An account is classified only if all of these hold:**
-
-1. it is active (disabled accounts are left alone);
-2. it has **no** platform role grant at all, current or revoked (a revoked grant is a deliberate administrative decision);
-3. it has **no** cycle-scoped role grant, current or revoked;
-4. it has **never** been a committee member (judging, integrity or trustees).
-
-Staff, judges, administrators and anyone else with a role are counted in the report and skipped, never converted. Each grant runs in its own transaction with the account row locked and the rules checked again. A second run classifies nothing.
+Both the default invocation and `--dry-run` are read-only. The compatibility command `candidates:provision` delegates to this policy and also requires `--apply`. Missing candidate grants are restored; contradictory ones are revoked with `revocation_source=candidate_role_policy`. Correct accounts produce no new grant or audit event on repeats. Deleted accounts and archive identities (`account_removed` / `@deleted.invalid`) are skipped. Disabled ordinary accounts can have their classification repaired, but their status is never changed and they cannot sign in. Applications, attachments, scores and historical rows are untouched. The migration only adds role-window/system-revocation support; it does not bulk repair existing accounts. Its rollback refuses to discard role-window/reconciliation history once used.
 
 ## 2. Pages and API
 
@@ -74,7 +71,7 @@ Laravel serves `index.html` for exactly these paths (`routes/web.php`); `/dashbo
 
 Every `/api/candidate/*` endpoint requires a session, an active account and the candidate role, sends `Cache-Control: no-store, private`, and has no identifier in its URL: it always concerns the signed-in account. State-changing requests use the existing cookie and CSRF protection. There are no bearer tokens.
 
-`/api/user` gains `is_candidate` and the opaque `account_context` (see «Account binding» in §4). It never includes profile data.
+`/api/user` includes `is_candidate`, the effective `roles` with their scopes/cycles, current administration permissions, `is_judge` and the opaque `account_context` (see «Account binding» in §4). It never includes profile data.
 
 ## 3. The dashboard
 

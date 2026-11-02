@@ -173,7 +173,7 @@ class ExportsController extends Controller
         $scope = [['تقدّم الترشح في', $cycle ? "{$cycle['name']} — {$cycle['year']}" : 'لا توجد دورة (المرحلة 1 فقط)']];
         $scope = [...$scope, ...$this->described($filters, [
             'q' => 'البحث',
-            'role' => ['الدور', ['candidate' => 'مترشح', 'award_admin' => 'مدير الجائزة', 'judge' => 'حكَم في الدورة المختارة']],
+            'role' => ['الدور الساري عبر جميع الدورات', DB::table('roles')->pluck('name_ar', 'code')->all()],
             'state' => ['حالة الحساب', ['active' => 'نشط', 'disabled' => 'معطّل']],
             'verified' => ['تأكيد البريد', ['verified' => 'مؤكَّد', 'unverified' => 'غير مؤكَّد']],
             'progress' => ['تقدّم الترشح', RegisteredUsers::PROGRESS_LABELS],

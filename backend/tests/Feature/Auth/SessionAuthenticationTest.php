@@ -48,10 +48,10 @@ class SessionAuthenticationTest extends TestCase
             ->assertExactJson([
                 'data' => [
                     'name' => 'سارة', 'email' => 'reader@example.org', 'email_verified' => true, 'has_password' => true, 'google_linked' => false,
-                    'is_candidate' => false, 'admin_permissions' => [], 'is_judge' => false, 'account_context' => AccountContext::for($user),
+                    'is_candidate' => true, 'roles' => [['code' => 'candidate', 'name' => 'مترشح', 'scope' => 'platform', 'cycle' => null]],
+                    'admin_permissions' => [], 'is_judge' => false, 'account_context' => AccountContext::for($user),
                 ],
-                // Not a candidate (no role), so the account page.
-                'redirect' => '/account',
+                'redirect' => '/dashboard',
             ]);
 
         $this->assertNotSame($guestSession, $this->cookieJar[$this->sessionCookieName()], 'session id must change on login');

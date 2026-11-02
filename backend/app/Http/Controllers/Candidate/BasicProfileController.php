@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Candidate;
 
+use App\Auth\RoleExclusivity;
 use App\Candidates\BasicProfiles;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureAccountIsActive;
@@ -56,6 +57,7 @@ class BasicProfileController extends Controller
         [$outcome, $profile] = $this->profiles->finalize($request->user(), $request->validated());
 
         return match ($outcome) {
+            RoleExclusivity::UNAVAILABLE => response()->json(['code' => $outcome, 'message' => RoleExclusivity::MESSAGE], 403),
             BasicProfiles::COMPLETED => response()->json([
                 'message' => 'حُفظت بياناتك الأساسية، وأصبحت متاحة للعرض فقط.',
                 'data' => new BasicProfileResource($profile),

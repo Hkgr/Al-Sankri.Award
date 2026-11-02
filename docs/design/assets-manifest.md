@@ -1,5 +1,15 @@
 # Brand assets manifest
 
+## Current official originals (2026-11-02)
+
+The owner supplied [the official Drive folder](https://drive.google.com/drive/folders/1iqeB1LxnTZF1Q78iFHJNvI6zPhaETmny). Its horizontal green/white Arabic and English PNGs now supersede the historical extracted wordmarks below. All five UI logo positions use `BrandLogo`: green on light public/candidate/judge headers, white on the dark footer and administration header, with the official language variant selected by the current locale. No background, card, color filter or synthesized white version is applied.
+
+Seven byte-identical originals are archived in `brand-originals/`, outside Vite's source/public directories. [manifest.json](brand-originals/manifest.json) records original Drive paths/IDs, dimensions, SHA-256 hashes and each derivative. The ~16–17k-pixel logos become 400/800px **lossless** WebP with transparency retained; trophy photographs become 480/960px WebP. No image is cropped or recolored. `prepare-brand-assets.py` reproduces them; `--check` verifies original hashes, derivative bytes, dimensions and the logos' exact resized RGBA pixels.
+
+The supplied culture/arts, heritage and creativity trophy photographs appear in the homepage domain cards and domain page introductions. Their opaque light patterned backgrounds are retained in full. Small domain navigation/form symbols remain the existing vectors. `الجائزة العامة.png` was inspected only as a reference: it contains the obsolete award name, was not copied into the repository and has no website derivative or import. Drive is a provenance source only; all served images are local bundled assets. The prior official PNG used by the Arabic PDF reports is retained unchanged.
+
+## Historical vector extraction inventory
+
 The brand artwork in `frontend/src/assets/brand/` consists of **faithful vector extractions** from the supplied identity guide, `docs/جائزة السنكري visual identity.pdf`. The web fonts in `frontend/src/assets/brand/fonts/` are **lossless conversions** of the owner-supplied OTF files in `docs/fonts/` ([Web fonts](#web-fonts)).
 
 - Page numbers are physical PDF pages.

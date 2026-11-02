@@ -242,6 +242,7 @@ export type UserRow = {
 export type UsersPage = {
   data: UserRow[]
   meta: {
+    role_options?: { code: string; name: string }[]
     page: number
     per_page: number
     total: number
@@ -250,7 +251,7 @@ export type UsersPage = {
   }
 }
 
-export const USER_ROLE_FILTERS = labels({ candidate: 'مترشح', award_admin: 'مدير الجائزة', judge: 'حكَم في الدورة المختارة' } as const)
+export const USER_ROLE_FILTERS = labels({ candidate: 'مترشح', award_admin: 'مدير الجائزة', judge: 'حكَم' } as const)
 
 export const USER_SORT_LABELS = labels({ name: 'الاسم', registered_at: 'تاريخ التسجيل', last_login_at: 'آخر تسجيل دخول' } as const)
 export type UserSortKey = keyof typeof USER_SORT_LABELS

@@ -3,6 +3,7 @@
 namespace App\Admin;
 
 use App\Auth\CandidateRole;
+use App\Auth\RoleExclusivity;
 use App\Candidates\NominationCycles;
 use App\Models\Application;
 use Illuminate\Database\Query\Builder;
@@ -13,8 +14,9 @@ use Illuminate\Validation\Rule;
 
 /**
  * «المستخدمون»: every registered account, once, with its current roles and
- * its candidate progress in ONE selected cycle, read from stored records
- * only (nothing here changes an account).
+ * its candidate progress in ONE selected cycle, read from stored records.
+ * Pending default-role classifications are reconciled before querying;
+ * candidature records and account activation are never changed here.
  *
  * The query starts from `users`; the candidate records are left joins that
  * are one-to-one by their unique keys (uq_candidate_profiles_user,
@@ -61,7 +63,7 @@ class RegisteredUsers
         'basic_information_only' => 'البيانات الأساسية مكتملة (لا دورة)',
     ];
 
-    public const ROLE_FILTERS = ['candidate', 'award_admin', 'judge'];
+    private bool $rolesPrepared = false;
 
     public const SORTS = ['name' => 'users.name', 'registered_at' => 'users.created_at', 'last_login_at' => 'users.last_login_at'];
 
@@ -79,7 +81,7 @@ class RegisteredUsers
         return [
             'cycle' => ['nullable', 'integer', 'min:1'],
             'q' => ['nullable', 'string', 'max:150'],
-            'role' => ['nullable', Rule::in(self::ROLE_FILTERS)],
+            'role' => ['nullable', 'string', 'max:64', Rule::exists('roles', 'code')],
             'state' => ['nullable', Rule::in(['active', 'disabled'])],
             'verified' => ['nullable', Rule::in(['verified', 'unverified'])],
             'progress' => ['nullable', Rule::in(self::PROGRESS)],
@@ -118,7 +120,8 @@ class RegisteredUsers
 
         return [
             'data' => $this->rows($filters, $cycleId, $canViewApplications, $page, $perPage),
-            'meta' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'last_page' => $lastPage, 'cycle' => $this->cycleMeta($cycleId)],
+            'meta' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'last_page' => $lastPage, 'cycle' => $this->cycleMeta($cycleId),
+                'role_options' => DB::table('roles')->orderBy('name_ar')->get(['code', 'name_ar as name'])->all()],
         ];
     }
 
@@ -150,6 +153,7 @@ class RegisteredUsers
      */
     private function rows(array $filters, ?int $cycleId, bool $canViewApplications, ?int $page = null, ?int $perPage = null): array
     {
+        $this->prepareRoles();
         [$progressSql, $progressBindings] = $this->progressExpression($cycleId);
         $sort = self::SORTS[$filters['sort'] ?? 'registered_at'] ?? self::SORTS['registered_at'];
         $direction = ($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
@@ -201,11 +205,20 @@ class RegisteredUsers
      */
     private function matching(array $filters, ?int $cycleId): Builder
     {
+        $this->prepareRoles();
         [$progressSql, $progressBindings] = $this->progressExpression($cycleId);
         $query = $this->base($cycleId);
         $this->filter($query, $filters, $cycleId, $progressSql, $progressBindings);
 
         return $query;
+    }
+
+    private function prepareRoles(): void
+    {
+        if (! $this->rolesPrepared) {
+            app(RoleExclusivity::class)->reconcilePending(apply: true);
+            $this->rolesPrepared = true;
+        }
     }
 
     private function base(?int $cycleId): Builder
@@ -227,11 +240,8 @@ class RegisteredUsers
      */
     private function progressExpression(?int $cycleId): array
     {
-        $now = now()->format('Y-m-d H:i:s');
         $profileOnly = $cycleId === null ? 'basic_information_only' : 'awaiting_nomination';
-        $grant = fn (string $role): string => "EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = users.id AND ur.revoked_at IS NULL AND r.code = '{$role}')";
-        $judge = 'EXISTS (SELECT 1 FROM cycle_user_roles cr JOIN roles r ON r.id = cr.role_id WHERE cr.user_id = users.id AND cr.revoked_at IS NULL'
-            ." AND r.code = '".AdminAccess::JUDGE_ROLE."' AND cr.starts_at <= ? AND (cr.ends_at IS NULL OR cr.ends_at > ?))";
+        $candidate = app(RoleExclusivity::class)->platform()->whereColumn('user_roles.user_id', 'users.id')->where('roles.code', CandidateRole::CODE)->selectRaw('1');
 
         $sql = 'CASE'
             ." WHEN applications.current_version_id IS NOT NULL THEN 'submitted'"
@@ -239,10 +249,10 @@ class RegisteredUsers
             ." WHEN journeys.id IS NOT NULL AND journeys.documentation_revision > 0 THEN 'documentation_incomplete'"
             ." WHEN journeys.id IS NOT NULL THEN 'awaiting_documentation'"
             ." WHEN profiles.id IS NOT NULL THEN '{$profileOnly}'"
-            .' WHEN NOT '.$grant(CandidateRole::CODE).' OR '.$grant(AdminAccess::ADMIN_ROLE)." OR {$judge} THEN 'not_required'"
+            .' WHEN NOT EXISTS ('.$candidate->toSql().") THEN 'not_required'"
             ." ELSE 'no_basic_information' END";
 
-        return [$sql, [$now, $now]];
+        return [$sql, $candidate->getBindings()];
     }
 
     /**
@@ -262,19 +272,10 @@ class RegisteredUsers
             $filters['verified'] === 'verified' ? $query->whereNotNull('users.email_verified_at') : $query->whereNull('users.email_verified_at');
         }
         if (! empty($filters['role'])) {
-            $now = now();
-            match ($filters['role']) {
-                'judge' => $query->whereExists(fn (Builder $grant) => $grant->selectRaw('1')->from('cycle_user_roles')
-                    ->join('roles', 'roles.id', '=', 'cycle_user_roles.role_id')
-                    ->whereColumn('cycle_user_roles.user_id', 'users.id')->where('roles.code', AdminAccess::JUDGE_ROLE)
-                    // Cycle-scoped: a judge of the selected cycle.
-                    ->where('cycle_user_roles.cycle_id', $cycleId ?? 0)->whereNull('cycle_user_roles.revoked_at')
-                    ->where('cycle_user_roles.starts_at', '<=', $now)
-                    ->where(fn (Builder $window) => $window->whereNull('cycle_user_roles.ends_at')->orWhere('cycle_user_roles.ends_at', '>', $now))),
-                default => $query->whereExists(fn (Builder $grant) => $grant->selectRaw('1')->from('user_roles')
-                    ->join('roles', 'roles.id', '=', 'user_roles.role_id')
-                    ->whereColumn('user_roles.user_id', 'users.id')->where('roles.code', $filters['role'])->whereNull('user_roles.revoked_at')),
-            };
+            $policy = app(RoleExclusivity::class);
+            $platform = $policy->platform()->whereColumn('user_roles.user_id', 'users.id')->where('roles.code', $filters['role'])->selectRaw('1');
+            $cycles = $policy->cycles()->whereColumn('cycle_user_roles.user_id', 'users.id')->where('roles.code', $filters['role'])->selectRaw('1');
+            $query->where(fn (Builder $q) => $q->whereExists($platform)->orWhereExists($cycles));
         }
         if (! empty($filters['progress'])) {
             $query->whereRaw("({$progressSql}) = ?", [...$progressBindings, $filters['progress']]);
@@ -282,8 +283,8 @@ class RegisteredUsers
     }
 
     /**
-     * Current role grants of the page's accounts: platform grants not
-     * revoked; cycle grants not revoked and inside their window, with the
+     * Current role grants of the page's accounts: unrevoked platform and
+     * cycle grants inside their windows, with the
      * cycle and (for a judge) the main domain of the current membership.
      *
      * @param  list<int>  $userIds
@@ -297,8 +298,8 @@ class RegisteredUsers
         $now = now();
         $roles = [];
 
-        DB::table('user_roles')->join('roles', 'roles.id', '=', 'user_roles.role_id')
-            ->whereIn('user_roles.user_id', $userIds)->whereNull('user_roles.revoked_at')
+        app(RoleExclusivity::class)->platform($now)
+            ->whereIn('user_roles.user_id', $userIds)
             ->orderBy('roles.code')->get(['user_roles.user_id', 'roles.code', 'roles.name_ar'])
             ->each(function (object $row) use (&$roles): void {
                 $roles[(int) $row->user_id]['platform'][] = ['code' => $row->code, 'name' => $row->name_ar];
@@ -312,11 +313,9 @@ class RegisteredUsers
             ->get(['committee_members.user_id', 'committees.cycle_id', 'cycle_domains.name_ar'])
             ->mapWithKeys(fn (object $row): array => ["{$row->user_id}:{$row->cycle_id}" => $row->name_ar]);
 
-        DB::table('cycle_user_roles')->join('roles', 'roles.id', '=', 'cycle_user_roles.role_id')
+        app(RoleExclusivity::class)->cycles($now)
             ->join('award_cycles', 'award_cycles.id', '=', 'cycle_user_roles.cycle_id')
-            ->whereIn('cycle_user_roles.user_id', $userIds)->whereNull('cycle_user_roles.revoked_at')
-            ->where('cycle_user_roles.starts_at', '<=', $now)
-            ->where(fn (Builder $window) => $window->whereNull('cycle_user_roles.ends_at')->orWhere('cycle_user_roles.ends_at', '>', $now))
+            ->whereIn('cycle_user_roles.user_id', $userIds)
             ->orderByDesc('award_cycles.year')->orderBy('roles.code')
             ->get(['cycle_user_roles.user_id', 'cycle_user_roles.cycle_id', 'roles.code', 'roles.name_ar', 'award_cycles.name_ar as cycle_name', 'award_cycles.year'])
             ->each(function (object $row) use (&$roles, $domains): void {

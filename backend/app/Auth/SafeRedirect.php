@@ -44,6 +44,7 @@ class SafeRedirect
         if ($user === null) {
             return self::ACCOUNT;
         }
+        app(RoleExclusivity::class)->reconcile($user);
         $access = app(AdminAccess::class);
         if ($access->isAdmin($user)) {
             return self::ADMIN;
@@ -123,6 +124,9 @@ class SafeRedirect
                 return null;
             }
             if (preg_match('#^/judge(/|\?|$)#', $path) === 1 && ($user === null || ! $access->isJudge((int) $user->getKey()))) {
+                return null;
+            }
+            if (preg_match('#^/dashboard(/|\?|$)#', $path) === 1 && ($user === null || ! app(CandidateRole::class)->isHeldBy($user))) {
                 return null;
             }
 

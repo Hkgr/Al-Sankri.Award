@@ -1,0 +1,590 @@
+{
+  "logo_cases": 20,
+  "trophy_cases": 18,
+  "javascript_errors": [],
+  "drive_runtime_requests": [],
+  "checks": [
+    {
+      "case": "header-ar-desktop",
+      "locale": "ar",
+      "variant": "green",
+      "src": "logo-ar-green-800-DfcMv0hN.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 240,
+      "renderedHeight": 77.6875,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "footer-ar-desktop",
+      "locale": "ar",
+      "variant": "white",
+      "src": "logo-ar-white-800-DUcFIxZo.webp",
+      "width": 272,
+      "height": 88,
+      "renderedWidth": 267.1875,
+      "renderedHeight": 86.5,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "trophy-culture-and-arts",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-culture-and-arts-960-CEOhFRZ4.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 296.65625,
+      "renderedHeight": 209.8125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-heritage",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-heritage-960-D1P4vEot.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 296.671875,
+      "renderedHeight": 209.828125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-creativity",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-creativity-960-6n56HV-y.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 296.65625,
+      "renderedHeight": 209.8125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "header-en-desktop",
+      "locale": "en",
+      "variant": "green",
+      "src": "logo-en-green-800-CiQHaOfo.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 240,
+      "renderedHeight": 77.6875,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "footer-en-desktop",
+      "locale": "en",
+      "variant": "white",
+      "src": "logo-en-white-800-GLKBE9Vr.webp",
+      "width": 272,
+      "height": 88,
+      "renderedWidth": 267.1875,
+      "renderedHeight": 86.5,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "trophy-culture-and-arts",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-culture-and-arts-960-CEOhFRZ4.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 296.65625,
+      "renderedHeight": 209.8125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-heritage",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-heritage-960-D1P4vEot.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 296.671875,
+      "renderedHeight": 209.828125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-creativity",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-creativity-960-6n56HV-y.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 296.65625,
+      "renderedHeight": 209.8125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-culture-and-arts",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-culture-and-arts-960-CEOhFRZ4.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 352,
+      "renderedHeight": 248.953125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-heritage",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-heritage-960-D1P4vEot.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 352,
+      "renderedHeight": 248.953125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-creativity",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "src": "trophy-creativity-960-6n56HV-y.webp",
+      "width": 352,
+      "height": 248,
+      "renderedWidth": 352,
+      "renderedHeight": 248.953125,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "candidate-ar-desktop",
+      "locale": "ar",
+      "variant": "green",
+      "src": "logo-ar-green-800-DfcMv0hN.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 230.390625,
+      "renderedHeight": 74.578125,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "candidate-en-desktop",
+      "locale": "en",
+      "variant": "green",
+      "src": "logo-en-green-800-CiQHaOfo.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 230.390625,
+      "renderedHeight": 74.578125,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "admin-ar-desktop",
+      "locale": "ar",
+      "variant": "white",
+      "src": "logo-ar-white-400-DuuiuQix.webp",
+      "width": 200,
+      "height": 65,
+      "renderedWidth": 200,
+      "renderedHeight": 65,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "admin-en-desktop",
+      "locale": "en",
+      "variant": "white",
+      "src": "logo-en-white-400-TPYYwM_P.webp",
+      "width": 200,
+      "height": 64,
+      "renderedWidth": 200,
+      "renderedHeight": 64.5,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "judge-ar-desktop",
+      "locale": "ar",
+      "variant": "green",
+      "src": "logo-ar-green-800-DfcMv0hN.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 230.390625,
+      "renderedHeight": 74.578125,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "judge-en-desktop",
+      "locale": "en",
+      "variant": "green",
+      "src": "logo-en-green-800-CiQHaOfo.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 230.390625,
+      "renderedHeight": 74.578125,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "header-ar-mobile",
+      "locale": "ar",
+      "variant": "green",
+      "src": "logo-ar-green-800-DfcMv0hN.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 200,
+      "renderedHeight": 64.75,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "footer-ar-mobile",
+      "locale": "ar",
+      "variant": "white",
+      "src": "logo-ar-white-800-DUcFIxZo.webp",
+      "width": 272,
+      "height": 88,
+      "renderedWidth": 235.6875,
+      "renderedHeight": 76.296875,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "trophy-culture-and-arts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-culture-and-arts-960-CEOhFRZ4.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 288.5,
+      "renderedHeight": 204.046875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-heritage",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-heritage-960-D1P4vEot.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 288.5,
+      "renderedHeight": 204.046875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-creativity",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-creativity-960-6n56HV-y.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 288.5,
+      "renderedHeight": 204.046875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "header-en-mobile",
+      "locale": "en",
+      "variant": "green",
+      "src": "logo-en-green-800-CiQHaOfo.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 200,
+      "renderedHeight": 64.75,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "footer-en-mobile",
+      "locale": "en",
+      "variant": "white",
+      "src": "logo-en-white-800-GLKBE9Vr.webp",
+      "width": 272,
+      "height": 88,
+      "renderedWidth": 235.6875,
+      "renderedHeight": 76.296875,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "trophy-culture-and-arts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-culture-and-arts-960-CEOhFRZ4.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 288.5,
+      "renderedHeight": 204.046875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-heritage",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-heritage-960-D1P4vEot.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 288.5,
+      "renderedHeight": 204.046875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-creativity",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-creativity-960-6n56HV-y.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 288.5,
+      "renderedHeight": 204.046875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-culture-and-arts",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-culture-and-arts-960-CEOhFRZ4.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 326.5,
+      "renderedHeight": 230.921875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-heritage",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-heritage-960-D1P4vEot.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 326.5,
+      "renderedHeight": 230.921875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "trophy-creativity",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "trophy-creativity-960-6n56HV-y.webp",
+      "width": 331,
+      "height": 234,
+      "renderedWidth": 326.5,
+      "renderedHeight": 230.921875,
+      "filter": "none",
+      "blend": "normal",
+      "fit": "fill"
+    },
+    {
+      "case": "candidate-ar-mobile",
+      "locale": "ar",
+      "variant": "green",
+      "src": "logo-ar-green-800-DfcMv0hN.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 200,
+      "renderedHeight": 64.75,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "candidate-en-mobile",
+      "locale": "en",
+      "variant": "green",
+      "src": "logo-en-green-800-CiQHaOfo.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 200,
+      "renderedHeight": 64.75,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "admin-ar-mobile",
+      "locale": "ar",
+      "variant": "white",
+      "src": "logo-ar-white-400-DuuiuQix.webp",
+      "width": 200,
+      "height": 65,
+      "renderedWidth": 200,
+      "renderedHeight": 65,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "admin-en-mobile",
+      "locale": "en",
+      "variant": "white",
+      "src": "logo-en-white-400-TPYYwM_P.webp",
+      "width": 200,
+      "height": 64,
+      "renderedWidth": 200,
+      "renderedHeight": 64.5,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(20, 65, 61)"
+    },
+    {
+      "case": "judge-ar-mobile",
+      "locale": "ar",
+      "variant": "green",
+      "src": "logo-ar-green-800-DfcMv0hN.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 200,
+      "renderedHeight": 64.75,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    },
+    {
+      "case": "judge-en-mobile",
+      "locale": "en",
+      "variant": "green",
+      "src": "logo-en-green-800-CiQHaOfo.webp",
+      "width": 240,
+      "height": 77,
+      "renderedWidth": 200,
+      "renderedHeight": 64.75,
+      "background": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "filter": "none",
+      "blend": "normal",
+      "backing": "rgb(255, 255, 255)"
+    }
+  ],
+  "test_origin": "Isolated local preview; synthetic accounts only.",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 1000
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844
+    },
+    "device_scale_factor": 2
+  }
+}

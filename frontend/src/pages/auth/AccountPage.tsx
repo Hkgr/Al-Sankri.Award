@@ -118,6 +118,10 @@ function AccountDetails({ user }: { user: User }) {
 
       <dl className="account-details">
         <div>
+          <dt>{t('roles.current')}</dt>
+          <dd>{user.roles?.length ? <ul>{user.roles.map((role) => <li key={`${role.scope}:${role.code}:${role.cycle?.id ?? 0}`}>{t(role.name)}{role.cycle && ` (${role.cycle.name} — ${role.cycle.year})`}</li>)}</ul> : '—'}</dd>
+        </div>
+        <div>
           <dt>{t('account.name')}</dt>
           <dd>{user.name}</dd>
         </div>
@@ -135,6 +139,7 @@ function AccountDetails({ user }: { user: User }) {
           </dd>
         </div>
       </dl>
+      <p className="auth-panel__text">{t(user.is_candidate ? 'roles.default' : 'roles.other')}</p>
 
       {!user.email_verified && <VerificationSection onSessionError={handleSessionError} />}
       <GoogleSection user={user} onSessionError={handleSessionError} />

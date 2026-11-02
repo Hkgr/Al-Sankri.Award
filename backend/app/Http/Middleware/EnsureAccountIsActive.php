@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Auth\RoleExclusivity;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +36,10 @@ class EnsureAccountIsActive
             }
 
             return redirect('/login?account=disabled');
+        }
+
+        if ($user !== null) {
+            app(RoleExclusivity::class)->reconcile($user);
         }
 
         return $next($request);
