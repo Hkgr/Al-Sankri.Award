@@ -13,6 +13,7 @@ export function AdminDialog({
   onClose,
   children,
   wide,
+  className = '',
 }: {
   open: boolean
   title: string
@@ -20,6 +21,7 @@ export function AdminDialog({
   onClose: () => void
   children: ReactNode
   wide?: boolean
+  className?: string
 }) {
   const { t } = useLocale()
   const ref = useRef<HTMLDialogElement>(null)
@@ -40,7 +42,7 @@ export function AdminDialog({
   return (
     <dialog
       ref={ref}
-      className={wide ? 'admin-dialog admin-dialog--wide' : 'admin-dialog'}
+      className={`${wide ? 'admin-dialog admin-dialog--wide' : 'admin-dialog'} ${className}`.trim()}
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault()

@@ -33,6 +33,8 @@ class AdminAccess
 
     public const VIEW_USERS = 'users.view_registered';
 
+    public const REMOVE_ACCOUNTS = 'users.remove_accounts';
+
     /** Exports (with the source module's own viewing permission). */
     public const EXPORT_REPORTS = 'reports.export';
 
@@ -47,7 +49,7 @@ class AdminAccess
     public const MANAGE_SCHEDULE = 'schedules.manage';
 
     /** The administration permissions this dashboard knows (anything else is ignored). */
-    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS, self::EXPORT_REPORTS, self::VIEW_AUDIT, self::VIEW_SYSTEM_LOGS, self::REVIEW_APPLICATIONS, self::MANAGE_SCHEDULE];
+    public const PERMISSIONS = [self::VIEW_APPLICATIONS, self::MANAGE_COMMITTEES, self::VIEW_USERS, self::EXPORT_REPORTS, self::VIEW_AUDIT, self::VIEW_SYSTEM_LOGS, self::REVIEW_APPLICATIONS, self::MANAGE_SCHEDULE, self::REMOVE_ACCOUNTS];
 
     public const SOURCE_COMMAND = 'admin_grant_access_command';
 

@@ -4,6 +4,7 @@ namespace Tests\Feature\Candidate;
 
 use App\Admin\CycleSchedule;
 use App\Candidates\AccountContext;
+use App\Candidates\AwardTerms;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -102,6 +103,10 @@ trait InteractsWithNominationStage
      */
     private function send(string $uri, array $payload, ?string $journeyKey = null): TestResponse
     {
+        if ($uri === '/api/candidate/submission') {
+            $terms = app(AwardTerms::class)->current((int) DB::table('candidate_nominations')->where('user_id', $this->signedIn?->id)->orderByDesc('id')->value('cycle_id'));
+            $payload += ['terms_version_id' => $terms?->id, 'accepted_terms' => true];
+        }
         // Stay under the per-account limits.
         $this->travel(7)->seconds();
 
@@ -134,7 +139,7 @@ trait InteractsWithNominationStage
     {
         return [
             'domain' => 'creativity',
-            'subcategory' => 'quality',
+            'subcategory' => 'entrepreneurship',
             'title' => 'مبادرة ذاكرة الحيّ',
             'purpose_and_mission' => 'صون ذاكرة الأحياء القديمة ونقلها إلى الأجيال الجديدة.',
             'objectives' => "توثيق الحِرف التقليدية\nتدريب الشباب على التوثيق",

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Candidate;
 
+use App\Candidates\AwardTerms;
 use App\Candidates\BasicProfiles;
 use App\Candidates\Documentation;
 use App\Candidates\NominationDetails;
@@ -13,6 +14,7 @@ use App\Models\Application;
 use App\Models\CandidateNomination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The read-only review of the whole participation and its final submission
@@ -59,6 +61,7 @@ class SubmissionController extends Controller
                 'nomination_details' => new NominationDetailsResource($journey),
                 'documentation' => $this->documentation->state($journey),
                 'submission' => $this->submissions->receipt(Application::query()->findOrFail($journey->application_id)),
+                'terms' => $this->terms($journey),
             ],
             'journey_key' => $this->documentation->journeyKey($journey),
         ]);
@@ -70,12 +73,17 @@ class SubmissionController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate(['reviewed_revision' => ['required', 'integer', 'min:0']], ['reviewed_revision.*' => 'أعد تحميل صفحة المراجعة ثم حاول مرة أخرى.']);
+        $validated = $request->validate([
+            'reviewed_revision' => ['required', 'integer', 'min:0'],
+            'terms_version_id' => ['nullable', 'integer'], 'accepted_terms' => ['sometimes', 'boolean'],
+        ], ['reviewed_revision.*' => 'أعد تحميل صفحة المراجعة ثم حاول مرة أخرى.']);
         /** @var CandidateNomination $journey */
         $journey = $request->attributes->get('candidate_journey');
-        [$outcome, $receipt] = $this->submissions->submit($request->user(), $journey, (int) $validated['reviewed_revision']);
+        [$outcome, $receipt] = $this->submissions->submit($request->user(), $journey, (int) $validated['reviewed_revision'], isset($validated['terms_version_id']) ? (int) $validated['terms_version_id'] : null, (bool) ($validated['accepted_terms'] ?? false));
 
         return match ($outcome) {
+            'category_review_required' => response()->json(['code' => $outcome, 'message' => 'اختر الفئة المعتمدة من صفحة فئة الترشح قبل الإرسال.'], 409),
+            'terms_changed' => response()->json(['code' => $outcome, 'message' => 'راجع النسخة الحالية من شروط التقديم ووافق عليها قبل الإرسال.'], 409),
             Submissions::SUBMITTED => response()->json(['code' => $outcome, 'data' => $receipt, 'message' => 'تم إرسال ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.'], 201),
             Submissions::ALREADY_SUBMITTED => response()->json(['code' => $outcome, 'data' => $receipt, 'message' => 'أُرسلت هذه المشاركة من قبل، ولم يُرسل شيء مرة ثانية.']),
             Submissions::REVIEW_OUTDATED => response()->json([
@@ -92,5 +100,18 @@ class SubmissionController extends Controller
             ], 403),
             default => app(DocumentationController::class)->refusal($outcome),
         };
+    }
+
+    /** The accepted immutable version for a submission; the latest version for a new consent. */
+    private function terms(CandidateNomination $journey): ?object
+    {
+        $application = Application::query()->findOrFail($journey->application_id);
+        if ($application->current_version_id !== null) {
+            return DB::table('application_consents')->join('policy_versions', 'policy_versions.id', '=', 'application_consents.policy_version_id')
+                ->where('application_consents.application_version_id', $application->current_version_id)->where('policy_versions.code', AwardTerms::CODE)
+                ->first(['policy_versions.id', 'version_number', 'title_ar', 'body_ar', 'body_en', 'content_hash']);
+        }
+
+        return app(AwardTerms::class)->current((int) $journey->cycle_id);
     }
 }

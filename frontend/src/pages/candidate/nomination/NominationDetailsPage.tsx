@@ -13,6 +13,7 @@ import { DomainArtwork } from './nominationFields'
 import { NominationForm } from './NominationForm'
 import { nominationSummaryFromDetails } from './nominationSummaries'
 import { useLocale } from '../../../i18n/useLocale'
+import { CategoryCorrection } from './CategoryCorrection'
 
 type Loaded = { kind: 'state'; state: NominationState } | { kind: 'stage_1_required' }
 
@@ -94,7 +95,10 @@ export function NominationDetailsPage({ user }: { user: User }) {
           </p>
         </FormAlert>
       ) : details ? (
-        <ReadOnlyNomination details={details} storedNotice={storedNotice} />
+        <>
+          {details.taxonomy_review_required && (state?.correction_options?.length ? <CategoryCorrection options={state.correction_options} url="/api/candidate/category-correction" context={user.account_context} journeyKey={state.journey_key} onSaved={load} /> : <FormAlert tone="info"><p>{t('category.adminReview')}</p></FormAlert>)}
+          <ReadOnlyNomination details={details} storedNotice={storedNotice} />
+        </>
       ) : state && state.availability.status === 'available' && state.options && state.journey_key ? (
         <NominationForm
           accountContext={user.account_context}

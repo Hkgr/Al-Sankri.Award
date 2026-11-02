@@ -1,0 +1,119 @@
+{
+  "revision": "2026-11-02",
+  "ar": {
+    "title": "الشروط العامة للتقديم",
+    "general": [
+      { "title": "النطاق الجغرافي", "text": "أن تكون المبادرة أو المشروع أو النشاط قائماً ومُنفذاً بالفعل داخل سوريا." },
+      { "title": "الفئات المؤهلة", "text": "يُتاح التقديم لكافة الأفراد، الفرق التطوعية، المبادرات المجتمعية، والمؤسسات والجمعيات." },
+      { "title": "شرط الأثر الموثق", "text": "أن تكون المبادرة ذات أثر ملموس وموثق في الواقع، وليست مجرد فكرة نظرية أو مقترح لم يبدأ تنفيذه بعد." },
+      { "title": "اكتمال الملف والأهلية", "text": "استيفاء كافة البيانات والوثائق الداعمة وأدلة الأثر المطلوبة وخلو الملف من أي مخالفات فنية أو قانونية." },
+      { "title": "منع تضارب المصالح الصارم", "text": "حظر ترشح أعضاء مجلس الأمناء، ولجان التحكيم، ولجنة النزاهة، وموظفي إدارة الجائزة بمؤسسة الرواد ضماناً للحياد والنزاهة." }
+    ],
+    "domains": [
+      {
+        "code": "culture_and_arts", "name": "الثقافة والفنون",
+        "intro": "تُعنى المبادرات في هذا المحور بالنتاج الأدبي والفني الذي يُسهم في بناء الإنسان وصون الهوية الوطنية:",
+        "subcategories": [
+          { "code": "poetry", "name": "الشعر", "requirements": [
+            "تقديم نتاج شعري أصيل (قصائد، مجموعة شعرية، أو مبادرة شعرية) يمتلك جودة أدبية ولغوية عالية.",
+            "ألا يكون حاصلًا على جائزة من قبل.",
+            "رفع النصوص والأدلة التوثيقية الكاملة عبر البوابة الرقمية للجائزة."
+          ] },
+          { "code": "story", "name": "القصة", "requirements": [
+            "تقديم نتاج أدبي قصصي أصيل (مبادرة سردية موجهة للأطفال أو الكبار).",
+            "أن يُعبر العمل عن القيم والهوية والأصالة.",
+            "إرفاق النسخ الإلكترونية عبر البوابة الرقمية للجائزة."
+          ] }
+        ]
+      },
+      {
+        "code": "heritage", "name": "التراث",
+        "intro": "تستهدف المبادرات التي تُعنى بحماية وتوثيق الذاكرة الجمعية والتراث السوري المادي واللامادي:",
+        "subcategories": [
+          { "code": "tangible_heritage", "name": "التراث المادي", "requirements": [
+            "أن تركز المبادرة أو العمل على صون، ترميم، حماية، أو توثيق المعالم العمرانية، الحرف اليدوية، الأماكن التراثية، أو المقتنيات المادية.",
+            "تقديم أدلة توثيقية (تقارير، صور عالية الدقة، أو فيديوهات) تثبت الأثر الواقعي لحماية المادة التراثية المادية من التلف أو الاندثار."
+          ] },
+          { "code": "intangible_heritage", "name": "التراث اللامادي", "requirements": [
+            "أن تستهدف المبادرة صون وتوثيق التراث الشفهي، العادات والتقاليد، العروض الشعبية، الموسيقى، أو الفنون الشعبية السورية.",
+            "تقديم توثيق رقمي أو مرئي أو مكتوب للمبادرة يوضح كيفية نقل وصون هذا التراث غير المادي للأجيال القادمة."
+          ] }
+        ]
+      },
+      {
+        "code": "creativity", "name": "الإبداع",
+        "intro": "تركز على النماذج والحلول الابتكارية ذات الأثر والمستدامة في خدمة المجتمع:",
+        "subcategories": [
+          { "code": "entrepreneurship", "name": "ريادة الأعمال", "requirements": [
+            "تقديم حلول ريادية ومشاريع اجتماعية مبتكرة تمتلك نموذج عمل مستدام يواجه تحدياً اقتصادياً أو مجتمعياً.",
+            "تقديم أدلة تثبت استدامة المشروع وقابليته للاستمرار والنمو الذاتي بعد مرحلة التكريم.",
+            "توثيق مؤشرات الأداء الإداري والمالي ونتاجات المشروع على الأرض."
+          ] },
+          { "code": "social_responsibility", "name": "المسؤولية المجتمعية", "requirements": [
+            "تقديم برامج ومبادرات مجتمعية أو أهلية مُنفذة تلبي احتياجات محلية حقيقية وتخدم الفئات الأشد ضعفاً.",
+            "تقديم أدلة موثوقة تعكس حجم التغيير الإيجابي والمباشر في حياة المستفيدين ومدى تعزيز التكافل الاجتماعي.",
+            "الالتزام بالشفافية المالية والإجرائية ووضوح نموذج إدارة المبادرة."
+          ] }
+        ]
+      }
+    ]
+  },
+  "en": {
+    "title": "General Application Conditions",
+    "general": [
+      { "title": "Geographic scope", "text": "The initiative, project or activity must exist and already be implemented within Syria." },
+      { "title": "Eligible applicants", "text": "Applications are open to all individuals, volunteer teams, community initiatives, institutions and associations." },
+      { "title": "Documented impact", "text": "The initiative must have tangible, documented impact in practice, and must not be merely a theoretical idea or a proposal whose implementation has not yet begun." },
+      { "title": "Completeness and eligibility", "text": "All required information, supporting documents and evidence of impact must be provided, and the application must be free of any technical or legal violations." },
+      { "title": "Strict prevention of conflicts of interest", "text": "Members of the board of trustees, judging committees and integrity committee, and award administration staff at Al-Rowad Foundation are prohibited from applying, to ensure impartiality and integrity." }
+    ],
+    "domains": [
+      {
+        "code": "culture_and_arts", "name": "Culture and Arts",
+        "intro": "Initiatives in this domain concern literary and artistic work that contributes to human development and safeguards national identity:",
+        "subcategories": [
+          { "code": "poetry", "name": "Poetry", "requirements": [
+            "Submit original poetic work (poems, a poetry collection or a poetry initiative) of high literary and linguistic quality.",
+            "The work must not have received an award previously.",
+            "Upload the complete texts and documentary evidence through the award's digital portal."
+          ] },
+          { "code": "story", "name": "Story", "requirements": [
+            "Submit original literary storytelling work (a narrative initiative aimed at children or adults).",
+            "The work must express values, identity and authenticity.",
+            "Attach electronic copies through the award's digital portal."
+          ] }
+        ]
+      },
+      {
+        "code": "heritage", "name": "Heritage",
+        "intro": "This domain targets initiatives concerned with protecting and documenting collective memory and Syria's tangible and intangible heritage:",
+        "subcategories": [
+          { "code": "tangible_heritage", "name": "Tangible Heritage", "requirements": [
+            "The initiative or work must focus on safeguarding, restoring, protecting or documenting architectural landmarks, handicrafts, heritage sites or material artifacts.",
+            "Provide documentary evidence (reports, high-resolution photographs or videos) demonstrating the actual impact of protecting tangible heritage from damage or disappearance."
+          ] },
+          { "code": "intangible_heritage", "name": "Intangible Heritage", "requirements": [
+            "The initiative must aim to safeguard and document oral heritage, customs and traditions, folk performances, music or Syrian folk arts.",
+            "Provide digital, visual or written documentation of the initiative explaining how this intangible heritage is transmitted and safeguarded for future generations."
+          ] }
+        ]
+      },
+      {
+        "code": "creativity", "name": "Creativity",
+        "intro": "This domain focuses on innovative, impactful and sustainable models and solutions serving the community:",
+        "subcategories": [
+          { "code": "entrepreneurship", "name": "Entrepreneurship", "requirements": [
+            "Present innovative entrepreneurial solutions and social projects with a sustainable business model addressing an economic or societal challenge.",
+            "Provide evidence demonstrating the project's sustainability and its ability to continue and grow independently after the recognition stage.",
+            "Document administrative and financial performance indicators and the project's actual outputs on the ground."
+          ] },
+          { "code": "social_responsibility", "name": "Social Responsibility", "requirements": [
+            "Present implemented community or civil-society programs and initiatives that meet real local needs and serve the most vulnerable groups.",
+            "Provide reliable evidence reflecting the scale of direct, positive change in beneficiaries' lives and the extent to which social solidarity has been strengthened.",
+            "Commit to financial and procedural transparency and a clear model for managing the initiative."
+          ] }
+        ]
+      }
+    ]
+  }
+}

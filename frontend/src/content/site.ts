@@ -3,11 +3,11 @@
  *
  * Award information comes from the supplied documents in docs/:
  *   plan    خطة جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية.docx
- *   terms   جائزة الدكتور عبد القادر سنكري شروط التقديم.docx
+ *   terms   نهائي/الشروط العامة للتقديم.docx (current conditions, 2026-11-02)
  *   launch  التصور التنفيذي لحفل الإطلاق الرسمي.docx
  *   guide   جائزة السنكري visual identity.pdf (physical page numbers)
- * and the owner's decisions of 2026-10-29, which override the documents:
- * the official name and slogan, three main domains with seven
+ * and the owner's decisions of 2026-10-29 and 2026-11-02, which override older documents:
+ * the official name and slogan, three main domains with six
  * subcategories, no public voting and no field verification, review by
  * award administration before referral to a committee of 3 or 5 judges.
  * Biographical statements come from HAND's and Al-Rowad's published pages
@@ -29,6 +29,7 @@ import visitNarrow480 from '../assets/photos/sankari-umayyad-mosque-visit-narrow
 import visitNarrow912 from '../assets/photos/sankari-umayyad-mosque-visit-narrow-912.webp'
 import visitNarrow912Jpg from '../assets/photos/sankari-umayyad-mosque-visit-narrow-912.jpg'
 import type { PhotoSource } from '../components/Photo'
+import { awardTerms } from './awardTerms'
 
 export const award = {
   name: 'جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع',
@@ -74,7 +75,7 @@ export const pages: SitePage[] = [
     href: '/eligibility',
     label: 'شروط التقدم',
     labelEn: 'Eligibility',
-    description: 'شروط التقدم المشتركة لمحاور الجائزة الثلاثة، والوثائق وأدلة الأثر المطلوبة، وقواعد منع تضارب المصالح، ومبادئ التقييم.',
+    description: 'شروط التقدم المشتركة لمحاور الجائزة الثلاثة، والوثائق وأدلة الأثر المطلوبة، وقواعد منع تضارب المصالح، وشروط الفئات كاملة.',
   },
 ]
 
@@ -91,57 +92,26 @@ export const hero = {
   },
 }
 
-export type Subcategory = { label: string; scope: string }
+export type Subcategory = { code: string; label: string; requirements: string[] }
 
 export type MainDomain = {
   slug: 'culture-and-arts' | 'heritage' | 'creativity'
   label: string
   /** The approved award artwork. Creativity uses the former Volunteer Work shape (owner decision). */
   symbol: string
-  /** What the domain celebrates (guide pp. 10–15). */
+  /** Domain description from the current conditions. */
   intro: string
-  /** Number of awards in the domain (plan and terms: «محاور الجائزة»). */
-  awards: number
   subcategories: Subcategory[]
 }
 
-// Three main domains and seven subcategories (owner decision; plan and terms tables).
-export const domains: MainDomain[] = [
-  {
-    slug: 'culture-and-arts',
-    label: 'الثقافة والفنون',
-    symbol: domainCultureArts,
-    intro: 'يحتفي بالقراءة والفنون والإنتاج الثقافي بوصفها أثراً يُكتب ويُشارك.',
-    awards: 2,
-    subcategories: [
-      { label: 'الثقافة', scope: 'أعمال القراءة والمعرفة والإنتاج الثقافي التي تصنع أثراً يُكتب ويُشارك في المجتمع.' },
-      { label: 'الفنون', scope: 'الأعمال الفنية والإبداعية التي تقدّم أثراً ثقافياً ملموساً يتجاوز صاحبه إلى جمهوره ومجتمعه.' },
-    ],
-  },
-  {
-    slug: 'heritage',
-    label: 'التراث',
-    symbol: domainHeritage,
-    intro: 'يحتفي بحفظ التراث المادي واللامادي، وتوثيق الحرف والقصص والعناصر الثقافية بوصفها أثراً يُصان ويُشارك.',
-    awards: 2,
-    subcategories: [
-      { label: 'التراث المادي', scope: 'صون الشواهد الملموسة من الذاكرة الجماعية وتوثيقها: الحرف والمواقع والمقتنيات وما يحمل الهوية من موروث مادي.' },
-      { label: 'التراث اللامادي', scope: 'حفظ الموروث الحي ونقله: القصص والتراث الشفهي والممارسات والمعارف المتوارثة.' },
-    ],
-  },
-  {
-    slug: 'creativity',
-    label: 'الإبداع',
-    symbol: domainVolunteer,
-    intro: 'يحتفي بالمبادرات التي تجمع الناس حول قيمة مشتركة، وبالأفكار التي تتحول إلى فرص، وبالدقة والتحسين المستمر بوصفهما أثراً يُصنع بالفعل.',
-    awards: 3,
-    subcategories: [
-      { label: 'المسؤولية المجتمعية', scope: 'المبادرات التي تجمع الأفراد والجهات حول قيمة مشتركة وتخدم المجتمع.' },
-      { label: 'ريادة الأعمال', scope: 'انطلاق الفكرة وتحوّلها إلى فرصة، والنمو والتوسع اللذان يدعمان المشروع في رحلته نحو الاستمرار وصناعة القيمة.' },
-      { label: 'الجودة', scope: 'الدقة والتحسين المستمر، والجودة بوصفها معياراً يحمي قيمة العمل ويؤكد استحقاق أثره.' },
-    ],
-  },
-]
+// Three main domains and six subcategories (owner decision; plan and terms tables).
+export const domains: MainDomain[] = awardTerms.ar.domains.map((domain, index) => ({
+  slug: (['culture-and-arts', 'heritage', 'creativity'] as const)[index],
+  label: domain.name,
+  symbol: [domainCultureArts, domainHeritage, domainVolunteer][index],
+  intro: domain.intro,
+  subcategories: domain.subcategories.map((category) => ({ code: category.code, label: category.name, requirements: category.requirements })),
+}))
 
 export function domainBySlug(slug: string): MainDomain | undefined {
   return domains.find((domain) => domain.slug === slug)
@@ -269,17 +239,9 @@ export const journey: JourneyPhase[] = [
 
 export const eligibility = {
   // Terms: «شروط التقديم» and «شروط ومعايير الترشح»; field-verification readiness removed (owner decision).
-  conditions: [
-    { title: 'النطاق الجغرافي', text: 'أن يكون العمل، مبادرةً أو مشروعاً أو نشاطاً، قائماً ومنفّذاً داخل سوريا، وأن يقع مقرّه ونشاطه ضمن النطاق الجغرافي السوري في هذه الدورة.' },
-    { title: 'أثر موثّق', text: 'أن يكون للعمل أثر ملموس وموثق في الواقع، وألّا يكون فكرة نظرية أو مقترحاً لم يبدأ تنفيذه.' },
-    { title: 'مطابقة أحد المحاور', text: 'أن يطابق العمل أحد المحاور الرئيسية الثلاثة المعلنة، وأن يُقدَّم ضمن فئة من فئاتها.' },
-    { title: 'اكتمال الملف والأهلية', text: 'استيفاء البيانات والوثائق الداعمة وأدلة الأثر المطلوبة، وخلو الملف من أي مخالفة للشروط الفنية أو القانونية.' },
-    { title: 'النزاهة والشفافية', text: 'الالتزام بالأخلاقيات والنزاهة والشفافية في كل البيانات والتقارير المقدَّمة.' },
-    { title: 'توثيق قصة الأثر', text: 'الموافقة على توثيق قصة الأثر إعلامياً وإدراجها ضمن الأرشيف المعرفي والقاعدة البيانية الرقمية المفتوحة للمؤسسة.' },
-    { title: 'المشاركة في أسبوع الجائزة', text: 'الالتزام بالمشاركة في فعاليات أسبوع الجائزة المخطط لها (المعرض وورش العمل والمنتدى) في حال التأهل للتصفيات النهائية.' },
-  ],
+  conditions: awardTerms.ar.general.slice(0, 4),
   // Terms: «الفئات المؤهلة».
-  applicants: 'يُتاح التقديم للأفراد والفرق والمبادرات والمؤسسات الرسمية والمنظمات. وعند التسجيل في المنصة يُقدَّم الملف باسم فرد أو باسم مؤسسة.',
+  applicants: awardTerms.ar.general[1].text,
   // Terms: «إرفاق وثائق وأدلة الأثر», with the platform's actual documentation stage.
   evidence: {
     intro: 'يُبنى ملف الترشح على أدلة تثبت اكتمال العمل وأثره: الملفات التوثيقية، والتقارير الإجرائية، والصور، ومقاطع الفيديو، والشهادات.',
@@ -292,20 +254,14 @@ export const eligibility = {
   },
   // Terms: «شرط منع تضارب المصالح الصارم».
   conflict: [
-    'يُحظر تماماً على أعضاء مجلس الأمناء، ولجان التحكيم، ولجنة النزاهة، وموظفي إدارة الجائزة في ',
-    { org: 'rowad', label: 'مؤسسة الروّاد' },
-    ' الترشحُ للجائزة، أو التدخل والتأثير في أي ملفات ترشيح ذات صلة بهم، ضماناً للنزاهة والحياد التام.',
+    'حظر ترشح أعضاء مجلس الأمناء، ولجان التحكيم، ولجنة النزاهة، وموظفي إدارة الجائزة ب',
+    { org: 'rowad', label: 'مؤسسة الرواد' },
+    ' ضماناً للحياد والنزاهة.',
   ] satisfies RichText,
   // Terms: «معايير التقديم»; the impact criterion is verified through the evidence (no field visits).
-  criteria: [
-    { title: 'الأصالة والابتكار', text: 'تقديم حلول ريادية أو مجتمعية مبتكرة تعالج احتياجات محلية حقيقية.' },
-    { title: 'مصداقية الأثر المجتمعي وعمقه', text: 'حجم التغيير الإيجابي الملموس الذي أحدثه العمل في حياة المستفيدين والمجتمع، وقابلية هذا الأثر للتحقق من خلال الأدلة المقدَّمة.' },
-    { title: 'الاستدامة وقابلية التطوير', text: 'قدرة العمل على الاستمرار والنمو الذاتي بعد مرحلة التكريم.' },
-    { title: 'الحوكمة وإدارة العمليات', text: 'وضوح نماذج الإدارة والتوثيق، والشفافية المالية والإجرائية، وآليات التعامل مع المستفيدين.' },
-    { title: 'حفظ التراث والهوية', text: 'مدى إسهام العمل في صون الذاكرة الجمعية والتراث الثقافي، المادي أو اللامادي.' },
-  ],
+
   // Owner decisions: the shared conditions apply to every subcategory.
-  shared: 'تنطبق الشروط ومعايير التقييم نفسها على المحاور الثلاثة وفئاتها السبع؛ ويبيّن تعريف كل فئة نطاقها فقط، دون شروط إضافية خاصة بها.',
+  shared: 'تُطبق الشروط العامة على الفئات الست، إضافة إلى شروط كل فئة الواردة أدناه.',
 }
 
 export const closing = {

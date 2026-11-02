@@ -22,6 +22,7 @@ import { saveFile } from '../saveFile'
 import { ReviewSection } from './ReviewSection'
 import { StatusBadge } from './StatusBadge'
 import { useLocale } from '../../../i18n/useLocale'
+import { CategoryCorrection } from '../../candidate/nomination/CategoryCorrection'
 
 /** «تنزيل بطاقة الترشح PDF»: the submitted application as a server-made PDF. */
 function CardDownload({ user, applicationId }: { user: User; applicationId: number }) {
@@ -161,6 +162,8 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
       </header>
 
       <Section id="admin-summary" title={t('ملخص الإرسال')}>
+        {detail.current_category?.review_required && (user?.admin_permissions.includes('applications.review') ? <CategoryCorrection admin options={detail.current_category.options} url={`/api/admin/applications/${applicationId}/category-correction`} context={user.account_context} onSaved={load} /> : <FormAlert tone="info"><p>{t('category.adminReview')}</p></FormAlert>)}
+        {detail.current_category && <p>{t('category.current')}: {detail.current_category.name}</p>}
         <dl className="admin-facts">
           <div>
             <dt>{t('الرقم المرجعي')}</dt>
@@ -222,12 +225,12 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
             <ExportMenu user={user} label={t('تصدير تقييمات الحكام')} url={(format) => `/api/admin/exports/judge-scores?format=${format}&application=${summary.id}`} />
           </div>
         )}
-        {!detail.judging.ready ? (
+        {!detail.judging.ready && detail.judging.scores.length === 0 ? (
           <p className="admin-muted">{detail.judging.referred ? t('لم تُعتمد لجنة تحكيم هذا المحور بعد.') : t('لم يُرسل هذا الملف إلى التحكيم؛ لا يقيّمه الحكام قبل إرسال إدارة الجائزة له.')}</p>
         ) : (
           <>
             <p className="admin-muted">
-              {detail.judging.excluded
+              {!detail.judging.ready ? t('لم تُعتمد لجنة تحكيم هذا المحور بعد.') : detail.judging.excluded
                 ? t('النتيجة: استبعاد.')
                 : detail.judging.decision
                   ? t('متوسط التقييمات {decision} من 100.', { decision: detail.judging.decision })
@@ -236,7 +239,7 @@ export function ApplicationPage({ applicationId }: { applicationId: number }) {
             <dl className="admin-facts">
               {detail.judging.scores.map((item, index) => (
                 <div key={`${item.name}-${index}`}>
-                  <dt>{item.name}</dt>
+                  <dt>{item.name}{item.historical && ` · ${t('removal.historical')}`}</dt>
                   <dd>
                     {item.excluded ? t('استبعاد') : item.score === null ? t('بانتظار الإرسال') : t('{score} من 100', { score: item.score })}
                     {item.notes ? t(' — الملاحظات: {notes}', { notes: item.notes }) : ''}

@@ -173,6 +173,7 @@ class RegisteredUsers
 
         return $rows->map(fn (object $row): array => [
             'id' => (int) $row->id,
+            'removable' => app(AccountRemoval::class)->canTarget((int) $row->id),
             'name' => $row->name,
             'email' => $row->email,
             'email_verified' => $row->email_verified_at !== null,
@@ -210,6 +211,7 @@ class RegisteredUsers
     private function base(?int $cycleId): Builder
     {
         return DB::table('users')
+            ->whereNull('users.deleted_at')
             ->leftJoin('candidate_profiles as profiles', 'profiles.user_id', '=', 'users.id')
             // The journey of THIS cycle only (0 matches nothing when no cycle exists).
             ->leftJoin('candidate_nominations as journeys', function (JoinClause $join) use ($cycleId): void {

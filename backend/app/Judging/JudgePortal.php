@@ -242,6 +242,7 @@ class JudgePortal
             ->where('committees.status', 'approved')
             ->where('judging_assignments.round_number', 1)
             ->whereNotNull('applications.current_version_id')
+            ->where('applications.taxonomy_review_required', false)
             ->whereColumn('judging_assignments.application_version_id', 'applications.current_version_id')
             // The administrative referral gate: only an application referred
             // to this very committee, for the list, the detail, the files and

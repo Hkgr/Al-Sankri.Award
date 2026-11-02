@@ -83,7 +83,7 @@ class ApplicationReviews
             ->leftJoin('committees', 'committees.id', '=', 'applications.review_committee_id')
             ->where('applications.id', $applicationId)
             ->first([
-                'applications.cycle_id', 'applications.cycle_domain_id', 'applications.status', 'applications.current_version_id',
+                'applications.cycle_id', 'applications.cycle_domain_id', 'applications.status', 'applications.current_version_id', 'applications.taxonomy_review_required',
                 'applications.review_status', 'applications.review_source',
                 'applications.review_decided_at', 'applications.review_reason', 'applications.review_committee_id',
                 'deciders.name as decider_name', 'committees.name_ar as committee_name',

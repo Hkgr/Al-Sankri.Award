@@ -57,21 +57,7 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
         </ul>
       </section>
 
-      <section className="rules-block" aria-labelledby="criteria-title">
-        <Heading id="criteria-title" className="section__title">
-          {t('eligibility.principles')}
-        </Heading>
-        <p className="prose">{t('eligibility.principlesIntro')}</p>
-        <ul className="card-grid card-grid--criteria">
-          {eligibility.criteria.map((criterion) => (
-            <li key={criterion.title} className="info-card info-card--rule">
-              <Item className="info-card__title">{criterion.title}</Item>
-              <p>{criterion.text}</p>
-            </li>
-          ))}
-        </ul>
-        <p className="note">{t('eligibility.flowNote')}</p>
-      </section>
+      <p className="note">{t('eligibility.flowNote')}</p>
     </>
   )
 }
@@ -106,6 +92,12 @@ export function EligibilityPage() {
       <div className="section section--subtle">
         <div className="container">
           <SharedRules headingLevel={2} />
+          {domains.map((domain) => (
+            <section className="rules-block" key={domain.slug}>
+              <h2 className="section__title">{domain.label}</h2>
+              <CategoryConditions domain={domain} />
+            </section>
+          ))}
         </div>
       </div>
     </>
@@ -123,6 +115,21 @@ function DomainLinkCard({ domain }: { domain: MainDomain }) {
         <span className="domain-link__subs">{domain.subcategories.map((subcategory) => subcategory.label).join(t('eligibility.listSeparator'))}</span>
       </span>
     </Link>
+  )
+}
+
+function CategoryConditions({ domain }: { domain: MainDomain }) {
+  return (
+    <ul className="card-grid card-grid--two">
+      {domain.subcategories.map((subcategory) => (
+        <li key={subcategory.code} className="info-card info-card--subcategory">
+          <h3 className="info-card__title">{subcategory.label}</h3>
+          <ol className="check-list">
+            {subcategory.requirements.map((condition) => <li key={condition}>{condition}</li>)}
+          </ol>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -159,15 +166,7 @@ export function EligibilityDomainPage({ domain: requested }: { domain: MainDomai
           <h2 id="subcategories-title" className="section__title">
             {t('eligibility.subcategories')}
           </h2>
-          <p className="prose">{t('eligibility.subcategoriesIntro', { n: domain.awards })}</p>
-          <ul className={`card-grid ${domain.subcategories.length === 3 ? 'card-grid--three' : 'card-grid--two'}`}>
-            {domain.subcategories.map((subcategory) => (
-              <li key={subcategory.label} className="info-card info-card--subcategory">
-                <h3 className="info-card__title">{subcategory.label}</h3>
-                <p>{subcategory.scope}</p>
-              </li>
-            ))}
-          </ul>
+          <CategoryConditions domain={domain} />
           <p className="note">{eligibility.shared}</p>
         </div>
       </section>

@@ -47,6 +47,7 @@ class Application extends Model
         return [
             'first_submitted_at' => 'datetime',
             'review_decided_at' => 'datetime',
+            'taxonomy_review_required' => 'boolean',
         ];
     }
 

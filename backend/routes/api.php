@@ -4,6 +4,7 @@ use App\Admin\AdminAccess;
 use App\Http\Controllers\Account\GoogleLinkController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountPolicyController;
+use App\Http\Controllers\Admin\AccountRemovalController;
 use App\Http\Controllers\Admin\AdminContextController;
 use App\Http\Controllers\Admin\ApplicationReviewsController;
 use App\Http\Controllers\Admin\ApplicationsController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Candidate\BasicProfileController;
 use App\Http\Controllers\Candidate\CandidateOverviewController;
+use App\Http\Controllers\Candidate\CategoryCorrectionController;
 use App\Http\Controllers\Candidate\DocumentationController;
 use App\Http\Controllers\Candidate\NominationDetailsController;
 use App\Http\Controllers\Candidate\ReferenceDataController;
@@ -113,6 +115,8 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
     Route::get('review/journey', [SubmissionController::class, 'show'])->middleware(['candidate.context', 'documentation.journey']);
     Route::post('submission', [SubmissionController::class, 'store'])
         ->middleware(['throttle:candidate-confirm', 'candidate.context', 'documentation.journey']);
+    Route::post('category-correction', [CategoryCorrectionController::class, 'store'])
+        ->middleware(['throttle:candidate-confirm', 'candidate.context', 'documentation.journey']);
 });
 
 /*
@@ -144,6 +148,11 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admi
 
     // «المستخدمون»: read-only list of every registered account.
     Route::get('users', [UsersController::class, 'index'])->middleware('admin:'.AdminAccess::VIEW_USERS);
+    Route::middleware('admin:'.AdminAccess::REMOVE_ACCOUNTS)->group(function () {
+        Route::get('users/{user}/removal-preview', [AccountRemovalController::class, 'preview'])->whereNumber('user');
+        Route::post('users/{user}/remove', [AccountRemovalController::class, 'store'])
+            ->whereNumber('user')->middleware(['account.context', 'throttle:admin-writes']);
+    });
 
     // «السجل»: the activity log and sanitized technical-log summaries, read-only.
     Route::get('log/audit', [LogController::class, 'audit'])->middleware('admin:'.AdminAccess::VIEW_AUDIT);
@@ -165,6 +174,7 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'admin'])->prefix('admi
 
         // The administrative review gate: refer to the committee, or exclude and archive.
         Route::middleware(['admin:'.AdminAccess::REVIEW_APPLICATIONS, 'account.context', 'throttle:admin-writes'])->group(function () {
+            Route::post('applications/{application}/category-correction', [ApplicationsController::class, 'correctCategory'])->whereNumber('application');
             Route::post('applications/{application}/review/refer', [ApplicationReviewsController::class, 'refer'])->whereNumber('application');
             Route::post('applications/{application}/review/exclude', [ApplicationReviewsController::class, 'exclude'])->whereNumber('application');
         });

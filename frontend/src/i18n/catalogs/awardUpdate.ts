@@ -1,0 +1,35 @@
+import type { Dict } from '../types.js'
+
+export const ar: Dict = {
+  'terms.title': 'شروط التقديم',
+  'terms.version': 'نسخة الشروط {version}',
+  'terms.accept': 'قرأت شروط التقديم العامة وشروط الفئة وأوافق عليها.',
+  'category.review': 'تغيّر التصنيف المعتمد. اختر الفئة المناسبة للعمل قبل الإرسال. تبقى بقية البيانات والملفات محفوظة.',
+  'category.adminReview': 'تحتاج فئة هذا الطلب إلى مراجعة إدارية وفق التصنيف الجديد. تبقى النسخة المرسلة كما هي.',
+  'category.current': 'الفئة الحالية المعتمدة إدارياً',
+  'category.choose': 'اختر الفئة',
+  'category.save': 'تأكيد الفئة',
+}
+
+export const en: Dict = {
+  'حكَم': 'Judge',
+  'حذف حساب مرشح أو محكّم': 'Delete a candidate or judge account',
+  'تصحيح فئة الطلب وفق التصنيف المعتمد': 'Correct the application’s approved category',
+  'تهيئة صلاحية حذف الحسابات': 'Provision account deletion permission',
+  'terms.title': 'Application conditions',
+  'terms.version': 'Conditions version {version}',
+  'terms.accept': 'I have read and accept the general and category-specific application conditions.',
+  'category.review': 'The approved categories have changed. Select the appropriate category before submitting. All other data and files remain saved.',
+  'category.adminReview': 'This application’s category requires administrative review under the new classification. The submitted version remains unchanged.',
+  'category.current': 'Current category approved by administration',
+  'category.choose': 'Select a category',
+  'category.save': 'Confirm category',
+  'راجع النسخة الحالية من شروط التقديم ووافق عليها قبل الإرسال.': 'Review and accept the current application conditions before submitting.',
+  'اختر الفئة المعتمدة من صفحة فئة الترشح قبل الإرسال.': 'Select an approved category on the nomination details page before submitting.',
+  'الشعر': 'Poetry',
+  'القصة': 'Story',
+  'التراث المادي': 'Tangible Heritage',
+  'التراث اللامادي': 'Intangible Heritage',
+  'ريادة الأعمال': 'Entrepreneurship',
+  'المسؤولية المجتمعية': 'Social Responsibility',
+}

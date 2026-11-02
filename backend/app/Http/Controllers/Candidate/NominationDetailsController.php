@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Candidate;
 
+use App\Candidates\Documentation;
 use App\Candidates\NominationCycles;
 use App\Candidates\NominationDetails;
 use App\Http\Controllers\Controller;
@@ -11,6 +12,7 @@ use App\Http\Resources\NominationDetailsResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Stage 2 («فئة الترشح وبيانات العمل») for the signed-in candidate. No
@@ -44,7 +46,12 @@ class NominationDetailsController extends Controller
         $confirmed = $this->details->confirmedFor($profile, $current['cycle']);
 
         if ($confirmed !== null) {
-            return response()->json(['data' => new NominationDetailsResource($confirmed), 'availability' => ['status' => 'confirmed']]);
+            return response()->json([
+                'data' => new NominationDetailsResource($confirmed), 'availability' => ['status' => 'confirmed'],
+                'journey_key' => app(Documentation::class)->journeyKey($confirmed),
+                'correction_options' => $confirmed->application->status === 'draft' && $confirmed->application->taxonomy_review_required
+                    ? DB::table('cycle_domain_subcategories')->where('cycle_domain_id', $confirmed->application->cycle_domain_id)->where('is_active', true)->orderBy('display_order')->get(['code', 'name_ar as name']) : [],
+            ]);
         }
 
         if ($current['status'] !== NominationCycles::AVAILABLE) {

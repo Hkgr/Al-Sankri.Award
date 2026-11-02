@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
+import logo from '../../assets/brand/award-logo-official.png'
 import { homeFor, useAuth } from '../../auth/useAuth'
 import { useSite } from '../../content/useSite'
 import { LanguageToggle } from '../../i18n/LanguageToggle'
@@ -86,7 +86,7 @@ export function SiteHeader() {
       </a>
       <div className="site-header__inner container">
         <Link className="site-header__brand" href="/">
-          <img src={logo} alt={award.name} width={240} height={78} />
+          <img className="award-logo" src={logo} alt={award.name} width={240} height={81} />
         </Link>
 
         <div className="site-header__actions">

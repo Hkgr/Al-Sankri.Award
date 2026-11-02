@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Admin\AdminAccess;
 use App\Admin\SubmittedApplications;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Support\AuditLog;
 use App\Support\PrivateFileResponse;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +20,28 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  */
 class ApplicationsController extends Controller
 {
+    /** Correct only a flagged current category; submitted snapshots stay immutable. */
+    public function correctCategory(Request $request, int $application): JsonResponse
+    {
+        $data = $request->validate(['subcategory' => ['required', 'string', 'max:80']]);
+
+        return DB::transaction(function () use ($request, $application, $data): JsonResponse {
+            $actor = User::query()->whereKey($request->user()->id)->lockForUpdate()->first();
+            abort_unless($actor?->isActive() && app(AdminAccess::class)->can($actor, AdminAccess::REVIEW_APPLICATIONS), 403);
+            $row = DB::table('applications')->where('id', $application)->lockForUpdate()->first();
+            abort_if($row === null || $row->current_version_id === null, 404);
+            if ($row->taxonomy_review_required) {
+                $category = DB::table('cycle_domain_subcategories')->where('cycle_domain_id', $row->cycle_domain_id)
+                    ->where('is_active', true)->where('code', $data['subcategory'])->lockForUpdate()->first();
+                abort_if($category === null, 422);
+                DB::table('applications')->where('id', $application)->update(['subcategory_id' => $category->id, 'taxonomy_review_required' => false, 'updated_at' => now()]);
+                AuditLog::record('application.category_corrected', (int) $actor->id, 'application', $application, ['subcategory_id' => (int) $category->id], (int) $row->cycle_id);
+            }
+
+            return response()->json(['data' => $this->applications->show($application)]);
+        });
+    }
+
     private const NOT_FOUND = 'لم يُعثر على ملف ترشح مرسل بهذا الرقم.';
 
     public function __construct(private readonly SubmittedApplications $applications) {}

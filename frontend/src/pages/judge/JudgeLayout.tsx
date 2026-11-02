@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import logo from '../../assets/brand/logo-horizontal-light-bg.svg'
+import logo from '../../assets/brand/award-logo-official.png'
 import type { User } from '../../auth/useAuth'
 import { LanguageToggle } from '../../i18n/LanguageToggle'
 import { useLocale } from '../../i18n/useLocale'
@@ -34,7 +34,7 @@ export function JudgeLayout({ user, children }: { user: User; children: ReactNod
       <header className="candidate-header">
         <div className="candidate-header__inner container">
           <Link className="candidate-header__brand" href="/judge">
-            <img src={logo} alt={`${AWARD_NAME}: ${t('judge.nav')}`} width={240} height={78} />
+            <img className="award-logo" src={logo} alt={`${t(AWARD_NAME)}: ${t('judge.nav')}`} width={240} height={81} />
           </Link>
           <DamascusClock />
           <LanguageToggle />

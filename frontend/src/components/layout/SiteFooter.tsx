@@ -1,4 +1,4 @@
-import logo from '../../assets/brand/logo-horizontal-dark-bg.svg'
+import logo from '../../assets/brand/award-logo-official.png'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
@@ -19,7 +19,7 @@ export function SiteFooter() {
       <div className="site-footer__rule" aria-hidden="true" />
       <div className="site-footer__inner container">
         <div className="site-footer__identity">
-          <img className="site-footer__logo" src={logo} alt={award.name} width={260} height={84} />
+          <img className="site-footer__logo award-logo" src={logo} alt={award.name} width={260} height={88} />
           <p className="site-footer__statement">{closing.statement}</p>
           <p className="site-footer__slogan">{award.slogan}</p>
           <p className="site-footer__org">

@@ -556,6 +556,8 @@ class JudgingCommittees
 
         $rows = $members->map(fn (object $member): array => [
             'id' => (int) $member->id,
+            'user_id' => (int) $member->user_id,
+            'removable' => app(AccountRemoval::class)->canTarget((int) $member->user_id),
             'name' => $member->name,
             'email' => $member->email,
             'phone' => $member->phone,

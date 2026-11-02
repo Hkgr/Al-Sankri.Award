@@ -3,6 +3,7 @@
 namespace Tests\Feature\Candidate;
 
 use App\Candidates\AccountContext;
+use App\Candidates\AwardTerms;
 use App\Candidates\Documentation;
 use App\Candidates\Submissions;
 use App\Models\ApplicantIndividualDetail;
@@ -206,7 +207,7 @@ class DocumentationSubmissionTest extends TestCase
         $this->assertSame(['https://example.org/gallery'], array_column($snapshot['documentation']['links'], 'url'));
         $this->assertSame(['explanatory', 'video'], array_column($snapshot['documentation']['files'], 'kind'));
         $this->assertSame('candidate-submission/2', $snapshot['schema']);
-        $this->assertSame(['confirmed_at', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($snapshot['nomination_details']));
+        $this->assertSame(['confirmed_at', 'taxonomy_review_required', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($snapshot['nomination_details']));
         // It reaches the administration first: pending, nothing for judging.
         $this->assertSame(['pending', null, null], [$application->review_status, $application->review_decided_by, $application->review_committee_id]);
         $this->assertSame('pending', $receipt['processing']);
@@ -256,7 +257,7 @@ class DocumentationSubmissionTest extends TestCase
             if ($armed && DB::transactionLevel() > 1 && str_contains($query->sql, 'users')) {
                 $armed = false;
                 $journey = app(Documentation::class)->journeyOf($this->candidate);
-                [$outcome] = app(Submissions::class)->submit($this->candidate, $journey, 2);
+                [$outcome] = app(Submissions::class)->submit($this->candidate, $journey, 2, (int) app(AwardTerms::class)->current((int) $journey->cycle_id)->id, true);
                 $this->assertSame(Submissions::SUBMITTED, $outcome);
             }
         });

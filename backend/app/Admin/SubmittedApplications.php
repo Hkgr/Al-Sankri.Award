@@ -134,7 +134,7 @@ class SubmittedApplications
 
         $rows = $this->filtered($filters)
             ->select([
-                'applications.id', 'applications.reference_number', 'applications.title', 'applications.status', 'applications.review_status', 'applications.first_submitted_at',
+                'applications.id', 'applications.reference_number', 'applications.title', 'applications.status', 'applications.review_status', 'applications.first_submitted_at', 'applications.taxonomy_review_required',
                 'applicants.name_ar as applicant_name', 'applicants.type as applicant_type',
                 'award_domains.code as domain_code', 'cycle_domains.name_ar as domain_name',
                 'cycle_domain_subcategories.code as subcategory_code', 'cycle_domain_subcategories.name_ar as subcategory_name',
@@ -151,6 +151,7 @@ class SubmittedApplications
         return $rows->map(fn (object $row): array => [
             'id' => (int) $row->id,
             'reference_number' => $row->reference_number,
+            'taxonomy_review_required' => (bool) $row->taxonomy_review_required,
             'title' => $row->title,
             'applicant_name' => $row->applicant_name,
             'applicant_type' => $row->applicant_type === 'individual' ? 'individual' : 'institution',
@@ -194,6 +195,11 @@ class SubmittedApplications
                 'submitted_at' => $version->submitted_at->toIso8601ZuluString(),
                 'version_number' => $version->version_number,
                 'content_hash' => $version->content_hash,
+            ],
+            'current_category' => [
+                'review_required' => (bool) $application->taxonomy_review_required,
+                'name' => DB::table('cycle_domain_subcategories')->where('id', $application->subcategory_id)->value('name_ar'),
+                'options' => $application->taxonomy_review_required ? DB::table('cycle_domain_subcategories')->where('cycle_domain_id', $application->cycle_domain_id)->where('is_active', true)->orderBy('display_order')->get(['code', 'name_ar as name'])->all() : [],
             ],
             'basic_information' => $profile === null ? null : (new BasicProfileResource($profile))->resolve(),
             'nomination_details' => NominationDetailsResource::withoutRetired($snapshot['nomination_details'] ?? null),

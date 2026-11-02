@@ -60,9 +60,9 @@ class Submissions
     /**
      * @return array{0: string, 1: array{reference_number: string, submitted_at: string, version_number: int, processing: string}|null}
      */
-    public function submit(User $user, CandidateNomination $journey, int $reviewedRevision): array
+    public function submit(User $user, CandidateNomination $journey, int $reviewedRevision, ?int $termsVersion = null, bool $acceptedTerms = false): array
     {
-        return DB::transaction(function () use ($user, $journey, $reviewedRevision): array {
+        return DB::transaction(function () use ($user, $journey, $reviewedRevision, $termsVersion, $acceptedTerms): array {
             [$refusal, $journey, $application] = $this->documentation->lockForChange($user, $journey);
 
             if ($refusal === Documentation::SUBMITTED) {
@@ -70,6 +70,13 @@ class Submissions
             }
             if ($refusal !== null) {
                 return [$refusal, null];
+            }
+            if ($application->taxonomy_review_required) {
+                return ['category_review_required', null];
+            }
+            $terms = app(AwardTerms::class)->current((int) $application->cycle_id);
+            if (! $acceptedTerms || $terms === null || $termsVersion !== (int) $terms->id) {
+                return ['terms_changed', null];
             }
             // Read after the users row is locked: an appointment of this
             // account (JudgingCommittees) holds the same lock, so its
@@ -93,6 +100,7 @@ class Submissions
             $now = now();
             $reference = $this->newReference((int) DB::table('award_cycles')->where('id', $application->cycle_id)->value('year'));
             $snapshot = $this->snapshot($user, $journey, $application, $links->all(), $reference);
+            $snapshot['application_terms'] = ['policy_version_id' => (int) $terms->id, 'version_number' => (int) $terms->version_number, 'text_sha256' => $terms->content_hash];
 
             $version = new ApplicationVersion;
             $version->forceFill([
@@ -106,6 +114,11 @@ class Submissions
                 'content_hash' => CanonicalJson::hash($snapshot),
                 'created_at' => $now,
             ])->save();
+
+            DB::table('application_consents')->insert([
+                'application_version_id' => $version->id, 'policy_version_id' => $terms->id,
+                'accepted_by' => $user->id, 'accepted_at' => $now,
+            ]);
 
             // The same files, now also attached to the immutable version.
             foreach ($links as $link) {

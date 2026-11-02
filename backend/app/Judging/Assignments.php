@@ -34,7 +34,7 @@ class Assignments
      */
     public static function judgeable(object $application): bool
     {
-        return $application->current_version_id !== null && ! in_array($application->status, self::UNJUDGED_STATUSES, true);
+        return ! ($application->taxonomy_review_required ?? false) && $application->current_version_id !== null && ! in_array($application->status, self::UNJUDGED_STATUSES, true);
     }
 
     /**
@@ -97,6 +97,7 @@ class Assignments
         $applications = DB::table('applications')
             ->where('cycle_domain_id', $committee->cycle_domain_id)
             ->whereNotNull('current_version_id')
+            ->where('taxonomy_review_required', false)
             ->whereNotIn('status', self::UNJUDGED_STATUSES)
             // The administrative referral gate: referred to this committee only.
             ->where('review_status', Application::REVIEW_REFERRED)

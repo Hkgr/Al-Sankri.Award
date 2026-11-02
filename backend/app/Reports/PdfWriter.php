@@ -83,7 +83,7 @@ final class PdfWriter
         $mpdf->SetCreator('منصة الجائزة');
         $mpdf->showImageErrors = false;
 
-        $mpdf->SetHTMLHeader(view('reports.header', ['title' => $title, 'logo' => resource_path('reports/logo-horizontal-light-bg.svg')])->render());
+        $mpdf->SetHTMLHeader(view('reports.header', ['title' => $title, 'logo' => resource_path('reports/award-logo-report.png')])->render());
         $mpdf->SetHTMLFooter(view('reports.footer', ['generated' => $generatedLabel])->render());
         $mpdf->WriteHTML($html);
 
