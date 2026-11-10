@@ -29,8 +29,8 @@ final class NominationTaxonomy
             'name' => 'الثقافة والفنون',
             'artwork' => 'domain-culture-and-arts',
             'subcategories' => [
-                'poetry' => 'الشعر',
-                'story' => 'القصة',
+                'poetry' => 'الشعر العامودي',
+                'story' => 'القصة القصيرة',
             ],
         ],
         'heritage' => [

@@ -3,7 +3,7 @@
  *
  * Award information comes from the supplied documents in docs/:
  *   plan    خطة جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية.docx
- *   public conditions: owner's approved update, 2026-11-10 (publicConditions.ts)
+ *   current conditions: shared approved update, 2026-11-10 (awardTerms.ts)
  *   launch  التصور التنفيذي لحفل الإطلاق الرسمي.docx
  *   guide   جائزة السنكري visual identity.pdf (physical page numbers)
  * and the owner's decisions of 2026-10-29 and 2026-11-02, which override older documents:

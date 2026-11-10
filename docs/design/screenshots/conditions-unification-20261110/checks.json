@@ -1,0 +1,72 @@
+[
+  {
+    "check": "three simultaneous real MariaDB publication commands created one version",
+    "cycle": "cycle-2026",
+    "old_policy_id": 1,
+    "output": [
+      "Cycle: cycle-2026 (ID 1)\nPolicy: general_application_terms; revision 2026-11-10\nVersion: 2; policy ID: 2\nSHA256: b6561c1c39bbd7880694e08d1866ad066523904a012ed380efb102d79a38c6ec\nCategory labels updated: 0\nAlready current; no duplicate version or publication audit event.\n",
+      "Cycle: cycle-2026 (ID 1)\nPolicy: general_application_terms; revision 2026-11-10\nVersion: 2; policy ID: 2\nSHA256: b6561c1c39bbd7880694e08d1866ad066523904a012ed380efb102d79a38c6ec\nCategory labels updated: 0\nAlready current; no duplicate version or publication audit event.\n",
+      "Cycle: cycle-2026 (ID 1)\nPolicy: general_application_terms; revision 2026-11-10\nVersion: 2; policy ID: 2\nSHA256: b6561c1c39bbd7880694e08d1866ad066523904a012ed380efb102d79a38c6ec\nCategory labels updated: 2\nPublished; previous versions and acceptances preserved.\n"
+    ]
+  },
+  {
+    "check": "real stale submission rejected; v2 loaded; consent unchecked; submission disabled",
+    "http": 409,
+    "code": "terms_changed"
+  },
+  {
+    "check": "draft data and files unchanged; current API text exactly matches shared Arabic and English source",
+    "policy_id": 2,
+    "version": 2,
+    "hash": "b6561c1c39bbd7880694e08d1866ad066523904a012ed380efb102d79a38c6ec"
+  },
+  {
+    "check": "ar desktop: current bilingual consent and canonical identity-free document reminder; no overflow"
+  },
+  {
+    "check": "ar mobile: current bilingual consent and canonical identity-free document reminder; no overflow"
+  },
+  {
+    "check": "en desktop: current bilingual consent and canonical identity-free document reminder; no overflow"
+  },
+  {
+    "check": "en mobile: current bilingual consent and canonical identity-free document reminder; no overflow"
+  },
+  {
+    "check": "explicit fresh consent submitted successfully",
+    "http": 201
+  },
+  {
+    "check": "ar desktop: all six category names and 17 clauses match shared source; links and layout preserved"
+  },
+  {
+    "check": "ar mobile: all six category names and 17 clauses match shared source; links and layout preserved"
+  },
+  {
+    "check": "en desktop: all six category names and 17 clauses match shared source; links and layout preserved"
+  },
+  {
+    "check": "en mobile: all six category names and 17 clauses match shared source; links and layout preserved"
+  },
+  {
+    "check": "ar desktop: submitted application still shows accepted v1, with no consent checkbox"
+  },
+  {
+    "check": "ar mobile: submitted application still shows accepted v1, with no consent checkbox"
+  },
+  {
+    "check": "en desktop: submitted application still shows accepted v1, with no consent checkbox"
+  },
+  {
+    "check": "en mobile: submitted application still shows accepted v1, with no consent checkbox"
+  },
+  {
+    "check": "visual evidence: current version heading, general text and unchecked disabled controls; original accepted v1 heading; AR/EN at both widths"
+  },
+  {
+    "check": "ar: public seven conditions exactly match source; structured organization link retains external attributes and accessibility announcement"
+  },
+  {
+    "check": "en: public seven conditions exactly match source; structured organization link retains external attributes and accessibility announcement"
+  }
+]

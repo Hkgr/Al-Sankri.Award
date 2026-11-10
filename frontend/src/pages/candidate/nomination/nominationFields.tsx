@@ -100,6 +100,7 @@ export function DomainChooser({
         <div className="form-alert__body">
           <h3>{chosenSubcategory.name}</h3>
           <ol className="check-list">{categoryRequirements(locale, chosenSubcategory.code).map((condition) => <li key={condition}>{condition}</li>)}</ol>
+          <p><a href="/eligibility#conditions-title" target="_blank" rel="noopener noreferrer">{t('eligibility.conditions')}</a></p>
         </div>
       </section>}
 

@@ -1,4 +1,4 @@
-import terms from '../../../backend/resources/award/terms-2026-11-02.json' with { type: 'json' }
+import terms from '../../../backend/resources/award/terms-2026-11-10.json' with { type: 'json' }
 
 /** One versioned source for public pages, category guidance and server-side consent. */
 export const awardTerms = terms

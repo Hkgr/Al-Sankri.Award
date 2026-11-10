@@ -12,6 +12,7 @@ import { AttachmentList, LinkList } from './AttachmentList'
 import type { Attachment, AttachmentKind, Documentation, DocumentationLink, DocumentationState } from './documentationApi'
 import { formatBytes, journeyStateUrl, KIND_RULES, precheck, SECTION_TITLES } from './documentationApi'
 import { useLocale } from '../../../i18n/useLocale'
+import { awardTerms } from '../../../content/awardTerms'
 
 const STATE_URL = '/api/candidate/documentation'
 
@@ -24,7 +25,7 @@ type Loaded = { kind: 'state'; state: DocumentationState } | { kind: 'stage_1_re
  * replaced or removed. Afterwards everything is shown read-only.
  */
 export function DocumentationPage({ user }: { user: User }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   usePageTitle(t('ملفات العمل وتوثيقه'))
   const handleAccountFailure = useAccountFailure()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
@@ -62,6 +63,7 @@ export function DocumentationPage({ user }: { user: User }) {
             ? t('أُرسلت المشاركة، وهذه ملفاتها وروابطها كما أُرسلت. هي متاحة للعرض فقط.')
             : t('ارفع وثيقة تشرح العمل المرشّح، وأضف إن شئت وثائق وفيديوهات وروابط توثّقه.')}
         </p>
+        <p className="note">{awardTerms[locale].general[6].text} <Link href="/eligibility#conditions-title">{t('eligibility.conditions')}</Link></p>
       </header>
 
       {loadError ? (
