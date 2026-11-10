@@ -25,7 +25,7 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
           {eligibility.conditions.map((condition) => (
             <li key={condition.title} className="rules-list__item">
               <Item className="rules-list__title">{condition.title}</Item>
-              <p>{condition.text}</p>
+              <p><RichText value={condition.text} /></p>
             </li>
           ))}
         </ol>
@@ -123,7 +123,7 @@ function CategoryConditions({ domain }: { domain: MainDomain }) {
   return (
     <ul className="card-grid card-grid--two">
       {domain.subcategories.map((subcategory) => (
-        <li key={subcategory.code} className="info-card info-card--subcategory">
+        <li key={subcategory.code} id={`category-${subcategory.code}`} className="info-card info-card--subcategory">
           <h3 className="info-card__title">{subcategory.label}</h3>
           <ol className="check-list">
             {subcategory.requirements.map((condition) => <li key={condition}>{condition}</li>)}
@@ -168,7 +168,7 @@ export function EligibilityDomainPage({ domain: requested }: { domain: MainDomai
             {t('eligibility.subcategories')}
           </h2>
           <CategoryConditions domain={domain} />
-          <p className="note">{eligibility.shared}</p>
+          <p className="note">{eligibility.shared} <Link href="#conditions-title">{t('eligibility.conditions')}</Link></p>
         </div>
       </section>
 

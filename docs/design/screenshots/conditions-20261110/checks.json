@@ -1,0 +1,287 @@
+{
+  "pages": 16,
+  "category_deep_links": 24,
+  "javascript_errors": [],
+  "cases": [
+    {
+      "page": "eligibility",
+      "lang": "ar",
+      "viewport": "desktop",
+      "general": 7,
+      "specific": 17
+    },
+    {
+      "page": "culture-and-arts",
+      "lang": "ar",
+      "viewport": "desktop",
+      "specific": [
+        "poetry",
+        "story"
+      ]
+    },
+    {
+      "page": "heritage",
+      "lang": "ar",
+      "viewport": "desktop",
+      "specific": [
+        "tangible_heritage",
+        "intangible_heritage"
+      ]
+    },
+    {
+      "page": "creativity",
+      "lang": "ar",
+      "viewport": "desktop",
+      "specific": [
+        "social_responsibility",
+        "entrepreneurship"
+      ]
+    },
+    {
+      "home_link": "poetry",
+      "lang": "ar",
+      "viewport": "desktop",
+      "href": "/eligibility/culture-and-arts#category-poetry"
+    },
+    {
+      "home_link": "story",
+      "lang": "ar",
+      "viewport": "desktop",
+      "href": "/eligibility/culture-and-arts#category-story"
+    },
+    {
+      "home_link": "tangible_heritage",
+      "lang": "ar",
+      "viewport": "desktop",
+      "href": "/eligibility/heritage#category-tangible_heritage"
+    },
+    {
+      "home_link": "intangible_heritage",
+      "lang": "ar",
+      "viewport": "desktop",
+      "href": "/eligibility/heritage#category-intangible_heritage"
+    },
+    {
+      "home_link": "social_responsibility",
+      "lang": "ar",
+      "viewport": "desktop",
+      "href": "/eligibility/creativity#category-social_responsibility"
+    },
+    {
+      "home_link": "entrepreneurship",
+      "lang": "ar",
+      "viewport": "desktop",
+      "href": "/eligibility/creativity#category-entrepreneurship"
+    },
+    {
+      "page": "eligibility",
+      "lang": "en",
+      "viewport": "desktop",
+      "general": 7,
+      "specific": 17
+    },
+    {
+      "page": "culture-and-arts",
+      "lang": "en",
+      "viewport": "desktop",
+      "specific": [
+        "poetry",
+        "story"
+      ]
+    },
+    {
+      "page": "heritage",
+      "lang": "en",
+      "viewport": "desktop",
+      "specific": [
+        "tangible_heritage",
+        "intangible_heritage"
+      ]
+    },
+    {
+      "page": "creativity",
+      "lang": "en",
+      "viewport": "desktop",
+      "specific": [
+        "social_responsibility",
+        "entrepreneurship"
+      ]
+    },
+    {
+      "home_link": "poetry",
+      "lang": "en",
+      "viewport": "desktop",
+      "href": "/eligibility/culture-and-arts#category-poetry"
+    },
+    {
+      "home_link": "story",
+      "lang": "en",
+      "viewport": "desktop",
+      "href": "/eligibility/culture-and-arts#category-story"
+    },
+    {
+      "home_link": "tangible_heritage",
+      "lang": "en",
+      "viewport": "desktop",
+      "href": "/eligibility/heritage#category-tangible_heritage"
+    },
+    {
+      "home_link": "intangible_heritage",
+      "lang": "en",
+      "viewport": "desktop",
+      "href": "/eligibility/heritage#category-intangible_heritage"
+    },
+    {
+      "home_link": "social_responsibility",
+      "lang": "en",
+      "viewport": "desktop",
+      "href": "/eligibility/creativity#category-social_responsibility"
+    },
+    {
+      "home_link": "entrepreneurship",
+      "lang": "en",
+      "viewport": "desktop",
+      "href": "/eligibility/creativity#category-entrepreneurship"
+    },
+    {
+      "page": "eligibility",
+      "lang": "ar",
+      "viewport": "mobile",
+      "general": 7,
+      "specific": 17
+    },
+    {
+      "page": "culture-and-arts",
+      "lang": "ar",
+      "viewport": "mobile",
+      "specific": [
+        "poetry",
+        "story"
+      ]
+    },
+    {
+      "page": "heritage",
+      "lang": "ar",
+      "viewport": "mobile",
+      "specific": [
+        "tangible_heritage",
+        "intangible_heritage"
+      ]
+    },
+    {
+      "page": "creativity",
+      "lang": "ar",
+      "viewport": "mobile",
+      "specific": [
+        "social_responsibility",
+        "entrepreneurship"
+      ]
+    },
+    {
+      "home_link": "poetry",
+      "lang": "ar",
+      "viewport": "mobile",
+      "href": "/eligibility/culture-and-arts#category-poetry"
+    },
+    {
+      "home_link": "story",
+      "lang": "ar",
+      "viewport": "mobile",
+      "href": "/eligibility/culture-and-arts#category-story"
+    },
+    {
+      "home_link": "tangible_heritage",
+      "lang": "ar",
+      "viewport": "mobile",
+      "href": "/eligibility/heritage#category-tangible_heritage"
+    },
+    {
+      "home_link": "intangible_heritage",
+      "lang": "ar",
+      "viewport": "mobile",
+      "href": "/eligibility/heritage#category-intangible_heritage"
+    },
+    {
+      "home_link": "social_responsibility",
+      "lang": "ar",
+      "viewport": "mobile",
+      "href": "/eligibility/creativity#category-social_responsibility"
+    },
+    {
+      "home_link": "entrepreneurship",
+      "lang": "ar",
+      "viewport": "mobile",
+      "href": "/eligibility/creativity#category-entrepreneurship"
+    },
+    {
+      "page": "eligibility",
+      "lang": "en",
+      "viewport": "mobile",
+      "general": 7,
+      "specific": 17
+    },
+    {
+      "page": "culture-and-arts",
+      "lang": "en",
+      "viewport": "mobile",
+      "specific": [
+        "poetry",
+        "story"
+      ]
+    },
+    {
+      "page": "heritage",
+      "lang": "en",
+      "viewport": "mobile",
+      "specific": [
+        "tangible_heritage",
+        "intangible_heritage"
+      ]
+    },
+    {
+      "page": "creativity",
+      "lang": "en",
+      "viewport": "mobile",
+      "specific": [
+        "social_responsibility",
+        "entrepreneurship"
+      ]
+    },
+    {
+      "home_link": "poetry",
+      "lang": "en",
+      "viewport": "mobile",
+      "href": "/eligibility/culture-and-arts#category-poetry"
+    },
+    {
+      "home_link": "story",
+      "lang": "en",
+      "viewport": "mobile",
+      "href": "/eligibility/culture-and-arts#category-story"
+    },
+    {
+      "home_link": "tangible_heritage",
+      "lang": "en",
+      "viewport": "mobile",
+      "href": "/eligibility/heritage#category-tangible_heritage"
+    },
+    {
+      "home_link": "intangible_heritage",
+      "lang": "en",
+      "viewport": "mobile",
+      "href": "/eligibility/heritage#category-intangible_heritage"
+    },
+    {
+      "home_link": "social_responsibility",
+      "lang": "en",
+      "viewport": "mobile",
+      "href": "/eligibility/creativity#category-social_responsibility"
+    },
+    {
+      "home_link": "entrepreneurship",
+      "lang": "en",
+      "viewport": "mobile",
+      "href": "/eligibility/creativity#category-entrepreneurship"
+    }
+  ]
+}

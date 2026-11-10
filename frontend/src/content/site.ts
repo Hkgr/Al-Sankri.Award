@@ -3,7 +3,7 @@
  *
  * Award information comes from the supplied documents in docs/:
  *   plan    خطة جائزة الدكتور عبد القادر سنكري للثقافة والتراث والتنمية المجتمعية.docx
- *   terms   نهائي/الشروط العامة للتقديم.docx (current conditions, 2026-11-02)
+ *   public conditions: owner's approved update, 2026-11-10 (publicConditions.ts)
  *   launch  التصور التنفيذي لحفل الإطلاق الرسمي.docx
  *   guide   جائزة السنكري visual identity.pdf (physical page numbers)
  * and the owner's decisions of 2026-10-29 and 2026-11-02, which override older documents:
@@ -29,7 +29,7 @@ import visitNarrow480 from '../assets/photos/sankari-umayyad-mosque-visit-narrow
 import visitNarrow912 from '../assets/photos/sankari-umayyad-mosque-visit-narrow-912.webp'
 import visitNarrow912Jpg from '../assets/photos/sankari-umayyad-mosque-visit-narrow-912.jpg'
 import type { PhotoSource } from '../components/Photo'
-import { awardTerms } from './awardTerms'
+import { publicConditions, generalConditions } from './publicConditions'
 
 export const award = {
   name: 'جائزة الدكتور عبد القادر سنكري للثقافة والتراث والإبداع',
@@ -105,7 +105,7 @@ export type MainDomain = {
 }
 
 // Three main domains and six subcategories (owner decision; plan and terms tables).
-export const domains: MainDomain[] = awardTerms.ar.domains.map((domain, index) => ({
+export const domains: MainDomain[] = publicConditions.ar.domains.map((domain, index) => ({
   slug: (['culture-and-arts', 'heritage', 'creativity'] as const)[index],
   label: domain.name,
   symbol: [domainCultureArts, domainHeritage, domainVolunteer][index],
@@ -239,9 +239,9 @@ export const journey: JourneyPhase[] = [
 
 export const eligibility = {
   // Terms: «شروط التقديم» and «شروط ومعايير الترشح»; field-verification readiness removed (owner decision).
-  conditions: awardTerms.ar.general.slice(0, 4),
+  conditions: generalConditions('ar'),
   // Terms: «الفئات المؤهلة».
-  applicants: awardTerms.ar.general[1].text,
+  applicants: publicConditions.ar.general[1].text,
   // Terms: «إرفاق وثائق وأدلة الأثر», with the platform's actual documentation stage.
   evidence: {
     intro: 'يُبنى ملف الترشح على أدلة تثبت اكتمال العمل وأثره: الملفات التوثيقية، والتقارير الإجرائية، والصور، ومقاطع الفيديو، والشهادات.',
@@ -253,11 +253,7 @@ export const eligibility = {
     ],
   },
   // Terms: «شرط منع تضارب المصالح الصارم».
-  conflict: [
-    'حظر ترشح أعضاء مجلس الأمناء، ولجان التحكيم، ولجنة النزاهة، وموظفي إدارة الجائزة ب',
-    { org: 'rowad', label: 'مؤسسة الرواد' },
-    ' ضماناً للحياد والنزاهة.',
-  ] satisfies RichText,
+  conflict: generalConditions('ar')[4].text,
   // Terms: «معايير التقديم»; the impact criterion is verified through the evidence (no field visits).
 
   // Owner decisions: the shared conditions apply to every subcategory.
