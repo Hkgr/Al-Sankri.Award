@@ -46,7 +46,18 @@ export const siteEn: SiteContent = {
       labelEn: 'Eligibility',
       description: "The eligibility conditions shared by the award's three domains, the documents and evidence of impact required, the rules preventing conflicts of interest, and the complete category-specific conditions.",
     },
+    {
+      href: '/media',
+      label: 'Media Center',
+      labelEn: 'Media Center',
+      description: "The Dr. Abdulkader Sankari Award's Media Center: the award's news and official statements, and its official logos for media use.",
+    },
   ],
+
+  partners: siteAr.partners.map((partner) => ({
+    ...partner,
+    name: { rowad: 'Al-Rowad Foundation for Cooperation and Development', 'aleppo-culture-directorate': 'Directorate of Culture in Aleppo', 'university-of-aleppo': 'University of Aleppo' }[partner.key],
+  })),
 
   hero: {
     ...siteAr.hero,

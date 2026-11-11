@@ -8,7 +8,7 @@ import { Link } from '../../lib/router'
 import { useRouter } from '../../lib/useRouter'
 
 // Matches the breakpoint in layout.css where the navigation becomes inline.
-const INLINE_NAV_QUERY = '(min-width: 64rem)'
+const INLINE_NAV_QUERY = '(min-width: 80rem)'
 
 /**
  * «تسجيل» (signed out) or «حسابي» (signed in). The header renders it twice,

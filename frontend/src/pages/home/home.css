@@ -115,8 +115,8 @@
 /*
  * The portrait: decorative, faded and blended into the light hero (multiply
  * drops the photograph's white background into the line pattern). It is
- * anchored to the physical right in both languages, so he looks into the
- * page, and the content reserves room for his face (--hero-portrait-room).
+ * anchored to the physical left in both languages (owner decision), and the
+ * content reserves room for his face beside it.
  */
 .hero {
   --hero-portrait-width: min(56vw, 15rem);
@@ -126,7 +126,7 @@
 .hero__portrait {
   position: absolute;
   inset-block-start: 0;
-  right: 0;
+  left: 0;
   z-index: 0;
   inline-size: var(--hero-portrait-width);
   margin: 0;
@@ -144,8 +144,8 @@
   opacity: var(--hero-portrait-opacity);
   mix-blend-mode: multiply;
   /* Soften every edge, most towards the content. */
-  -webkit-mask-image: radial-gradient(ellipse 72% 78% at 58% 40%, #000 52%, transparent 100%);
-  mask-image: radial-gradient(ellipse 72% 78% at 58% 40%, #000 52%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 72% 78% at 46% 40%, #000 52%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 78% at 46% 40%, #000 52%, transparent 100%);
 }
 
 .hero__portrait-caption {
@@ -234,11 +234,11 @@
   }
 
   .hero__portrait-caption {
-    /* Beside his face, to its left, in both languages. */
+    /* Beside his face, to its right, in both languages. */
     inset-block-end: auto;
     inset-block-start: 36%;
-    right: calc(100% - var(--sa-space-3));
-    left: auto;
+    left: calc(100% - var(--sa-space-3));
+    right: auto;
     inline-size: max-content;
     max-inline-size: calc(100vw - var(--hero-portrait-width) - var(--sa-space-4));
     text-align: start;
@@ -260,13 +260,14 @@
     padding-inline: var(--sa-space-7);
   }
 
-  /* Medium screens: the text keeps clear of the face on the right. */
+  /* Medium screens: the text keeps clear of the face on the left. */
   .hero__text {
-    padding-right: calc(var(--hero-portrait-width) * 0.7);
+    padding-left: calc(var(--hero-portrait-width) * 0.78);
   }
 }
 
-@media (min-width: 64rem) {
+/* Side by side from 80rem: below that the text needs the full width beside the portrait. */
+@media (min-width: 80rem) {
   .hero {
     --hero-portrait-width: clamp(22rem, 28vw, 32rem);
     --hero-portrait-opacity: 0.18;
@@ -288,11 +289,11 @@
     gap: var(--sa-space-7);
     padding-block: var(--sa-space-7);
     /* Where the container is centred, its outer margin already covers part of that room. */
-    padding-right: max(var(--sa-gutter), calc(var(--hero-portrait-width) * 0.76 - max(0px, (100vw - var(--sa-container-max)) / 2)));
+    padding-left: max(var(--sa-gutter), calc(var(--hero-portrait-width) * 0.8 - max(0px, (100vw - var(--sa-container-max)) / 2)));
   }
 
   .hero__text {
-    padding-right: 0;
+    padding-left: 0;
   }
 
   .hero__stage {

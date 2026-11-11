@@ -6,10 +6,11 @@ Updated 2026-10-29. This continues the existing React 19 / TypeScript / Vite imp
 
 | Path | Content |
 | --- | --- |
-| `/` | Official name and slogan; the official logo above the countdown in the deep-green card, with the authentic portrait faded beside the content; introduction; three stacked domain rows with their trophies and two category links each; journey preview and platform actions. |
+| `/` | Official name and slogan; the official logo above the countdown in the deep-green card, with the authentic portrait faded at the left edge beside the content; introduction; three stacked domain rows with their trophies and two category links each; journey preview and platform actions. |
 | `/about` | Purpose, values, documented impact, implementing organization and Dr. Sankari's legacy with the mosque-visit photograph. |
 | `/journey` | Preparation, applications, administrative review, judging and planned award week. |
 | `/eligibility` | Shared eligibility, evidence, conflicts of interest and evaluation criteria. |
+| `/media` | Media Center (2026-11-11): news and official statements (an honest empty state until items are supplied; nothing invented) and the four official logos for media use, each on its approved surface with a download link. |
 | `/eligibility/culture-and-arts` | Culture and arts. |
 | `/eligibility/heritage` | Tangible and intangible heritage. |
 | `/eligibility/creativity` | Social responsibility, entrepreneurship and quality. |

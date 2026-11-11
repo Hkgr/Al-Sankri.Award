@@ -77,6 +77,23 @@ export const pages: SitePage[] = [
     labelEn: 'Eligibility',
     description: 'شروط التقدم المشتركة لمحاور الجائزة الثلاثة، والوثائق وأدلة الأثر المطلوبة، وقواعد منع تضارب المصالح، وشروط الفئات كاملة.',
   },
+  {
+    href: '/media',
+    label: 'المركز الإعلامي',
+    labelEn: 'Media Center',
+    description: 'المركز الإعلامي لجائزة الدكتور عبد القادر سنكري: أخبار الجائزة وبياناتها الرسمية، وشعاراتها الرسمية للاستخدام الإعلامي.',
+  },
+]
+
+export type PartnerKey = 'rowad' | 'aleppo-culture-directorate' | 'university-of-aleppo'
+
+/** The implementing organization first, then the participating ones (owner decision, 2026-11-11). */
+export type Partner = { key: PartnerKey; name: string; role: 'implementing' | 'participating'; url: string }
+
+export const partners: Partner[] = [
+  { key: 'rowad', name: organizations.rowad.name, role: 'implementing', url: organizations.rowad.url },
+  { key: 'aleppo-culture-directorate', name: 'مديرية الثقافة في حلب', role: 'participating', url: 'https://www.facebook.com/AleppoCulture/' },
+  { key: 'university-of-aleppo', name: 'جامعة حلب', role: 'participating', url: 'https://alepuniv.edu.sy/' },
 ]
 
 export const hero = {
@@ -266,6 +283,6 @@ export const closing = {
 }
 
 /** The Arabic copy as one value; siteEn.ts has the same shape in English (use it through useSite). */
-export const siteAr = { award, organizations, pages, hero, domains, about, legacy, confirmedSchedule, journey, eligibility, closing }
+export const siteAr = { award, organizations, pages, partners, hero, domains, about, legacy, confirmedSchedule, journey, eligibility, closing }
 
 export type SiteContent = typeof siteAr
