@@ -1,7 +1,9 @@
-"""Resize the owner's official assets; never crop, recolor, flatten logos or remove trophy backgrounds.
+"""Resize the owner's official assets; never crop, pad, recolor, flatten logos or redraw trophy artwork.
 
 Run with Python + Pillow. --check validates committed derivatives without writing.
 The full-size originals are archived outside Vite's source/public directories.
+Logos: transparent horizontal PNGs. Trophies: the owner's vertical JPEG artwork on white
+(supplied 2026-11-11), resized in proportion with their white kept as supplied.
 """
 
 import argparse
@@ -20,6 +22,9 @@ MANIFEST = ARCHIVE / 'manifest.json'
 
 # The verified official PNGs are ~96 megapixels. Open one at a time.
 Image.MAX_IMAGE_PIXELS = 110_000_000
+
+# Derivative widths: horizontal logos, and vertical trophies shown up to ~22rem wide.
+WIDTHS = {'logo': [400, 800], 'trophy': [400, 800]}
 
 
 def sha256(data):
@@ -40,7 +45,7 @@ def prepare(check):
             source['width'], source['height'] = image.size
             source['transparent'] = logo
             generated = []
-            for width in ([400, 800] if logo else [480, 960]):
+            for width in WIDTHS[source['kind']]:
                 height = round(image.height * width / image.width)
                 resized = image.resize((width, height), Image.Resampling.LANCZOS)
                 options = {'lossless': True, 'exact': True, 'method': 6} if logo else {'quality': 88, 'method': 6}

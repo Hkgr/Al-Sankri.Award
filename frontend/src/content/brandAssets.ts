@@ -6,12 +6,12 @@ import enGreen400 from '../assets/brand/official/logo-en-green-400.webp'
 import enGreen800 from '../assets/brand/official/logo-en-green-800.webp'
 import enWhite400 from '../assets/brand/official/logo-en-white-400.webp'
 import enWhite800 from '../assets/brand/official/logo-en-white-800.webp'
-import culture480 from '../assets/brand/official/trophy-culture-and-arts-480.webp'
-import culture960 from '../assets/brand/official/trophy-culture-and-arts-960.webp'
-import heritage480 from '../assets/brand/official/trophy-heritage-480.webp'
-import heritage960 from '../assets/brand/official/trophy-heritage-960.webp'
-import creativity480 from '../assets/brand/official/trophy-creativity-480.webp'
-import creativity960 from '../assets/brand/official/trophy-creativity-960.webp'
+import culture400 from '../assets/brand/official/trophy-culture-and-arts-400.webp'
+import culture800 from '../assets/brand/official/trophy-culture-and-arts-800.webp'
+import heritage400 from '../assets/brand/official/trophy-heritage-400.webp'
+import heritage800 from '../assets/brand/official/trophy-heritage-800.webp'
+import creativity400 from '../assets/brand/official/trophy-creativity-400.webp'
+import creativity800 from '../assets/brand/official/trophy-creativity-800.webp'
 
 const logo = (small: string, large: string) => ({ src: small, srcSet: `${small} 400w, ${large} 800w`, width: 800, height: 259 })
 
@@ -21,16 +21,17 @@ export const brandLogos = {
   en: { light: logo(enGreen400, enGreen800), dark: logo(enWhite400, enWhite800) },
 }
 
-const trophy = (small: string, large: string) => ({
+/** Intrinsic size of the 800px derivative; the vertical artworks differ slightly in proportion. */
+const trophy = (small: string, large: string, height: number) => ({
   fallback: small,
-  sources: [{ srcSet: `${small} 480w, ${large} 960w`, type: 'image/webp' }],
-  width: 960,
-  height: 679,
+  sources: [{ srcSet: `${small} 400w, ${large} 800w`, type: 'image/webp' }],
+  width: 800,
+  height,
 })
 
-/** Complete photographs, including their supplied opaque patterned backgrounds. */
+/** The owner's vertical trophy artwork on white (supplied 2026-11-11), resized only. */
 export const domainTrophies = {
-  'culture-and-arts': trophy(culture480, culture960),
-  heritage: trophy(heritage480, heritage960),
-  creativity: trophy(creativity480, creativity960),
+  'culture-and-arts': trophy(culture400, culture800, 919),
+  heritage: trophy(heritage400, heritage800, 925),
+  creativity: trophy(creativity400, creativity800, 906),
 }

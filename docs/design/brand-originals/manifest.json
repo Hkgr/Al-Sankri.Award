@@ -117,84 +117,84 @@
     {
       "key": "creativity",
       "kind": "trophy",
-      "file": "trophies/creativity.png",
-      "drive_path": "تصميم الكأس/جائزة-الإبداع.png",
-      "drive_file_id": "1sgAIHuRSen8WrLKXL8WCRRz9byGfG7B2",
-      "sha256": "235d2a09bae4545d72a8bc27632d0320d7c53429426b4ee2530b1ed320a14244",
-      "bytes": 4152747,
-      "width": 3508,
-      "height": 2480,
+      "file": "trophies/creativity.jpeg",
+      "supplied_as": "كأس الإبداع.jpeg",
+      "supplied_on": "2026-11-11",
+      "sha256": "e7c3ad8fe55528b33dc9612e0ae3f2b32caaeea9f577a03f63fb54312061b7b7",
+      "bytes": 360733,
+      "width": 2493,
+      "height": 2822,
       "transparent": false,
       "derivatives": [
         {
-          "file": "frontend/src/assets/brand/official/trophy-creativity-480.webp",
-          "width": 480,
-          "height": 339,
-          "bytes": 9268,
-          "sha256": "d4f84ac169f8afe4eba2b455f4a42b08485317f23b5eeef15619a0fcb6cc7b75"
+          "file": "frontend/src/assets/brand/official/trophy-creativity-400.webp",
+          "width": 400,
+          "height": 453,
+          "bytes": 8524,
+          "sha256": "ad1adc53eebf49ad465bd6e25f629e2984d79547f5e3af34abd96554b56b6f67"
         },
         {
-          "file": "frontend/src/assets/brand/official/trophy-creativity-960.webp",
-          "width": 960,
-          "height": 679,
-          "bytes": 30830,
-          "sha256": "05258db5d9232bde6aab9b30f58f434e1fdebcbeac7f26e3931aa41b2bf407c0"
+          "file": "frontend/src/assets/brand/official/trophy-creativity-800.webp",
+          "width": 800,
+          "height": 906,
+          "bytes": 17256,
+          "sha256": "c75136e86ce1ab09c320a00c6e373fff914d061d7c64f67033b0e20edc944f96"
         }
       ]
     },
     {
       "key": "heritage",
       "kind": "trophy",
-      "file": "trophies/heritage.png",
-      "drive_path": "تصميم الكأس/جائزة-التراث-المادي-واللامادي.png",
-      "drive_file_id": "1an8AUKZJhf1JCV7GR5R6B6eBSOh8o4F0",
-      "sha256": "928cb7805b6a6237111109d2636bf21c6f2b3ba226c08a80e1763afbc1d0460e",
-      "bytes": 3634051,
-      "width": 3508,
-      "height": 2480,
+      "file": "trophies/heritage.jpeg",
+      "supplied_as": "كأس التراث.jpeg",
+      "supplied_on": "2026-11-11",
+      "sha256": "ddc5a9aed1aff21fde19655f498cd1c51cacd649c6467891be3daba98fe4598b",
+      "bytes": 337168,
+      "width": 2440,
+      "height": 2820,
       "transparent": false,
       "derivatives": [
         {
-          "file": "frontend/src/assets/brand/official/trophy-heritage-480.webp",
-          "width": 480,
-          "height": 339,
-          "bytes": 9220,
-          "sha256": "eefff7a6e1656122cf0df14257e40f480e59d0f6d3a58e28ac6a28dd164e9d98"
+          "file": "frontend/src/assets/brand/official/trophy-heritage-400.webp",
+          "width": 400,
+          "height": 462,
+          "bytes": 7730,
+          "sha256": "529b755487ceca50ec6f1f3f9d2e1be1778b4a3e382f1a3a4bfa479dae3c0ea0"
         },
         {
-          "file": "frontend/src/assets/brand/official/trophy-heritage-960.webp",
-          "width": 960,
-          "height": 679,
-          "bytes": 30364,
-          "sha256": "5894e637fe79f6537aaa406d88b21a634b5d6610dc9fcf2d9ddb814ca196d4ed"
+          "file": "frontend/src/assets/brand/official/trophy-heritage-800.webp",
+          "width": 800,
+          "height": 925,
+          "bytes": 15380,
+          "sha256": "7e91b279c8ee63514f6f65b78494e82651bb97c9df57cec1c7e05e924a1541f5"
         }
       ]
     },
     {
       "key": "culture-and-arts",
       "kind": "trophy",
-      "file": "trophies/culture-and-arts.png",
-      "drive_path": "تصميم الكأس/جائزة-الثقافةو-والفنون.png",
-      "drive_file_id": "1eSZYNjTV4PjAEH84Ln4RxBHuNo_iofnA",
-      "sha256": "edccce5209bb27809745e9453bee3a5f10ced399c48af081a353d466010427cf",
-      "bytes": 3495606,
-      "width": 3508,
-      "height": 2480,
+      "file": "trophies/culture-and-arts.jpeg",
+      "supplied_as": "كأس الثقافة والفنون.jpeg",
+      "supplied_on": "2026-11-11",
+      "sha256": "482e798a3ec31b1da6c5b48c032f761bba8c1125083ae3e148d63bdea8dc8d16",
+      "bytes": 408425,
+      "width": 2430,
+      "height": 2790,
       "transparent": false,
       "derivatives": [
         {
-          "file": "frontend/src/assets/brand/official/trophy-culture-and-arts-480.webp",
-          "width": 480,
-          "height": 339,
-          "bytes": 9548,
-          "sha256": "a5213c7d411c4b3a13c898a279bfa0ca4046fea4925bedcc632cc18c3479ca78"
+          "file": "frontend/src/assets/brand/official/trophy-culture-and-arts-400.webp",
+          "width": 400,
+          "height": 459,
+          "bytes": 10270,
+          "sha256": "b60c3de02a9b10138600c03361da37fb9b19674b6071c98bd2ac2d29d1e64b8e"
         },
         {
-          "file": "frontend/src/assets/brand/official/trophy-culture-and-arts-960.webp",
-          "width": 960,
-          "height": 679,
-          "bytes": 31638,
-          "sha256": "ffa3520593e8507cafbc7fda88d9c76f0c703bea61e8ab6bd87d23cca0bc3fb6"
+          "file": "frontend/src/assets/brand/official/trophy-culture-and-arts-800.webp",
+          "width": 800,
+          "height": 919,
+          "bytes": 20612,
+          "sha256": "a589a968a849fecc1cebe9d54ec93d50253635392ba079238ba3be98d54a4641"
         }
       ]
     }
@@ -203,5 +203,41 @@
     "drive_file_id": "1IRvthCE0ncyCygZSgV8U6DV22xQG6IA3",
     "name": "الجائزة العامة.png",
     "reason": "Reference only: obsolete award name. Not copied into the repository or website build."
+  },
+  "superseded_trophies": {
+    "replaced_on": "2026-11-11",
+    "reason": "The owner supplied vertical trophy artwork on white. The earlier landscape box photographs were removed from the archive and the build; they remain recoverable from Git history (commit bf0abfb).",
+    "sources": [
+      {
+        "key": "creativity",
+        "file": "trophies/creativity.png",
+        "drive_path": "تصميم الكأس/جائزة-الإبداع.png",
+        "drive_file_id": "1sgAIHuRSen8WrLKXL8WCRRz9byGfG7B2",
+        "sha256": "235d2a09bae4545d72a8bc27632d0320d7c53429426b4ee2530b1ed320a14244",
+        "bytes": 4152747,
+        "width": 3508,
+        "height": 2480
+      },
+      {
+        "key": "heritage",
+        "file": "trophies/heritage.png",
+        "drive_path": "تصميم الكأس/جائزة-التراث-المادي-واللامادي.png",
+        "drive_file_id": "1an8AUKZJhf1JCV7GR5R6B6eBSOh8o4F0",
+        "sha256": "928cb7805b6a6237111109d2636bf21c6f2b3ba226c08a80e1763afbc1d0460e",
+        "bytes": 3634051,
+        "width": 3508,
+        "height": 2480
+      },
+      {
+        "key": "culture-and-arts",
+        "file": "trophies/culture-and-arts.png",
+        "drive_path": "تصميم الكأس/جائزة-الثقافةو-والفنون.png",
+        "drive_file_id": "1eSZYNjTV4PjAEH84Ln4RxBHuNo_iofnA",
+        "sha256": "edccce5209bb27809745e9453bee3a5f10ced399c48af081a353d466010427cf",
+        "bytes": 3495606,
+        "width": 3508,
+        "height": 2480
+      }
+    ]
   }
 }

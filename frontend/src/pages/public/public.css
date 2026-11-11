@@ -491,15 +491,11 @@
   align-items: center;
 }
 
+/* The vertical trophy beside the domain introduction, at a moderate size. */
 .domain-hero__trophy {
-  display: block;
-  flex: 0 1 22rem;
-  max-inline-size: 100%;
-}
-
-.domain-hero__trophy img {
-  inline-size: 100%;
-  block-size: auto;
+  flex: 0 0 auto;
+  inline-size: clamp(9rem, 22vw, 13rem);
+  border: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
 }
 
 .domain-hero p {

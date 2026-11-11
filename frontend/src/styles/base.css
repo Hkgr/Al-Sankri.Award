@@ -61,6 +61,25 @@ img {
   object-fit: contain;
 }
 
+/*
+ * The vertical domain trophies, whole on white. The frame is a little wider
+ * than every artwork (0.87–0.88), so each fills its height and all three
+ * appear at one scale; contain never crops or stretches them.
+ */
+.domain-trophy {
+  display: block;
+  aspect-ratio: 9 / 10;
+  padding: 6%;
+  border-radius: var(--sa-radius-md);
+  background: var(--sa-observed-white);
+}
+
+.domain-trophy img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
 a {
   color: var(--sa-color-link);
   text-decoration-line: underline;
