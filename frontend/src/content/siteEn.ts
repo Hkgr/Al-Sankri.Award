@@ -6,7 +6,7 @@
 
 import { siteAr } from './site'
 import type { SiteContent } from './site'
-import { awardTerms } from './awardTerms'
+import { publicConditions, generalConditions } from './publicConditions'
 
 export const siteEn: SiteContent = {
   award: {
@@ -58,7 +58,7 @@ export const siteEn: SiteContent = {
     },
   },
 
-  domains: awardTerms.en.domains.map((domain, index) => ({
+  domains: publicConditions.en.domains.map((domain, index) => ({
     ...siteAr.domains[index], label: domain.name, intro: domain.intro,
     subcategories: domain.subcategories.map((category) => ({ code: category.code, label: category.name, requirements: category.requirements })),
   })),
@@ -161,8 +161,8 @@ export const siteEn: SiteContent = {
   ],
 
   eligibility: {
-    conditions: awardTerms.en.general.slice(0, 4),
-    applicants: awardTerms.en.general[1].text,
+    conditions: generalConditions('en'),
+    applicants: publicConditions.en.general[1].text,
     evidence: {
       intro: 'The application is built on evidence that proves the work is complete and shows its impact: documentation files, procedural reports, photos, videos and testimonials.',
       items: [
@@ -172,11 +172,7 @@ export const siteEn: SiteContent = {
         'Additional documentation links: optional, up to 20 links.',
       ],
     },
-    conflict: [
-      'Members of the board of trustees, judging committees and integrity committee, and award administration staff at ',
-      { org: 'rowad', label: 'Al-Rowad Foundation' },
-      ' are prohibited from applying, to ensure impartiality and integrity.',
-    ],
+    conflict: generalConditions('en')[4].text,
 
     shared: 'The general conditions apply to all six categories, together with the specific conditions for each category below.',
   },

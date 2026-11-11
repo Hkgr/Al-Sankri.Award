@@ -26,14 +26,14 @@ class AwardTermsAndTaxonomyTest extends TestCase
         $this->candidate = User::factory()->candidate()->create();
     }
 
-    public function test_complete_bilingual_conditions_have_six_categories_and_sixteen_specific_requirements(): void
+    public function test_complete_bilingual_conditions_have_seven_general_and_seventeen_specific_requirements(): void
     {
         $content = app(AwardTerms::class)->content();
         foreach (['ar', 'en'] as $locale) {
-            $this->assertCount(5, $content[$locale]['general']);
+            $this->assertCount(7, $content[$locale]['general']);
             $categories = collect($content[$locale]['domains'])->flatMap(fn (array $domain): array => $domain['subcategories']);
             $this->assertCount(6, $categories);
-            $this->assertSame(16, $categories->sum(fn (array $category): int => count($category['requirements'])));
+            $this->assertSame(17, $categories->sum(fn (array $category): int => count($category['requirements'])));
         }
         $this->assertStringContainsString('جائزة من قبل', app(AwardTerms::class)->body('ar'));
         $this->assertStringContainsString('previously', app(AwardTerms::class)->body('en'));

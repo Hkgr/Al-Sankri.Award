@@ -82,7 +82,7 @@ export function HomePage() {
                 <p className="domain-card__intro">{domain.intro}</p>
                 <ul className="domain-card__subcategories" aria-label={t('home.domainSubs', { domain: domain.label })}>
                   {domain.subcategories.map((subcategory) => (
-                    <li key={subcategory.label}>{subcategory.label}</li>
+                    <li key={subcategory.code}><Link href={`/eligibility/${domain.slug}#category-${subcategory.code}`}>{subcategory.label}</Link></li>
                   ))}
                 </ul>
                 <Link className="domain-card__link" href={`/eligibility/${domain.slug}`}>

@@ -3,6 +3,7 @@
 namespace App\Candidates;
 
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class AwardTerms
 {
@@ -11,7 +12,7 @@ class AwardTerms
     /** @return array<string, mixed> */
     public function content(): array
     {
-        return json_decode(file_get_contents(resource_path('award/terms-2026-11-02.json')), true, flags: JSON_THROW_ON_ERROR);
+        return json_decode(file_get_contents(resource_path('award/terms-2026-11-10.json')), true, flags: JSON_THROW_ON_ERROR);
     }
 
     public function body(string $locale): string
@@ -38,23 +39,31 @@ class AwardTerms
     /** Append a new immutable version; existing accepted texts are never overwritten. */
     public function publishForCycle(int $cycleId): int
     {
-        $ar = $this->body('ar');
-        $en = $this->body('en');
-        $hash = hash('sha256', $ar."\n".$en);
-        $latest = DB::table('policy_versions')->where('cycle_id', $cycleId)->where('code', self::CODE)->orderByDesc('version_number')->lockForUpdate()->first();
-        if ($latest !== null && $latest->content_hash === $hash && $latest->status === 'published') {
-            return (int) $latest->id;
-        }
+        return DB::transaction(function () use ($cycleId): int {
+            $cycle = DB::table('award_cycles')->where('id', $cycleId)->lockForUpdate()->first();
+            if ($cycle === null || ! in_array($cycle->status, ['draft', 'published'], true)) {
+                throw new InvalidArgumentException('Choose an existing draft or published cycle; historical cycles cannot receive a new current terms version.');
+            }
+            $ar = $this->body('ar');
+            $en = $this->body('en');
+            $hash = hash('sha256', $ar."\n".$en);
+            $latest = DB::table('policy_versions')->where('cycle_id', $cycleId)->where('code', self::CODE)->orderByDesc('version_number')->lockForUpdate()->first();
+            $current = $this->current($cycleId);
+            if ($current !== null && $current->content_hash === $hash) {
+                return (int) $current->id;
+            }
 
-        return DB::table('policy_versions')->insertGetId([
-            'cycle_id' => $cycleId, 'code' => self::CODE, 'version_number' => ($latest?->version_number ?? 0) + 1,
-            'title_ar' => $this->content()['ar']['title'], 'body_ar' => $ar, 'body_en' => $en, 'content_hash' => $hash,
-            'status' => 'published', 'published_at' => now(), 'created_at' => now(), 'updated_at' => now(),
-        ]);
+            return DB::table('policy_versions')->insertGetId([
+                'cycle_id' => $cycleId, 'code' => self::CODE, 'version_number' => ($latest?->version_number ?? 0) + 1,
+                'title_ar' => $this->content()['ar']['title'], 'body_ar' => $ar, 'body_en' => $en, 'content_hash' => $hash,
+                'status' => 'published', 'published_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }, 3);
     }
 
     public function current(int $cycleId): ?object
     {
-        return DB::table('policy_versions')->where('cycle_id', $cycleId)->where('code', self::CODE)->where('status', 'published')->orderByDesc('version_number')->first();
+        return DB::table('policy_versions')->where('cycle_id', $cycleId)->where('code', self::CODE)->where('status', 'published')
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())->orderByDesc('version_number')->first();
     }
 }

@@ -43,12 +43,12 @@ export function ReviewPage({ user }: { user: User }) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [alert, setAlert] = useState<{ tone: 'error' | 'info' | 'success'; content: ReactNode } | null>(null)
   const [sending, setSending] = useState(false)
-  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [acceptedTermsVersion, setAcceptedTermsVersion] = useState<number | null>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   const load = useCallback(async () => {
     setLoadError(null)
-    setAcceptedTerms(false)
+    setAcceptedTermsVersion(null)
     try {
       setState(await api.get<ReviewState>('/api/candidate/review', contextHeader(user)))
     } catch (error) {
@@ -67,6 +67,7 @@ export function ReviewPage({ user }: { user: User }) {
   }, [load])
 
   const review = state?.data ?? null
+  const acceptedTerms = review?.terms?.id != null && acceptedTermsVersion === review.terms.id
 
   const submit = async () => {
     dialogRef.current?.close()
@@ -222,8 +223,8 @@ export function ReviewPage({ user }: { user: User }) {
 
           {review.terms && <section className="review-part">
             <h2 className="review-part__title">{t('terms.title')}</h2>
-            <details><summary>{t('terms.version', { version: review.terms.version_number })}</summary><div style={{ whiteSpace: 'pre-wrap' }}>{locale === 'en' ? review.terms.body_en : review.terms.body_ar}</div></details>
-            {!review.submission && <p><label><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /> {t('terms.accept')}</label></p>}
+            <details><summary>{t('terms.version', { version: review.terms.version_number })}</summary><div style={{ whiteSpace: 'pre-wrap' }}>{locale === 'en' ? (review.terms.body_en ?? review.terms.body_ar) : review.terms.body_ar}</div></details>
+            {!review.submission && <p><label><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTermsVersion(event.target.checked ? review.terms?.id ?? null : null)} /> {t('terms.accept')}</label></p>}
           </section>}
           {review.nomination_details.taxonomy_review_required && <FormAlert tone="info"><p>{t('category.adminReview')}</p><Link href="/dashboard/nomination-details">{t('category.choose')}</Link></FormAlert>}
           {!review.submission && (
