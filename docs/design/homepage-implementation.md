@@ -6,10 +6,12 @@ Updated 2026-10-29. This continues the existing React 19 / TypeScript / Vite imp
 
 | Path | Content |
 | --- | --- |
-| `/` | Official name and slogan; the official logo above the countdown in the deep-green card, with the authentic portrait faded beside the content; introduction; three stacked domain rows with their trophies and two category links each; journey preview and platform actions. |
-| `/about` | Purpose, values, documented impact, implementing organization and Dr. Sankari's legacy with the mosque-visit photograph. |
-| `/journey` | Preparation, applications, administrative review, judging and planned award week. |
+| `/` | The ceremonial hero (owner choice, 2026-11-11): deep green with gold specks; the award name, the slogan (its words rise in turn), the lead, the platform actions and a glass countdown; the authentic portrait in a white circle inside gold orbits (left in Arabic, mirrored in English). The award logo stays in the header only. Then the introduction, «لماذا الجائزة؟» (four reasons from the owner's presentation, 2026-11-11), three stacked domain rows with their trophies and two category links each, the journey preview and platform actions. All motion is off under reduced motion; brand artwork never moves. |
+| `/about` | Purpose, «الغاية والأهداف الاستراتيجية» (the overarching purpose and five main objectives from the owner's presentation, replacing the earlier three aims), values, documented impact, implementing organization and Dr. Sankari's legacy with the mosque-visit photograph. |
+| `/journey` | «الدورة التشغيلية ومسار الجائزة» (three stages, owner's presentation), then preparation, applications, administrative review, judging and planned award week. |
 | `/eligibility` | Shared eligibility, evidence, conflicts of interest and evaluation criteria. |
+| `/governance` | «منظومة الحوكمة» (owner's presentation, 2026-11-11): four stations in order — initial eligibility screening, independent judging committees (3 to 5 experts per domain), field verification (due diligence), Board of Trustees approval — then the published conflict-of-interest rule. The presentation numbered the last station 05; the site numbers them 01–04. |
+| `/media` | Media Center (2026-11-11): news and official statements (an honest empty state until items are supplied; nothing invented), the four official logos for media use, each on its approved surface with a download link, and the media contact. |
 | `/eligibility/culture-and-arts` | Culture and arts. |
 | `/eligibility/heritage` | Tangible and intangible heritage. |
 | `/eligibility/creativity` | Social responsibility, entrepreneurship and quality. |
@@ -110,3 +112,7 @@ git diff --check
 - **Official logo limitation:** supplied logo artwork still contains the older award wording/tagline. It is preserved unchanged; surrounding copy and accessible names use the approved name/slogan. Updated official master artwork is needed to change the lettering inside the logo.
 - Vite SPA rendering remains client-side. A production canonical URL, sharing image and favicon have not been supplied. The combined application bundle still produces Vite's over-500-kB warning.
 - Existing photo-permission and source-resolution notes remain in the provenance record. Browser coverage is Chromium on Windows; Safari/iOS, Firefox, physical mobile devices and screen readers were not tested.
+
+## Contact (2026-11-11)
+
+The owner supplied the contact for enquiries and cooperation: award@onder1.org and +90 555 109 05 89. Both appear in every public page's footer and on the Media Center; the email opens the mail app (`mailto:`), the number opens a WhatsApp chat (`https://wa.me/905551090589`) in a new tab and is isolated left-to-right inside Arabic text.

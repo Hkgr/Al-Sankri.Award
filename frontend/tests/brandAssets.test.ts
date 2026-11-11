@@ -28,3 +28,22 @@ test('each domain shows its own vertical trophy at the derivative’s real dimen
   assert.match(brandAssets, /width: 800,/)
   assert.doesNotMatch(brandAssets, /679|-480\.webp|-960\.webp/)
 })
+
+test('each partner logo is imported at its trimmed derivative size and links to its own organization', () => {
+  const partners = manifest.sources.filter((source) => source.kind === 'partner')
+  assert.deepEqual(partners.map((source) => source.key), ['rowad', 'aleppo-culture-directorate', 'university-of-aleppo'])
+  for (const source of partners) {
+    const [derivative] = source.derivatives
+    assert.equal(source.derivatives.length, 1)
+    assert.equal(derivative.height, 160)
+    assert.ok(existsSync(new URL(`../../${derivative.file}`, import.meta.url)), derivative.file)
+    assert.match(brandAssets, new RegExp(`from '\\.\\./assets/brand/official/partner-${source.key}-${derivative.width}\\.webp'`))
+    const key = source.key.includes('-') ? `'${source.key}'` : source.key
+    assert.match(brandAssets, new RegExp(`${key}: \\{ src: \\w+, width: ${derivative.width}, height: ${derivative.height} \\}`))
+  }
+
+  const site = readFileSync(new URL('../src/content/site.ts', import.meta.url), 'utf8')
+  assert.match(site, /\{ key: 'rowad', name: organizations\.rowad\.name, role: 'implementing', url: organizations\.rowad\.url \}/)
+  assert.match(site, /\{ key: 'aleppo-culture-directorate', name: 'مديرية الثقافة في حلب', role: 'participating', url: 'https:\/\/www\.facebook\.com\/AleppoCulture\/' \}/)
+  assert.match(site, /\{ key: 'university-of-aleppo', name: 'جامعة حلب', role: 'participating', url: 'https:\/\/alepuniv\.edu\.sy\/' \}/)
+})

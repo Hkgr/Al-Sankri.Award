@@ -1,0 +1,1786 @@
+{
+ "total": 356,
+ "failed": [],
+ "checks": [
+  {
+   "check": "ar-mobile-390: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: no award logo in the hero; the header keeps it",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: slogan whole, word-split with spaces kept",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: portrait in its circle, loaded, captioned, inside the hero",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: slogan watermark decorative; rights line; dark-surface logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: six main pages, Governance before Media Center",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link culture-and-arts#poetry opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link culture-and-arts#story opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link heritage#tangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link heritage#intangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link creativity#social_responsibility opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link creativity#entrepreneurship opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link culture-and-arts#poetry opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link culture-and-arts#story opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link heritage#tangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link heritage#intangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link creativity#social_responsibility opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link creativity#entrepreneurship opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "governance page from the menu: current, four stations in order",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "language switch: header logo becomes the English green logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "language switch: hero slogan in English",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "language switch: domain rows in English",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state open: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state open: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state upcoming: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state upcoming: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state unavailable: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state unavailable: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state closed: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state closed: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state judging: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state judging: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state judged: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state judged: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state unknown: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state unknown: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state open: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state open: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state upcoming: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state upcoming: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state unavailable: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state unavailable: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state closed: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state closed: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state judging: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state judging: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state judged: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state judged: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state unknown: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state unknown: phase, countdown after the actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "reduced motion: no hero or footer animation; words and orbit fully shown",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "motion: words rise, the gold orbit draws, the watermark drifts, then settle",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

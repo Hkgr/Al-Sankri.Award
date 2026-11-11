@@ -1,5 +1,6 @@
 import { RichText } from '../../components/OrgLink'
 import { Photo } from '../../components/Photo'
+import { pageAt } from '../../content/site'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { usePageMeta } from '../../lib/usePageMeta'
@@ -7,9 +8,9 @@ import { PageHeader } from './PageHeader'
 import './public.css'
 
 export function AboutPage() {
-  const { about, award, hero, legacy, pages } = useSite()
+  const { about, award, hero, legacy, pages, purpose } = useSite()
   const { t } = useLocale()
-  const page = pages[1]
+  const page = pageAt(pages, '/about')
   usePageMeta(page.label, page.description)
 
   return (
@@ -18,17 +19,27 @@ export function AboutPage() {
         <p>{about.philosophy}</p>
       </PageHeader>
 
-      <section className="section" aria-labelledby="aims-title">
+      {/* The owner's «الغاية والأهداف الاستراتيجية». */}
+      <section className="section" aria-labelledby="purpose-title">
         <div className="container">
           <p className="pull-quote">{about.statement}</p>
-          <h2 id="aims-title" className="section__title">
-            {t('about.aims')}
+          <h2 id="purpose-title" className="section__title">
+            {t('about.purposeTitle')}
           </h2>
-          <ol className="card-grid card-grid--three">
-            {about.aims.map((aim) => (
-              <li key={aim.title} className="info-card">
-                <h3 className="info-card__title">{aim.title}</h3>
-                <p>{aim.text}</p>
+          <figure className="purpose-banner">
+            <figcaption className="purpose-banner__label">{t('about.grand')}</figcaption>
+            <blockquote className="purpose-banner__quote">
+              <p>{purpose.grand}</p>
+            </blockquote>
+          </figure>
+          <h3 className="objectives__title">{t('about.objectives')}</h3>
+          <ol className="objectives">
+            {purpose.objectives.map((objective, index) => (
+              <li key={objective} className="objectives__item">
+                <span className="objectives__number" aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <p>{objective}</p>
               </li>
             ))}
           </ol>

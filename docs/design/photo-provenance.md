@@ -50,7 +50,7 @@ Made with Pillow 13 (outside the project's dependency tree).
 
 | File set | Crop from source (px) | Widths | Used |
 | --- | --- | --- | --- |
-| `sankari-portrait-{400,640,800}.webp`, `-800.jpg` | x 0–800, y 0–790: keeps the whole head and shoulders and drops the empty white background on the right of the source image | 400, 640, 800 | Homepage hero (2026-11-11): a large decorative figure beside the content, outside the logo card — opacity 0.18–0.2, `mix-blend-mode: multiply` and a soft radial mask, with his name as a visible caption; the face never sits behind the text or the countdown. `/about` reuses these derivatives. |
+| `sankari-portrait-{400,640,800}.webp`, `-800.jpg` | x 0–800, y 0–790: keeps the whole head and shoulders and drops the empty white background on the right of the source image | 400, 640, 800 | Homepage hero (2026-11-11, ceremony design): a white circle inside gold orbits beside the content (left in Arabic, mirrored in English), `object-fit: cover`, `object-position: 50% 22%`, with his name as the caption. |
 | `sankari-umayyad-mosque-visit-{960,1600}.webp`, `-1600.jpg` | Full frame, uncropped | 960, 1600 | `/about` legacy section, 768px and up |
 | `sankari-umayyad-mosque-visit-narrow-{480,912}.webp`, `-912.jpg` | x 0–912, y 110–1220: the mosaic frieze, Dr. Sankari and the four men nearest him, and the HAND watermark | 480, 912 | `/about` below 768px, where the full group would make faces too small. Art-directed with `<picture media>`. |
 
