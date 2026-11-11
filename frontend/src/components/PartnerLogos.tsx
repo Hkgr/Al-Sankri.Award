@@ -3,17 +3,17 @@ import { useSite } from '../content/useSite'
 import { useLocale } from '../i18n/useLocale'
 
 /**
- * The implementing and participating organizations: each supplied logo on its
- * own light tile (their artwork is dark ink, so never on the deep green
- * directly), with its name and role in text, linking to its website or page in
- * a new tab. The logo is decorative: the visible name labels the link.
+ * The implementing and participating organizations on one white card (their
+ * artwork is dark ink, so never on the deep green directly), each with its name
+ * and role in text, linking to its website or page in a new tab. The logo is
+ * decorative: the visible name labels the link.
  */
-export function PartnerLogos({ tone, className = '' }: { tone: 'on-dark' | 'on-light'; className?: string }) {
+export function PartnerLogos({ className = '' }: { className?: string }) {
   const { partners } = useSite()
   const { t } = useLocale()
 
   return (
-    <ul className={`partners partners--${tone} ${className}`.trim()}>
+    <ul className={`partners ${className}`.trim()}>
       {partners.map((partner) => {
         const logo = partnerLogos[partner.key]
         return (

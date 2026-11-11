@@ -6,7 +6,7 @@ Updated 2026-10-29. This continues the existing React 19 / TypeScript / Vite imp
 
 | Path | Content |
 | --- | --- |
-| `/` | Official name and slogan; the official logo above the countdown in the deep-green card, with the authentic portrait faded at the left edge beside the content; introduction; three stacked domain rows with their trophies and two category links each; journey preview and platform actions. |
+| `/` | The ceremonial hero (owner choice, 2026-11-11): deep green with gold specks; the award name, the slogan (its words rise in turn), the lead, the platform actions and a glass countdown; the authentic portrait in a white circle inside gold orbits (left in Arabic, mirrored in English). The award logo stays in the header only. Then the introduction, three stacked domain rows with their trophies and two category links each, the journey preview and platform actions. All motion is off under reduced motion; brand artwork never moves. |
 | `/about` | Purpose, values, documented impact, implementing organization and Dr. Sankari's legacy with the mosque-visit photograph. |
 | `/journey` | Preparation, applications, administrative review, judging and planned award week. |
 | `/eligibility` | Shared eligibility, evidence, conflicts of interest and evaluation criteria. |

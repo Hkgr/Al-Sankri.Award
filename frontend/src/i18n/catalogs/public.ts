@@ -36,6 +36,7 @@ export const ar: Dict = {
   'footer.login': 'الدخول إلى المنصة',
   'footer.privacy': 'سياسة الخصوصية',
   'footer.terms': 'شروط الاستخدام',
+  'footer.rights': 'جميع الحقوق محفوظة',
 
   'about.title': 'عن الجائزة',
   'about.aims': 'غاية الجائزة',
@@ -153,6 +154,7 @@ export const en: Dict = {
   'footer.login': 'Sign in to the platform',
   'footer.privacy': 'Privacy policy',
   'footer.terms': 'Terms of use',
+  'footer.rights': 'All rights reserved',
 
   'about.title': 'About the award',
   'about.aims': 'Purpose of the award',

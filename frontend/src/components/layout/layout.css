@@ -261,19 +261,141 @@
   transform: scaleX(-1);
 }
 
-/* ---------- Footer (deep green: the only surface for the dark logo) ---------- */
+/* ---------- Footer: the floating partners card over a rounded deep-green body ---------- */
 
 .site-footer {
   position: relative;
-  background: var(--sa-color-surface-dark);
+  /* The page's light surface shows behind the card and the body's rounded corners. */
+  background: var(--sa-color-surface);
+}
+
+/* ---------- Implementing and participating organizations (the floating card) ---------- */
+
+.site-footer__partners {
+  position: relative;
+  z-index: 1;
+  padding-block-start: var(--sa-space-7);
+  margin-block-end: -5.5rem;
+}
+
+/* One white card; their dark-ink logos stay on white, never on the deep green. */
+.partners {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 2rem;
+  background: var(--sa-observed-white);
+  box-shadow:
+    0 40px 80px -40px rgb(15 51 48 / 0.55),
+    0 0 0 1px #e6ecf0;
+  list-style: none;
+}
+
+.partners__item + .partners__item {
+  border-block-start: var(--sa-border-width-hairline) solid #e9eef2;
+}
+
+.partner {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sa-space-4);
+  align-items: center;
+  block-size: 100%;
+  padding: var(--sa-space-4) var(--sa-space-5);
+  color: var(--sa-color-text);
+  text-decoration: none;
+}
+
+.site-footer .partner,
+.site-footer .partner:hover {
+  color: var(--sa-color-text);
+}
+
+/* A gold line slides in along the top of an organization on hover. */
+.partner::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--sa-space-5);
+  block-size: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--sa-brand-gold);
+  transform: scaleX(0);
+}
+
+.partner:hover {
+  background: #fbfcfe;
+}
+
+.partner:hover::before {
+  transform: scaleX(1);
+}
+
+.partner__logo {
+  display: grid;
+  place-items: center;
+  min-inline-size: 0;
+}
+
+.partner__logo img {
+  inline-size: auto;
+  max-inline-size: 5.75rem;
+  block-size: 3.4rem;
+  object-fit: contain;
+}
+
+.partner__text {
+  display: grid;
+  gap: var(--sa-space-1);
+  justify-items: start;
+}
+
+/* The role as a small pill: gold-tinted for the implementing organization. */
+.partner__role {
+  padding: 0.1rem var(--sa-space-3);
+  border-radius: 999px;
+  background: var(--sa-color-surface);
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-caption);
+  font-weight: var(--sa-font-weight-medium);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.partners__item--implementing .partner__role {
+  background: var(--sa-ext-gold-tint);
+  color: #6f5212;
+}
+
+.partner__name {
+  font-weight: var(--sa-font-weight-bold);
+  line-height: 1.5;
+}
+
+.partner:hover .partner__name {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
+
+/* ---------- The deep-green body ---------- */
+
+.site-footer__body {
+  position: relative;
+  overflow: hidden;
+  padding-block-start: 8rem;
+  border-radius: 2rem 2rem 0 0;
+  background: radial-gradient(70rem 30rem at 80% 0%, #1b5650, var(--sa-color-surface-dark) 60%, var(--sa-ext-green-900));
   color: var(--sa-color-text-on-dark);
 }
 
-.site-footer a {
+.site-footer__body a {
   color: var(--sa-color-link-on-dark);
 }
 
-.site-footer a:hover {
+.site-footer__body a:hover {
   color: var(--sa-color-link-on-dark);
 }
 
@@ -281,16 +403,30 @@
   outline-color: var(--sa-color-focus-ring-on-dark);
 }
 
-/* A gold rule above the footer (identity-guidelines.md §8.3). */
-.site-footer__rule {
-  block-size: 0.25rem;
-  background: var(--sa-brand-gold);
+.site-footer__partners :focus-visible {
+  outline-color: var(--sa-color-focus-ring);
+}
+
+/* The slogan, engraved and barely visible, drifting slowly (twice over, so the loop is seamless). */
+.site-footer__watermark {
+  position: absolute;
+  inset-block-start: 4rem;
+  inset-inline-start: 0;
+  color: transparent;
+  font-size: clamp(5rem, 2rem + 9vw, 11rem);
+  font-weight: var(--sa-font-weight-black);
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-text-stroke: 1px rgb(244 247 252 / 0.07);
+  pointer-events: none;
+  user-select: none;
 }
 
 .site-footer__inner {
+  position: relative;
   display: grid;
   gap: var(--sa-space-7);
-  padding-block: var(--sa-space-8) var(--sa-space-7);
+  padding-block: var(--sa-space-5) var(--sa-space-7);
 }
 
 .site-footer__identity {
@@ -318,12 +454,23 @@
 }
 
 .site-footer__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sa-space-2);
   margin-block-end: var(--sa-space-3);
-  padding-block-end: var(--sa-space-2);
-  border-block-end: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.2);
   color: var(--sa-color-text-on-dark-muted);
   font-size: var(--sa-font-size-small);
   font-weight: var(--sa-font-weight-medium);
+}
+
+/* A small gold diamond before each heading. */
+.site-footer__heading::before {
+  content: '';
+  inline-size: 0.45rem;
+  block-size: 0.45rem;
+  border-radius: 2px;
+  background: var(--sa-brand-gold);
+  transform: rotate(45deg);
 }
 
 .site-footer__links {
@@ -342,158 +489,27 @@
 }
 
 .site-footer__links a:hover {
+  color: #f3d58f;
   text-decoration: underline;
+  text-underline-offset: 0.3em;
 }
 
 .site-footer__base {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sa-space-2) var(--sa-space-5);
   padding-block: var(--sa-space-4) var(--sa-space-5);
-  border-block-start: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.2);
+  border-block-start: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.14);
   color: var(--sa-color-text-on-dark-muted);
   font-size: var(--sa-font-size-small);
 }
 
-/* ---------- Implementing and participating organizations ---------- */
-
-.site-footer__partners {
-  padding-block: var(--sa-space-7) 0;
-}
-
-.site-footer__partners-title {
-  margin-block-end: var(--sa-space-5);
-}
-
-/*
- * Each organization's own logo on a quiet light tile: their artwork is dark
- * ink, so it is never placed on the deep green directly, never recolored.
- */
-.partners {
-  display: grid;
-  gap: var(--sa-space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.partner {
-  display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr);
-  gap: var(--sa-space-4);
-  align-items: center;
-  block-size: 100%;
-  padding: var(--sa-space-4);
-  border: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
-  border-radius: var(--sa-radius-lg);
-  background: var(--sa-observed-white);
-  color: var(--sa-color-text);
-  text-decoration: none;
-  box-shadow: 0 1px 2px rgb(20 65 61 / 0.06);
-}
-
-.site-footer .partner,
-.site-footer .partner:hover {
-  color: var(--sa-color-text);
-}
-
-.partners--on-dark .partner {
-  border-color: rgb(244 247 252 / 0.14);
-  box-shadow: 0 1px 0 rgb(0 0 0 / 0.12);
-}
-
-.partner {
-  --partner-logo-height: 4rem;
-}
-
-/* One logo height for all three; a wide logo may narrow to fit its tile. */
-.partner__logo {
-  display: grid;
-  place-items: center;
-  block-size: var(--partner-logo-height);
-  min-inline-size: 0;
-}
-
-.partner__logo img {
-  inline-size: auto;
-  max-inline-size: 100%;
-  block-size: auto;
-  max-block-size: var(--partner-logo-height);
-  object-fit: contain;
-}
-
-.partner__text {
-  display: grid;
-  gap: var(--sa-space-1);
-}
-
-/* A small, quiet role label: gold rule for the implementing organization, green for the others. */
-.partner__role {
-  justify-self: start;
-  padding-inline-start: var(--sa-space-2);
-  border-inline-start: 0.2rem solid var(--sa-ext-green-900);
-  color: var(--sa-color-text-muted);
-  font-size: var(--sa-font-size-small);
-  font-weight: var(--sa-font-weight-medium);
-  line-height: 1.4;
-}
-
-.partners__item--implementing .partner__role {
-  border-inline-start-color: var(--sa-brand-gold);
-}
-
-.partner__name {
-  font-weight: var(--sa-font-weight-bold);
-  line-height: 1.5;
-}
-
-.partner:hover {
-  border-color: var(--sa-brand-gold);
-  box-shadow: 0 0.5rem 1.25rem rgb(20 65 61 / 0.12);
-}
-
-.partner:hover .partner__name {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.3em;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .partner {
-    transition:
-      transform var(--sa-duration-fast) var(--sa-easing-standard),
-      box-shadow var(--sa-duration-fast) var(--sa-easing-standard),
-      border-color var(--sa-duration-fast) var(--sa-easing-standard);
-  }
-
-  .partner:hover {
-    transform: translateY(-2px);
-  }
-}
-
-@media (min-width: 48rem) {
-  /* The implementing organization's tile is a little wider; logos above their names. */
-  .partners {
-    grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(0, 1fr));
-    gap: var(--sa-space-5);
-  }
-
-  .partner {
-    grid-template-columns: none;
-    justify-items: center;
-    padding: var(--sa-space-5) var(--sa-space-4);
-    text-align: center;
-  }
-
-  .partner {
-    --partner-logo-height: 5rem;
-  }
-
-  .partner__role {
-    justify-self: center;
-  }
-}
-
 /* Echoes the guide's gold band on dark pages (Observed, page 5). */
 .site-footer__band {
-  block-size: 0.5rem;
+  position: relative;
+  block-size: 0.375rem;
   background: var(--sa-brand-gold);
 }
 
@@ -507,13 +523,105 @@
   }
 }
 
+@media (min-width: 48rem) {
+  /* The organizations side by side; the implementing organization a little wider. */
+  .partners {
+    grid-template-columns: minmax(0, 1.25fr) repeat(2, minmax(0, 1fr));
+  }
+
+  .partners__item + .partners__item {
+    border-block-start: 0;
+    border-inline-start: var(--sa-border-width-hairline) solid #e9eef2;
+  }
+
+  .partner {
+    gap: var(--sa-space-5);
+    padding: var(--sa-space-6) var(--sa-space-6);
+  }
+
+  .partner__logo img {
+    max-inline-size: 11rem;
+    block-size: 4.6rem;
+  }
+
+  .site-footer__partners {
+    margin-block-end: -6rem;
+  }
+
+  .site-footer__body {
+    padding-block-start: 9rem;
+    border-radius: 3rem 3rem 0 0;
+  }
+}
+
 @media (min-width: 64rem) {
   .site-footer__inner {
-    grid-template-columns: minmax(0, 1.8fr) repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
     gap: var(--sa-space-7);
   }
 
   .site-footer__identity {
     grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .partner,
+  .partner::before {
+    transition:
+      transform 0.45s cubic-bezier(0.2, 0, 0, 1),
+      background var(--sa-duration-fast) var(--sa-easing-standard);
+  }
+
+  .site-footer__links a {
+    transition:
+      color var(--sa-duration-fast) var(--sa-easing-standard),
+      transform var(--sa-duration-fast) var(--sa-easing-standard);
+  }
+
+  .site-footer__links a:hover {
+    transform: translateX(-4px);
+  }
+
+  [dir='ltr'] .site-footer__links a:hover {
+    transform: translateX(4px);
+  }
+
+  /* RTL text starts at the right and moves right; LTR starts left and moves left. */
+  .site-footer__watermark {
+    animation: footer-drift 60s linear infinite;
+  }
+
+  [dir='ltr'] .site-footer__watermark {
+    animation-name: footer-drift-ltr;
+  }
+
+  /* The card and the columns rise into view as they are scrolled to, where supported. */
+  @supports (animation-timeline: view()) {
+    .partners,
+    .site-footer__inner > * {
+      animation: footer-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+
+@keyframes footer-drift {
+  to {
+    transform: translateX(50%);
+  }
+}
+
+@keyframes footer-drift-ltr {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes footer-rise {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
   }
 }

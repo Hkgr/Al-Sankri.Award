@@ -1,34 +1,44 @@
 {
- "total": 318,
+ "total": 315,
  "failed": [],
  "checks": [
   {
-   "check": "ar-mobile-390: face clear of the text and the countdown card",
+   "check": "ar-mobile-390: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390: face inside the hero, uncropped",
+   "check": "ar-mobile-390: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390: portrait on the left edge",
+   "check": "ar-mobile-390: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390: no hero text under the card",
+   "check": "ar-mobile-390: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "ar-mobile-390: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-mobile-390: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -39,21 +49,6 @@
   },
   {
    "check": "ar-mobile-390: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-mobile-390: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-mobile-390: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-mobile-390: official ar white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -98,32 +93,42 @@
    "detail": ""
   },
   {
-   "check": "ar-tablet-834: face clear of the text and the countdown card",
+   "check": "ar-tablet-834: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-tablet-834: face inside the hero, uncropped",
+   "check": "ar-tablet-834: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-tablet-834: portrait on the left edge",
+   "check": "ar-tablet-834: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-tablet-834: no hero text under the card",
+   "check": "ar-tablet-834: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "ar-tablet-834: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-tablet-834: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -134,21 +139,6 @@
   },
   {
    "check": "ar-tablet-834: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-tablet-834: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-tablet-834: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-tablet-834: official ar white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -208,32 +198,47 @@
    "detail": ""
   },
   {
-   "check": "ar-laptop-1024: face clear of the text and the countdown card",
+   "check": "ar-laptop-1024: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-laptop-1024: face inside the hero, uncropped",
+   "check": "ar-laptop-1024: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-laptop-1024: portrait on the left edge",
+   "check": "ar-laptop-1024: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-laptop-1024: no hero text under the card",
+   "check": "ar-laptop-1024: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "ar-laptop-1024: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-laptop-1024: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -244,21 +249,6 @@
   },
   {
    "check": "ar-laptop-1024: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-laptop-1024: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-laptop-1024: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-laptop-1024: official ar white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -318,32 +308,47 @@
    "detail": ""
   },
   {
-   "check": "ar-desktop-1280: face clear of the text and the countdown card",
+   "check": "ar-desktop-1280: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1280: face inside the hero, uncropped",
+   "check": "ar-desktop-1280: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1280: portrait on the left edge",
+   "check": "ar-desktop-1280: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1280: no hero text under the card",
+   "check": "ar-desktop-1280: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "ar-desktop-1280: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1280: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -354,21 +359,6 @@
   },
   {
    "check": "ar-desktop-1280: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1280: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1280: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1280: official ar white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -428,32 +418,47 @@
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440: face clear of the text and the countdown card",
+   "check": "ar-desktop-1440: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440: face inside the hero, uncropped",
+   "check": "ar-desktop-1440: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440: portrait on the left edge",
+   "check": "ar-desktop-1440: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440: no hero text under the card",
+   "check": "ar-desktop-1440: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "ar-desktop-1440: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1440: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -464,21 +469,6 @@
   },
   {
    "check": "ar-desktop-1440: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1440: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1440: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1440: official ar white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -538,32 +528,47 @@
    "detail": ""
   },
   {
-   "check": "ar-desktop-1920: face clear of the text and the countdown card",
+   "check": "ar-desktop-1920: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1920: face inside the hero, uncropped",
+   "check": "ar-desktop-1920: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1920: portrait on the left edge",
+   "check": "ar-desktop-1920: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1920: no hero text under the card",
+   "check": "ar-desktop-1920: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: portrait on the left",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "ar-desktop-1920: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1920: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -574,21 +579,6 @@
   },
   {
    "check": "ar-desktop-1920: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1920: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1920: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "ar-desktop-1920: official ar white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -648,32 +638,42 @@
    "detail": ""
   },
   {
-   "check": "en-mobile-390: face clear of the text and the countdown card",
+   "check": "en-mobile-390: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390: face inside the hero, uncropped",
+   "check": "en-mobile-390: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390: portrait on the left edge",
+   "check": "en-mobile-390: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390: no hero text under the card",
+   "check": "en-mobile-390: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "en-mobile-390: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-mobile-390: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -684,21 +684,6 @@
   },
   {
    "check": "en-mobile-390: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-mobile-390: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-mobile-390: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-mobile-390: official en white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -743,32 +728,42 @@
    "detail": ""
   },
   {
-   "check": "en-tablet-834: face clear of the text and the countdown card",
+   "check": "en-tablet-834: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-tablet-834: face inside the hero, uncropped",
+   "check": "en-tablet-834: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-tablet-834: portrait on the left edge",
+   "check": "en-tablet-834: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-tablet-834: no hero text under the card",
+   "check": "en-tablet-834: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "en-tablet-834: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-tablet-834: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -779,21 +774,6 @@
   },
   {
    "check": "en-tablet-834: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-tablet-834: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-tablet-834: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-tablet-834: official en white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -853,32 +833,47 @@
    "detail": ""
   },
   {
-   "check": "en-laptop-1024: face clear of the text and the countdown card",
+   "check": "en-laptop-1024: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-laptop-1024: face inside the hero, uncropped",
+   "check": "en-laptop-1024: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-laptop-1024: portrait on the left edge",
+   "check": "en-laptop-1024: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-laptop-1024: no hero text under the card",
+   "check": "en-laptop-1024: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "en-laptop-1024: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-laptop-1024: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -889,21 +884,6 @@
   },
   {
    "check": "en-laptop-1024: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-laptop-1024: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-laptop-1024: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-laptop-1024: official en white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -963,32 +943,47 @@
    "detail": ""
   },
   {
-   "check": "en-desktop-1280: face clear of the text and the countdown card",
+   "check": "en-desktop-1280: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1280: face inside the hero, uncropped",
+   "check": "en-desktop-1280: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1280: portrait on the left edge",
+   "check": "en-desktop-1280: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1280: no hero text under the card",
+   "check": "en-desktop-1280: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "en-desktop-1280: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1280: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -999,21 +994,6 @@
   },
   {
    "check": "en-desktop-1280: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1280: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1280: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1280: official en white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -1073,32 +1053,47 @@
    "detail": ""
   },
   {
-   "check": "en-desktop-1440: face clear of the text and the countdown card",
+   "check": "en-desktop-1440: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440: face inside the hero, uncropped",
+   "check": "en-desktop-1440: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440: portrait on the left edge",
+   "check": "en-desktop-1440: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440: no hero text under the card",
+   "check": "en-desktop-1440: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "en-desktop-1440: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1440: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -1109,21 +1104,6 @@
   },
   {
    "check": "en-desktop-1440: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1440: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1440: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1440: official en white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -1183,32 +1163,47 @@
    "detail": ""
   },
   {
-   "check": "en-desktop-1920: face clear of the text and the countdown card",
+   "check": "en-desktop-1920: no award logo in the hero; the header keeps it",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1920: face inside the hero, uncropped",
+   "check": "en-desktop-1920: slogan whole, word-split with spaces kept",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1920: portrait on the left edge",
+   "check": "en-desktop-1920: portrait in its circle, loaded, captioned, inside the hero",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1920: no hero text under the card",
+   "check": "en-desktop-1920: no text or countdown over the portrait",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: countdown units inside the viewport",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: portrait on the right (mirrored)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: partners card floats across the rounded footer top",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: slogan watermark decorative; rights line; dark-surface logo",
    "ok": true,
    "detail": ""
   },
   {
    "check": "en-desktop-1920: footer partners in order, with links, roles and loaded logos",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1920: partner logos on light tiles",
    "ok": true,
    "detail": ""
   },
@@ -1219,21 +1214,6 @@
   },
   {
    "check": "en-desktop-1920: no horizontal scroll",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1920: one decorative portrait, outside the logo card",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1920: portrait opacity 0.12-0.22, blended",
-   "ok": true,
-   "detail": ""
-  },
-  {
-   "check": "en-desktop-1920: official en white logo in the card, unfiltered, in proportion",
    "ok": true,
    "detail": ""
   },
@@ -1433,7 +1413,12 @@
    "detail": ""
   },
   {
-   "check": "language switch: hero logo becomes the English white logo",
+   "check": "language switch: header logo becomes the English green logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "language switch: hero slogan in English",
    "ok": true,
    "detail": ""
   },
@@ -1443,152 +1428,152 @@
    "detail": ""
   },
   {
-   "check": "ar-mobile-390 state open: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-mobile-390 state open: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440 state open: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-desktop-1440 state open: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-mobile-390 state upcoming: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-desktop-1440 state upcoming: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-mobile-390 state unavailable: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-desktop-1440 state unavailable: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390 state closed: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-mobile-390 state closed: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440 state closed: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-desktop-1440 state closed: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390 state judging: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-mobile-390 state judging: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440 state judging: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-desktop-1440 state judging: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390 state judged: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-mobile-390 state judged: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440 state judged: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-desktop-1440 state judged: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-mobile-390 state unknown: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-mobile-390 state unknown: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440 state unknown: phase, logo above the countdown, actions, no overlap",
+   "check": "ar-desktop-1440 state unknown: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390 state open: phase, logo above the countdown, actions, no overlap",
+   "check": "en-mobile-390 state open: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440 state open: phase, logo above the countdown, actions, no overlap",
+   "check": "en-desktop-1440 state open: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "check": "en-mobile-390 state upcoming: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "check": "en-desktop-1440 state upcoming: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "check": "en-mobile-390 state unavailable: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "check": "en-desktop-1440 state unavailable: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390 state closed: phase, logo above the countdown, actions, no overlap",
+   "check": "en-mobile-390 state closed: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440 state closed: phase, logo above the countdown, actions, no overlap",
+   "check": "en-desktop-1440 state closed: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390 state judging: phase, logo above the countdown, actions, no overlap",
+   "check": "en-mobile-390 state judging: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440 state judging: phase, logo above the countdown, actions, no overlap",
+   "check": "en-desktop-1440 state judging: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390 state judged: phase, logo above the countdown, actions, no overlap",
+   "check": "en-mobile-390 state judged: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440 state judged: phase, logo above the countdown, actions, no overlap",
+   "check": "en-desktop-1440 state judged: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-mobile-390 state unknown: phase, logo above the countdown, actions, no overlap",
+   "check": "en-mobile-390 state unknown: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "en-desktop-1440 state unknown: phase, logo above the countdown, actions, no overlap",
+   "check": "en-desktop-1440 state unknown: phase, countdown after the actions, no overlap",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "motion reduce: portrait animation none",
+   "check": "reduced motion: no hero or footer animation; words and orbit fully shown",
    "ok": true,
    "detail": ""
   },
   {
-   "check": "motion no-preference: portrait animation hero-portrait-in",
+   "check": "motion: words rise, the gold orbit draws, the watermark drifts, then settle",
    "ok": true,
    "detail": ""
   }

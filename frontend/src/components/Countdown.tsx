@@ -50,7 +50,8 @@ export function Countdown({ schedule, offset }: { schedule: PublicSchedule | nul
         <div className="countdown__units" role="timer" aria-label={phase === 'open' ? t('countdown.timerOpen') : t('countdown.timerUpcoming')}>
           {UNITS.map((unit) => (
             <div key={unit} className="countdown__unit">
-              <span className="countdown__value">{String(left[unit]).padStart(2, '0')}</span>
+              {/* Keyed by its value, so a changed digit re-enters (the flip is CSS, off under reduced motion). */}
+              <span key={left[unit]} className="countdown__value">{String(left[unit]).padStart(2, '0')}</span>
               <span className="countdown__label">{t(`countdown.${unit}`)}</span>
             </div>
           ))}
