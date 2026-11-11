@@ -107,6 +107,10 @@ class SubmissionController extends Controller
     {
         $application = Application::query()->findOrFail($journey->application_id);
         if ($application->current_version_id !== null) {
+            if (! DB::table('application_versions')->where('id', $application->current_version_id)->where('application_id', $application->id)->exists()) {
+                return null;
+            }
+
             return DB::table('application_consents')->join('policy_versions', 'policy_versions.id', '=', 'application_consents.policy_version_id')
                 ->where('application_consents.application_version_id', $application->current_version_id)->where('policy_versions.code', AwardTerms::CODE)
                 ->first(['policy_versions.id', 'version_number', 'title_ar', 'body_ar', 'body_en', 'content_hash']);

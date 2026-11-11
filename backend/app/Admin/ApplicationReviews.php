@@ -2,6 +2,7 @@
 
 namespace App\Admin;
 
+use App\Candidates\ApplicationProgress;
 use App\Judging\Assignments;
 use App\Models\Application;
 use App\Models\User;
@@ -211,6 +212,7 @@ class ApplicationReviews
             AuditLog::record('application.excluded', (int) $actor->getKey(), 'application', (int) $application->id, [
                 'reference_number' => $application->reference_number,
             ], (int) $application->cycle_id);
+            app(ApplicationProgress::class)->record((int) $application->id);
 
             return self::EXCLUDED;
         });

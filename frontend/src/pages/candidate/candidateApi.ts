@@ -5,7 +5,7 @@
 
 import type { User } from '../../auth/useAuth'
 import { getLocale, labels } from '../../i18n/messages'
-import type { Processing } from './documentation/documentationApi'
+import type { Receipt } from './documentation/documentationApi'
 
 export type ProfileType = 'individual' | 'institution'
 
@@ -29,7 +29,7 @@ export type Overview = {
     confirmed_at: string | null
   }
   /** The submission receipt once the participation was sent. */
-  submission: { reference_number: string; submitted_at: string; version_number: number; processing: Processing } | null
+  submission: Receipt | null
 }
 
 export type PolicyCode = 'privacy_policy' | 'terms_of_use'

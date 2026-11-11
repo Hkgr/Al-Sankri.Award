@@ -33,6 +33,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'email_verified' => $this->hasVerifiedEmail(),
+            'preferred_locale' => in_array($this->preferred_locale, ['ar', 'en'], true) ? $this->preferred_locale : null,
             'has_password' => $this->hasPassword(),
             'google_linked' => app(GoogleAccounts::class)->isLinked($this->resource),
             'is_candidate' => app(CandidateRole::class)->isHeldBy($this->resource),

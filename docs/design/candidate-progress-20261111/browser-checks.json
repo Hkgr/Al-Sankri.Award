@@ -1,0 +1,50 @@
+[
+  {
+    "check": "ar 390px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "ar 834px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "ar 1024px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "ar 1440px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "en 390px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "en 834px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "en 1024px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "en 1440px: six real states, exact stage labels, correct applicable path, keyboard refresh, reduced motion and no horizontal overflow"
+  },
+  {
+    "check": "ar 390px: initial loading, failed read and successful explicit retry"
+  },
+  {
+    "check": "en 1440px: initial loading, failed read and successful explicit retry"
+  },
+  {
+    "check": "ar: all four email templates at 390/1440px and with blocked images; award text, stage content and action remain readable (browser previews, not Gmail/Outlook)"
+  },
+  {
+    "check": "en: all four email templates at 390/1440px and with blocked images; award text, stage content and action remain readable (browser previews, not Gmail/Outlook)"
+  },
+  {
+    "check": "actual English SMTP update used owner preference and official English CID PNG; two workers and duplicate jobs sent it once"
+  },
+  {
+    "check": "submitted file tracking remained available and unchanged after the nomination window closed"
+  },
+  {
+    "check": "captured tracking link required ordinary login and preserved the exact owned journey, submitted version and progress anchor"
+  },
+  {
+    "check": "a different signed-in account could not read the linked participation; only a neutral ownership-safe error appeared"
+  }
+]

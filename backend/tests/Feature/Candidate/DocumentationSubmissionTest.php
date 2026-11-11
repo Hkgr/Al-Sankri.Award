@@ -210,7 +210,8 @@ class DocumentationSubmissionTest extends TestCase
         $this->assertSame(['confirmed_at', 'taxonomy_review_required', 'cycle', 'domain', 'subcategory', 'title', 'purpose_and_mission', 'objectives', 'impact'], array_keys($snapshot['nomination_details']));
         // It reaches the administration first: pending, nothing for judging.
         $this->assertSame(['pending', null, null], [$application->review_status, $application->review_decided_by, $application->review_committee_id]);
-        $this->assertSame('pending', $receipt['processing']);
+        $this->assertArrayNotHasKey('processing', $receipt);
+        $this->assertSame('administrative_review', $receipt['progress']['stage']);
         $this->assertSame(['candidate_profile_id', 'applicant_id', 'profile_type', 'applicant_name', 'confirmed_at', 'data_accuracy_declared_at'], array_keys($snapshot['basic_information']));
         $this->assertSame(2, DB::table('file_links')->where('application_version_id', $version->id)->count(), 'the same files are linked to the version');
         $this->assertSame(1, DB::table('audit_logs')->where('action', 'application.submitted')->count());

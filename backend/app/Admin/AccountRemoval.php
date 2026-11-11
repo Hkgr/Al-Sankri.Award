@@ -2,6 +2,7 @@
 
 namespace App\Admin;
 
+use App\Candidates\ApplicationProgress;
 use App\Models\User;
 use App\Support\AuditLog;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -208,6 +209,9 @@ class AccountRemoval
         DB::table('committee_members')->whereIn('id', $plan['members']->whereNull('left_at')->pluck('id'))->update(['left_at' => now(), 'updated_at' => now()]);
         DB::table('committees')->whereIn('id', $plan['members']->whereNull('left_at')->pluck('committee_id'))->where('status', '<>', 'dissolved')
             ->update(['status' => 'draft', 'approved_by' => null, 'approved_at' => null, 'updated_at' => now()]);
+        foreach ($plan['members']->whereNull('left_at')->pluck('committee_id')->unique()->sort() as $committeeId) {
+            app(ApplicationProgress::class)->committeeChanged((int) $committeeId);
+        }
         foreach (['user_roles', 'cycle_user_roles'] as $table) {
             DB::table($table)->where('user_id', $plan['user']['id'])->whereNull('revoked_at')->update([
                 'revoked_at' => now(), 'revoked_by' => $actor->id, 'updated_at' => now(),

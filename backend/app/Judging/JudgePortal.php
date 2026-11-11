@@ -5,6 +5,7 @@ namespace App\Judging;
 use App\Admin\CycleSchedule;
 use App\Admin\SubmittedApplications;
 use App\Auth\RoleExclusivity;
+use App\Candidates\ApplicationProgress;
 use App\Models\Application;
 use App\Models\FileLink;
 use App\Models\User;
@@ -167,13 +168,19 @@ class JudgePortal
             User::query()->whereKey($judge->getKey())->lockForUpdate()->firstOrFail();
 
             $found = $this->assignments($judge)->where('applications.id', $applicationId)->first([
-                'judging_assignments.id', 'applications.cycle_id', 'evaluation_criteria.id as criterion_id', 'evaluation_criteria.max_score',
+                'judging_assignments.id', 'judging_assignments.committee_id', 'applications.cycle_id', 'evaluation_criteria.id as criterion_id', 'evaluation_criteria.max_score',
             ]);
             if ($found === null) {
                 return self::NOT_ASSIGNED;
             }
             if (! $this->schedule->judgingOpen((int) $found->cycle_id, lock: true)) {
                 return self::STAGE_CLOSED;
+            }
+
+            DB::table('committees')->where('id', $found->committee_id)->lockForUpdate()->first();
+            DB::table('applications')->where('id', $applicationId)->lockForUpdate()->first();
+            if (! $this->assignments($judge)->where('judging_assignments.id', $found->id)->sharedLock()->exists()) {
+                return self::NOT_ASSIGNED;
             }
 
             $assignment = DB::table('judging_assignments')->where('id', $found->id)->lockForUpdate()->first();
@@ -212,6 +219,7 @@ class JudgePortal
                 'score' => $score,
                 'excluded' => $excluded,
             ], (int) DB::table('applications')->where('id', $applicationId)->value('cycle_id'));
+            app(ApplicationProgress::class)->record($applicationId);
 
             return self::SENT;
         });

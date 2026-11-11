@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { ApiError, api } from '../lib/api'
 import { AuthContext } from './useAuth'
 import type { RefreshOptions, RefreshResult, User } from './useAuth'
+import { useLocale } from '../i18n/useLocale'
 
 type AuthOptions = {
   google: { available: boolean }
@@ -18,7 +19,12 @@ async function fetchUser(): Promise<User | null> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null | undefined>(undefined)
+  const [user, setUserState] = useState<User | null | undefined>(undefined)
+  const { setLocale } = useLocale()
+  const setUser = useCallback((next: User | null) => {
+    setUserState(next)
+    if (next?.preferred_locale) setLocale(next.preferred_locale)
+  }, [setLocale])
   const [googleAvailable, setGoogleAvailable] = useState(false)
   // The account shown now, for refreshUser({ keepAccount: true }).
   const current = useRef(user)
@@ -40,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false
     }
-  }, [])
+  }, [setUser])
 
   const refreshUser = useCallback(async (options: RefreshOptions = {}): Promise<RefreshResult> => {
     const fresh = await fetchUser()
@@ -48,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (options.keepAccount && shown && fresh?.account_context !== shown.account_context) return 'account_changed'
     setUser(fresh)
     return 'updated'
-  }, [])
+  }, [setUser])
 
   useEffect(() => {
     const refresh = () => {
@@ -72,11 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!(error instanceof ApiError && error.status === 401)) throw error
     }
     setUser(null)
-  }, [])
+  }, [setUser])
 
   const value = useMemo(
     () => ({ user, googleAvailable, setUser, refreshUser, logout }),
-    [user, googleAvailable, refreshUser, logout],
+    [user, googleAvailable, refreshUser, logout, setUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

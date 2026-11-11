@@ -10,6 +10,7 @@ import { DashboardPage } from './DashboardPage'
 import { DocumentationPage } from './documentation/DocumentationPage'
 import { NominationDetailsPage } from './nomination/NominationDetailsPage'
 import { ReviewPage } from './review/ReviewPage'
+import { candidateSignInUrl } from './progress/progressApi'
 
 /**
  * /dashboard and its stage pages (basic-information, nomination-details,
@@ -25,8 +26,8 @@ export function CandidateApp() {
   const { t } = useLocale()
 
   useEffect(() => {
-    if (user === null) navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
-  }, [user, navigate, location.pathname])
+    if (user === null) navigate(candidateSignInUrl(location), { replace: true })
+  }, [user, navigate, location])
 
   if (!user) {
     return (
