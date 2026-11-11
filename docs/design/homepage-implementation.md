@@ -6,7 +6,7 @@ Updated 2026-10-29. This continues the existing React 19 / TypeScript / Vite imp
 
 | Path | Content |
 | --- | --- |
-| `/` | Official name and slogan, authentic portrait, countdown, introduction, three domains, journey preview and platform actions. |
+| `/` | Official name and slogan; the official logo above the countdown in the deep-green card, with the authentic portrait faded beside the content; introduction; three stacked domain rows with their trophies and two category links each; journey preview and platform actions. |
 | `/about` | Purpose, values, documented impact, implementing organization and Dr. Sankari's legacy with the mosque-visit photograph. |
 | `/journey` | Preparation, applications, administrative review, judging and planned award week. |
 | `/eligibility` | Shared eligibility, evidence, conflicts of interest and evaluation criteria. |

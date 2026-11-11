@@ -157,7 +157,7 @@ export function EligibilityDomainPage({ domain: requested }: { domain: MainDomai
         title={domain.label}
       >
         <div className="domain-hero">
-          <DomainTrophy domain={domain.slug} className="domain-hero__trophy" sizes="(min-width: 40rem) 352px, 85vw" />
+          <DomainTrophy domain={domain.slug} className="domain-hero__trophy" sizes="(min-width: 60rem) 13rem, 9rem" />
           <p>{domain.intro}</p>
         </div>
       </PageHeader>

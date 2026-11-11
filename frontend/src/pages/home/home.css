@@ -65,6 +65,12 @@
   display: block;
 }
 
+/* English words are longer; a smaller maximum keeps the actions on the first screen. */
+.hero__title:lang(en) {
+  font-size: clamp(2.4rem, 1.4rem + 3.4vw, 4.4rem);
+  line-height: 1.12;
+}
+
 .hero__title-line + .hero__title-line {
   color: var(--sa-ext-green-900);
 }
@@ -76,13 +82,14 @@
   line-height: 1.85;
 }
 
-/* The deep-green stage: the portrait and the countdown. */
+/* The deep-green stage: the official logo and the countdown. */
 .hero__stage {
   position: relative;
+  z-index: 1;
   display: grid;
   gap: var(--sa-space-6);
   justify-items: center;
-  padding: var(--sa-space-6) var(--sa-space-5) var(--sa-space-6);
+  padding: var(--sa-space-7) var(--sa-space-5) var(--sa-space-6);
   border-radius: var(--sa-radius-lg);
   background: var(--sa-color-surface-dark);
   color: var(--sa-color-text-on-dark);
@@ -99,34 +106,62 @@
   background: var(--sa-brand-gold);
 }
 
-.hero__figure {
-  display: grid;
-  gap: var(--sa-space-3);
-  justify-items: center;
-  inline-size: min(100%, 25rem);
+/* The official white logo on deep green: whole, transparent, never filtered or boxed. */
+.hero__logo {
+  inline-size: min(100%, 20rem);
+  block-size: auto;
 }
 
-.hero__photo {
+/*
+ * The portrait: decorative, faded and blended into the light hero (multiply
+ * drops the photograph's white background into the line pattern). It is
+ * anchored to the physical right in both languages, so he looks into the
+ * page, and the content reserves room for his face (--hero-portrait-room).
+ */
+.hero {
+  --hero-portrait-width: min(56vw, 15rem);
+  --hero-portrait-opacity: 0.2;
+}
+
+.hero__portrait {
+  position: absolute;
+  inset-block-start: 0;
+  right: 0;
+  z-index: 0;
+  inline-size: var(--hero-portrait-width);
+  margin: 0;
+  pointer-events: none;
+}
+
+.hero__portrait-photo,
+.hero__portrait-photo img {
   display: block;
   inline-size: 100%;
-  overflow: hidden;
-  border: 0.25rem solid var(--sa-brand-gold);
-  border-radius: var(--sa-radius-lg);
-  background: var(--sa-observed-white);
+  block-size: auto;
 }
 
-.hero__photo img {
-  inline-size: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  /* The face stays in view in every frame (photo-provenance.md). */
-  object-position: 58% 40%;
+.hero__portrait-photo {
+  opacity: var(--hero-portrait-opacity);
+  mix-blend-mode: multiply;
+  /* Soften every edge, most towards the content. */
+  -webkit-mask-image: radial-gradient(ellipse 72% 78% at 58% 40%, #000 52%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 78% at 58% 40%, #000 52%, transparent 100%);
 }
 
-.hero__caption {
-  color: var(--sa-color-text-on-dark);
+.hero__portrait-caption {
+  position: absolute;
+  inset-block-end: 12%;
+  left: 0;
+  right: 0;
+  color: var(--sa-color-text-muted);
   font-size: var(--sa-font-size-small);
   font-weight: var(--sa-font-weight-medium);
+  text-align: center;
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- Countdown (on the deep-green stage) ---------- */
@@ -192,45 +227,89 @@
   font-size: var(--sa-font-size-h3);
 }
 
+@media (max-width: 39.99rem) {
+  /* Small screens: the face sits above the text, which begins below his chin. */
+  .hero__inner {
+    padding-block-start: calc(var(--hero-portrait-width) * 0.74);
+  }
+
+  .hero__portrait-caption {
+    /* Beside his face, to its left, in both languages. */
+    inset-block-end: auto;
+    inset-block-start: 36%;
+    right: calc(100% - var(--sa-space-3));
+    left: auto;
+    inline-size: max-content;
+    max-inline-size: calc(100vw - var(--hero-portrait-width) - var(--sa-space-4));
+    text-align: start;
+  }
+}
+
 @media (min-width: 40rem) {
+  .hero {
+    --hero-portrait-width: clamp(15rem, 32vw, 20rem);
+  }
+
+  /* Under the faded bust, inside the room the text leaves for it. */
+  .hero__portrait-caption {
+    inset-block-end: auto;
+    inset-block-start: 100%;
+  }
+
   .hero__stage {
     padding-inline: var(--sa-space-7);
+  }
+
+  /* Medium screens: the text keeps clear of the face on the right. */
+  .hero__text {
+    padding-right: calc(var(--hero-portrait-width) * 0.7);
   }
 }
 
 @media (min-width: 64rem) {
+  .hero {
+    --hero-portrait-width: clamp(22rem, 28vw, 32rem);
+    --hero-portrait-opacity: 0.18;
+  }
+
+  .hero__portrait {
+    inset-block-start: auto;
+    inset-block-end: 0;
+  }
+
+  .hero__portrait-caption {
+    inset-block-start: auto;
+    inset-block-end: 12%;
+  }
+
+  /* The content keeps clear of the face; the faded shoulders may run under the text. */
   .hero__inner {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    gap: var(--sa-space-8);
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+    gap: var(--sa-space-7);
     padding-block: var(--sa-space-7);
+    /* Where the container is centred, its outer margin already covers part of that room. */
+    padding-right: max(var(--sa-gutter), calc(var(--hero-portrait-width) * 0.76 - max(0px, (100vw - var(--sa-container-max)) / 2)));
+  }
+
+  .hero__text {
+    padding-right: 0;
   }
 
   .hero__stage {
     gap: var(--sa-space-5);
-    padding-block: var(--sa-space-6) var(--sa-space-5);
-  }
-
-  /* Square, so the portrait and the countdown both fit the first screen. */
-  .hero__figure {
-    inline-size: min(100%, 19rem);
+    padding-block: var(--sa-space-7) var(--sa-space-5);
   }
 }
 
-@media (min-width: 80rem) {
-  .hero__figure {
-    inline-size: min(100%, 21rem);
-  }
-}
-
-/* Restrained entrance: only the stage and the photo; the text and actions are there at once. */
+/* Restrained entrance: only the stage and the portrait; the text and actions are there at once. */
 @media (prefers-reduced-motion: no-preference) {
   .hero__stage {
     animation: hero-stage-in var(--sa-duration-slow) var(--sa-easing-standard) both;
     animation-duration: 640ms;
   }
 
-  .hero__photo {
-    animation: hero-photo-in 900ms var(--sa-easing-standard) both;
+  .hero__portrait-photo {
+    animation: hero-portrait-in 1200ms var(--sa-easing-standard) both;
   }
 }
 
@@ -241,7 +320,7 @@
   }
 }
 
-@keyframes hero-photo-in {
+@keyframes hero-portrait-in {
   from {
     opacity: 0;
   }
@@ -283,7 +362,7 @@
   background: var(--sa-color-surface-subtle);
 }
 
-.domain-cards {
+.domain-rows {
   display: grid;
   gap: var(--sa-space-5);
   margin: 0;
@@ -291,63 +370,98 @@
   list-style: none;
 }
 
-.domain-card {
+.domain-row {
   display: grid;
-  align-content: start;
-  gap: var(--sa-space-4);
-  padding: var(--sa-space-6);
+  gap: var(--sa-space-5);
+  align-items: center;
+  padding: var(--sa-space-5);
   border: var(--sa-border-width-hairline) solid var(--sa-color-border-subtle);
   border-block-start: var(--sa-border-width-accent) solid var(--sa-color-rule-accent);
   border-radius: var(--sa-radius-lg);
   background: var(--sa-color-surface-raised);
 }
 
-.domain-card__trophy,
-.domain-card__trophy img {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-}
-
-.domain-card__trophy {
-  max-inline-size: 22rem;
+/* Small screens: the trophy above the text, at a moderate size. */
+.domain-row__trophy {
+  order: -1;
+  inline-size: min(100%, 10.5rem);
   justify-self: center;
 }
 
-.domain-card__title {
+.domain-row__body {
+  display: grid;
+  align-content: start;
+  gap: var(--sa-space-4);
+}
+
+.domain-row__title {
   font-size: var(--sa-font-size-h3);
 }
 
-.domain-card__intro {
+.domain-row__intro {
+  max-inline-size: var(--sa-measure-prose);
   color: var(--sa-color-text-muted);
   line-height: 1.85;
 }
 
-.domain-card__subcategories {
-  display: flex;
-  flex-wrap: wrap;
+/* The two categories, one per line, each linking to its conditions. */
+.domain-row__subcategories {
+  display: grid;
   gap: var(--sa-space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.domain-card__subcategories li {
-  padding: var(--sa-space-1) var(--sa-space-3);
-  border: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
-  border-radius: 999px;
-  font-size: var(--sa-font-size-small);
+.domain-row__subcategories li {
+  position: relative;
+  padding-inline-start: var(--sa-space-5);
+  font-size: var(--sa-font-size-lead);
   font-weight: var(--sa-font-weight-medium);
+  line-height: 1.6;
 }
 
-.domain-card__link {
+.domain-row__subcategories li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--sa-space-1);
+  inset-block-start: 0.6em;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 1px;
+  background: var(--sa-brand-gold);
+  transform: rotate(45deg);
+}
+
+.domain-row__link {
   justify-self: start;
+  margin-block-start: var(--sa-space-1);
   font-weight: var(--sa-font-weight-bold);
 }
 
-@media (min-width: 64rem) {
-  .domain-cards {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (min-width: 48rem) {
+  /* Text first (right in Arabic, left in English); the trophy beside it, narrower. */
+  .domain-row {
+    grid-template-columns: minmax(0, 1fr) 12rem;
+    gap: var(--sa-space-7);
+    padding: var(--sa-space-6) var(--sa-space-7);
+  }
+
+  .domain-row__intro {
+    font-size: var(--sa-font-size-lead);
+  }
+
+  .domain-row__trophy {
+    order: 0;
+    inline-size: 100%;
+  }
+}
+
+@media (min-width: 80rem) {
+  .domain-row {
+    grid-template-columns: minmax(0, 1fr) 14rem;
+    gap: var(--sa-space-8);
+    padding-inline: var(--sa-space-8);
   }
 }
 

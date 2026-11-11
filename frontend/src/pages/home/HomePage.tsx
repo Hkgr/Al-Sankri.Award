@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../components/BrandLogo'
 import { Countdown } from '../../components/Countdown'
 import { DomainTrophy } from '../../components/DomainTrophy'
 import { Photo } from '../../components/Photo'
@@ -37,14 +38,18 @@ export function HomePage() {
             <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: t('actions.readEligibility') }} />
           </div>
 
+          {/* The official logo leads the deep-green card; the countdown stays beneath it. */}
           <div className="hero__stage">
-            <figure className="hero__figure">
-              <Photo className="hero__photo" {...hero.portrait} sizes="(min-width: 64rem) 25rem, (min-width: 40rem) 22rem, 82vw" loading="eager" fetchPriority="high" />
-              <figcaption className="hero__caption">{hero.portrait.caption}</figcaption>
-            </figure>
+            <BrandLogo surface="dark" className="hero__logo" alt={award.name} sizes="(min-width: 64rem) 352px, (min-width: 40rem) 320px, 72vw" />
             <Countdown schedule={schedule} offset={offset} />
           </div>
         </div>
+
+        {/* The faded portrait beside the content, never behind the text or the countdown; its caption names him. */}
+        <figure className="hero__portrait">
+          <Photo className="hero__portrait-photo" {...hero.portrait} alt="" sizes="(min-width: 64rem) 34rem, (min-width: 40rem) 22rem, 56vw" loading="eager" />
+          <figcaption className="hero__portrait-caption">{hero.portrait.caption}</figcaption>
+        </figure>
       </section>
 
       <section className="section intro" aria-labelledby="intro-title">
@@ -73,22 +78,27 @@ export function HomePage() {
               {t('home.domainsTitle')}
             </h2>
           </div>
-          <ul className="domain-cards">
+          {/* One full-width row per domain, stacked at every width; the trophy sits beside the text from 48rem. */}
+          <ul className="domain-rows">
             {domains.map((domain) => (
-              <li key={domain.slug} className="domain-card">
-                {/* The visible label names the artwork, so it is decorative. */}
-                <DomainTrophy domain={domain.slug} className="domain-card__trophy" sizes="(min-width: 40rem) 352px, 85vw" />
-                <h3 className="domain-card__title">{domain.label}</h3>
-                <p className="domain-card__intro">{domain.intro}</p>
-                <ul className="domain-card__subcategories" aria-label={t('home.domainSubs', { domain: domain.label })}>
-                  {domain.subcategories.map((subcategory) => (
-                    <li key={subcategory.code}><Link href={`/eligibility/${domain.slug}#category-${subcategory.code}`}>{subcategory.label}</Link></li>
-                  ))}
-                </ul>
-                <Link className="domain-card__link" href={`/eligibility/${domain.slug}`}>
-                  {t('home.domainLink')}
-                  <span className="visually-hidden">: {domain.label}</span>
-                </Link>
+              <li key={domain.slug} className="domain-row">
+                <div className="domain-row__body">
+                  <h3 className="domain-row__title">{domain.label}</h3>
+                  <p className="domain-row__intro">{domain.intro}</p>
+                  <ul className="domain-row__subcategories" aria-label={t('home.domainSubs', { domain: domain.label })}>
+                    {domain.subcategories.map((subcategory) => (
+                      <li key={subcategory.code}>
+                        <Link href={`/eligibility/${domain.slug}#category-${subcategory.code}`}>{subcategory.label}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link className="domain-row__link" href={`/eligibility/${domain.slug}`}>
+                    {t('home.domainLink')}
+                    <span className="visually-hidden">: {domain.label}</span>
+                  </Link>
+                </div>
+                {/* The visible heading names the artwork, so it is decorative. */}
+                <DomainTrophy domain={domain.slug} className="domain-row__trophy" sizes="(min-width: 80rem) 14rem, 12rem" />
               </li>
             ))}
           </ul>
