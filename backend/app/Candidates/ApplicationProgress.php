@@ -111,7 +111,7 @@ class ApplicationProgress
         return DB::table('application_progress_events')->insertGetId([
             'application_id' => $application->id, 'application_version_id' => $application->current_version_id,
             'cycle_id' => $application->cycle_id, 'sequence' => $sequence, 'stage' => $stage,
-            'via_committee' => $viaCommittee, 'occurred_at' => $at, 'historical' => $historical, 'recorded_at' => now(),
+            'via_committee' => $viaCommittee, 'occurred_at' => $at === null ? null : Carbon::parse($at, 'UTC')->utc()->toDateTimeString(), 'historical' => $historical, 'recorded_at' => now(),
         ]);
     }
 
