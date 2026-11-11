@@ -197,6 +197,87 @@
           "sha256": "a589a968a849fecc1cebe9d54ec93d50253635392ba079238ba3be98d54a4641"
         }
       ]
+    },
+    {
+      "key": "rowad",
+      "kind": "partner",
+      "file": "partners/rowad.png",
+      "supplied_as": "Al-Rowad-LOGO-01 (1).png",
+      "supplied_on": "2026-11-11",
+      "sha256": "6dd95ec52b0f35e7a3dfa1f74212640d1f1ccfe44c920bed0f2366c20a107158",
+      "bytes": 195356,
+      "width": 2769,
+      "height": 1349,
+      "transparent": true,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/partner-rowad-425.webp",
+          "width": 425,
+          "height": 160,
+          "bytes": 27220,
+          "sha256": "87da260aca14f2ccd6c223946dbc06d46733396d7da2d8e2ea644a8e7fb39b78"
+        }
+      ],
+      "trimmed_to": [
+        228,
+        232,
+        2542,
+        1103
+      ]
+    },
+    {
+      "key": "aleppo-culture-directorate",
+      "kind": "partner",
+      "file": "partners/aleppo-culture-directorate.png",
+      "supplied_as": "مديرية الثقافة بحلب .png",
+      "supplied_on": "2026-11-11",
+      "sha256": "9e03fd9819dcd54d704c8cc1e059b8ef8166269f7af35a82faf6039d253eac4b",
+      "bytes": 71364,
+      "width": 500,
+      "height": 500,
+      "transparent": true,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/partner-aleppo-culture-directorate-188.webp",
+          "width": 188,
+          "height": 160,
+          "bytes": 20270,
+          "sha256": "d851d041bd9af8d0efe12cfc3a6e8a744bf3a270de96eab79335072745069028"
+        }
+      ],
+      "trimmed_to": [
+        99,
+        85,
+        444,
+        379
+      ]
+    },
+    {
+      "key": "university-of-aleppo",
+      "kind": "partner",
+      "file": "partners/university-of-aleppo.png",
+      "supplied_as": "جامعة حلب.png",
+      "supplied_on": "2026-11-11",
+      "sha256": "55886bbcf40de70b7c5c28df014887240e044bd212b47f1eaead376d02695e37",
+      "bytes": 273919,
+      "width": 500,
+      "height": 500,
+      "transparent": true,
+      "derivatives": [
+        {
+          "file": "frontend/src/assets/brand/official/partner-university-of-aleppo-160.webp",
+          "width": 160,
+          "height": 160,
+          "bytes": 22630,
+          "sha256": "3053f98783c8fee9d755fc8983921d9c743aed3a7fbd637b66effa9ad784b0d8"
+        }
+      ],
+      "trimmed_to": [
+        0,
+        0,
+        500,
+        500
+      ]
     }
   ],
   "excluded_reference": {

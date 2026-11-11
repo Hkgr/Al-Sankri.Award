@@ -33,7 +33,7 @@ class SpaRoutingTest extends TestCase
 
     public function test_each_public_page_serves_the_react_app(): void
     {
-        foreach (['/', '/login', '/register', '/forgot-password', '/reset-password?token=abc&email=a%40b.org', '/verify-email?status=verified', '/account', '/dashboard', '/dashboard/basic-information', '/dashboard/nomination-details', '/dashboard/documentation', '/dashboard/review', '/policies/privacy-policy', '/policies/terms-of-use', '/about', '/journey', '/eligibility', '/eligibility/culture-and-arts', '/eligibility/heritage', '/eligibility/creativity'] as $path) {
+        foreach (['/', '/login', '/register', '/forgot-password', '/reset-password?token=abc&email=a%40b.org', '/verify-email?status=verified', '/account', '/dashboard', '/dashboard/basic-information', '/dashboard/nomination-details', '/dashboard/documentation', '/dashboard/review', '/policies/privacy-policy', '/policies/terms-of-use', '/about', '/journey', '/eligibility', '/eligibility/culture-and-arts', '/eligibility/heritage', '/eligibility/creativity', '/media'] as $path) {
             $response = $this->get($path)->assertOk();
             $this->assertSame(realpath($this->publicPath.'/index.html'), $response->baseResponse->getFile()->getRealPath(), $path);
             $this->assertStringStartsWith('text/html', (string) $response->headers->get('Content-Type'));
@@ -52,6 +52,7 @@ class SpaRoutingTest extends TestCase
         $this->get('/eligibility/volunteer-work')->assertNotFound();
         $this->get('/eligibility/heritage/extra')->assertNotFound();
         $this->get('/about/team')->assertNotFound();
+        $this->get('/media/news')->assertNotFound();
         $this->getJson('/api/candidate/overview')->assertUnauthorized();
         $this->getJson('/api/no-such-endpoint')->assertNotFound()->assertJsonStructure(['message']);
         $this->get('/up')->assertOk();

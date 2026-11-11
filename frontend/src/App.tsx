@@ -23,6 +23,7 @@ import { PolicyPage } from './pages/policies/PolicyPage'
 import { AboutPage } from './pages/public/AboutPage'
 import { EligibilityDomainPage, EligibilityPage } from './pages/public/EligibilityPage'
 import { JourneyPage } from './pages/public/JourneyPage'
+import { MediaPage } from './pages/public/MediaPage'
 import { domainBySlug } from './content/site'
 
 /** Sign-in and sign-up pages send visitors who are already signed in to their dashboard or account. */
@@ -68,6 +69,8 @@ function CurrentPage() {
       return <JourneyPage />
     case '/eligibility':
       return <EligibilityPage />
+    case '/media':
+      return <MediaPage />
     case '/login':
       return (
         <GuestOnly>

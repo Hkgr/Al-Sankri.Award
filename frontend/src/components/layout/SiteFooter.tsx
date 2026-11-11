@@ -2,13 +2,14 @@ import { BrandLogo } from '../BrandLogo'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
-import { OrgLink } from '../OrgLink'
+import { PartnerLogos } from '../PartnerLogos'
 
 /**
- * The site's closing: the supplied dark-background logo on deep green (its
- * only approved surface), the award's purpose, the four pages, the three
- * domain pages, the implementing organisation and the published policies.
- * No contact details, accounts or sponsor marks are invented.
+ * The site's closing: the implementing and participating organizations'
+ * logos (each on its own light tile), then the supplied dark-background logo
+ * on deep green (its only approved surface), the award's purpose, the main
+ * pages, the three domain pages and the published policies. No contact
+ * details or accounts are invented.
  */
 export function SiteFooter() {
   const { award, closing, domains, pages } = useSite()
@@ -17,14 +18,17 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer__rule" aria-hidden="true" />
+      <section className="site-footer__partners container" aria-labelledby="footer-partners-title">
+        <h2 id="footer-partners-title" className="site-footer__heading site-footer__partners-title">
+          {t('footer.partners')}
+        </h2>
+        <PartnerLogos tone="on-dark" />
+      </section>
       <div className="site-footer__inner container">
         <div className="site-footer__identity">
           <BrandLogo surface="dark" className="site-footer__logo" alt={award.name} sizes="272px" loading="lazy" />
           <p className="site-footer__statement">{closing.statement}</p>
           <p className="site-footer__slogan">{award.slogan}</p>
-          <p className="site-footer__org">
-            {t('footer.implementedBy')} <OrgLink org="rowad" className="org-link--on-dark" />
-          </p>
         </div>
 
         <nav className="site-footer__nav" aria-label={t('footer.pages')}>

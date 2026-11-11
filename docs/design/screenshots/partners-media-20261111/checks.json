@@ -1,0 +1,1596 @@
+{
+ "total": 318,
+ "failed": [],
+ "checks": [
+  {
+   "check": "ar-mobile-390: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: official ar white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: official ar white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: official ar white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: official ar white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: official ar white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: official ar white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: official en white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: official en white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: official en white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: official en white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: official en white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: face clear of the text and the countdown card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: face inside the hero, uncropped",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: portrait on the left edge",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: no hero text under the card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: footer partners in order, with links, roles and loaded logos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: partner logos on light tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: Media Center in the main navigation",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: no horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: one decorative portrait, outside the logo card",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: portrait opacity 0.12-0.22, blended",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: official en white logo in the card, unfiltered, in proportion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: three stacked domain rows",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: culture-and-arts trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: culture-and-arts two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: culture-and-arts trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: heritage trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: heritage two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: heritage trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: creativity trophy matches its domain, lazy, contained on white",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: creativity two category links on two lines",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: creativity trophy beside the text, text wider",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: trophies at one scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link culture-and-arts#poetry opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link culture-and-arts#story opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link heritage#tangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link heritage#intangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link creativity#social_responsibility opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar: link creativity#entrepreneurship opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link culture-and-arts#poetry opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link culture-and-arts#story opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link heritage#tangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link heritage#intangible_heritage opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link creativity#social_responsibility opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en: link creativity#entrepreneurship opens its category",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: eligibility/culture-and-arts shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: eligibility/heritage shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: eligibility/creativity shows its own trophy",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "language switch: hero logo becomes the English white logo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "language switch: domain rows in English",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state open: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state open: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state closed: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state closed: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state judging: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state judging: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state judged: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state judged: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390 state unknown: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440 state unknown: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state open: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state open: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state upcoming: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state unavailable: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state closed: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state closed: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state judging: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state judging: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state judged: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state judged: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390 state unknown: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440 state unknown: phase, logo above the countdown, actions, no overlap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "motion reduce: portrait animation none",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "motion no-preference: portrait animation hero-portrait-in",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}
