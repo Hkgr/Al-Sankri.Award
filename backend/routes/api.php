@@ -16,9 +16,11 @@ use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\AuthOptionsController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\LanguagePreferenceController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Candidate\ApplicationProgressController;
 use App\Http\Controllers\Candidate\BasicProfileController;
 use App\Http\Controllers\Candidate\CandidateOverviewController;
 use App\Http\Controllers\Candidate\CategoryCorrectionController;
@@ -50,6 +52,7 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('user', AccountController::class);
+    Route::post('account/language', LanguagePreferenceController::class)->middleware('candidate.context');
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:verification');
     Route::post('account/google/link', [GoogleLinkController::class, 'store'])
@@ -75,6 +78,8 @@ Route::middleware(['no-store', 'auth:sanctum', 'active', 'candidate'])->prefix('
     // the account context of the page that asks (App\Candidates\AccountContext):
     // the X-Candidate-Context header on reads, the account_context field on writes.
     Route::get('overview', CandidateOverviewController::class)->middleware('candidate.context');
+    Route::get('progress', ApplicationProgressController::class)->middleware('candidate.context');
+    Route::get('progress/journey', ApplicationProgressController::class)->middleware(['candidate.context', 'documentation.journey']);
     Route::get('basic-profile', [BasicProfileController::class, 'show'])->middleware('candidate.context');
     Route::post('basic-profile/check', [BasicProfileController::class, 'check'])->middleware(['throttle:candidate-check', 'candidate.context']);
     Route::post('basic-profile', [BasicProfileController::class, 'store'])->middleware(['throttle:candidate-confirm', 'candidate.context']);

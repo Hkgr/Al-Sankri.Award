@@ -35,16 +35,17 @@ class CommitteeDecision
             ->where('cycle_domain_id', $application->cycle_domain_id)
             ->where('type', 'judging')
             ->whereIn('status', ['approved', 'draft'])
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())
             ->first();
         if ($committee === null) {
             return $empty;
         }
 
         $members = DB::table('committee_members')
-            ->join('users', 'users.id', '=', 'committee_members.user_id')
             ->where('committee_members.committee_id', $committee->id)
             ->orderBy('committee_members.id')
-            ->get(['committee_members.id', 'committee_members.left_at', 'users.name']);
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())
+            ->get(['committee_members.id', 'committee_members.left_at', 'committee_members.user_id']);
 
         $scores = [];
         $marks = [];
@@ -58,6 +59,7 @@ class CommitteeDecision
                 ->where('judging_assignments.committee_member_id', $member->id)
                 ->where('judging_assignments.application_version_id', $application->current_version_id)
                 ->where('judging_assignments.round_number', 1)
+                ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())
                 ->first(['evaluations.status', 'evaluations.overall_comment', 'evaluations.recommendation', 'evaluations.finalized_at', 'evaluation_scores.score', 'evaluation_scores.comment as recommendations']);
 
             $memberExcluded = $row !== null && $row->status === 'finalized' && $row->recommendation === 'exclude';
@@ -73,7 +75,7 @@ class CommitteeDecision
             }
             $sent = $memberExcluded || $scored;
             $scores[] = [
-                'name' => $member->name,
+                'name' => DB::table('users')->where('id', $member->user_id)->value('name'),
                 'historical' => ! $current,
                 'score' => $scored ? Scores::present((string) $row->score) : null,
                 'notes' => $sent ? $row->overall_comment : null,

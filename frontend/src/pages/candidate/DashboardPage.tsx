@@ -9,7 +9,7 @@ import { usePageTitle } from '../auth/usePageTitle'
 import { formatDamascusDateTime, PROFILE_TYPE_LABELS } from './candidateApi'
 import { contextHeader } from './candidateApi'
 import type { Overview } from './candidateApi'
-import { PROCESSING_TEXT } from './documentation/documentationApi'
+import { ApplicationProgressPanel } from './progress/ApplicationProgressPanel'
 import { useAccountFailure } from './useCandidateRequests'
 import { VerifyEmailNotice } from './VerifyEmailNotice'
 
@@ -51,6 +51,8 @@ export function DashboardPage({ user }: { user: User }) {
         </h1>
         <p className="candidate-page__intro">{t('من هنا تستكمل ملف الترشح لجائزة الدكتور عبد القادر سنكري مرحلةً بعد مرحلة.')}</p>
       </header>
+
+      <ApplicationProgressPanel user={user} journeyKey={params.get('journey_key')} version={params.get('version')} />
 
       {params.get('welcome') === '1' && (
         <FormAlert tone={params.get('mail') === 'failed' ? 'info' : 'success'}>
@@ -103,9 +105,7 @@ export function DashboardPage({ user }: { user: User }) {
 
         <p className="candidate-section__note">
           {overview?.submission
-            ? t('أُرسل ملف الترشح، وأصبح كله متاحاً للعرض فقط. {processing}', {
-                processing: t(PROCESSING_TEXT[overview.submission.processing] ?? PROCESSING_TEXT.pending),
-              })
+            ? t('لا يمكن تعديل المشاركة أو إضافة ملفات إليها بعد الإرسال.')
             : t('استكمال المراحل لا يعني إرسال المشاركة: تُرسل المشاركة من صفحة المراجعة بعد استكمال المراحل الثلاث.')}
         </p>
       </section>
@@ -193,18 +193,19 @@ function DocumentationStage({ stage }: { stage: Overview['documentation'] }) {
 function SubmissionStage({ overview }: { overview: Overview }) {
   const { t, locale } = useLocale()
   const receipt = overview.submission
+  const receiptVerified = !!receipt?.submitted_at && !!receipt.reference_number
   const ready = overview.documentation.status === 'completed'
 
   return (
-    <li className={`stage-card${receipt ? ' stage-card--completed' : ''}${receipt || ready ? '' : ' stage-card--waiting'}`}>
+    <li className={`stage-card${receiptVerified ? ' stage-card--completed' : ''}${receipt || ready ? '' : ' stage-card--waiting'}`}>
       <p className="stage-card__number">{t('المراجعة والإرسال')}</p>
-      <h3 className="stage-card__title">{receipt ? t('تم إرسال المشاركة') : t('مراجعة المشاركة وإرسالها')}</h3>
+      <h3 className="stage-card__title">{receipt ? t(receipt.submitted_at ? 'تم إرسال المشاركة' : 'المشاركة متاحة للعرض فقط.') : t('مراجعة المشاركة وإرسالها')}</h3>
       <p className="stage-card__status">
-        <StatusIcon tone={receipt ? 'success' : 'info'} />
+        <StatusIcon tone={receipt?.submitted_at && receipt.reference_number ? 'success' : 'info'} />
         <span>
-          {receipt
+          {receipt?.submitted_at
             ? t('أُرسلت في {when} بتوقيت دمشق', { when: formatDamascusDateTime(receipt.submitted_at, locale) })
-            : ready
+            : receipt ? t('progress.unknownDate') : ready
               ? t('جاهزة للمراجعة')
               : t('تُتاح بعد المرحلة 3')}
         </span>
@@ -212,7 +213,7 @@ function SubmissionStage({ overview }: { overview: Overview }) {
       <p className="stage-card__text">
         {receipt ? (
           <>
-            {t('الرقم المرجعي:')} <bdi dir="ltr">{receipt.reference_number}</bdi>. {t('المشاركة متاحة للعرض فقط.')}
+            {receipt.reference_number ? <>{t('الرقم المرجعي:')} <bdi dir="ltr">{receipt.reference_number}</bdi>. </> : t('progress.referenceUnavailable')} {t('المشاركة متاحة للعرض فقط.')}
           </>
         ) : (
           t('مراجعة المراحل الثلاث كما حُفظت، ثم إرسال ملف الترشح إلى إدارة الجائزة للمراجعة الأولية.')

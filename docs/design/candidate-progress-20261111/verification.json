@@ -1,0 +1,46 @@
+{
+    "date":  "2026-11-11",
+    "timezone":  "Asia/Damascus",
+    "base_sha":  "7cfe095",
+    "database":  "MariaDB 10.11.18",
+    "backend":  {
+                    "tests":  85,
+                    "passed":  85,
+                    "assertions":  2725
+                },
+    "final_focused_backend":  {
+                                  "tests":  24,
+                                  "passed":  24,
+                                  "assertions":  625
+                              },
+    "frontend":  {
+                     "tests":  39,
+                     "passed":  39,
+                     "lint":  "passed",
+                     "typescript":  "passed",
+                     "build":  "passed",
+                     "pint":  "passed"
+                 },
+    "integration":  {
+                        "real_browser":  true,
+                        "database_queue":  true,
+                        "smtp":  "loopback-only capture, no relay",
+                        "simultaneous_last_evaluations":  2,
+                        "concurrent_queue_workers":  2,
+                        "successful_arabic_stage_messages":  3,
+                        "successful_english_stage_messages":  1,
+                        "exactly_once_smtp_claimed":  false
+                    },
+    "viewports":  [
+                      390,
+                      834,
+                      1024,
+                      1440
+                  ],
+    "locales":  [
+                    "ar",
+                    "en"
+                ],
+    "production_modified":  false,
+    "merged":  false
+}

@@ -1,0 +1,43 @@
+[
+  {
+    "check": "real browser submission saved one receipt and administrative transition",
+    "reference": "SA-2026-S8T8AN",
+    "stage": "administrative_review"
+  },
+  {
+    "check": "database queue worker delivered the receipt over loopback-only SMTP",
+    "messages": 1
+  },
+  {
+    "check": "SMTP test transport failure preserved committed progress and pending delivery intent; asynchronous recovery delivered receipt and referral after transport repair",
+    "successful_messages": 2
+  },
+  {
+    "check": "real authenticated administrative referral provisioned judging and advanced the interface",
+    "stage": "committee_review",
+    "messages": 2
+  },
+  {
+    "check": "one finalized judge assessment did not complete the committee or send mail"
+  },
+  {
+    "check": "the last two judges finalized concurrently; duplicate queue deliveries on two workers produced one completion email",
+    "evaluation_workers": [
+      {
+        "judge_index": 1,
+        "result": "sent"
+      },
+      {
+        "judge_index": 2,
+        "result": "sent"
+      }
+    ],
+    "messages": 3
+  },
+  {
+    "check": "captured MIME messages contain HTML, plain text, CID PNG, bound tracking links and neutral event-specific content; no real inbox or relay used"
+  },
+  {
+    "check": "all four candidate API consumers remained free of administrative outcomes and judging details"
+  }
+]

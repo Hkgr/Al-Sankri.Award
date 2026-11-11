@@ -11,7 +11,8 @@ import type { BasicProfile } from '../candidateApi'
 import { contextHeader, formatDamascusDateTime } from '../candidateApi'
 import { AttachmentList, LinkList } from '../documentation/AttachmentList'
 import type { AttachmentKind, Documentation, Receipt } from '../documentation/documentationApi'
-import { journeyStateUrl, PROCESSING_TEXT, SECTION_TITLES, SUBMIT_CONFIRMATION } from '../documentation/documentationApi'
+import { journeyStateUrl, SECTION_TITLES, SUBMIT_CONFIRMATION } from '../documentation/documentationApi'
+import { ApplicationProgressPanel } from '../progress/ApplicationProgressPanel'
 import type { NominationDetails } from '../nomination/nominationApi'
 import { DomainArtwork } from '../nomination/nominationFields'
 import { nominationSummaryFromDetails } from '../nomination/nominationSummaries'
@@ -157,15 +158,14 @@ export function ReviewPage({ user }: { user: User }) {
       ) : (
         <>
           {review.submission ? (
-            <div className="locked-banner submitted-banner" role="status">
-              <StatusIcon tone="success" />
+            <div className={`locked-banner${review.submission.submitted_at && review.submission.reference_number ? ' submitted-banner' : ''}`} role="status">
+              <StatusIcon tone={review.submission.submitted_at && review.submission.reference_number ? 'success' : 'info'} />
               <div>
-                <p className="locked-banner__title">{t('تم إرسال المشاركة')}</p>
+                <p className="locked-banner__title">{t(review.submission.submitted_at && review.submission.reference_number ? 'تم إرسال المشاركة' : 'المشاركة متاحة للعرض فقط.')}</p>
                 <p>
-                  {t('الرقم المرجعي:')} <bdi dir="ltr">{review.submission.reference_number}</bdi>
+                  {review.submission.reference_number ? <>{t('الرقم المرجعي:')} <bdi dir="ltr">{review.submission.reference_number}</bdi></> : t('progress.referenceUnavailable')}
                 </p>
-                <p>{t('وقت الإرسال: {when} بتوقيت دمشق.', { when: formatDamascusDateTime(review.submission.submitted_at, locale) })}</p>
-                <p>{t(PROCESSING_TEXT[review.submission.processing] ?? PROCESSING_TEXT.pending)}</p>
+                <p>{review.submission.submitted_at ? t('وقت الإرسال: {when} بتوقيت دمشق.', { when: formatDamascusDateTime(review.submission.submitted_at, locale) }) : t('progress.unknownDate')}</p>
                 <p>{t('لا يمكن تعديل المشاركة أو إضافة ملفات إليها بعد الإرسال.')}</p>
               </div>
             </div>
@@ -177,6 +177,7 @@ export function ReviewPage({ user }: { user: User }) {
               </p>
             </FormAlert>
           ) : null}
+          {review.submission && <ApplicationProgressPanel user={user} journeyKey={state?.journey_key} version={review.submission.version_number === null ? null : String(review.submission.version_number)} />}
           {alert && <FormAlert tone={alert.tone}>{alert.content}</FormAlert>}
 
           <section className="review-part" aria-labelledby="review-stage-1">

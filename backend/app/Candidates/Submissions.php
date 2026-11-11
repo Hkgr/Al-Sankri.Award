@@ -58,7 +58,7 @@ class Submissions
     public function __construct(private readonly Documentation $documentation, private readonly AdminAccess $access) {}
 
     /**
-     * @return array{0: string, 1: array{reference_number: string, submitted_at: string, version_number: int, processing: string}|null}
+     * @return array{0: string, 1: array<string, mixed>|null}
      */
     public function submit(User $user, CandidateNomination $journey, int $reviewedRevision, ?int $termsVersion = null, bool $acceptedTerms = false): array
     {
@@ -139,6 +139,8 @@ class Submissions
                 'current_version_id' => $version->getKey(),
             ])->save();
 
+            app(ApplicationProgress::class)->record((int) $application->id);
+
             AuditLog::record('application.submitted', (int) $user->getKey(), 'application', (int) $application->getKey(), [
                 'application_version_id' => $version->getKey(),
                 'reference_number' => $reference,
@@ -171,10 +173,9 @@ class Submissions
 
     /**
      * The receipt of a submitted application, or null for a draft, with its
-     * processing status for the owner: pending, referred or excluded (the
-     * code only, never an administrator's reason or name).
+     * candidate-safe procedural progress, never an administrative outcome.
      *
-     * @return array{reference_number: string, submitted_at: string, version_number: int, processing: string}|null
+     * @return array<string, mixed>|null
      */
     public function receipt(Application $application): ?array
     {
@@ -182,13 +183,13 @@ class Submissions
             return null;
         }
 
-        $version = ApplicationVersion::query()->findOrFail($application->current_version_id);
+        $version = ApplicationVersion::query()->whereKey($application->current_version_id)->where('application_id', $application->id)->first();
 
         return [
-            'reference_number' => (string) $application->reference_number,
-            'submitted_at' => $version->submitted_at->toIso8601ZuluString(),
-            'version_number' => $version->version_number,
-            'processing' => $application->review_status ?? Application::REVIEW_PENDING,
+            'reference_number' => $application->reference_number ?: null,
+            'submitted_at' => $version?->submitted_at?->toIso8601ZuluString(),
+            'version_number' => $version?->version_number,
+            'progress' => app(ApplicationProgress::class)->forApplication($application),
         ];
     }
 

@@ -97,8 +97,14 @@ export const messages = {
  * deadline. When the deadline passes, the step is aborted and the promise
  * rejects with a RequestTimeoutError, even if the aborted work never settles.
  */
-async function withDeadline<T>(step: (signal: AbortSignal) => Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
+async function withDeadline<T>(step: (signal: AbortSignal) => Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS, externalSignal?: AbortSignal): Promise<T> {
   const controller = new AbortController()
+  if (externalSignal?.aborted) throw new DOMException('Aborted', 'AbortError')
+  let abort: (() => void) | undefined
+  const cancelled = new Promise<never>((_, reject) => {
+    abort = () => { controller.abort(); reject(new DOMException('Aborted', 'AbortError')) }
+    externalSignal?.addEventListener('abort', abort, { once: true })
+  })
   let timer: ReturnType<typeof setTimeout> | undefined
   const deadline = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
@@ -107,9 +113,10 @@ async function withDeadline<T>(step: (signal: AbortSignal) => Promise<T>, timeou
     }, timeoutMs)
   })
   try {
-    return await Promise.race([step(controller.signal), deadline])
+    return await Promise.race([step(controller.signal), deadline, cancelled])
   } finally {
     clearTimeout(timer)
+    if (abort) externalSignal?.removeEventListener('abort', abort)
   }
 }
 
@@ -190,6 +197,7 @@ function attempt<T>(
   headers?: Record<string, string>,
   retryOn419 = false,
   timeoutMs = REQUEST_TIMEOUT_MS,
+  externalSignal?: AbortSignal,
 ): Promise<T | typeof CSRF_RETRY> {
   return withDeadline(async (signal) => {
     const response = await send(method, url, signal, body, headers)
@@ -206,21 +214,21 @@ function attempt<T>(
     } catch {
       throw new NetworkError(messages.network)
     }
-  }, timeoutMs)
+  }, timeoutMs, externalSignal)
 }
 
-async function request<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
+async function request<T>(method: Method, url: string, body?: unknown, headers?: Record<string, string>, timeoutMs = REQUEST_TIMEOUT_MS, externalSignal?: AbortSignal): Promise<T> {
   if (method !== 'GET' && !readCookie('XSRF-TOKEN')) await refreshCsrfCookie()
 
-  const first = await attempt<T>(method, url, body, headers, method !== 'GET', timeoutMs)
+  const first = await attempt<T>(method, url, body, headers, method !== 'GET', timeoutMs, externalSignal)
   if (first !== CSRF_RETRY) return first
 
   await refreshCsrfCookie()
-  return (await attempt<T>(method, url, body, headers, false, timeoutMs)) as T
+  return (await attempt<T>(method, url, body, headers, false, timeoutMs, externalSignal)) as T
 }
 
 export const api = {
-  get: <T>(url: string, headers?: Record<string, string>) => request<T>('GET', url, undefined, headers),
+  get: <T>(url: string, headers?: Record<string, string>, signal?: AbortSignal) => request<T>('GET', url, undefined, headers, REQUEST_TIMEOUT_MS, signal),
   post: <T>(url: string, body: unknown = {}) => request<T>('POST', url, body),
   /**
    * One file as multipart form data, with the upload deadline. Its outcome

@@ -1,0 +1,54 @@
+{
+    "ar": {
+        "received": {
+            "label": "تم استلام ملف الترشح",
+            "description": "حُفظت النسخة المرسلة ورقمها المرجعي."
+        },
+        "administrative_review": {
+            "subject": "استلمنا ملف ترشحك",
+            "label": "لدى إدارة الجائزة للمراجعة الإدارية",
+            "description": "تم استلام ملف الترشح ووصوله إلى إدارة الجائزة للمراجعة الإدارية."
+        },
+        "committee_review": {
+            "subject": "انتقل ملفك إلى مراجعة لجنة التحكيم",
+            "label": "لدى لجنة التحكيم للمراجعة",
+            "description": "انتقل ملف الترشح إلى لجنة التحكيم للمراجعة."
+        },
+        "review_completed": {
+            "subject": "اكتملت إجراءات مراجعة ملفك",
+            "label": "اكتملت إجراءات مراجعة الملف",
+            "description": "اكتملت إجراءات مراجعة ملف الترشح. هذا إشعار بالمرحلة الإجرائية فقط."
+        },
+        "tracking_paused": {
+            "subject": "تحديث متابعة ملف ترشحك",
+            "label": "لا توجد مرحلة معالجة نشطة حاليًا",
+            "description": "لا تتوفر مرحلة معالجة نشطة لهذا الملف حاليًا. يعرض حسابك السجل المتاح؛ للاستفسار تواصل مع إدارة الجائزة."
+        }
+    },
+    "en": {
+        "received": {
+            "label": "Application received",
+            "description": "The submitted version and its reference were saved."
+        },
+        "administrative_review": {
+            "subject": "We received your application",
+            "label": "With award administration for administrative review",
+            "description": "Your application was received and reached award administration for administrative review."
+        },
+        "committee_review": {
+            "subject": "Your application moved to committee review",
+            "label": "With the judging committee for review",
+            "description": "Your application moved to the judging committee for review."
+        },
+        "review_completed": {
+            "subject": "Your application review procedures are complete",
+            "label": "Application review procedures completed",
+            "description": "The review procedures for your application were completed. This is a procedural update only."
+        },
+        "tracking_paused": {
+            "subject": "An update on tracking your application",
+            "label": "No active processing stage currently",
+            "description": "An active processing stage is not currently available for this application. Your account shows the available history; contact award administration with any questions."
+        }
+    }
+}

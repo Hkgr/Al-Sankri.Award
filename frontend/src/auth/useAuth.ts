@@ -5,6 +5,7 @@ export type User = {
   name: string
   email: string
   email_verified: boolean
+  preferred_locale?: 'ar' | 'en' | null
   has_password: boolean
   google_linked: boolean
   /** Holds the «مترشح» classification (assigned by the backend only). */

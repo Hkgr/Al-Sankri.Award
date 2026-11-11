@@ -118,8 +118,8 @@ function ReadOnlyDocumentation({ user, journeyKey, doc }: { user: User; journeyK
           <div>
             <p className="locked-banner__title">{t('تم إرسال المشاركة')}</p>
             <p>
-              {t('الرقم المرجعي')} <bdi dir="ltr">{doc.submission.reference_number}</bdi>،{' '}
-              {t('أُرسلت في {when} بتوقيت دمشق. لا يمكن إضافة ملفات أو تعديلها بعد الإرسال.', { when: formatDamascusDateTime(doc.submission.submitted_at, locale) })}
+              {doc.submission.reference_number ? <>{t('الرقم المرجعي')} <bdi dir="ltr">{doc.submission.reference_number}</bdi>، </> : t('progress.referenceUnavailable')}{' '}
+              {doc.submission.submitted_at ? t('أُرسلت في {when} بتوقيت دمشق. لا يمكن إضافة ملفات أو تعديلها بعد الإرسال.', { when: formatDamascusDateTime(doc.submission.submitted_at, locale) }) : t('progress.unknownDate')}
             </p>
           </div>
         </div>

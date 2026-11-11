@@ -1,5 +1,6 @@
 import type { User } from '../../../auth/useAuth'
 import { labels, tr } from '../../../i18n/messages'
+import type { ApplicationProgress } from '../progress/progressApi'
 
 /**
  * Types, labels and limits for Stage 3 («ملفات العمل وتوثيقه») and the
@@ -24,16 +25,7 @@ export type Attachment = {
 
 export type DocumentationLink = { title: string; url: string }
 
-/** What award administration has done with a submission (never its internal notes). */
-export type Processing = 'pending' | 'referred' | 'excluded'
-
-export const PROCESSING_TEXT: Record<Processing, string> = labels({
-  pending: 'ملف الترشح لدى إدارة الجائزة للمراجعة الأولية.',
-  referred: 'أحالت إدارة الجائزة ملف الترشح إلى لجنة التحكيم.',
-  excluded: 'لم يُحل ملف الترشح إلى التحكيم بعد المراجعة الأولية لإدارة الجائزة، وحُفظ في الأرشيف.',
-})
-
-export type Receipt = { reference_number: string; submitted_at: string; version_number: number; processing: Processing }
+export type Receipt = { reference_number: string | null; submitted_at: string | null; version_number: number | null; progress: ApplicationProgress | null }
 
 export type Documentation = {
   revision: number

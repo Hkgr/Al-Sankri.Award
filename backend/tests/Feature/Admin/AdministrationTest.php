@@ -825,7 +825,7 @@ class AdministrationTest extends TestCase
         $this->assertSame(0, DB::table('judging_assignments')->count());
         $this->assertSame(['pending', 'pending', 'pending'], DB::table('applications')->orderBy('id')->pluck('review_status')->all());
         $this->signIn($this->candidate->email);
-        $this->read('/api/candidate/review')->assertOk()->assertJsonPath('data.submission.processing', 'pending');
+        $this->read('/api/candidate/review')->assertOk()->assertJsonPath('data.submission.progress.stage', 'administrative_review')->assertJsonMissingPath('data.submission.processing');
 
         $this->signInAdmin();
         $page = $this->read("/api/admin/applications/{$referred['id']}")->assertOk()
@@ -892,7 +892,7 @@ class AdministrationTest extends TestCase
 
         // The owner sees a truthful status, never the reason.
         $this->signIn('omar@example.org');
-        $review = $this->read('/api/candidate/review')->assertOk()->assertJsonPath('data.submission.processing', 'excluded');
+        $review = $this->read('/api/candidate/review')->assertOk()->assertJsonPath('data.submission.progress.stage', 'review_completed')->assertJsonMissingPath('data.submission.processing');
         $this->assertStringNotContainsString('خارج مجالات', (string) $review->getContent());
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Judging;
 
+use App\Candidates\ApplicationProgress;
 use App\Models\Application;
 use App\Support\AuditLog;
 use Illuminate\Support\Facades\DB;
@@ -44,14 +45,16 @@ class Assignments
      */
     public function delivered(int $applicationId, int $committeeId): bool
     {
-        $version = DB::table('applications')->where('id', $applicationId)->value('current_version_id');
-        $members = DB::table('committee_members')->where('committee_id', $committeeId)->whereNull('left_at')->pluck('id');
+        $version = DB::table('applications')->where('id', $applicationId)->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())->value('current_version_id');
+        $members = DB::table('committee_members')->where('committee_id', $committeeId)->whereNull('left_at')
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())->pluck('id');
         if ($version === null || $members->isEmpty()) {
             return false;
         }
 
         return DB::table('judging_assignments')->where('application_version_id', $version)->where('committee_id', $committeeId)
-            ->where('round_number', 1)->whereIn('committee_member_id', $members)->distinct()->count('committee_member_id') === $members->count();
+            ->where('round_number', 1)->whereIn('committee_member_id', $members)
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->sharedLock())->pluck('committee_member_id')->unique()->count() === $members->count();
     }
 
     /**
@@ -146,6 +149,7 @@ class Assignments
                     'updated_at' => $now,
                 ]);
             }
+            app(ApplicationProgress::class)->record((int) $application->id);
         }
 
         if ($created > 0) {
