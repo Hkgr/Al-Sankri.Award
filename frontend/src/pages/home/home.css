@@ -752,3 +752,121 @@
     gap: var(--sa-space-8);
   }
 }
+
+/* ---------- «لماذا الجائزة؟» (the owner's presentation) ---------- */
+
+.why {
+  padding-block: var(--sa-space-section);
+  background-color: var(--sa-color-surface);
+  background-image: url('../../assets/brand/background-line-pattern.svg');
+  background-position: center;
+  background-size: cover;
+}
+
+.why__inner {
+  display: grid;
+  gap: var(--sa-space-6);
+}
+
+/* The title on deep green (gold accent only at display size). */
+.why__panel {
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-block-size: 10rem;
+  padding: var(--sa-space-7) var(--sa-space-6);
+  overflow: hidden;
+  border-radius: 2rem;
+  background:
+    radial-gradient(30rem 20rem at 85% 15%, rgb(204 153 51 / 0.18), transparent 65%),
+    linear-gradient(160deg, #17504a, var(--sa-color-surface-dark) 55%, var(--sa-ext-green-900));
+  color: var(--sa-color-text-on-dark);
+}
+
+.why__panel::after {
+  content: '';
+  position: absolute;
+  inset-block-end: var(--sa-space-6);
+  inset-inline-start: var(--sa-space-6);
+  inline-size: 4rem;
+  block-size: 3px;
+  border-radius: 3px;
+  background: var(--sa-brand-gold);
+}
+
+.why__title {
+  font-size: clamp(2.4rem, 1.6rem + 3vw, 4.2rem);
+  font-weight: var(--sa-font-weight-black);
+  line-height: 1.2;
+}
+
+.why__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.why__item {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  gap: var(--sa-space-4);
+  align-items: start;
+  padding-block: var(--sa-space-5);
+}
+
+.why__item + .why__item {
+  border-block-start: var(--sa-border-width-hairline) solid var(--sa-ext-neutral-200);
+}
+
+/* Decorative numbers in the gold family that stays legible on light. */
+.why__number {
+  color: var(--sa-color-text-accent);
+  font-size: 2.6rem;
+  font-weight: var(--sa-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.why__item-title {
+  font-size: var(--sa-font-size-h3);
+  font-weight: var(--sa-font-weight-bold);
+  line-height: 1.4;
+}
+
+.why__item p {
+  margin-block-start: var(--sa-space-1);
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-lead);
+  line-height: 1.8;
+}
+
+@media (min-width: 64rem) {
+  .why__inner {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--sa-space-8);
+    align-items: stretch;
+  }
+
+  .why__panel {
+    padding: var(--sa-space-8) var(--sa-space-7);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .why__panel,
+    .why__item {
+      animation: why-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+  }
+}
+
+@keyframes why-rise {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+}

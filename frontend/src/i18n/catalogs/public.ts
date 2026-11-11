@@ -39,7 +39,6 @@ export const ar: Dict = {
   'footer.rights': 'جميع الحقوق محفوظة',
 
   'about.title': 'عن الجائزة',
-  'about.aims': 'غاية الجائزة',
   'about.values': 'قيمنا',
   'about.impact': 'التركيز على الأثر الموثق',
   'about.organization': 'الجهة المنفذة',
@@ -113,6 +112,32 @@ export const ar: Dict = {
   'media.download': 'تنزيل الشعار',
   'media.downloadFormat': 'WebP شفاف، 800 بكسل',
 
+  'home.whyTitle': 'لماذا الجائزة؟',
+
+  'about.purposeTitle': 'الغاية والأهداف الاستراتيجية',
+  'about.grand': 'الغاية الكبرى',
+  'about.objectives': 'الأهداف الرئيسية',
+
+  'journey.cycleTitle': 'الدورة التشغيلية ومسار الجائزة',
+  'journey.cycleStages': 'مراحل الدورة التشغيلية',
+
+  'governance.eyebrow': 'النزاهة والشفافية',
+  'governance.title': 'منظومة الحوكمة',
+  'governance.intro': 'يمر كل ملف ترشح بأربع محطات متتابعة تضمن موضوعية التقييم ونزاهته، من فحص الأهلية المبدئي حتى اعتماد النتائج.',
+  'governance.flow': 'محطات الحوكمة بالترتيب',
+  'governance.stepN': 'المحطة {n}: ',
+  'governance.conflict': 'منع تضارب المصالح',
+  'governance.journeyLink': 'مسيرة الجائزة ومواعيدها',
+  'governance.eligibilityLink': 'شروط التقدم كاملة',
+
+  'contact.title': 'تواصل معنا',
+  'contact.purpose': 'للاستفسار والتعاون',
+  'contact.email': 'البريد الإلكتروني',
+  'contact.whatsapp': 'واتساب',
+  'contact.whatsappHint': 'مراسلة عبر واتساب',
+  'media.contactTitle': 'التواصل الإعلامي',
+  'media.contactText': 'للاستفسارات الإعلامية والتعاون، تواصلوا معنا عبر:',
+
   'notFound.title': 'الصفحة غير موجودة',
   'notFound.text': 'لم نجد الصفحة التي طلبتها.',
   'notFound.home': 'العودة إلى الصفحة الرئيسية',
@@ -157,7 +182,6 @@ export const en: Dict = {
   'footer.rights': 'All rights reserved',
 
   'about.title': 'About the award',
-  'about.aims': 'Purpose of the award',
   'about.values': 'Our values',
   'about.impact': 'Focus on documented impact',
   'about.organization': 'Implementing organization',
@@ -232,6 +256,32 @@ export const en: Dict = {
   'media.kitDark': 'For dark backgrounds',
   'media.download': 'Download the logo',
   'media.downloadFormat': 'Transparent WebP, 800 px',
+
+  'home.whyTitle': 'Why the award?',
+
+  'about.purposeTitle': 'Purpose and strategic objectives',
+  'about.grand': 'The overarching purpose',
+  'about.objectives': 'Main objectives',
+
+  'journey.cycleTitle': 'The operational cycle and the award path',
+  'journey.cycleStages': 'Stages of the operational cycle',
+
+  'governance.eyebrow': 'Integrity and transparency',
+  'governance.title': 'Governance system',
+  'governance.intro': 'Every application passes through four successive stations that keep the evaluation objective and fair, from the initial eligibility screening to the approval of the results.',
+  'governance.flow': 'The governance stations, in order',
+  'governance.stepN': 'Station {n}: ',
+  'governance.conflict': 'Preventing conflicts of interest',
+  'governance.journeyLink': 'The award journey and its dates',
+  'governance.eligibilityLink': 'The full eligibility conditions',
+
+  'contact.title': 'Contact us',
+  'contact.purpose': 'For enquiries and cooperation',
+  'contact.email': 'Email',
+  'contact.whatsapp': 'WhatsApp',
+  'contact.whatsappHint': 'Message on WhatsApp',
+  'media.contactTitle': 'Media contact',
+  'media.contactText': 'For media enquiries and cooperation, contact us by:',
 
   'notFound.title': 'Page not found',
   'notFound.text': 'We could not find the page you asked for.',

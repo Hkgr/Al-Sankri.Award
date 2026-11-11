@@ -1,4 +1,6 @@
+import { ContactLinks } from '../../components/ContactLinks'
 import { brandLogoDownloads } from '../../content/brandAssets'
+import { pageAt } from '../../content/site'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { usePageMeta } from '../../lib/usePageMeta'
@@ -7,13 +9,14 @@ import './public.css'
 
 /**
  * The Media Center: the award's news and official statements (none are
- * published yet, and none are invented) and the official logos for media use.
+ * published yet, and none are invented), the official logos for media use and
+ * the media contact (the owner's email and WhatsApp number).
  * The implementing and participating organizations close every page, in the footer.
  */
 export function MediaPage() {
   const { award, pages } = useSite()
   const { t } = useLocale()
-  const page = pages[4]
+  const page = pageAt(pages, '/media')
   usePageMeta(page.label, page.description)
 
   return (
@@ -53,6 +56,18 @@ export function MediaPage() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      <section className="section" aria-labelledby="media-contact-title">
+        <div className="container media-contact">
+          <div>
+            <h2 id="media-contact-title" className="section__title">
+              {t('media.contactTitle')}
+            </h2>
+            <p className="prose">{t('media.contactText')}</p>
+          </div>
+          <ContactLinks className="contact-links--light" />
         </div>
       </section>
     </>

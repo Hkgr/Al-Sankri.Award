@@ -1,6 +1,7 @@
 import { RichText } from '../../components/OrgLink'
 import { DomainTrophy } from '../../components/DomainTrophy'
 import type { MainDomain } from '../../content/site'
+import { pageAt } from '../../content/site'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
@@ -66,7 +67,7 @@ function SharedRules({ headingLevel }: { headingLevel: 2 | 3 }) {
 export function EligibilityPage() {
   const { domains, eligibility, pages } = useSite()
   const { t } = useLocale()
-  const page = pages[3]
+  const page = pageAt(pages, '/eligibility')
   usePageMeta(page.label, page.description)
 
   return (
@@ -138,7 +139,7 @@ export function EligibilityDomainPage({ domain: requested }: { domain: MainDomai
   const { domains, eligibility, pages } = useSite()
   const { t } = useLocale()
   const domain = domains.find((item) => item.slug === requested.slug) ?? requested
-  const page = pages[3]
+  const page = pageAt(pages, '/eligibility')
   usePageMeta(
     `${domain.label} | ${page.label}`,
     t('eligibility.domainMeta', { domain: domain.label, subs: domain.subcategories.map((subcategory) => subcategory.label).join(t('eligibility.listSeparator')) }),

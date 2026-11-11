@@ -15,6 +15,7 @@ Route::get('/about', SpaController::class);
 Route::get('/journey', SpaController::class);
 Route::get('/eligibility', SpaController::class);
 Route::get('/eligibility/{domain}', SpaController::class)->whereIn('domain', ['culture-and-arts', 'heritage', 'creativity']);
+Route::get('/governance', SpaController::class);
 Route::get('/media', SpaController::class);
 Route::get('/login', SpaController::class)->name('login');
 Route::get('/register', SpaController::class);

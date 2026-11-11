@@ -1,4 +1,5 @@
 import { BrandLogo } from '../BrandLogo'
+import { ContactLinks } from '../ContactLinks'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
@@ -9,8 +10,8 @@ import { PartnerLogos } from '../PartnerLogos'
  * organizations floats across the top edge of the deep-green footer (their
  * dark-ink logos stay on white); then the supplied dark-background logo on
  * deep green (its only approved surface), the award's purpose, the main pages,
- * the three domain pages and the published policies, over a faint slogan
- * watermark. No contact details or accounts are invented.
+ * the three domain pages, the published policies and the owner's contact
+ * details for enquiries and cooperation, over a faint slogan watermark.
  */
 export function SiteFooter() {
   const { award, closing, domains, pages } = useSite()
@@ -75,6 +76,14 @@ export function SiteFooter() {
               </li>
             </ul>
           </nav>
+
+          <section className="site-footer__contact" aria-labelledby="footer-contact-title">
+            <h2 id="footer-contact-title" className="site-footer__heading">
+              {t('contact.title')}
+            </h2>
+            <p className="site-footer__contact-note">{t('contact.purpose')}</p>
+            <ContactLinks />
+          </section>
         </div>
         <div className="site-footer__base container">
           <p>

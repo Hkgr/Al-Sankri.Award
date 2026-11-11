@@ -1,4 +1,5 @@
 import type { JourneyPhase } from '../../content/site'
+import { pageAt } from '../../content/site'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { applicationPhaseAt, deadlineText, judgingPhaseAt, periodText } from '../../lib/schedule'
@@ -41,9 +42,9 @@ function statusOf(key: JourneyPhase['key'], now: number, schedule: PublicSchedul
 }
 
 export function JourneyPage() {
-  const { award, confirmedSchedule, journey, pages } = useSite()
+  const { award, confirmedSchedule, cycle, journey, pages } = useSite()
   const { t, locale } = useLocale()
-  const page = pages[2]
+  const page = pageAt(pages, '/journey')
   usePageMeta(page.label, page.description)
   const { schedule, offset } = useSchedule()
   const now = useServerNow(offset, Boolean(schedule))
@@ -62,6 +63,32 @@ export function JourneyPage() {
       <PageHeader trail={[{ href: '/', label: t('nav.home') }, { href: page.href, label: page.label }]} eyebrow={award.name} title={t('journey.title')}>
         <p>{t('journey.intro')}</p>
       </PageHeader>
+
+      {/* The owner's «الدورة التشغيلية ومسار الجائزة»: three stages, then the detailed timeline. */}
+      <section className="section section--subtle" aria-labelledby="cycle-title">
+        <div className="container">
+          <h2 id="cycle-title" className="section__title">
+            {t('journey.cycleTitle')}
+          </h2>
+          <ol className="cycle" aria-label={t('journey.cycleStages')}>
+            {cycle.map((stage, index) => (
+              <li key={stage.title} className="cycle__stage" data-stage={index + 1}>
+                <h3 className="cycle__title">{stage.title}</h3>
+                <div className="cycle__card">
+                  <span className="cycle__number" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <ul className="cycle__points">
+                    {stage.points.map((point) => (
+                      <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
       <section className="section" aria-labelledby="timeline-title">
         <div className="container">

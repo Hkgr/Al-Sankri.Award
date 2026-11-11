@@ -578,3 +578,392 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* ---------- About: «الغاية والأهداف الاستراتيجية» ---------- */
+
+.purpose-banner {
+  display: grid;
+  gap: var(--sa-space-3);
+  margin: var(--sa-space-5) 0 0;
+  padding: var(--sa-space-6) var(--sa-space-6) var(--sa-space-7);
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(30rem 16rem at 10% 0%, rgb(204 153 51 / 0.16), transparent 65%),
+    linear-gradient(160deg, #17504a, var(--sa-color-surface-dark) 55%, var(--sa-ext-green-900));
+  color: var(--sa-color-text-on-dark);
+}
+
+/* Gold on deep green: the label is set large enough. */
+.purpose-banner__label {
+  color: var(--sa-color-text-on-dark-accent-large);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-bold);
+}
+
+.purpose-banner__quote {
+  margin: 0;
+}
+
+.purpose-banner__quote p {
+  font-size: clamp(1.4rem, 1rem + 1.4vw, 2.1rem);
+  font-weight: var(--sa-font-weight-bold);
+  line-height: 1.6;
+}
+
+.purpose-banner__quote p::before {
+  content: '«';
+}
+
+.purpose-banner__quote p::after {
+  content: '»';
+}
+
+:lang(en) .purpose-banner__quote p::before {
+  content: '“';
+}
+
+:lang(en) .purpose-banner__quote p::after {
+  content: '”';
+}
+
+.objectives__title {
+  margin-block-start: var(--sa-space-7);
+  color: var(--sa-color-text-accent);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-bold);
+}
+
+.objectives {
+  display: grid;
+  gap: var(--sa-space-5);
+  margin: var(--sa-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.objectives__item {
+  display: grid;
+  gap: var(--sa-space-3);
+  align-content: start;
+}
+
+.objectives__number {
+  padding-block-end: var(--sa-space-3);
+  border-block-end: 2px solid var(--sa-brand-gold);
+  color: var(--sa-color-surface-dark);
+  font-size: 2.5rem;
+  font-weight: var(--sa-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.objectives__item p {
+  color: var(--sa-color-text-muted);
+  font-size: var(--sa-font-size-lead);
+  line-height: 1.8;
+}
+
+@media (min-width: 40rem) {
+  .objectives {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .objectives {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Journey: «الدورة التشغيلية ومسار الجائزة» ---------- */
+
+.cycle {
+  display: grid;
+  gap: var(--sa-space-5);
+  margin: var(--sa-space-6) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.cycle__stage {
+  --stage-bg: var(--sa-color-surface-dark);
+  --stage-fg: var(--sa-color-text-on-dark);
+  --stage-number: var(--sa-color-surface-dark);
+  display: grid;
+  /* The bands stay one height; only the cards grow with their points. */
+  grid-template-rows: auto 1fr;
+  gap: var(--sa-space-3);
+}
+
+.cycle__stage[data-stage='2'] {
+  --stage-bg: #2b5d58;
+  --stage-number: #2b5d58;
+}
+
+.cycle__stage[data-stage='3'] {
+  --stage-bg: var(--sa-brand-gold);
+  --stage-fg: var(--sa-ext-green-900);
+  --stage-number: var(--sa-color-text-accent);
+}
+
+/* A chevron pointing along the reading direction. */
+.cycle__title {
+  display: grid;
+  place-items: center;
+  min-block-size: 4.5rem;
+  padding-inline: 2.5rem;
+  background: var(--stage-bg);
+  color: var(--stage-fg);
+  font-size: var(--sa-font-size-h4);
+  font-weight: var(--sa-font-weight-bold);
+  clip-path: polygon(0 50%, 12% 0, 100% 0, 88% 50%, 100% 100%, 12% 100%);
+}
+
+[dir='ltr'] .cycle__title {
+  clip-path: polygon(100% 50%, 88% 0, 0 0, 12% 50%, 0 100%, 88% 100%);
+}
+
+.cycle__card {
+  display: grid;
+  gap: var(--sa-space-3);
+  block-size: 100%;
+  padding: var(--sa-space-5) var(--sa-space-6) var(--sa-space-6);
+  border-radius: 1.25rem;
+  background: var(--sa-color-surface-raised);
+  box-shadow: 0 18px 36px -28px rgb(20 65 61 / 0.5);
+}
+
+.cycle__number {
+  justify-self: end;
+  color: var(--stage-number);
+  font-size: 3.6rem;
+  font-weight: var(--sa-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.cycle__points {
+  display: grid;
+  gap: var(--sa-space-2);
+  margin: 0;
+  padding-inline-start: 1.2rem;
+  font-size: var(--sa-font-size-lead);
+}
+
+.cycle__points li::marker {
+  color: var(--stage-number);
+}
+
+@media (min-width: 48rem) {
+  .cycle {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Governance: the four stations ---------- */
+
+.governance {
+  position: relative;
+  overflow: hidden;
+  padding-block: var(--sa-space-section);
+  background:
+    radial-gradient(50rem 30rem at 85% 0%, rgb(204 153 51 / 0.12), transparent 60%),
+    linear-gradient(160deg, #17504a 0%, var(--sa-color-surface-dark) 50%, var(--sa-ext-green-900) 100%);
+  color: var(--sa-color-text-on-dark);
+}
+
+.governance__flow {
+  position: relative;
+  display: grid;
+  gap: var(--sa-space-7);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The dashed line linking the stations: down the side on small screens, across on wide ones. */
+.governance__flow::before {
+  content: '';
+  position: absolute;
+  inset-block: 2.75rem;
+  inset-inline-start: 2.75rem;
+  border-inline-start: 2px dashed rgb(204 153 51 / 0.6);
+}
+
+.governance__station {
+  position: relative;
+  display: grid;
+  gap: var(--sa-space-2);
+  padding: var(--sa-space-2) 0 0 0;
+  padding-inline-start: calc(5.5rem + var(--sa-space-5));
+}
+
+.governance__icon {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 5.5rem;
+  block-size: 5.5rem;
+  border: 2px solid var(--sa-brand-gold);
+  border-radius: 50%;
+  background: var(--sa-color-surface-dark);
+}
+
+.governance__icon svg {
+  inline-size: 2.4rem;
+  block-size: 2.4rem;
+  fill: none;
+  stroke: var(--sa-brand-gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.governance__station--final .governance__icon {
+  background: var(--sa-brand-gold);
+}
+
+.governance__station--final .governance__icon svg {
+  stroke: var(--sa-ext-green-900);
+}
+
+.governance__number {
+  color: var(--sa-color-text-on-dark-muted);
+  font-size: var(--sa-font-size-small);
+  font-weight: var(--sa-font-weight-bold);
+  letter-spacing: 0.08em;
+}
+
+.governance__title {
+  font-size: var(--sa-font-size-h3);
+  line-height: 1.4;
+}
+
+/* Gold on deep green: display size only. */
+.governance__station--final .governance__title {
+  color: var(--sa-color-text-on-dark-accent-large);
+}
+
+.governance__text {
+  color: var(--sa-color-text-on-dark-muted);
+  font-size: var(--sa-font-size-lead);
+  line-height: 1.8;
+}
+
+.governance__links {
+  display: grid;
+  gap: var(--sa-space-3);
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 64rem) {
+  .governance__flow {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--sa-space-5);
+  }
+
+  .governance__flow::before {
+    inset-block: auto;
+    inset-block-start: 2.75rem;
+    inset-inline: 12.5%;
+    border-inline-start: 0;
+    border-block-start: 2px dashed rgb(204 153 51 / 0.6);
+  }
+
+  .governance__station {
+    justify-items: center;
+    padding: 4rem var(--sa-space-5) var(--sa-space-6);
+    margin-block-start: 2.75rem;
+    border: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.14);
+    border-radius: 1.25rem;
+    background: rgb(244 247 252 / 0.06);
+    text-align: center;
+  }
+
+  .governance__station--final {
+    border-color: rgb(204 153 51 / 0.7);
+    background: rgb(204 153 51 / 0.14);
+  }
+
+  .governance__icon {
+    inset-block-start: -2.75rem;
+    inset-inline-start: 50%;
+    translate: -50% 0;
+  }
+
+  [dir='rtl'] .governance__icon {
+    translate: 50% 0;
+  }
+
+  .split:has(.governance__links) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.6fr);
+  }
+}
+
+/* ---------- Media Center: contact ---------- */
+
+.media-contact {
+  display: grid;
+  gap: var(--sa-space-5);
+  align-items: center;
+}
+
+.contact-links--light .contact-link {
+  color: var(--sa-color-text);
+}
+
+.contact-links--light .contact-link__icon {
+  background: var(--sa-ext-gold-tint);
+  stroke: var(--sa-color-text-accent);
+}
+
+.contact-links--light .contact-link__label {
+  color: var(--sa-color-text-muted);
+}
+
+.contact-links--light .contact-link:hover bdi {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+@media (min-width: 48rem) {
+  .media-contact {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+/* ---------- Motion for the new sections ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .objectives__item,
+    .cycle__stage,
+    .governance__station,
+    .purpose-banner {
+      animation: public-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+  }
+
+  .governance__station .governance__icon {
+    transition: transform var(--sa-duration-fast) var(--sa-easing-standard);
+  }
+
+  .governance__station:hover .governance__icon {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes public-rise {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+}

@@ -4,6 +4,7 @@ import { Countdown } from '../../components/Countdown'
 import { DomainTrophy } from '../../components/DomainTrophy'
 import { Photo } from '../../components/Photo'
 import { PlatformActions } from '../../components/PlatformActions'
+import { pageAt } from '../../content/site'
 import { useSite } from '../../content/useSite'
 import { useLocale } from '../../i18n/useLocale'
 import { Link } from '../../lib/router'
@@ -37,9 +38,9 @@ function sloganLines(slogan: string) {
 }
 
 export function HomePage() {
-  const { about, award, domains, hero, journey, pages } = useSite()
+  const { about, award, domains, hero, journey, pages, why } = useSite()
   const { t } = useLocale()
-  usePageMeta(null, pages[0].description)
+  usePageMeta(null, pageAt(pages, '/').description)
   const { schedule, offset } = useSchedule()
   // The phase decides which way into the platform is offered; it changes at the closing instant.
   const now = useServerNow(offset, Boolean(schedule))
@@ -120,6 +121,30 @@ export function HomePage() {
               {t('home.aboutMore')}
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* The owner's «لماذا الجائزة؟»: the title on deep green beside four numbered reasons. */}
+      <section className="why" aria-labelledby="why-title">
+        <div className="container why__inner">
+          <div className="why__panel">
+            <h2 id="why-title" className="why__title">
+              {t('home.whyTitle')}
+            </h2>
+          </div>
+          <ol className="why__list">
+            {why.map((reason, index) => (
+              <li key={reason.title} className="why__item">
+                <span className="why__number" aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <h3 className="why__item-title">{reason.title}</h3>
+                  <p>{reason.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 

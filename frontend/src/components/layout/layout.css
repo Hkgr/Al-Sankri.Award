@@ -37,6 +37,8 @@
 
 .site-header__brand {
   display: block;
+  /* The logo keeps its size; the navigation adapts around it. */
+  flex: none;
   /* Clear space around the lockup (identity-guidelines.md §2.3). */
   padding-block: var(--sa-space-1);
   border-radius: var(--sa-radius-sm);
@@ -237,6 +239,17 @@
 
   .site-nav__link {
     white-space: nowrap;
+  }
+}
+
+/* Six pages: slightly tighter links until the width is generous. */
+@media (min-width: 80rem) and (max-width: 89.99rem) {
+  .site-nav__link {
+    padding-inline: var(--sa-space-2);
+  }
+
+  .site-nav__link[aria-current]::after {
+    inset-inline: var(--sa-space-2);
   }
 }
 
@@ -506,6 +519,65 @@
   font-size: var(--sa-font-size-small);
 }
 
+/* ---------- Contact (footer and Media Center) ---------- */
+
+.site-footer__contact-note {
+  margin-block-end: var(--sa-space-3);
+  color: var(--sa-color-text-on-dark-muted);
+  font-size: var(--sa-font-size-small);
+}
+
+.contact-links {
+  display: grid;
+  gap: var(--sa-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sa-space-3);
+  min-block-size: var(--sa-target-min);
+  text-decoration: none;
+}
+
+.contact-link__icon {
+  flex: none;
+  inline-size: 2.4rem;
+  block-size: 2.4rem;
+  padding: 0.55rem;
+  border-radius: 50%;
+  background: rgb(204 153 51 / 0.14);
+  fill: none;
+  stroke: var(--sa-brand-gold);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.contact-link__text {
+  display: grid;
+  line-height: 1.45;
+}
+
+.contact-link__label {
+  color: var(--sa-color-text-on-dark-muted);
+  font-size: var(--sa-font-size-caption);
+}
+
+.contact-link bdi {
+  font-weight: var(--sa-font-weight-bold);
+  overflow-wrap: anywhere;
+}
+
+.site-footer__body .contact-link:hover bdi {
+  color: #f3d58f;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
 /* Echoes the guide's gold band on dark pages (Observed, page 5). */
 .site-footer__band {
   position: relative;
@@ -515,7 +587,7 @@
 
 @media (min-width: 40rem) {
   .site-footer__inner {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .site-footer__identity {
@@ -554,10 +626,16 @@
   }
 }
 
+@media (min-width: 56rem) {
+  .site-footer__inner {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 @media (min-width: 64rem) {
   .site-footer__inner {
-    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
-    gap: var(--sa-space-7);
+    grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 0.8fr)) minmax(0, 1.1fr);
+    gap: var(--sa-space-6);
   }
 
   .site-footer__identity {

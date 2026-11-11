@@ -1,5 +1,5 @@
 {
- "total": 315,
+ "total": 356,
  "failed": [],
  "checks": [
   {
@@ -28,6 +28,16 @@
    "detail": ""
   },
   {
+   "check": "ar-mobile-390: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "ar-mobile-390: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -43,7 +53,7 @@
    "detail": ""
   },
   {
-   "check": "ar-mobile-390: Media Center in the main navigation",
+   "check": "ar-mobile-390: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -118,6 +128,16 @@
    "detail": ""
   },
   {
+   "check": "ar-tablet-834: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-tablet-834: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "ar-tablet-834: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -133,7 +153,7 @@
    "detail": ""
   },
   {
-   "check": "ar-tablet-834: Media Center in the main navigation",
+   "check": "ar-tablet-834: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -228,6 +248,16 @@
    "detail": ""
   },
   {
+   "check": "ar-laptop-1024: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-laptop-1024: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "ar-laptop-1024: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -243,7 +273,7 @@
    "detail": ""
   },
   {
-   "check": "ar-laptop-1024: Media Center in the main navigation",
+   "check": "ar-laptop-1024: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -338,6 +368,16 @@
    "detail": ""
   },
   {
+   "check": "ar-desktop-1280: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1280: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "ar-desktop-1280: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -353,7 +393,7 @@
    "detail": ""
   },
   {
-   "check": "ar-desktop-1280: Media Center in the main navigation",
+   "check": "ar-desktop-1280: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -448,6 +488,16 @@
    "detail": ""
   },
   {
+   "check": "ar-desktop-1440: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "ar-desktop-1440: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -463,7 +513,7 @@
    "detail": ""
   },
   {
-   "check": "ar-desktop-1440: Media Center in the main navigation",
+   "check": "ar-desktop-1440: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -558,6 +608,16 @@
    "detail": ""
   },
   {
+   "check": "ar-desktop-1920: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1920: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "ar-desktop-1920: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -573,7 +633,7 @@
    "detail": ""
   },
   {
-   "check": "ar-desktop-1920: Media Center in the main navigation",
+   "check": "ar-desktop-1920: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -663,6 +723,16 @@
    "detail": ""
   },
   {
+   "check": "en-mobile-390: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "en-mobile-390: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -678,7 +748,7 @@
    "detail": ""
   },
   {
-   "check": "en-mobile-390: Media Center in the main navigation",
+   "check": "en-mobile-390: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -753,6 +823,16 @@
    "detail": ""
   },
   {
+   "check": "en-tablet-834: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-tablet-834: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "en-tablet-834: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -768,7 +848,7 @@
    "detail": ""
   },
   {
-   "check": "en-tablet-834: Media Center in the main navigation",
+   "check": "en-tablet-834: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -863,6 +943,16 @@
    "detail": ""
   },
   {
+   "check": "en-laptop-1024: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-laptop-1024: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "en-laptop-1024: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -878,7 +968,7 @@
    "detail": ""
   },
   {
-   "check": "en-laptop-1024: Media Center in the main navigation",
+   "check": "en-laptop-1024: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -973,6 +1063,16 @@
    "detail": ""
   },
   {
+   "check": "en-desktop-1280: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1280: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "en-desktop-1280: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -988,7 +1088,7 @@
    "detail": ""
   },
   {
-   "check": "en-desktop-1280: Media Center in the main navigation",
+   "check": "en-desktop-1280: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -1083,6 +1183,16 @@
    "detail": ""
   },
   {
+   "check": "en-desktop-1440: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "en-desktop-1440: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -1098,7 +1208,7 @@
    "detail": ""
   },
   {
-   "check": "en-desktop-1440: Media Center in the main navigation",
+   "check": "en-desktop-1440: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -1193,6 +1303,16 @@
    "detail": ""
   },
   {
+   "check": "en-desktop-1920: footer contact: mailto, WhatsApp chat in a new tab, number kept left-to-right",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1920: «why the award» with four reasons",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "check": "en-desktop-1920: partners card floats across the rounded footer top",
    "ok": true,
    "detail": ""
@@ -1208,7 +1328,7 @@
    "detail": ""
   },
   {
-   "check": "en-desktop-1920: Media Center in the main navigation",
+   "check": "en-desktop-1920: six main pages, Governance before Media Center",
    "ok": true,
    "detail": ""
   },
@@ -1409,6 +1529,91 @@
   },
   {
    "check": "en-desktop-1440: Media Center page from the menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-mobile-390: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "ar-desktop-1440: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-mobile-390: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /about shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /journey shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /governance shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "en-desktop-1440: /media shows the owner content without horizontal scroll",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "governance page from the menu: current, four stations in order",
    "ok": true,
    "detail": ""
   },

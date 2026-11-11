@@ -78,12 +78,25 @@ export const pages: SitePage[] = [
     description: 'شروط التقدم المشتركة لمحاور الجائزة الثلاثة، والوثائق وأدلة الأثر المطلوبة، وقواعد منع تضارب المصالح، وشروط الفئات كاملة.',
   },
   {
+    href: '/governance',
+    label: 'الحوكمة',
+    labelEn: 'Governance',
+    description: 'منظومة الحوكمة في جائزة الدكتور عبد القادر سنكري: فحص الأهلية المبدئي، ولجان التحكيم المستقلة، والتحقق الميداني، ومصادقة مجلس الأمناء على النتائج.',
+  },
+  {
     href: '/media',
     label: 'المركز الإعلامي',
     labelEn: 'Media Center',
     description: 'المركز الإعلامي لجائزة الدكتور عبد القادر سنكري: أخبار الجائزة وبياناتها الرسمية، وشعاراتها الرسمية للاستخدام الإعلامي.',
   },
 ]
+
+/** A main page by its path; the navigation order may change, so pages are never looked up by position. */
+export function pageAt(list: SitePage[], href: string): SitePage {
+  const page = list.find((item) => item.href === href)
+  if (!page) throw new Error(`Unknown page ${href}`)
+  return page
+}
 
 export type PartnerKey = 'rowad' | 'aleppo-culture-directorate' | 'university-of-aleppo'
 
@@ -140,12 +153,6 @@ export const about = {
     'تبرز الجائزة قيمةً أخلاقية تجسّد الوفاء لمسيرة الدكتور عبد القادر سنكري في العطاء الإنساني والتنموي، وتهدف إلى تأسيس منصة سنوية سورية موثوقة تكتشف المبادرات والأفراد والفرق المغمورة التي تعمل بصمت وتصنع أثراً حقيقياً، وتكرّمها.',
   // Guide p. 16 (closing page).
   statement: 'لا تحتفي الجائزة بالإنجاز بوصفه نتيجة فحسب، بل بالقيمة التي يصنعها، وبالذاكرة التي يحفظها، وبالمبادرة التي تفتح طريقاً لغيرها.',
-  // Plan and terms: the award's aims.
-  aims: [
-    { title: 'اكتشاف الأثر المغمور', text: 'اكتشاف المبادرات والأفراد والفرق المغمورة التي تصنع أثراً حقيقياً وموثقاً، وتكريمها.' },
-    { title: 'حماية الذاكرة والتراث', text: 'حماية الذاكرة الجماعية والتراث، بوصفهما أثراً يُصان ويُشارك.' },
-    { title: 'التمكين بعد التكريم', text: 'ربط المكرَّمين بفرص التمكين والتدريب والتشبيك، لضمان استدامة التنمية المجتمعية.' },
-  ],
   // Terms and launch plan: governance commitments.
   values: [
     { title: 'الوفاء', text: 'وفاءٌ لمسيرة عطاء إنساني وتنموي، وللأثر الذي يصنعه أصحابه بعيداً عن الأضواء.' },
@@ -277,12 +284,56 @@ export const eligibility = {
   shared: 'تُطبق الشروط العامة على الفئات الست، إضافة إلى شروط كل فئة الواردة أدناه.',
 }
 
+// The owner's presentation (2026-11-11): «لماذا الجائزة؟».
+export const why = [
+  { title: 'اكتشاف المبادرات «المغمورة»', text: 'التي تعمل بصمت في الميدان' },
+  { title: 'صون الذاكرة الجماعية', text: 'وحماية التراث الثقافي السوري المادي واللامادي' },
+  { title: 'بناء منصة وطنية موثوقة', text: 'تضمن استدامة أثر المبادرات وتحويل العمل الإغاثي إلى تنمية مستدامة' },
+  { title: 'ترسيخ الوفاء', text: 'لمسيرة العطاء الإنساني والتنموي للدكتور عبد القادر سنكري' },
+]
+
+// The owner's presentation: «الغاية والأهداف الاستراتيجية».
+export const purpose = {
+  grand: 'بوفاءٍ للأثر الذي لا يغيب... نمكّن المبادرة لنحمي ذاكرة الوطن ونبني إنسان المستقبل',
+  objectives: [
+    'ترسيخ اسم الجائزة كمنصة سنوية تحظى بثقة المجتمع والشركاء',
+    'تكريم المبادرات المغمورة وتوسيع دائرة الاعتراف المجتمعي بها',
+    'بناء أرشيف معرفي ورقمي يوثق قصص الأثر والتراث السوري',
+    'تمكين المبادرات الفائزة عبر التدريب والتشبيك والمتابعة البعدية',
+    'رفع كفاءة وحوكمة العمل الأهلي والثقافي',
+  ],
+}
+
+// The owner's presentation: «منظومة الحوكمة» (four stations, in order).
+export type GovernanceStation = { key: 'eligibility' | 'committees' | 'field' | 'board'; title: string; text: string }
+
+export const governance: GovernanceStation[] = [
+  { key: 'eligibility', title: 'فحص الأهلية المبدئي', text: 'تدقيق الشروط الفنية والقانونية للملفات.' },
+  { key: 'committees', title: 'لجان تحكيم مستقلة', text: '3 إلى 5 خبراء متخصصين لكل محور.' },
+  { key: 'field', title: 'التحقق الميداني (العناية الواجبة)', text: 'زيارات واقعية لمطابقة التقارير بالواقع وسؤال المستفيدين.' },
+  { key: 'board', title: 'مجلس الأمناء', text: 'المصادقة الإجرائية واعتماد النتائج.' },
+]
+
+// The owner's presentation: «الدورة التشغيلية ومسار الجائزة».
+export const cycle = [
+  { title: 'المرحلة الأولى', points: ['إطلاق المنصة الإلكترونية', 'فحص الأهلية'] },
+  { title: 'المرحلة الثانية', points: ['التقييم المستقل', 'التحقق الميداني'] },
+  { title: 'المرحلة الثالثة', points: ['فعاليات أسبوع الجائزة', 'حفل الختام', 'المتابعة البعدية'] },
+]
+
+/** For enquiries and cooperation (supplied by the owner, 2026-11-11). The number opens a WhatsApp chat. */
+export const contact = {
+  email: 'award@onder1.org',
+  phone: '+90 555 109 05 89',
+  whatsapp: 'https://wa.me/905551090589',
+}
+
 export const closing = {
   // Guide p. 16.
   statement: 'إنها جائزة تحتفي بمن يصنع أثراً... ويبقيه حاضراً في الذاكرة والمجتمع',
 }
 
 /** The Arabic copy as one value; siteEn.ts has the same shape in English (use it through useSite). */
-export const siteAr = { award, organizations, pages, partners, hero, domains, about, legacy, confirmedSchedule, journey, eligibility, closing }
+export const siteAr = { award, organizations, pages, partners, why, purpose, governance, cycle, contact, hero, domains, about, legacy, confirmedSchedule, journey, eligibility, closing }
 
 export type SiteContent = typeof siteAr

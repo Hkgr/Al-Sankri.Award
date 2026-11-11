@@ -47,12 +47,51 @@ export const siteEn: SiteContent = {
       description: "The eligibility conditions shared by the award's three domains, the documents and evidence of impact required, the rules preventing conflicts of interest, and the complete category-specific conditions.",
     },
     {
+      href: '/governance',
+      label: 'Governance',
+      labelEn: 'Governance',
+      description: "The Dr. Abdulkader Sankari Award's governance system: initial eligibility screening, independent judging committees, field verification, and the Board of Trustees' approval of the results.",
+    },
+    {
       href: '/media',
       label: 'Media Center',
       labelEn: 'Media Center',
       description: "The Dr. Abdulkader Sankari Award's Media Center: the award's news and official statements, and its official logos for media use.",
     },
   ],
+
+  why: [
+    { title: 'Discovering “unsung” initiatives', text: 'that work quietly in the field' },
+    { title: 'Safeguarding collective memory', text: "and protecting Syria's tangible and intangible cultural heritage" },
+    { title: 'Building a trusted national platform', text: 'that sustains the impact of initiatives and turns relief work into sustainable development' },
+    { title: 'Upholding loyalty', text: "to Dr. Abdulkader Sankari's journey of humanitarian and development giving" },
+  ],
+
+  purpose: {
+    grand: "With loyalty to an impact that endures... we empower initiative to protect the nation's memory and build the people of the future",
+    objectives: [
+      'Establishing the award as an annual platform trusted by the community and partners',
+      'Honoring unsung initiatives and widening their recognition in the community',
+      'Building a knowledge and digital archive that documents stories of impact and Syrian heritage',
+      'Empowering winning initiatives through training, networking and follow-up',
+      'Raising the effectiveness and governance of civil and cultural work',
+    ],
+  },
+
+  governance: [
+    { key: 'eligibility', title: 'Initial eligibility screening', text: "Checking the files' technical and legal conditions." },
+    { key: 'committees', title: 'Independent judging committees', text: '3 to 5 specialist experts for each domain.' },
+    { key: 'field', title: 'Field verification (due diligence)', text: 'On-site visits to match reports with reality and to hear from beneficiaries.' },
+    { key: 'board', title: 'Board of Trustees', text: 'Procedural endorsement and approval of the results.' },
+  ],
+
+  cycle: [
+    { title: 'Stage one', points: ['Launching the online platform', 'Eligibility screening'] },
+    { title: 'Stage two', points: ['Independent evaluation', 'Field verification'] },
+    { title: 'Stage three', points: ['Award Week events', 'Closing ceremony', 'Follow-up'] },
+  ],
+
+  contact: siteAr.contact,
 
   partners: siteAr.partners.map((partner) => ({
     ...partner,
@@ -78,11 +117,6 @@ export const siteEn: SiteContent = {
     philosophy:
       "The award stands as a moral value expressing loyalty to Dr. Abdulkader Sankari's journey of humanitarian and development giving. It aims to establish a trusted annual Syrian platform that discovers and honors the lesser-known initiatives, individuals and teams that work quietly and create real impact.",
     statement: 'The award does not celebrate achievement only as a result, but the value it creates, the memory it preserves, and the initiative that opens a path for others.',
-    aims: [
-      { title: 'Discovering overlooked impact', text: 'Discovering and honoring the lesser-known initiatives, individuals and teams that create real, documented impact.' },
-      { title: 'Protecting memory and heritage', text: 'Protecting collective memory and heritage as impact that is safeguarded and shared.' },
-      { title: 'Empowerment after recognition', text: 'Connecting honorees with opportunities for empowerment, training and networking, to ensure the sustainability of community development.' },
-    ],
     values: [
       { title: 'Loyalty', text: 'Loyalty to a journey of humanitarian and development giving, and to the impact its people make away from the spotlight.' },
       { title: 'Documented impact', text: 'The award honors what has actually been achieved and is proven by evidence, not theoretical ideas or proposals whose implementation has not begun.' },

@@ -22,6 +22,7 @@ import { HomePage } from './pages/home/HomePage'
 import { PolicyPage } from './pages/policies/PolicyPage'
 import { AboutPage } from './pages/public/AboutPage'
 import { EligibilityDomainPage, EligibilityPage } from './pages/public/EligibilityPage'
+import { GovernancePage } from './pages/public/GovernancePage'
 import { JourneyPage } from './pages/public/JourneyPage'
 import { MediaPage } from './pages/public/MediaPage'
 import { domainBySlug } from './content/site'
@@ -69,6 +70,8 @@ function CurrentPage() {
       return <JourneyPage />
     case '/eligibility':
       return <EligibilityPage />
+    case '/governance':
+      return <GovernancePage />
     case '/media':
       return <MediaPage />
     case '/login':
