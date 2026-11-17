@@ -21,7 +21,7 @@ test('the approved conditions are complete in both languages and use the same si
 })
 
 test('public pages group the repeated poetry portal condition under general conditions in both languages', () => {
-  const shared = JSON.parse(readFileSync(new URL('../../backend/resources/award/terms-2026-11-10.json', import.meta.url), 'utf8'))
+  const shared = JSON.parse(readFileSync(new URL('../../backend/resources/award/terms-2026-11-17.json', import.meta.url), 'utf8'))
   assert.deepEqual(awardTerms, shared)
   for (const locale of ['ar', 'en'] as const) {
     const before = awardTerms[locale].domains.map((domain) => [domain.code, domain.subcategories.map((category) => category.code).sort()])
@@ -57,6 +57,19 @@ test('new deletion and consent messages have complete English and Arabic catalog
     assert.ok(en[key], key)
     assert.doesNotMatch(en[key], /[\u0600-\u06ff]/, key)
   }
+})
+
+test('the new terms revision expands anonymity while preserving the other approved conditions', () => {
+  const previous = JSON.parse(readFileSync(new URL('../../backend/resources/award/terms-2026-11-10.json', import.meta.url), 'utf8'))
+  assert.equal(awardTerms.revision, '2026-11-17')
+  for (const locale of ['ar', 'en'] as const) {
+    assert.deepEqual(awardTerms[locale].general.slice(0, 6), previous[locale].general.slice(0, 6))
+    assert.deepEqual(awardTerms[locale].domains, previous[locale].domains)
+  }
+  assert.equal(awardTerms.ar.general[6].title, 'إخفاء الهوية في النصوص والوثائق')
+  assert.equal(awardTerms.ar.general[6].text, 'يجب إخفاء هوية المترشح من النصوص والوثائق المقدّمة للتحكيم، وإزالة اسمه وتوقيعه وأي بيانات أو إشارات تدلّ على صاحبها.')
+  assert.equal(awardTerms.en.general[6].title, 'Anonymity in texts and documents')
+  assert.equal(awardTerms.en.general[6].text, 'The candidate’s identity must be concealed in the texts and documents submitted for judging. Their name, signature, and any data or indications that identify their author must be removed.')
 })
 
 test('the legacy official PNG source remains intact for the Arabic reports', () => {

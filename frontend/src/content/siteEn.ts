@@ -80,7 +80,7 @@ export const siteEn: SiteContent = {
 
   governance: [
     { key: 'eligibility', title: 'Initial eligibility screening', text: "Checking the files' technical and legal conditions." },
-    { key: 'committees', title: 'Independent judging committees', text: '3 to 5 specialist experts for each domain.' },
+    { key: 'committees', title: 'Independent judging committees', text: '3 or 5 specialist judges for each main domain.' },
     { key: 'field', title: 'Field verification (due diligence)', text: 'On-site visits to match reports with reality and to hear from beneficiaries.' },
     { key: 'board', title: 'Board of Trustees', text: 'Procedural endorsement and approval of the results.' },
   ],
@@ -162,7 +162,7 @@ export const siteEn: SiteContent = {
     {
       key: 'preparation',
       title: 'Preparation',
-      summary: 'Planning the award and preparing its documents, criteria and online platform.',
+      summary: 'Preparations and groundwork for launching the award before applications open.',
       points: ['Consultative meetings with official institutions and civil society organizations.', "Planning the award and preparing its documents and criteria.", 'Preparing the online application platform.'],
     },
     {

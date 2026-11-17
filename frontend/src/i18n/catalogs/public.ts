@@ -25,7 +25,7 @@ export const ar: Dict = {
   'home.journeyMore': 'تفاصيل مسيرة الجائزة',
   'home.platformTitle': 'منصة الترشح الإلكترونية',
   'home.platformText':
-    'يُقدَّم ملف الترشح عبر المنصة: البيانات الأساسية، ثم فئة الترشح وبيانات العمل، ثم ملفات العمل وأدلة أثره. يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق قبل إحالته إلى لجنة التحكيم المختصة.',
+    'يُقدَّم ملف الترشح عبر المنصة: البيانات الأساسية، ثم فئة الترشح وبيانات العمل، ثم ملفات العمل وأدلة أثره. يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق، ثم يحال إلى لجنة تحكيم متخصصة بمحوره الرئيسي، وتتألف كل لجنة من 3 أو 5 محكّمين.',
 
   'footer.pages': 'صفحات الموقع',
   'footer.domains': 'محاور الجائزة',
@@ -59,7 +59,7 @@ export const ar: Dict = {
   'eligibility.evidence': 'الوثائق وأدلة الأثر',
   'eligibility.principles': 'مبادئ التقييم',
   'eligibility.principlesIntro': 'تُقيَّم الملفات المحالة إلى لجان التحكيم وفق معايير الجودة والحوكمة التالية:',
-  'eligibility.flowNote': 'يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق، ثم تحيله إدارة الجائزة إلى لجنة تحكيم محوره الرئيسي، وتتألف كل لجنة من 3 أو 5 محكّمين.',
+  'eligibility.flowNote': 'يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق، ثم يحال إلى لجنة تحكيم متخصصة بمحوره الرئيسي، وتتألف كل لجنة من 3 أو 5 محكّمين.',
   'eligibility.domainEyebrow': 'محور رئيسي',
   'eligibility.domainMeta': 'محور {domain} في جائزة الدكتور عبد القادر سنكري: {subs}، وشروط التقدم المشتركة.',
   'eligibility.subcategories': 'فئات المحور',
@@ -100,7 +100,7 @@ export const ar: Dict = {
   'governance.flow': 'محطات الحوكمة بالترتيب',
   'governance.stepN': 'المحطة {n}: ',
   'governance.conflict': 'منع تضارب المصالح',
-  'governance.journeyLink': 'مسيرة الجائزة ومواعيدها',
+  'governance.journeyLink': 'مسيرة الجائزة',
   'governance.eligibilityLink': 'شروط التقدم كاملة',
 
   'contact.title': 'تواصل معنا',
@@ -141,7 +141,7 @@ export const en: Dict = {
   'home.journeyMore': 'Award journey details',
   'home.platformTitle': 'The online application platform',
   'home.platformText':
-    'Applications are submitted through the platform: basic information, then nomination category and work details, then work files and evidence of impact. Every submitted application reaches the award administration first for review before being referred to the relevant judging committee.',
+    'Applications are submitted through the platform: basic information, then nomination category and work details, then work files and evidence of impact. Every submitted application first reaches the award administration for review, then is referred to a judging committee specializing in its main domain. Each committee consists of 3 or 5 judges.',
 
   'footer.pages': 'Site pages',
   'footer.domains': 'Award domains',
@@ -177,7 +177,7 @@ export const en: Dict = {
   'eligibility.principles': 'Evaluation principles',
   'eligibility.principlesIntro': 'Applications referred to the judging committees are evaluated against the following quality and governance criteria:',
   'eligibility.flowNote':
-    'Every submitted application reaches the award administration first for review, which then refers it to the judging committee of its main domain. Each committee has 3 or 5 judges.',
+    'Every submitted application first reaches the award administration for review, then is referred to a judging committee specializing in its main domain. Each committee consists of 3 or 5 judges.',
   'eligibility.domainEyebrow': 'Main domain',
   'eligibility.domainMeta': 'The {domain} domain of the Dr. Abdulkader Sankari Award: {subs}, and the shared eligibility conditions.',
   'eligibility.subcategories': 'Domain categories',
@@ -218,7 +218,7 @@ export const en: Dict = {
   'governance.flow': 'The governance stations, in order',
   'governance.stepN': 'Station {n}: ',
   'governance.conflict': 'Preventing conflicts of interest',
-  'governance.journeyLink': 'The award journey and its dates',
+  'governance.journeyLink': 'Award journey',
   'governance.eligibilityLink': 'The full eligibility conditions',
 
   'contact.title': 'Contact us',

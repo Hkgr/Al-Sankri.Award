@@ -9,6 +9,7 @@ use App\Models\ApplicantIndividualDetail;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\ActsAsSpaBrowser;
 use Tests\Feature\Candidate\InteractsWithNominationStage;
 use Tests\TestCase;
@@ -40,12 +41,22 @@ class AwardTermsPublicationTest extends TestCase
         }
     }
 
-    public function test_targeted_publication_preserves_history_and_requires_fresh_explicit_consent(): void
+    public static function priorRevisions(): array
     {
-        $this->legacyCycle();
+        return ['original terms' => ['2026-11-02'], 'document-only anonymity' => ['2026-11-10']];
+    }
+
+    #[DataProvider('priorRevisions')]
+    public function test_targeted_publication_preserves_history_and_requires_fresh_explicit_consent(string $revision): void
+    {
+        $this->legacyCycle($revision);
         $original = $this->candidate;
         $this->readyDraft($original);
         $old = $this->read('/api/candidate/review')->assertOk()->json('data.terms');
+        if ($revision === '2026-11-10') {
+            $this->assertStringContainsString('إخفاء الهوية داخل الوثائق', $old['body_ar']);
+            $this->assertStringContainsString('Anonymity within the documents', $old['body_en']);
+        }
         $this->send('/api/candidate/submission', ['reviewed_revision' => 0])->assertCreated();
         $oldVersion = DB::table('application_versions')->sole();
         $oldConsent = DB::table('application_consents')->sole();
@@ -68,6 +79,8 @@ class AwardTermsPublicationTest extends TestCase
         $this->assertNotSame((int) $old['id'], (int) $current->id);
         $this->assertSame(app(AwardTerms::class)->body('ar'), $current->body_ar);
         $this->assertSame(app(AwardTerms::class)->body('en'), $current->body_en);
+        $this->assertStringContainsString('يجب إخفاء هوية المترشح من النصوص والوثائق المقدّمة للتحكيم، وإزالة اسمه وتوقيعه وأي بيانات أو إشارات تدلّ على صاحبها.', $current->body_ar);
+        $this->assertStringContainsString('The candidate’s identity must be concealed in the texts and documents submitted for judging. Their name, signature, and any data or indications that identify their author must be removed.', $current->body_en);
         $this->assertSame(hash('sha256', $current->body_ar."\n".$current->body_en), $current->content_hash);
         $this->read('/api/candidate/review')->assertJsonPath('data.terms.id', (int) $current->id)->assertJsonPath('data.terms.body_en', $current->body_en);
         $this->send('/api/candidate/submission', ['reviewed_revision' => 0, 'terms_version_id' => $old['id'], 'accepted_terms' => true])->assertConflict()->assertJsonPath('code', 'terms_changed');
@@ -108,20 +121,22 @@ class AwardTermsPublicationTest extends TestCase
         $this->artisan('award-terms:publish', ['cycle' => 'missing', '--actor' => $this->operator->email])->assertExitCode(2);
     }
 
-    private function legacyTerms(): AwardTerms
+    private function legacyTerms(string $revision = '2026-11-02'): AwardTerms
     {
-        return new class extends AwardTerms
+        return new class($revision) extends AwardTerms
         {
+            public function __construct(private string $revision) {}
+
             public function content(): array
             {
-                return json_decode(file_get_contents(resource_path('award/terms-2026-11-02.json')), true, flags: JSON_THROW_ON_ERROR);
+                return json_decode(file_get_contents(resource_path("award/terms-{$this->revision}.json")), true, flags: JSON_THROW_ON_ERROR);
             }
         };
     }
 
-    private function legacyCycle(): void
+    private function legacyCycle(string $revision = '2026-11-02'): void
     {
-        $this->app->instance(AwardTerms::class, $this->legacyTerms());
+        $this->app->instance(AwardTerms::class, $this->legacyTerms($revision));
         $this->configureCycle();
         $this->app->forgetInstance(AwardTerms::class);
         DB::table('cycle_domain_subcategories')->where('code', 'poetry')->update(['name_ar' => 'الشعر']);
