@@ -1,6 +1,5 @@
 import { Fragment } from 'react'
 import type { CSSProperties } from 'react'
-import { Countdown } from '../../components/Countdown'
 import { DomainTrophy } from '../../components/DomainTrophy'
 import { Photo } from '../../components/Photo'
 import { PlatformActions } from '../../components/PlatformActions'
@@ -48,7 +47,7 @@ export function HomePage() {
 
   return (
     <>
-      {/* The ceremonial hero: the award name, the slogan and the countdown beside the portrait in its gold orbits. */}
+      {/* The ceremonial hero: the award name and slogan beside the portrait in its gold orbits. */}
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero__specks" aria-hidden="true">
           {SPECKS.map((speck) => (
@@ -85,7 +84,6 @@ export function HomePage() {
             </h1>
             <p className="hero__lead">{hero.lead}</p>
             <PlatformActions phase={phase} secondary={{ href: '/eligibility', label: t('actions.readEligibility') }} />
-            <Countdown schedule={schedule} offset={offset} />
           </div>
 
           <figure className="hero__portrait">

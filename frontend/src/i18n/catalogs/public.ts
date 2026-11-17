@@ -22,10 +22,10 @@ export const ar: Dict = {
   'home.domainLink': 'شروط المحور وفئاته',
   'home.journeyEyebrow': 'مسيرة الجائزة',
   'home.journeyTitle': 'من الإعداد إلى أسبوع الجائزة',
-  'home.journeyMore': 'تفاصيل مسيرة الجائزة ومواعيدها',
+  'home.journeyMore': 'تفاصيل مسيرة الجائزة',
   'home.platformTitle': 'منصة الترشح الإلكترونية',
   'home.platformText':
-    'يُقدَّم ملف الترشح عبر المنصة: البيانات الأساسية، ثم فئة الترشح وبيانات العمل، ثم ملفات العمل وأدلة أثره. يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق قبل إحالته إلى لجنة التحكيم المختصة.',
+    'يُقدَّم ملف الترشح عبر المنصة: البيانات الأساسية، ثم فئة الترشح وبيانات العمل، ثم ملفات العمل وأدلة أثره. يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق، ثم يحال إلى لجنة تحكيم متخصصة بمحوره الرئيسي، وتتألف كل لجنة من 3 أو 5 محكّمين.',
 
   'footer.pages': 'صفحات الموقع',
   'footer.domains': 'محاور الجائزة',
@@ -46,16 +46,9 @@ export const ar: Dict = {
   'about.legacyTitle': 'الدكتور عبد القادر سنكري',
 
   'journey.title': 'مسيرة الجائزة',
-  'journey.intro': 'تمضي الدورة الأولى للجائزة في مراحل متتابعة تضمن النزاهة والحوكمة: من الإعداد، إلى استقبال الترشيحات وتدقيقها، فالتحكيم المستقل، وصولاً إلى أسبوع الجائزة المخطط له.',
+  'journey.intro': 'تبدأ مسيرة الجائزة بالإعداد، ثم استقبال ملفات الترشح وتدقيقها، فالتحكيم المستقل، وصولاً إلى التكريم.',
   'journey.phases': 'مراحل الدورة الأولى',
-  'journey.phaseN': 'المرحلة {n}: ',
-  'journey.note': 'هذه الدورة الأولى للجائزة. يُعلن موعد أسبوع الجائزة وفعالياته لاحقاً، وتعلن الجائزة نتائجها رسمياً خلاله.',
-  'journey.status.current': 'جارية الآن',
-  'journey.status.upcoming': 'مقبلة',
-  'journey.status.unavailable': 'الترشح غير متاح حالياً',
-  'journey.status.ended': 'انتهت',
-  'journey.status.planned': 'مخطط لها',
-  'journey.status.screening': 'مع وصول الملفات المرسلة',
+  'journey.phaseN': 'المرحلة {n} — ',
 
   'eligibility.title': 'شروط التقدم',
   'eligibility.eyebrow': 'الدورة الأولى',
@@ -66,7 +59,7 @@ export const ar: Dict = {
   'eligibility.evidence': 'الوثائق وأدلة الأثر',
   'eligibility.principles': 'مبادئ التقييم',
   'eligibility.principlesIntro': 'تُقيَّم الملفات المحالة إلى لجان التحكيم وفق معايير الجودة والحوكمة التالية:',
-  'eligibility.flowNote': 'يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق، ثم تحيله إدارة الجائزة إلى لجنة تحكيم محوره الرئيسي، وتتألف كل لجنة من 3 أو 5 محكّمين.',
+  'eligibility.flowNote': 'يصل كل ملف مرسل إلى إدارة الجائزة أولاً للتدقيق، ثم يحال إلى لجنة تحكيم متخصصة بمحوره الرئيسي، وتتألف كل لجنة من 3 أو 5 محكّمين.',
   'eligibility.domainEyebrow': 'محور رئيسي',
   'eligibility.domainMeta': 'محور {domain} في جائزة الدكتور عبد القادر سنكري: {subs}، وشروط التقدم المشتركة.',
   'eligibility.subcategories': 'فئات المحور',
@@ -74,24 +67,6 @@ export const ar: Dict = {
   'eligibility.others': 'المحوران الآخران',
   'eligibility.listSeparator': '، ',
 
-  'countdown.upcoming': 'يُفتح باب الترشح بعد',
-  'countdown.open': 'يغلق باب الترشح بعد',
-  'countdown.unavailable': 'الترشح غير متاح حالياً',
-  'countdown.closed': 'أُغلق باب الترشح',
-  'countdown.judged': 'انتهت فترة التحكيم',
-  'countdown.unknown': 'مواعيد الدورة الأولى',
-  'countdown.days': 'يوماً',
-  'countdown.hours': 'ساعة',
-  'countdown.minutes': 'دقيقة',
-  'countdown.seconds': 'ثانية',
-  'countdown.timerOpen': 'الوقت المتبقي حتى إغلاق باب الترشح',
-  'countdown.timerUpcoming': 'الوقت المتبقي حتى فتح باب الترشح',
-  'countdown.deadlineLabel': 'موعد إغلاق باب الترشح',
-  'countdown.judgingLabel': 'فترة التحكيم',
-  'countdown.lineClosed': 'أُغلق باب الترشح {date} — بتوقيت دمشق',
-  'countdown.lineUnavailable': 'الموعد المحدد لإغلاق باب الترشح {date} — بتوقيت دمشق',
-  'countdown.lineOpen': 'يغلق باب الترشح {date} — بتوقيت دمشق',
-  'countdown.judgingLine': 'فترة التحكيم: {period}',
 
   'footer.partners': 'الجهة المنفذة والجهات المشاركة',
 
@@ -118,8 +93,6 @@ export const ar: Dict = {
   'about.grand': 'الغاية الكبرى',
   'about.objectives': 'الأهداف الرئيسية',
 
-  'journey.cycleTitle': 'الدورة التشغيلية ومسار الجائزة',
-  'journey.cycleStages': 'مراحل الدورة التشغيلية',
 
   'governance.eyebrow': 'النزاهة والشفافية',
   'governance.title': 'منظومة الحوكمة',
@@ -127,7 +100,7 @@ export const ar: Dict = {
   'governance.flow': 'محطات الحوكمة بالترتيب',
   'governance.stepN': 'المحطة {n}: ',
   'governance.conflict': 'منع تضارب المصالح',
-  'governance.journeyLink': 'مسيرة الجائزة ومواعيدها',
+  'governance.journeyLink': 'مسيرة الجائزة',
   'governance.eligibilityLink': 'شروط التقدم كاملة',
 
   'contact.title': 'تواصل معنا',
@@ -165,10 +138,10 @@ export const en: Dict = {
   'home.domainLink': 'Domain conditions and categories',
   'home.journeyEyebrow': 'Award journey',
   'home.journeyTitle': 'From preparation to Award Week',
-  'home.journeyMore': 'Award journey details and dates',
+  'home.journeyMore': 'Award journey details',
   'home.platformTitle': 'The online application platform',
   'home.platformText':
-    'Applications are submitted through the platform: basic information, then nomination category and work details, then work files and evidence of impact. Every submitted application reaches the award administration first for review before being referred to the relevant judging committee.',
+    'Applications are submitted through the platform: basic information, then nomination category and work details, then work files and evidence of impact. Every submitted application first reaches the award administration for review, then is referred to a judging committee specializing in its main domain. Each committee consists of 3 or 5 judges.',
 
   'footer.pages': 'Site pages',
   'footer.domains': 'Award domains',
@@ -190,16 +163,9 @@ export const en: Dict = {
 
   'journey.title': 'Award journey',
   'journey.intro':
-    'The first cycle of the award moves through consecutive stages that ensure integrity and governance: from preparation, to receiving and reviewing applications, then independent judging, and on to the planned Award Week.',
+    'The award journey begins with preparation, followed by receiving and reviewing applications, independent judging and recognition.',
   'journey.phases': 'Stages of the first cycle',
-  'journey.phaseN': 'Stage {n}: ',
-  'journey.note': 'This is the first cycle of the award. The date and events of Award Week will be announced later, and the award announces its results officially during it.',
-  'journey.status.current': 'In progress',
-  'journey.status.upcoming': 'Upcoming',
-  'journey.status.unavailable': 'Applications currently unavailable',
-  'journey.status.ended': 'Ended',
-  'journey.status.planned': 'Planned',
-  'journey.status.screening': 'As submitted applications arrive',
+  'journey.phaseN': 'Stage {n} — ',
 
   'eligibility.title': 'Eligibility',
   'eligibility.eyebrow': 'First cycle',
@@ -211,7 +177,7 @@ export const en: Dict = {
   'eligibility.principles': 'Evaluation principles',
   'eligibility.principlesIntro': 'Applications referred to the judging committees are evaluated against the following quality and governance criteria:',
   'eligibility.flowNote':
-    'Every submitted application reaches the award administration first for review, which then refers it to the judging committee of its main domain. Each committee has 3 or 5 judges.',
+    'Every submitted application first reaches the award administration for review, then is referred to a judging committee specializing in its main domain. Each committee consists of 3 or 5 judges.',
   'eligibility.domainEyebrow': 'Main domain',
   'eligibility.domainMeta': 'The {domain} domain of the Dr. Abdulkader Sankari Award: {subs}, and the shared eligibility conditions.',
   'eligibility.subcategories': 'Domain categories',
@@ -219,24 +185,6 @@ export const en: Dict = {
   'eligibility.others': 'The other two domains',
   'eligibility.listSeparator': ', ',
 
-  'countdown.upcoming': 'Applications open in',
-  'countdown.open': 'Applications close in',
-  'countdown.unavailable': 'Applications are currently unavailable',
-  'countdown.closed': 'Applications are closed',
-  'countdown.judged': 'The judging period has ended',
-  'countdown.unknown': 'First cycle dates',
-  'countdown.days': 'days',
-  'countdown.hours': 'hours',
-  'countdown.minutes': 'minutes',
-  'countdown.seconds': 'seconds',
-  'countdown.timerOpen': 'Time remaining until applications close',
-  'countdown.timerUpcoming': 'Time remaining until applications open',
-  'countdown.deadlineLabel': 'Application closing date',
-  'countdown.judgingLabel': 'Judging period',
-  'countdown.lineClosed': 'Applications closed {date} — Damascus time',
-  'countdown.lineUnavailable': 'The set date for applications to close: {date} — Damascus time',
-  'countdown.lineOpen': 'Applications close {date} — Damascus time',
-  'countdown.judgingLine': 'Judging period: {period}',
 
   'footer.partners': 'Implementing and participating organizations',
 
@@ -263,8 +211,6 @@ export const en: Dict = {
   'about.grand': 'The overarching purpose',
   'about.objectives': 'Main objectives',
 
-  'journey.cycleTitle': 'The operational cycle and the award path',
-  'journey.cycleStages': 'Stages of the operational cycle',
 
   'governance.eyebrow': 'Integrity and transparency',
   'governance.title': 'Governance system',
@@ -272,7 +218,7 @@ export const en: Dict = {
   'governance.flow': 'The governance stations, in order',
   'governance.stepN': 'Station {n}: ',
   'governance.conflict': 'Preventing conflicts of interest',
-  'governance.journeyLink': 'The award journey and its dates',
+  'governance.journeyLink': 'Award journey',
   'governance.eligibilityLink': 'The full eligibility conditions',
 
   'contact.title': 'Contact us',

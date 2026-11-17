@@ -38,7 +38,7 @@ export const siteEn: SiteContent = {
       href: '/journey',
       label: 'Award journey',
       labelEn: 'Award journey',
-      description: 'The stages of the first cycle: preparation, launch and receiving applications, administrative review, independent judging, and the planned Award Week.',
+      description: 'The award stages in sequence, from preparation to receiving applications, administrative review, independent judging and recognition.',
     },
     {
       href: '/eligibility',
@@ -61,7 +61,7 @@ export const siteEn: SiteContent = {
   ],
 
   why: [
-    { title: 'Discovering “unsung” initiatives', text: 'that work quietly in the field' },
+    { title: 'Discovering “overlooked” initiatives', text: 'that work quietly in the field' },
     { title: 'Safeguarding collective memory', text: "and protecting Syria's tangible and intangible cultural heritage" },
     { title: 'Building a trusted national platform', text: 'that sustains the impact of initiatives and turns relief work into sustainable development' },
     { title: 'Upholding loyalty', text: "to Dr. Abdulkader Sankari's journey of humanitarian and development giving" },
@@ -71,7 +71,7 @@ export const siteEn: SiteContent = {
     grand: "With loyalty to an impact that endures... we empower initiative to protect the nation's memory and build the people of the future",
     objectives: [
       'Establishing the award as an annual platform trusted by the community and partners',
-      'Honoring unsung initiatives and widening their recognition in the community',
+      'Honoring overlooked initiatives and widening their recognition in the community',
       'Building a knowledge and digital archive that documents stories of impact and Syrian heritage',
       'Empowering winning initiatives through training, networking and follow-up',
       'Raising the effectiveness and governance of civil and cultural work',
@@ -80,7 +80,7 @@ export const siteEn: SiteContent = {
 
   governance: [
     { key: 'eligibility', title: 'Initial eligibility screening', text: "Checking the files' technical and legal conditions." },
-    { key: 'committees', title: 'Independent judging committees', text: '3 to 5 specialist experts for each domain.' },
+    { key: 'committees', title: 'Independent judging committees', text: '3 or 5 specialist judges for each main domain.' },
     { key: 'field', title: 'Field verification (due diligence)', text: 'On-site visits to match reports with reality and to hear from beneficiaries.' },
     { key: 'board', title: 'Board of Trustees', text: 'Procedural endorsement and approval of the results.' },
   ],
@@ -115,7 +115,7 @@ export const siteEn: SiteContent = {
 
   about: {
     philosophy:
-      "The award stands as a moral value expressing loyalty to Dr. Abdulkader Sankari's journey of humanitarian and development giving. It aims to establish a trusted annual Syrian platform that discovers and honors the lesser-known initiatives, individuals and teams that work quietly and create real impact.",
+      "The award stands as a moral value expressing loyalty to Dr. Abdulkader Sankari's journey of humanitarian and development giving. It aims to establish a trusted annual Syrian platform that discovers and honors overlooked initiatives, individuals and teams that work quietly and create real impact.",
     statement: 'The award does not celebrate achievement only as a result, but the value it creates, the memory it preserves, and the initiative that opens a path for others.',
     values: [
       { title: 'Loyalty', text: 'Loyalty to a journey of humanitarian and development giving, and to the impact its people make away from the spotlight.' },
@@ -162,7 +162,7 @@ export const siteEn: SiteContent = {
     {
       key: 'preparation',
       title: 'Preparation',
-      summary: 'Setting up the award before applications open.',
+      summary: 'Preparations and groundwork for launching the award before applications open.',
       points: ['Consultative meetings with official institutions and civil society organizations.', "Planning the award and preparing its documents and criteria.", 'Preparing the online application platform.'],
     },
     {
@@ -196,9 +196,9 @@ export const siteEn: SiteContent = {
     {
       key: 'recognition',
       title: 'Award Week and recognition',
-      summary: 'A planned stage; its date will be announced later.',
+      summary: 'Award events, announcing the winners and recognizing impact.',
       points: [
-        'Planned interactive events: art exhibitions, workshops, performances and the closing ceremony.',
+        'Art exhibitions, workshops, performances and the closing ceremony.',
         'Announcement of the winners and the financial and development recognition during Award Week.',
         'Then connecting the honorees with opportunities for empowerment, training and networking.',
       ],

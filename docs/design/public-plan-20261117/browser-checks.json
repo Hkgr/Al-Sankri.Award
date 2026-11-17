@@ -1,0 +1,236 @@
+{
+  "reviewedCommit": "607626b6b98328a39f0924023de5f9ed69b981eb",
+  "termsRevision": "2026-11-17",
+  "browser": "Chromium via in-app browser",
+  "routes": [
+    {
+      "dir": "rtl",
+      "hash": "",
+      "lang": "ar",
+      "path": "/journey",
+      "scrollWidth": 1425,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "journey-ar-desktop.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "#journey-title",
+      "lang": "ar",
+      "path": "/",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "home-ar-desktop.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "#platform-title",
+      "lang": "ar",
+      "path": "/",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "home-flow-ar-desktop.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "",
+      "lang": "ar",
+      "path": "/eligibility/culture-and-arts",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "poetry-ar-desktop.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "",
+      "journeyLink": "مسيرة الجائزة",
+      "lang": "ar",
+      "path": "/governance",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "governance-ar-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "#journey-title",
+      "lang": "en",
+      "path": "/",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "home-en-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "#platform-title",
+      "lang": "en",
+      "path": "/",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "home-flow-en-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "",
+      "lang": "en",
+      "path": "/journey",
+      "scrollWidth": 1425,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "journey-en-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "",
+      "lang": "en",
+      "path": "/eligibility/culture-and-arts",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "poetry-en-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "",
+      "journeyLink": "Award journey",
+      "lang": "en",
+      "path": "/governance",
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "governance-en-desktop.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "#journey-title",
+      "lang": "ar",
+      "path": "/",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "home-ar-mobile.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "#platform-title",
+      "lang": "ar",
+      "path": "/",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "home-flow-ar-mobile.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "",
+      "lang": "ar",
+      "path": "/journey",
+      "scrollWidth": 375,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "journey-ar-mobile.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "",
+      "lang": "ar",
+      "path": "/eligibility/culture-and-arts",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "poetry-ar-mobile.jpg"
+    },
+    {
+      "dir": "rtl",
+      "hash": "",
+      "journeyLink": "مسيرة الجائزة",
+      "lang": "ar",
+      "path": "/governance",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "governance-ar-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "#journey-title",
+      "lang": "en",
+      "path": "/",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "home-en-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "#platform-title",
+      "lang": "en",
+      "path": "/",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "home-flow-en-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "",
+      "lang": "en",
+      "path": "/journey",
+      "scrollWidth": 375,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "journey-en-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "",
+      "lang": "en",
+      "path": "/eligibility/culture-and-arts",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "poetry-en-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "hash": "",
+      "journeyLink": "Award journey",
+      "lang": "en",
+      "path": "/governance",
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "governance-en-mobile.jpg"
+    }
+  ],
+  "console": [],
+  "navigation": {
+    "governanceJourneyLink": true,
+    "languageSwitch": true
+  }
+}

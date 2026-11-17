@@ -84,7 +84,7 @@ class NominationDetailsTest extends TestCase
         $domains = $this->read('/api/candidate/nomination-details')->assertOk()->json('options.domains');
 
         $this->assertSame([
-            ['code' => 'culture_and_arts', 'name' => 'الثقافة والفنون', 'artwork' => 'domain-culture-and-arts', 'subcategories' => [['code' => 'poetry', 'name' => 'الشعر العامودي'], ['code' => 'story', 'name' => 'القصة القصيرة']]],
+            ['code' => 'culture_and_arts', 'name' => 'الثقافة والفنون', 'artwork' => 'domain-culture-and-arts', 'subcategories' => [['code' => 'poetry', 'name' => 'الشعر العمودي'], ['code' => 'story', 'name' => 'القصة القصيرة']]],
             ['code' => 'heritage', 'name' => 'التراث', 'artwork' => 'domain-tangible-and-intangible-heritage', 'subcategories' => [['code' => 'tangible_heritage', 'name' => 'التراث المادي'], ['code' => 'intangible_heritage', 'name' => 'التراث اللامادي']]],
             // Creativity uses the approved former Volunteer Work artwork.
             ['code' => 'creativity', 'name' => 'الإبداع', 'artwork' => 'domain-volunteer-work', 'subcategories' => [

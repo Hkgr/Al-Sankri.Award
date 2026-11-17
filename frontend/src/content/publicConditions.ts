@@ -1,7 +1,22 @@
 import { awardTerms } from './awardTerms.ts'
 
-/** Formatting wrapper over the same approved source used by guidance and server-side consent. */
-export const publicConditions = awardTerms
+/** The public page groups shared conditions once, above the category-specific ones. */
+function forPublicPages(locale: 'ar' | 'en') {
+  const content = awardTerms[locale]
+  const portalCondition = content.general[5].text
+  return {
+    ...content,
+    domains: content.domains.map((domain) => ({
+      ...domain,
+      subcategories: domain.subcategories.map((category) => ({
+        ...category,
+        requirements: category.code === 'poetry' ? category.requirements.filter((condition) => condition !== portalCondition) : category.requirements,
+      })),
+    })),
+  }
+}
+
+export const publicConditions = { ar: forPublicPages('ar'), en: forPublicPages('en') }
 
 /** Keep the organization link structured in the numbered conditions as well as the warning. */
 export function generalConditions(locale: 'ar' | 'en') {

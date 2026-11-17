@@ -300,12 +300,6 @@
   font-weight: var(--sa-font-weight-bold);
 }
 
-.timeline__phase[data-tone='planned'] .timeline__marker {
-  border: var(--sa-border-width-control) dashed var(--sa-color-text);
-  background: var(--sa-color-surface-raised);
-  color: var(--sa-color-text);
-}
-
 .timeline__card {
   display: grid;
   gap: var(--sa-space-3);
@@ -315,54 +309,13 @@
   background: var(--sa-color-surface-raised);
 }
 
-.timeline__phase[data-tone='current'] .timeline__card {
-  border-color: var(--sa-color-border-strong);
-  box-shadow: var(--sa-shadow-raised);
-}
-
-.timeline__head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sa-space-2) var(--sa-space-4);
-  align-items: center;
-}
-
 .timeline__title {
   font-size: var(--sa-font-size-h3);
-}
-
-/* The status is a word; the style only supports it. */
-.timeline__status {
-  padding: 0 var(--sa-space-3);
-  border: var(--sa-border-width-hairline) solid var(--sa-color-border-control);
-  border-radius: 999px;
-  font-size: var(--sa-font-size-small);
-  font-weight: var(--sa-font-weight-medium);
-  line-height: 1.9;
-}
-
-.timeline__phase[data-tone='current'] .timeline__status {
-  border-color: var(--sa-color-surface-dark);
-  background: var(--sa-color-surface-dark);
-  color: var(--sa-color-text-on-dark);
-}
-
-.timeline__phase[data-tone='planned'] .timeline__status {
-  border-style: dashed;
 }
 
 .timeline__summary {
   color: var(--sa-color-text-muted);
   font-size: var(--sa-font-size-lead);
-}
-
-.timeline__date {
-  justify-self: start;
-  padding: var(--sa-space-2) var(--sa-space-4);
-  border-radius: var(--sa-radius-md);
-  background: var(--sa-ext-gold-tint);
-  font-weight: var(--sa-font-weight-bold);
-  line-height: 1.7;
 }
 
 .timeline__points {
@@ -675,92 +628,6 @@
   }
 }
 
-/* ---------- Journey: «الدورة التشغيلية ومسار الجائزة» ---------- */
-
-.cycle {
-  display: grid;
-  gap: var(--sa-space-5);
-  margin: var(--sa-space-6) 0 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: none;
-}
-
-.cycle__stage {
-  --stage-bg: var(--sa-color-surface-dark);
-  --stage-fg: var(--sa-color-text-on-dark);
-  --stage-number: var(--sa-color-surface-dark);
-  display: grid;
-  /* The bands stay one height; only the cards grow with their points. */
-  grid-template-rows: auto 1fr;
-  gap: var(--sa-space-3);
-}
-
-.cycle__stage[data-stage='2'] {
-  --stage-bg: #2b5d58;
-  --stage-number: #2b5d58;
-}
-
-.cycle__stage[data-stage='3'] {
-  --stage-bg: var(--sa-brand-gold);
-  --stage-fg: var(--sa-ext-green-900);
-  --stage-number: var(--sa-color-text-accent);
-}
-
-/* A chevron pointing along the reading direction. */
-.cycle__title {
-  display: grid;
-  place-items: center;
-  min-block-size: 4.5rem;
-  padding-inline: 2.5rem;
-  background: var(--stage-bg);
-  color: var(--stage-fg);
-  font-size: var(--sa-font-size-h4);
-  font-weight: var(--sa-font-weight-bold);
-  clip-path: polygon(0 50%, 12% 0, 100% 0, 88% 50%, 100% 100%, 12% 100%);
-}
-
-[dir='ltr'] .cycle__title {
-  clip-path: polygon(100% 50%, 88% 0, 0 0, 12% 50%, 0 100%, 88% 100%);
-}
-
-.cycle__card {
-  display: grid;
-  gap: var(--sa-space-3);
-  block-size: 100%;
-  padding: var(--sa-space-5) var(--sa-space-6) var(--sa-space-6);
-  border-radius: 1.25rem;
-  background: var(--sa-color-surface-raised);
-  box-shadow: 0 18px 36px -28px rgb(20 65 61 / 0.5);
-}
-
-.cycle__number {
-  justify-self: end;
-  color: var(--stage-number);
-  font-size: 3.6rem;
-  font-weight: var(--sa-font-weight-bold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.cycle__points {
-  display: grid;
-  gap: var(--sa-space-2);
-  margin: 0;
-  padding-inline-start: 1.2rem;
-  font-size: var(--sa-font-size-lead);
-}
-
-.cycle__points li::marker {
-  color: var(--stage-number);
-}
-
-@media (min-width: 48rem) {
-  .cycle {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 /* ---------- Governance: the four stations ---------- */
 
 .governance {
@@ -943,7 +810,6 @@
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .objectives__item,
-    .cycle__stage,
     .governance__station,
     .purpose-banner {
       animation: public-rise linear both;

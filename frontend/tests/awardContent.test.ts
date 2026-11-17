@@ -20,16 +20,24 @@ test('the approved conditions are complete in both languages and use the same si
   assert.deepEqual(categoryRequirements('en', 'quality'), [])
 })
 
-test('public formatting and all category guidance consume the same shared conditions without changing their text', () => {
-  const shared = JSON.parse(readFileSync(new URL('../../backend/resources/award/terms-2026-11-10.json', import.meta.url), 'utf8'))
+test('public pages group the repeated poetry portal condition under general conditions in both languages', () => {
+  const shared = JSON.parse(readFileSync(new URL('../../backend/resources/award/terms-2026-11-17.json', import.meta.url), 'utf8'))
   assert.deepEqual(awardTerms, shared)
-  assert.strictEqual(publicConditions, awardTerms)
   for (const locale of ['ar', 'en'] as const) {
     const before = awardTerms[locale].domains.map((domain) => [domain.code, domain.subcategories.map((category) => category.code).sort()])
     const after = publicConditions[locale].domains.map((domain) => [domain.code, domain.subcategories.map((category) => category.code).sort()])
     assert.deepEqual(after, before)
     for (const domain of publicConditions[locale].domains) {
-      for (const category of domain.subcategories) assert.deepEqual(categoryRequirements(locale, category.code), category.requirements)
+      for (const category of domain.subcategories) {
+        const sharedRequirements = categoryRequirements(locale, category.code)
+        const portal = awardTerms[locale].general[5].text
+        assert.deepEqual(category.requirements, category.code === 'poetry' ? sharedRequirements.filter((condition) => condition !== portal) : sharedRequirements)
+        if (category.code === 'poetry') {
+          assert.equal(sharedRequirements.length, 4)
+          assert.equal(category.requirements.length, 3)
+          assert.equal(sharedRequirements.filter((condition) => condition === portal).length, 1)
+        }
+      }
     }
     assert.equal(publicConditions[locale].general.length, 7)
     generalConditions(locale).forEach((condition, index) => {
@@ -38,6 +46,8 @@ test('public formatting and all category guidance consume the same shared condit
     assert.deepEqual(generalConditions(locale)[4].text.filter((part) => typeof part !== 'string'), [{ org: 'rowad', label: locale === 'ar' ? 'مؤسسة الرواد' : 'Al-Rowad Foundation' }])
   }
   assert.doesNotMatch(JSON.stringify(publicConditions.en), /[\u0600-\u06ff]/)
+  assert.equal(publicConditions.ar.domains[0].subcategories[0].name, 'الشعر العمودي')
+  assert.doesNotMatch(JSON.stringify(publicConditions.ar), /العامودي/)
 })
 
 test('new deletion and consent messages have complete English and Arabic catalog coverage', () => {
@@ -47,6 +57,19 @@ test('new deletion and consent messages have complete English and Arabic catalog
     assert.ok(en[key], key)
     assert.doesNotMatch(en[key], /[\u0600-\u06ff]/, key)
   }
+})
+
+test('the new terms revision expands anonymity while preserving the other approved conditions', () => {
+  const previous = JSON.parse(readFileSync(new URL('../../backend/resources/award/terms-2026-11-10.json', import.meta.url), 'utf8'))
+  assert.equal(awardTerms.revision, '2026-11-17')
+  for (const locale of ['ar', 'en'] as const) {
+    assert.deepEqual(awardTerms[locale].general.slice(0, 6), previous[locale].general.slice(0, 6))
+    assert.deepEqual(awardTerms[locale].domains, previous[locale].domains)
+  }
+  assert.equal(awardTerms.ar.general[6].title, 'إخفاء الهوية في النصوص والوثائق')
+  assert.equal(awardTerms.ar.general[6].text, 'يجب إخفاء هوية المترشح من النصوص والوثائق المقدّمة للتحكيم، وإزالة اسمه وتوقيعه وأي بيانات أو إشارات تدلّ على صاحبها.')
+  assert.equal(awardTerms.en.general[6].title, 'Anonymity in texts and documents')
+  assert.equal(awardTerms.en.general[6].text, 'The candidate’s identity must be concealed in the texts and documents submitted for judging. Their name, signature, and any data or indications that identify their author must be removed.')
 })
 
 test('the legacy official PNG source remains intact for the Arabic reports', () => {

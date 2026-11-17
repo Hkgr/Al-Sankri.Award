@@ -12,7 +12,7 @@ class AwardTerms
     /** @return array<string, mixed> */
     public function content(): array
     {
-        return json_decode(file_get_contents(resource_path('award/terms-2026-11-10.json')), true, flags: JSON_THROW_ON_ERROR);
+        return json_decode(file_get_contents(resource_path('award/terms-2026-11-17.json')), true, flags: JSON_THROW_ON_ERROR);
     }
 
     public function body(string $locale): string
