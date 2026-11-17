@@ -29,6 +29,7 @@ export const en: Dict = {
   'الشعر': 'Poetry',
   'القصة': 'Story',
   'الشعر العامودي': 'Poetry',
+  'الشعر العمودي': 'Poetry',
   'القصة القصيرة': 'Story',
   'نشر شروط التقدم': 'Publish application conditions',
   'إصدار شروط التقدم': 'Application conditions version',

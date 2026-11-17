@@ -9,8 +9,7 @@
 
 /*
  * Identity: the official logo stays in the header (owner decision); gold text on
- * deep green only at display size (the slogan's second line, the countdown
- * digits). The line pattern belongs to light surfaces, so it is not used here.
+ * deep green only at display size (the slogan's second line). The line pattern belongs to light surfaces, so it is not used here.
  * Every movement below runs only without a reduced-motion preference.
  */
 .hero {
@@ -49,6 +48,7 @@
 }
 
 .hero__text {
+  min-inline-size: 0;
   display: grid;
   gap: var(--sa-space-4);
   justify-items: start;
@@ -77,16 +77,16 @@
   display: grid;
   gap: 0.05em;
   color: var(--sa-color-text-on-dark);
-  font-size: clamp(2.6rem, 1.4rem + 4.2vw, 5.2rem);
+  font-size: clamp(3rem, 1.3rem + 5vw, 6.2rem);
   font-weight: var(--sa-font-weight-black);
-  line-height: 1.18;
+  line-height: 1.3;
   letter-spacing: 0;
 }
 
 /* English words are longer; a smaller maximum keeps the actions on the first screen. */
 .hero__title:lang(en) {
-  font-size: clamp(2.3rem, 1.4rem + 2.6vw, 3.6rem);
-  line-height: 1.12;
+  font-size: clamp(2.6rem, 1.4rem + 3.4vw, 4.6rem);
+  line-height: 1.2;
 }
 
 .hero__title-line {
@@ -102,8 +102,8 @@
 .hero__word {
   display: inline-block;
   overflow: hidden;
-  padding-block: 0.08em;
-  margin-block: -0.08em;
+  padding-block: 0.2em;
+  margin-block: -0.2em;
   vertical-align: top;
 }
 
@@ -222,100 +222,9 @@
   text-align: center;
 }
 
-/* ---------- Countdown (glass units on the hero) ---------- */
-
-.countdown {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: var(--sa-space-5);
-  row-gap: var(--sa-space-1);
-  align-items: center;
-  inline-size: 100%;
-  margin-block-start: var(--sa-space-4);
-}
-
-.countdown__units {
-  display: flex;
-  grid-row: 1 / 3;
-  gap: var(--sa-space-2);
-}
-
-.countdown__unit {
-  display: grid;
-  gap: 0.1rem;
-  min-inline-size: 4.6rem;
-  padding: var(--sa-space-2) var(--sa-space-1);
-  border: var(--sa-border-width-hairline) solid rgb(244 247 252 / 0.16);
-  border-radius: var(--sa-radius-lg);
-  background: rgb(244 247 252 / 0.07);
-  text-align: center;
-  backdrop-filter: blur(6px);
-}
-
-/* Gold on deep green: large text only. */
-.countdown__value {
-  display: block;
-  color: var(--sa-color-text-on-dark-accent-large);
-  font-size: clamp(1.7rem, 1.2rem + 1.4vw, 2.1rem);
-  font-weight: var(--sa-font-weight-bold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.15;
-}
-
-.countdown__label {
-  color: var(--sa-color-text-on-dark-muted);
-  font-size: var(--sa-font-size-small);
-}
-
-.countdown__title {
-  align-self: end;
-  color: var(--sa-color-text-on-dark);
-  font-size: var(--sa-font-size-lead);
-  font-weight: var(--sa-font-weight-bold);
-}
-
-.countdown__dates {
-  display: grid;
-  align-self: start;
-  margin: 0;
-}
-
-.countdown__date dd {
-  margin: 0;
-  color: var(--sa-color-text-on-dark-muted);
-  font-size: var(--sa-font-size-small);
-  line-height: 1.8;
-}
-
-/* Without a running countdown (closed, judging, judged, unknown): a single column. */
-.countdown:not(:has(.countdown__units)) {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.countdown:not([data-phase='open']):not([data-phase='upcoming']) .countdown__title {
-  font-size: var(--sa-font-size-h3);
-}
-
-@media (max-width: 39.99rem) {
-  /* Small screens: the units span the width, the text below them. */
-  .countdown {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .countdown__units {
-    grid-row: auto;
-    order: -1;
-  }
-
-  .countdown__unit {
-    flex: 1;
-    min-inline-size: 0;
-  }
-}
-
 @media (min-width: 64rem) {
   .hero__inner {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.75fr);
     gap: var(--sa-space-7);
     padding-block: var(--sa-space-7) var(--sa-space-8);
   }
@@ -326,20 +235,10 @@
   }
 }
 
-/* Narrow desktops: a smaller portrait, and the countdown text beneath its units. */
+/* A smaller portrait gives the slogan room on narrow desktops. */
 @media (min-width: 64rem) and (max-width: 79.99rem) {
   .hero__portrait {
     inline-size: min(80%, 21rem);
-  }
-
-  .countdown {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .countdown__units {
-    grid-row: auto;
-    order: -1;
-    margin-block-end: var(--sa-space-2);
   }
 }
 
@@ -347,6 +246,32 @@
 @media (max-width: 63.99rem) {
   .hero__portrait {
     order: -1;
+  }
+}
+
+@media (max-width: 39.99rem) {
+  .hero__inner {
+    gap: var(--sa-space-5);
+    padding-block: var(--sa-space-4) var(--sa-space-6);
+  }
+
+  .hero__portrait {
+    inline-size: min(60%, 12rem);
+    margin: 0 0 var(--sa-space-6);
+  }
+
+  .hero__name {
+    font-size: 1.1rem;
+  }
+
+  .hero__title:lang(en) {
+    font-size: clamp(1.6rem, 8.2vw, 2rem);
+    line-height: 1.3;
+  }
+
+  .hero__lead {
+    font-size: 1.0625rem;
+    line-height: 1.85;
   }
 }
 
@@ -374,7 +299,6 @@
 
   .hero__lead,
   .hero .platform-actions,
-  .hero .countdown,
   .hero__caption {
     animation: hero-rise 0.9s cubic-bezier(0.2, 0, 0, 1) both;
   }
@@ -385,10 +309,6 @@
 
   .hero .platform-actions {
     animation-delay: 0.85s;
-  }
-
-  .hero .countdown {
-    animation-delay: 1s;
   }
 
   .hero__caption {
@@ -411,11 +331,6 @@
   .hero__spin--reverse {
     animation-duration: 90s;
     animation-direction: reverse;
-  }
-
-  /* A changed countdown digit flips in. */
-  .countdown__value {
-    animation: hero-flip 0.5s cubic-bezier(0.2, 0.7, 0, 1);
   }
 
   .hero .button {
@@ -494,12 +409,6 @@
   }
 }
 
-@keyframes hero-flip {
-  from {
-    opacity: 0;
-    transform: translateY(-45%) rotateX(70deg);
-  }
-}
 
 /* ---------- Introduction ---------- */
 

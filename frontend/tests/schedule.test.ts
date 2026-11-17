@@ -1,5 +1,5 @@
 /**
- * The countdown's boundaries and its independence from the visitor's
+ * Platform entry boundaries and their independence from the visitor's
  * timezone. The schedule is the confirmed one: applications close at
  * 2026-11-16T00:00:00+03:00 (exclusive), judging runs until
  * 2026-11-26T00:00:00+03:00 (exclusive).
@@ -8,7 +8,7 @@
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { applicationPhaseAt, clockOffset, countdownTarget, deadlineText, judgingPhaseAt, periodText, phaseAt, remaining } from '../src/lib/schedule.ts'
+import { applicationPhaseAt, clockOffset, deadlineText, judgingPhaseAt, periodText, phaseAt } from '../src/lib/schedule.ts'
 import type { PublicSchedule } from '../src/lib/schedule.ts'
 
 const CLOSES = Date.parse('2026-11-16T00:00:00+03:00')
@@ -42,8 +42,6 @@ test('the application phase ends exactly at the exclusive closing instant', () =
   assert.equal(judgingPhaseAt(JUDGING_ENDS, open), 'ended')
   assert.equal(phaseAt(CLOSES, schedule(false)), 'judging')
   assert.equal(phaseAt(JUDGING_ENDS, schedule(false)), 'judged')
-  assert.equal(countdownTarget('open', open), CLOSES)
-  assert.equal(countdownTarget('judging', open), null)
 })
 
 test('the server decides: a closed stage is never reopened by the client clock', () => {
@@ -51,7 +49,6 @@ test('the server decides: a closed stage is never reopened by the client clock',
   assert.equal(phaseAt(0, null), 'unknown')
   const notYet: PublicSchedule = { ...schedule(false), application: { opens_at: '2026-11-05T21:00:00Z', closes_at: '2026-11-15T21:00:00Z', open: false } }
   assert.equal(phaseAt(Date.parse('2026-11-05T20:00:00Z'), notYet), 'upcoming')
-  assert.equal(countdownTarget('upcoming', notYet), Date.parse('2026-11-05T21:00:00Z'))
   assert.equal(phaseAt(Date.parse('2026-11-05T21:00:00Z'), notYet), 'unavailable', 'the client cannot reopen a server-refused period at its planned opening')
 })
 
@@ -60,7 +57,6 @@ test('incomplete configuration before a future deadline is unavailable, not elap
   assert.equal(applicationPhaseAt(OCTOBER_29, incomplete), 'unavailable')
   assert.equal(phaseAt(OCTOBER_29, incomplete), 'unavailable')
   assert.equal(judgingPhaseAt(OCTOBER_29, incomplete), 'upcoming')
-  assert.equal(countdownTarget(phaseAt(OCTOBER_29, incomplete), incomplete), null)
   assert.equal(deadlineText(incomplete.application!.closes_at!), 'بنهاية يوم 15 نوفمبر 2026')
 })
 
@@ -102,13 +98,6 @@ test('judging requires both valid interval boundaries and cannot start during a 
     assert.equal(judgingPhaseAt(CLOSES, invalid), 'unknown')
     assert.equal(phaseAt(CLOSES, invalid), 'closed')
   }
-})
-
-test('the remaining time is computed from now, split into labelled units and clamped at zero', () => {
-  assert.deepEqual(remaining(CLOSES - 1000, CLOSES), { days: 0, hours: 0, minutes: 0, seconds: 1, totalMs: 1000 })
-  assert.deepEqual(remaining(CLOSES - (3 * 86_400 + 4 * 3_600 + 5 * 60 + 6) * 1000, CLOSES), { days: 3, hours: 4, minutes: 5, seconds: 6, totalMs: 273_906_000 })
-  assert.deepEqual(remaining(CLOSES + 5000, CLOSES), { days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 })
-  assert.equal(remaining(CLOSES - 999, CLOSES).seconds, 0, 'a partial second is not rounded up')
 })
 
 test('the announced dates are the Damascus calendar days, under any device timezone', () => {

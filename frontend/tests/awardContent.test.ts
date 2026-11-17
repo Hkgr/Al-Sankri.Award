@@ -20,16 +20,24 @@ test('the approved conditions are complete in both languages and use the same si
   assert.deepEqual(categoryRequirements('en', 'quality'), [])
 })
 
-test('public formatting and all category guidance consume the same shared conditions without changing their text', () => {
+test('public pages group the repeated poetry portal condition under general conditions in both languages', () => {
   const shared = JSON.parse(readFileSync(new URL('../../backend/resources/award/terms-2026-11-10.json', import.meta.url), 'utf8'))
   assert.deepEqual(awardTerms, shared)
-  assert.strictEqual(publicConditions, awardTerms)
   for (const locale of ['ar', 'en'] as const) {
     const before = awardTerms[locale].domains.map((domain) => [domain.code, domain.subcategories.map((category) => category.code).sort()])
     const after = publicConditions[locale].domains.map((domain) => [domain.code, domain.subcategories.map((category) => category.code).sort()])
     assert.deepEqual(after, before)
     for (const domain of publicConditions[locale].domains) {
-      for (const category of domain.subcategories) assert.deepEqual(categoryRequirements(locale, category.code), category.requirements)
+      for (const category of domain.subcategories) {
+        const sharedRequirements = categoryRequirements(locale, category.code)
+        const portal = awardTerms[locale].general[5].text
+        assert.deepEqual(category.requirements, category.code === 'poetry' ? sharedRequirements.filter((condition) => condition !== portal) : sharedRequirements)
+        if (category.code === 'poetry') {
+          assert.equal(sharedRequirements.length, 4)
+          assert.equal(category.requirements.length, 3)
+          assert.equal(sharedRequirements.filter((condition) => condition === portal).length, 1)
+        }
+      }
     }
     assert.equal(publicConditions[locale].general.length, 7)
     generalConditions(locale).forEach((condition, index) => {
@@ -38,6 +46,8 @@ test('public formatting and all category guidance consume the same shared condit
     assert.deepEqual(generalConditions(locale)[4].text.filter((part) => typeof part !== 'string'), [{ org: 'rowad', label: locale === 'ar' ? 'مؤسسة الرواد' : 'Al-Rowad Foundation' }])
   }
   assert.doesNotMatch(JSON.stringify(publicConditions.en), /[\u0600-\u06ff]/)
+  assert.equal(publicConditions.ar.domains[0].subcategories[0].name, 'الشعر العمودي')
+  assert.doesNotMatch(JSON.stringify(publicConditions.ar), /العامودي/)
 })
 
 test('new deletion and consent messages have complete English and Arabic catalog coverage', () => {

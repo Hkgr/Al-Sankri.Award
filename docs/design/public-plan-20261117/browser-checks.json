@@ -1,0 +1,150 @@
+{
+  "browser": "Chromium via in-app browser",
+  "capture": "Viewport screenshots",
+  "routes": [
+    {
+      "dir": "rtl",
+      "lang": "ar",
+      "path": "/journey",
+      "poetryRules": 0,
+      "scrollWidth": 375,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "journey-ar-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "lang": "en",
+      "path": "/journey",
+      "poetryRules": 0,
+      "scrollWidth": 375,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "journey-en-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "heroHeight": 750.21875,
+      "lang": "en",
+      "path": "/",
+      "poetryRules": 0,
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "home-en-mobile.jpg"
+    },
+    {
+      "dir": "ltr",
+      "lang": "en",
+      "path": "/eligibility/culture-and-arts",
+      "poetryRules": 3,
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "poetry-en-mobile.jpg"
+    },
+    {
+      "dir": "rtl",
+      "lang": "ar",
+      "path": "/eligibility/culture-and-arts",
+      "poetryRules": 3,
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "poetry-ar-mobile.jpg"
+    },
+    {
+      "dir": "rtl",
+      "heroHeight": 729.765625,
+      "lang": "ar",
+      "path": "/",
+      "poetryRules": 0,
+      "scrollWidth": 375,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 390,
+      "screenshot": "home-ar-mobile.jpg"
+    },
+    {
+      "dir": "rtl",
+      "heroHeight": 615.46875,
+      "lang": "ar",
+      "path": "/",
+      "poetryRules": 0,
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "home-ar-desktop.jpg"
+    },
+    {
+      "dir": "rtl",
+      "lang": "ar",
+      "path": "/journey",
+      "poetryRules": 0,
+      "scrollWidth": 1440,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "journey-ar-desktop.jpg"
+    },
+    {
+      "dir": "rtl",
+      "lang": "ar",
+      "path": "/eligibility/culture-and-arts",
+      "poetryRules": 3,
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "poetry-ar-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "heroHeight": 670.96875,
+      "lang": "en",
+      "path": "/",
+      "poetryRules": 0,
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "home-en-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "lang": "en",
+      "path": "/journey",
+      "poetryRules": 0,
+      "scrollWidth": 1425,
+      "stages": 5,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "journey-en-desktop.jpg"
+    },
+    {
+      "dir": "ltr",
+      "lang": "en",
+      "path": "/eligibility/culture-and-arts",
+      "poetryRules": 3,
+      "scrollWidth": 1425,
+      "stages": 0,
+      "temporalElements": 0,
+      "width": 1440,
+      "screenshot": "poetry-en-desktop.jpg"
+    }
+  ],
+  "console": [],
+  "navigation": {
+    "homeJourneyLink": true,
+    "homePoetryLink": true,
+    "mobileMenu": true,
+    "signInCTA": true,
+    "languageSwitch": true
+  }
+}

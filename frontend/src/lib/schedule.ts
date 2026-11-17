@@ -1,12 +1,12 @@
 /**
- * The award's public schedule (GET /api/public/schedule) and the countdown
- * arithmetic, kept free of imports so the Node test runner can load it.
+ * The award's public schedule (GET /api/public/schedule), kept free of
+ * imports so the Node test runner can load it.
  *
  * Every instant is an absolute timestamp (ISO 8601 with Z from the server),
  * compared as milliseconds; dates are shown in Asia/Damascus through Intl,
  * so the visitor's own timezone never moves a deadline. The server decides
- * whether applications are open; the countdown only counts down to the
- * instant the server announced.
+ * whether applications are open. Platform entry actions follow this answer
+ * and the announced closing instant.
  */
 
 export const AWARD_TIME_ZONE = 'Asia/Damascus'
@@ -20,7 +20,7 @@ export type PublicSchedule = {
 
 /**
  * - `upcoming`: applications not open yet (the server says closed, and an opening instant lies ahead);
- * - `open`: applications open, counting down to the closing instant;
+ * - `open`: applications open before the closing instant;
  * - `unavailable`: the server refuses applications, without an elapsed deadline;
  * - `closed`: the application deadline has elapsed, without current judging;
  * - `judging`: applications ended and the announced judging interval is current;
@@ -30,8 +30,6 @@ export type PublicSchedule = {
 export type ApplicationPhase = 'upcoming' | 'open' | 'unavailable' | 'closed' | 'unknown'
 export type JudgingPhase = 'upcoming' | 'current' | 'ended' | 'unknown'
 export type SchedulePhase = ApplicationPhase | 'judging' | 'judged'
-
-export type Remaining = { days: number; hours: number; minutes: number; seconds: number; totalMs: number }
 
 const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -80,28 +78,6 @@ export function phaseAt(now: number, schedule: PublicSchedule | null): ScheduleP
   if (judging === 'ended') return 'judged'
 
   return 'closed'
-}
-
-/** The instant the countdown runs to in this phase, or null when none is shown. */
-export function countdownTarget(phase: SchedulePhase, schedule: PublicSchedule | null): number | null {
-  if (phase === 'open') return instant(schedule?.application?.closes_at)
-  if (phase === 'upcoming') return instant(schedule?.application?.opens_at)
-
-  return null
-}
-
-/** Whole days, hours, minutes and seconds left until `target`, never below zero. */
-export function remaining(now: number, target: number): Remaining {
-  const totalMs = Math.max(0, target - now)
-  const totalSeconds = Math.floor(totalMs / 1000)
-
-  return {
-    days: Math.floor(totalSeconds / 86_400),
-    hours: Math.floor((totalSeconds % 86_400) / 3_600),
-    minutes: Math.floor((totalSeconds % 3_600) / 60),
-    seconds: totalSeconds % 60,
-    totalMs,
-  }
 }
 
 /** The calendar date of an instant in Damascus: day, month (1–12) and year. */

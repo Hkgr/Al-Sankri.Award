@@ -23,7 +23,7 @@ function load(): Promise<Loaded> {
 
 /**
  * The public schedule and the difference between the server's clock and
- * this device's (so a wrong device clock does not move the countdown).
+ * this device's, keeping platform entry actions aligned to the server.
  * `schedule` is undefined while loading.
  */
 export function useSchedule(): { schedule: PublicSchedule | null | undefined; offset: number; failed: boolean } {
